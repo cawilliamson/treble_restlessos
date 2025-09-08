@@ -1,8 +1,10 @@
 # variables
+ANDROID_VERSION := 16
+ANDROID_VERSION_TAG := 
 BUILD_NUMBER := `date "+%Y%m%d%H%M"`
 BUILD_DATETIME := `date "+%s"`
 REPO_HOST := env_var_or_default("REPO_HOST", "https://github.com")
-REPO_PATH := env_var_or_default("REPO_PATH", "LeOS-LeanOS/treble_leanos")
+REPO_PATH := env_var_or_default("REPO_PATH", "cawilliamson/treble_grapheneos")
 WEB_DIR := env_var_or_default("WEB_DIR", "/var/www/build.chrisaw.io")
 
 # common container parameters
@@ -31,13 +33,10 @@ build-container:
 # sync grapheneos sources with manifests
 sync-sources: build-container
     mkdir -p out/ src/ tmp/
-    echo "android-16.0" > tmp/.android_version
-    echo "ap3a" > tmp/.android_version_tag
     {{CONTAINER_RUN}} -w /repo/src gsi-builder \
         /bin/bash -e -c ' \
             echo "Syncing grapheneos sources..." && \
-            ANDROID_VERSION=$(cat /repo/tmp/.android_version) && \
-            repo init -u https://android.googlesource.com/platform/manifest -b ${ANDROID_VERSION} --depth=1 --git-lfs && \
+            repo init -u https://github.com/GrapheneOS/platform_manifest.git -b {{ANDROID_VERSION}} --depth=1 --git-lfs && \
             mkdir -p .repo/local_manifests && \
             cp -v /repo/configs/local_manifests/*.xml .repo/local_manifests/ && \
             while ! repo sync -j$(nproc --all) --force-sync --no-clone-bundle --no-tags; do sleep 30; done'
@@ -48,29 +47,29 @@ apply-patches: build-container
         /bin/bash -e -c ' \
             echo "Applying patches..." && \
             cp -Rv /repo/patches/* patches/ && \
-            patches/apply.sh . leanos'
+            patches/apply.sh . trebledroid && \
+            patches/apply.sh . staging && \
+            patches/apply.sh . personal'
 
 # build treble app
 build-treble-app: build-container
     {{CONTAINER_RUN}} -w /repo/src/treble_app gsi-builder \
         /bin/bash -e -c ' \
             echo "Building TrebleApp..." && \
-            bash build.sh release \
-        '
+            bash build.sh release'
 
 # build rom image for specific architecture
 build-rom-image arch:
     {{CONTAINER_RUN}} -w /repo/src gsi-builder \
         /bin/bash -e -c ' \
             echo "Building ROM image..." && \
-            ANDROID_VERSION_TAG_VAL=$(cat /repo/tmp/.android_version_tag) && \
             pushd device/phh/treble && \
-                cp -fv "/repo/configs/rom/leanos.mk" . && \
-                bash generate.sh leanos && \
+                cp -fv "/repo/configs/rom/grapheneos.mk" . && \
+                bash generate.sh grapheneos && \
             popd && \
             rm -rfv out/target/product/tdgsi_{{arch}}_ab/ && \
             . build/envsetup.sh && \
-            lunch treble_{{arch}}_bvN-${ANDROID_VERSION_TAG_VAL}-userdebug && \
+            lunch treble_{{arch}}_bvN-cur-userdebug && \
             make systemimage -j$(nproc --all) && \
             make target-files-package otatools -j$(nproc --all)'
 
@@ -79,9 +78,8 @@ sign-rom-image arch:
     {{CONTAINER_RUN}} -w /repo/src gsi-builder \
         /bin/bash -e -c ' \
             echo "Signing ROM image..." && \
-            ANDROID_VERSION_TAG_VAL=$(cat /repo/tmp/.android_version_tag) && \
             . build/envsetup.sh && \
-            lunch treble_{{arch}}_bvN-${ANDROID_VERSION_TAG_VAL}-userdebug && \
+            lunch treble_{{arch}}_bvN-cur-userdebug && \
             bash vendor/chrisaw-priv/keys/sign.sh && \
             rm -fv ${OUT}/system.img && \
             unzip -joq ${OUT}/signed-target_files.zip IMAGES/system.img -d ${OUT}/ && \
@@ -93,10 +91,9 @@ compress-rom-image arch:
     {{CONTAINER_RUN}} -w /repo/tmp gsi-builder \
         /bin/bash -e -c ' \
             echo "Compressing ROM image..." && \
-            ANDROID_VERSION=$(cat /repo/tmp/.android_version) && \
-            VERSION_TAG="${ANDROID_VERSION#android-}-{{BUILD_NUMBER}}" && \
+            VERSION_TAG="{{ANDROID_VERSION}}-{{BUILD_NUMBER}}" && \
             src="system_{{arch}}.img" && \
-            dest="LeanOS-{{arch}}-ab-${VERSION_TAG}.img" && \
+            dest="GrapheneOS-{{arch}}-ab-${VERSION_TAG}.img" && \
             mv -v "${src}" "${dest}" && \
             xz -9 -T0 -v -z "${dest}" && \
             cp -fv "${dest}.xz" /repo/out/'
@@ -118,9 +115,8 @@ copy-to-webdir: build-container
     {{CONTAINER_RUN}} -w /repo/tmp gsi-builder \
         /bin/bash -e -c ' \
             echo "Copying to webdir..." && \
-            ANDROID_VERSION=$(cat /repo/tmp/.android_version); \
-            VERSION_TAG="${ANDROID_VERSION#android-}-{{BUILD_NUMBER}}"; \
-            RELEASE_NAME="LeanOS-ab-${VERSION_TAG}"; \
+            VERSION_TAG="{{ANDROID_VERSION}}-{{BUILD_NUMBER}}"; \
+            RELEASE_NAME="GrapheneOS-ab-${VERSION_TAG}"; \
             mkdir -p "/web/${RELEASE_NAME}" && \
             cp -fv *.img.xz "/web/${RELEASE_NAME}/" && \
             echo "Images copied to /web/${RELEASE_NAME}/"'
@@ -131,11 +127,10 @@ upload-to-github:
         echo "Uploading to GitHub..." && \
         git init && \
         git remote add origin "{{REPO_HOST}}/{{REPO_PATH}}.git" && \
-        ANDROID_VERSION=$(cat "../tmp/.android_version") && \
         RELEASE_TAG="${ANDROID_VERSION#android-}-{{BUILD_NUMBER}}" && \
         gh repo set-default "{{REPO_PATH}}" && \
-        RELEASE_NAME="LeanOS-ab-${RELEASE_TAG}" && \
+        RELEASE_NAME="GrapheneOS-ab-${RELEASE_TAG}" && \
         RELEASE_DESCRIPTION="Download mirror: https://build.chrisaw.io/${RELEASE_NAME}/" && \
-        gh release create -d -n "${RELEASE_DESCRIPTION}" -t "LeanOS ${RELEASE_TAG}" "${RELEASE_TAG}" && \
+        gh release create -d -n "${RELEASE_DESCRIPTION}" -t "GrapheneOS ${RELEASE_TAG}" "${RELEASE_TAG}" && \
         gh release upload "${RELEASE_TAG}" --clobber -- *.img.xz && \
         rm -rf .git/'
