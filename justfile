@@ -1,6 +1,5 @@
 # variables
-ANDROID_VERSION := 16
-ANDROID_VERSION_TAG := 
+ANDROID_VERSION := "16"
 BUILD_NUMBER := `date "+%Y%m%d%H%M"`
 BUILD_DATETIME := `date "+%s"`
 REPO_HOST := env_var_or_default("REPO_HOST", "https://github.com")
