@@ -34,7 +34,7 @@ sync-sources: build-container
     mkdir -p out/ src/ tmp/
     {{CONTAINER_RUN}} -w /repo/src gsi-builder \
         /bin/bash -e -c ' \
-            echo "Syncing grapheneos sources..." && \
+            echo "Syncing GrapheneOS sources..." && \
             repo init -u https://github.com/GrapheneOS/platform_manifest.git -b {{ANDROID_VERSION}} --depth=1 --git-lfs && \
             mkdir -p .repo/local_manifests && \
             cp -v /repo/configs/local_manifests/*.xml .repo/local_manifests/ && \
