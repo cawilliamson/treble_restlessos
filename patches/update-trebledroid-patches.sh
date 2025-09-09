@@ -9,7 +9,7 @@ export ANDROID_VERSION AOSP_TAG PATCHES_DIR
 # run if no arguments
 if [ $# -eq 0 ]; then
 	# clean existing trebledroid patches and start extraction
-	rm -Rf $PATCHES_DIR/tmp $PATCHES_DIR/trebledroid
+	rm -Rfv $PATCHES_DIR/tmp $PATCHES_DIR/trebledroid
 	mkdir -p $PATCHES_DIR/tmp $PATCHES_DIR/trebledroid
 	pushd $PATCHES_DIR/tmp
 		# initialize repo with aosp manifest
