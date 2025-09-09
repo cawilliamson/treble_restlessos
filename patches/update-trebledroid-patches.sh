@@ -40,7 +40,9 @@ if [ $# -eq 0 ]; then
 
 		# extract patches
 		echo "Extracting patches from repositories..."
-		repo forall -j1 -c "bash -x $PATCHES_DIR/update-trebledroid-patches.sh extract"
+		echo "Script path: $PATCHES_DIR/update-trebledroid-patches.sh"
+		ls -la "$PATCHES_DIR/update-trebledroid-patches.sh"
+		repo forall -v -j1 -c "bash -x $PATCHES_DIR/update-trebledroid-patches.sh extract"
 		echo "Patch extraction completed"
 	popd
 	
