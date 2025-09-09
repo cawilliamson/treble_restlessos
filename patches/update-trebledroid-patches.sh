@@ -32,6 +32,7 @@ fi
 # run if "extract" argument
 if [ "$1" = "extract" ]; then
 	# skip repos without trebledroid remote
+	pwd
 	git remote get-url td 2>/dev/null || exit 0
 	git fetch --unshallow td $REPO_RREV 2>/dev/null || true
 
