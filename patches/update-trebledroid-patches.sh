@@ -35,7 +35,7 @@ if [ $# -eq 0 ]; then
 
 		# extract patches
 		echo "Extracting patches from repositories..."
-		repo forall -j1 -c "bash $(readlink -f -- $0) extract"
+		repo forall -j1 -c "bash -x $(readlink -f -- $0) extract"
 		echo "Patch extraction completed"
 	popd
 	
