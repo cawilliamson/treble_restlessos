@@ -42,7 +42,7 @@ if [ $# -eq 0 ]; then
 	popd
 	
 	echo "Cleaning up temporary directory..."
-	rm -Rf $PATCHES_DIR/tmp
+	rm -Rfv $PATCHES_DIR/tmp
 	echo "TrebleDroid patches update completed. Patches saved to: $PATCHES_DIR/trebledroid/"
 fi
 
