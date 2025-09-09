@@ -57,30 +57,37 @@ if [ "$1" = "extract" ]; then
 		exit 0
 	fi
 	
+	echo "Found TrebleDroid remote, fetching..."
 	git fetch --unshallow td $REPO_RREV 2>/dev/null || true
 
 	# get remote urls
 	compact_remote="$(git remote get-url td|cut -d / -f 5)"
 	original_remote=https://android.googlesource.com/"$(tr _ /  <<<$compact_remote)"
+	echo "AOSP remote: $original_remote"
 
 	# fetch from original aosp remote with retry logic
 	echo "Fetching tags from AOSP..."
-	fetch_attempt=1
 	while ! git fetch --tags $original_remote 2>/dev/null; do
-		echo "Fetch attempt $fetch_attempt failed, retrying in 30 seconds..."
+		echo "Fetch failed, retrying in 30 seconds..."
 		sleep 30
-		((fetch_attempt++))
 	done
+	echo "Fetch successful"
 
 	# generate patches
-	lastTag="$(git describe --abbrev=0 --match=android-*)"
+	echo "Looking for Android tags..."
+	lastTag="$(git describe --abbrev=0 --match=android-* 2>/dev/null || echo "")"
 	
 	if [ -n "$lastTag" ]; then
+		echo "Found tag: $lastTag"
 		patches_out=$PATCHES_DIR/trebledroid/$compact_remote/
 		mkdir -p "$patches_out"
 		
+		echo "Counting commits since $lastTag..."
 		patch_count=$(git rev-list --count "$lastTag..HEAD" 2>/dev/null || echo "0")
+		echo "Found $patch_count commits to process"
+		
 		if [ "$patch_count" -gt 0 ]; then
+			echo "Generating patches..."
 			git format-patch "$lastTag..HEAD" -o "$patches_out" 2>/dev/null || true
 			actual_patches=$(ls -1 "$patches_out"/*.patch 2>/dev/null | wc -l || echo "0")
 			echo "Generated $actual_patches patches"
@@ -92,5 +99,8 @@ if [ "$1" = "extract" ]; then
 		if [ -z "$(ls -A "$patches_out" 2>/dev/null)" ]; then
 			rmdir "$patches_out" 2>/dev/null || true
 		fi
+	else
+		echo "No Android tag found, skipping patch generation"
 	fi
+	echo "Completed processing $current_repo"
 fi
