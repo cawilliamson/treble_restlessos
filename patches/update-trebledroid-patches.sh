@@ -3,8 +3,13 @@
 # variables
 ANDROID_VERSION="android-16.0"
 AOSP_TAG="android-16.0.0_r2"
-PATCHES_DIR="$(dirname "$(readlink -f -- "$0")")"
-export ANDROID_VERSION AOSP_TAG PATCHES_DIR
+export ANDROID_VERSION AOSP_TAG
+
+# set PATCHES_DIR only once
+if [ -z "$PATCHES_DIR" ]; then
+	PATCHES_DIR="$(dirname "$(readlink -f -- "$0")")"
+	export PATCHES_DIR
+fi
 
 # run if no arguments
 if [ $# -eq 0 ]; then
@@ -46,12 +51,13 @@ fi
 
 # run if "extract" argument
 if [ "$1" = "extract" ]; then
-	# skip repos without trebledroid remote
+	# PATCHES_DIR is passed in via environment, don't recalculate it
 	current_repo="$(pwd | sed "s|.*/||")"
 	echo "Processing $current_repo..."
+	echo "PATCHES_DIR=$PATCHES_DIR"
 	
 	if ! git remote get-url td 2>/dev/null; then
-		echo "Skipping (no TrebleDroid remote)"
+		echo "Skipping $current_repo (no TrebleDroid remote)"
 		exit 0
 	fi
 	
