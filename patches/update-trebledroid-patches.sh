@@ -1,33 +1,38 @@
 #!/usr/bin/env bash
 
-# extract trebledroid patches for android 16
-
 # variables
 ANDROID_VERSION="android-16.0"
 AOSP_TAG="android-16.0.0_r2"
 PATCHES_DIR="$(dirname "$(readlink -f -- "$0")")"
 export ANDROID_VERSION AOSP_TAG PATCHES_DIR
 
-# clean existing trebledroid patches and start extraction
-rm -Rf $PATCHES_DIR/tmp $PATCHES_DIR/trebledroid
-mkdir -p $PATCHES_DIR/tmp $PATCHES_DIR/trebledroid
-pushd $PATCHES_DIR/tmp
-	# initialize repo with android 16 manifest
-	repo init -u "https://android.googlesource.com/platform/manifest" -b $AOSP_TAG --depth=1
+# run if no arguments
+if [ $# -eq 0 ]; then
+	# clean existing trebledroid patches and start extraction
+	rm -Rf $PATCHES_DIR/trebledroid $PATCHES_DIR/tmp
+	mkdir -p $PATCHES_DIR/tmp
+	pushd $PATCHES_DIR/tmp
 
-	# clone trebledroid manifest
-	git clone https://github.com/TrebleDroid/treble_manifest .repo/local_manifests -b $ANDROID_VERSION
+		# initialize repo with aosp manifest
+		repo init -u "https://android.googlesource.com/platform/manifest" -b $AOSP_TAG --depth=1
 
-	# sync repositories
-	while ! repo sync -c -j$(nproc --all) --force-sync; do
-		sleep 30
-	done
+		# clone trebledroid manifest
+		git clone https://github.com/TrebleDroid/treble_manifest .repo/local_manifests -b $ANDROID_VERSION
 
-	# extract patches
-	repo forall -j1 -c "bash $(readlink -f -- $0) extract"
-popd
-rm -Rf $PATCHES_DIR/trebledroid/tmp
+		# sync repositories
+		while ! repo sync -c -j$(nproc --all) --force-sync; do
+			sleep 30
+		done
 
+		# extract patches
+		repo forall -j1 -c "bash $(readlink -f -- $0) extract"
+
+	# clean up tmp directory
+	popd
+	rm -Rf $PATCHES_DIR/tmp
+fi
+
+# run if "extract" argument
 if [ "$1" = "extract" ]; then
 	# skip repos without trebledroid remote
 	git remote get-url td 2>/dev/null || exit 0
