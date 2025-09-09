@@ -9,10 +9,9 @@ export ANDROID_VERSION AOSP_TAG PATCHES_DIR
 # run if no arguments
 if [ $# -eq 0 ]; then
 	# clean existing trebledroid patches and start extraction
-	rm -Rf $PATCHES_DIR/trebledroid $PATCHES_DIR/tmp
-	mkdir -p $PATCHES_DIR/tmp
+	rm -Rf $PATCHES_DIR/tmp $PATCHES_DIR/trebledroid
+	mkdir -p $PATCHES_DIR/tmp $PATCHES_DIR/trebledroid
 	pushd $PATCHES_DIR/tmp
-
 		# initialize repo with aosp manifest
 		repo init -u "https://android.googlesource.com/platform/manifest" -b $AOSP_TAG --depth=1
 
@@ -26,8 +25,6 @@ if [ $# -eq 0 ]; then
 
 		# extract patches
 		repo forall -j1 -c "bash $(readlink -f -- $0) extract"
-
-	# clean up tmp directory
 	popd
 	rm -Rf $PATCHES_DIR/tmp
 fi
