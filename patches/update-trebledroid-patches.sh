@@ -26,14 +26,12 @@ if [ $# -eq 0 ]; then
 		git clone https://github.com/TrebleDroid/treble_manifest .repo/local_manifests -b $ANDROID_VERSION
 
 		# sync repositories
-		echo "Syncing repositories (using $(nproc --all) jobs, this may take 30+ minutes)..."
-		sync_attempt=1
+		echo "Syncing repositories..."
 		while ! repo sync -c -j$(nproc --all) --force-sync; do
-			echo "Sync attempt $sync_attempt failed, retrying in 30 seconds..."
+			echo "Sync failed, retrying in 30 seconds..."
 			sleep 30
-			((sync_attempt++))
 		done
-		echo "Repository sync completed after $sync_attempt attempt(s)"
+		echo "Repository sync completed"
 
 		# extract patches
 		echo "Extracting patches from repositories..."
@@ -58,7 +56,7 @@ if [ "$1" = "extract" ]; then
 	fi
 	
 	echo "Found TrebleDroid remote, fetching..."
-	git fetch --unshallow td $REPO_RREV 2>/dev/null || true
+	git fetch --unshallow td $REPO_RREV
 
 	# get remote urls
 	compact_remote="$(git remote get-url td|cut -d / -f 5)"
@@ -81,24 +79,7 @@ if [ "$1" = "extract" ]; then
 		echo "Found tag: $lastTag"
 		patches_out=$PATCHES_DIR/trebledroid/$compact_remote/
 		mkdir -p "$patches_out"
-		
-		echo "Counting commits since $lastTag..."
-		patch_count=$(git rev-list --count "$lastTag..HEAD" 2>/dev/null || echo "0")
-		echo "Found $patch_count commits to process"
-		
-		if [ "$patch_count" -gt 0 ]; then
-			echo "Generating patches..."
-			git format-patch "$lastTag..HEAD" -o "$patches_out" 2>/dev/null || true
-			actual_patches=$(ls -1 "$patches_out"/*.patch 2>/dev/null | wc -l || echo "0")
-			echo "Generated $actual_patches patches"
-		else
-			echo "No patches to generate"
-		fi
-		
-		# clean up empty directories
-		if [ -z "$(ls -A "$patches_out" 2>/dev/null)" ]; then
-			rmdir "$patches_out" 2>/dev/null || true
-		fi
+		git format-patch "$lastTag..HEAD" -o "$patches_out"
 	else
 		echo "No Android tag found, skipping patch generation"
 	fi
