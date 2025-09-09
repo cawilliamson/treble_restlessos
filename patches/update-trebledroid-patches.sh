@@ -6,13 +6,12 @@
 ANDROID_VERSION="android-16.0"
 AOSP_TAG="android-16.0.0_r2"
 PATCHES_DIR="$(dirname "$(readlink -f -- "$0")")"
-
 export ANDROID_VERSION AOSP_TAG PATCHES_DIR
 
 # clean existing trebledroid patches and start extraction
-rm -Rf $PATCHES_DIR/trebledroid
-mkdir -p $PATCHES_DIR/trebledroid/tmp
-pushd $PATCHES_DIR/trebledroid/tmp
+rm -Rf $PATCHES_DIR/tmp $PATCHES_DIR/trebledroid
+mkdir -p $PATCHES_DIR/tmp $PATCHES_DIR/trebledroid
+pushd $PATCHES_DIR/tmp
 	# initialize repo with android 16 manifest
 	repo init -u "https://android.googlesource.com/platform/manifest" -b $AOSP_TAG --depth=1
 
