@@ -42,7 +42,14 @@ if [ $# -eq 0 ]; then
 		echo "Extracting patches from repositories..."
 		echo "Script path: $PATCHES_DIR/update-trebledroid-patches.sh"
 		ls -la "$PATCHES_DIR/update-trebledroid-patches.sh"
-		repo forall -v -j1 -c "bash -x $PATCHES_DIR/update-trebledroid-patches.sh extract"
+		
+		# Add debugging: list all repositories that will be processed
+		echo "=== DEBUG: Listing all repositories that will be processed ==="
+		repo forall -c "echo 'REPO_DEBUG: Processing repository:' \$(pwd | sed 's|.*/||')"
+		echo "=== DEBUG: End of repository list ==="
+		
+		echo "=== Starting patch extraction with detailed logging ==="
+		repo forall -v -j1 -c "echo 'REPO_START: \$(pwd | sed \"s|.*/||\")' && bash -x $PATCHES_DIR/update-trebledroid-patches.sh extract && echo 'REPO_END: \$(pwd | sed \"s|.*/||\")'"
 		echo "Patch extraction completed"
 	popd
 	
@@ -57,14 +64,19 @@ if [ "$1" = "extract" ]; then
 	current_repo="$(pwd | sed "s|.*/||")"
 	echo "Processing $current_repo..."
 	echo "PATCHES_DIR=$PATCHES_DIR"
+	echo "DEBUG: Current working directory: $(pwd)"
+	echo "DEBUG: Checking for TrebleDroid remote..."
 	
 	if ! git remote get-url td 2>/dev/null; then
 		echo "Skipping $current_repo (no TrebleDroid remote)"
+		echo "DEBUG: Exiting extract mode for $current_repo"
 		exit 0
 	fi
 	
 	echo "Found TrebleDroid remote, fetching..."
+	echo "DEBUG: About to fetch from TrebleDroid remote..."
 	git fetch --unshallow td $REPO_RREV
+	echo "DEBUG: TrebleDroid fetch completed"
 
 	# get remote urls
 	compact_remote="$(git remote get-url td|cut -d / -f 5)"
@@ -73,23 +85,38 @@ if [ "$1" = "extract" ]; then
 
 	# fetch from original aosp remote with retry logic
 	echo "Fetching tags from AOSP..."
+	echo "DEBUG: Starting AOSP fetch loop..."
+	fetch_attempts=0
 	while ! git fetch --tags $original_remote 2>/dev/null; do
-		echo "Fetch failed, retrying in 30 seconds..."
+		fetch_attempts=$((fetch_attempts + 1))
+		echo "Fetch failed (attempt $fetch_attempts), retrying in 30 seconds..."
+		echo "DEBUG: Fetch attempt $fetch_attempts failed, sleeping..."
 		sleep 30
+		if [ $fetch_attempts -gt 10 ]; then
+			echo "ERROR: Too many fetch attempts, giving up on $current_repo"
+			exit 1
+		fi
 	done
-	echo "Fetch successful"
+	echo "Fetch successful after $fetch_attempts attempts"
+	echo "DEBUG: AOSP fetch completed successfully"
 
 	# generate patches
 	echo "Looking for Android tags..."
+	echo "DEBUG: Running git describe to find Android tags..."
 	lastTag="$(git describe --abbrev=0 --match=android-* 2>/dev/null || echo "")"
+	echo "DEBUG: Found tag: '$lastTag'"
 	
 	if [ -n "$lastTag" ]; then
 		echo "Found tag: $lastTag"
 		patches_out=$PATCHES_DIR/trebledroid/$compact_remote/
+		echo "DEBUG: Creating patches directory: $patches_out"
 		mkdir -p "$patches_out"
+		echo "DEBUG: Generating patches from $lastTag..HEAD"
 		git format-patch "$lastTag..HEAD" -o "$patches_out"
+		echo "DEBUG: Patch generation completed"
 	else
 		echo "No Android tag found, skipping patch generation"
 	fi
 	echo "Completed processing $current_repo"
+	echo "DEBUG: Extract mode completed for $current_repo"
 fi
