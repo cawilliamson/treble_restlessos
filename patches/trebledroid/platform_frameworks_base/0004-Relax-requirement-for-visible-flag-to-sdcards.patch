@@ -1,0 +1,31 @@
+From f418d4c31f551045ad2a933ccd6fd48f77aa3926 Mon Sep 17 00:00:00 2001
+From: Pierre-Hugues Husson <phh@phh.me>
+Date: Tue, 28 Nov 2017 18:28:04 +0100
+Subject: [PATCH 04/55] Relax requirement for visible flag to sdcards
+
+The vast majority of sdcard readers are stable enough to be declared by
+the API. (I see no counter-example)
+FBE broke adoptable storage with SDCard, hence this need.
+
+Change-Id: Ia616671c03562d1eadaff5531a5c708a62d7ad3a
+---
+ .../core/java/com/android/server/StorageManagerService.java    | 3 ++-
+ 1 file changed, 2 insertions(+), 1 deletion(-)
+
+diff --git a/services/core/java/com/android/server/StorageManagerService.java b/services/core/java/com/android/server/StorageManagerService.java
+index 3adbd229d200..0c60a9db14e4 100644
+--- a/services/core/java/com/android/server/StorageManagerService.java
++++ b/services/core/java/com/android/server/StorageManagerService.java
+@@ -1673,7 +1673,8 @@ class StorageManagerService extends IStorageManager.Stub
+ 
+             // Adoptable public disks are visible to apps, since they meet
+             // public API requirement of being in a stable location.
+-            if (vol.getDisk().isAdoptable()) {
++            // Assume all SDs match this as well
++            if (vol.getDisk().isAdoptable() || vol.getDisk().isSd()) {
+                 vol.setMountFlags(vol.getMountFlags() | VolumeInfo.MOUNT_FLAG_VISIBLE_FOR_WRITE);
+             }
+ 
+-- 
+2.52.0
+

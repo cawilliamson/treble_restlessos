@@ -1,7 +1,9 @@
 # variables
-ANDROID_VERSION := "16"
-BUILD_NUMBER := `date "+%Y%m%d%H%M"`
+ANDROID_VERSION := env_var_or_default("ANDROID_VERSION", "16.0.0")
+ANDROID_VERSION_TAG := env_var_or_default("ANDROID_VERSION_TAG", "bp4a")
+GRAPHENEOS_BRANCH := env_var_or_default("GRAPHENEOS_BRANCH", "16")
 BUILD_DATETIME := `date "+%s"`
+BUILD_NUMBER := `date "+%Y%m%d%H%M"`
 REPO_HOST := env_var_or_default("REPO_HOST", "https://github.com")
 REPO_PATH := env_var_or_default("REPO_PATH", "cawilliamson/treble_grapheneos")
 WEB_DIR := env_var_or_default("WEB_DIR", "/var/www/build.chrisaw.io")
@@ -12,6 +14,9 @@ CONTAINER_RUN := "podman run --rm --privileged" + \
     " -v \"$(pwd):/repo:Z\"" + \
     " -v \"" + WEB_DIR + ":/web:Z\"" + \
     " -v \"$HOME/.ssh:/root/.ssh:Z\"" + \
+    " -e ANDROID_VERSION=\"" + ANDROID_VERSION + "\"" + \
+    " -e ANDROID_VERSION_TAG=\"" + ANDROID_VERSION_TAG + "\"" + \
+    " -e GRAPHENEOS_BRANCH=\"" + GRAPHENEOS_BRANCH + "\"" + \
     " -e BUILD_DATETIME=\"" + BUILD_DATETIME + "\"" + \
     " -e BUILD_NUMBER=\"" + BUILD_NUMBER + "\""
 
@@ -23,22 +28,24 @@ clean:
     rm -rfv out/ src/ tmp/
 
 # full build process - simple linear chain
-build-all: clean build-container sync-sources apply-patches build-treble-app build-arm64 build-arm32 copy-to-webdir upload-to-github
+build-all: clean build-container sync-grapheneos-sources apply-patches build-treble-app build-arm64 build-arm32 copy-to-webdir upload-to-github
 
 # build the container image used for all build operations
 build-container:
     podman build -t gsi-builder -f Containerfile .
 
-# sync grapheneos sources with manifests
-sync-sources: build-container
+# sync grapheneos sources with manifests (hard limit to 4 concurrent to avoid limiting)
+sync-grapheneos-sources: build-container
     mkdir -p out/ src/ tmp/
     {{CONTAINER_RUN}} -w /repo/src gsi-builder \
         /bin/bash -e -c ' \
             echo "Syncing GrapheneOS sources..." && \
-            repo init -u https://github.com/GrapheneOS/platform_manifest.git -b {{ANDROID_VERSION}} --depth=1 --git-lfs && \
+            repo init -u https://github.com/GrapheneOS/platform_manifest.git -b ${GRAPHENEOS_BRANCH} --depth=1 --git-lfs && \
+            echo "${ANDROID_VERSION}" > /repo/tmp/.android_version && \
+            echo "${ANDROID_VERSION_TAG}" > /repo/tmp/.android_version_tag && \
             mkdir -p .repo/local_manifests && \
             cp -v /repo/configs/local_manifests/*.xml .repo/local_manifests/ && \
-            while ! repo sync -j$(nproc --all) --force-sync --no-clone-bundle --no-tags; do sleep 30; done'
+            while ! repo sync -j4 --force-sync --no-clone-bundle --no-tags; do sleep 30; done'
 
 # apply patches in correct order
 apply-patches: build-container
@@ -48,27 +55,30 @@ apply-patches: build-container
             cp -Rv /repo/patches/* patches/ && \
             patches/apply.sh . trebledroid && \
             patches/apply.sh . staging && \
-            patches/apply.sh . personal'
+            patches/apply.sh . common && \
+            patches/apply.sh . grapheneos'
 
 # build treble app
 build-treble-app: build-container
     {{CONTAINER_RUN}} -w /repo/src/treble_app gsi-builder \
         /bin/bash -e -c ' \
             echo "Building TrebleApp..." && \
-            bash build.sh release'
+            bash build.sh release \
+        '
 
 # build rom image for specific architecture
 build-rom-image arch:
     {{CONTAINER_RUN}} -w /repo/src gsi-builder \
         /bin/bash -e -c ' \
             echo "Building ROM image..." && \
+            ANDROID_VERSION_TAG_VAL=$(cat /repo/tmp/.android_version_tag) && \
             pushd device/phh/treble && \
                 cp -fv "/repo/configs/rom/grapheneos.mk" . && \
                 bash generate.sh grapheneos && \
             popd && \
             rm -rfv out/target/product/tdgsi_{{arch}}_ab/ && \
             . build/envsetup.sh && \
-            lunch treble_{{arch}}_bvN-cur-userdebug && \
+            lunch treble_{{arch}}_bvN-${ANDROID_VERSION_TAG_VAL}-userdebug && \
             make systemimage -j$(nproc --all) && \
             make target-files-package otatools -j$(nproc --all)'
 
@@ -77,8 +87,9 @@ sign-rom-image arch:
     {{CONTAINER_RUN}} -w /repo/src gsi-builder \
         /bin/bash -e -c ' \
             echo "Signing ROM image..." && \
+            ANDROID_VERSION_TAG_VAL=$(cat /repo/tmp/.android_version_tag) && \
             . build/envsetup.sh && \
-            lunch treble_{{arch}}_bvN-cur-userdebug && \
+            lunch treble_{{arch}}_bvN-${ANDROID_VERSION_TAG_VAL}-userdebug && \
             bash vendor/chrisaw-priv/keys/sign.sh && \
             rm -fv ${OUT}/system.img && \
             unzip -joq ${OUT}/signed-target_files.zip IMAGES/system.img -d ${OUT}/ && \
@@ -90,7 +101,8 @@ compress-rom-image arch:
     {{CONTAINER_RUN}} -w /repo/tmp gsi-builder \
         /bin/bash -e -c ' \
             echo "Compressing ROM image..." && \
-            VERSION_TAG="{{ANDROID_VERSION}}-{{BUILD_NUMBER}}" && \
+            ANDROID_VERSION=$(cat /repo/tmp/.android_version) && \
+            VERSION_TAG="${ANDROID_VERSION}-{{BUILD_NUMBER}}" && \
             src="system_{{arch}}.img" && \
             dest="GrapheneOS-{{arch}}-ab-${VERSION_TAG}.img" && \
             mv -v "${src}" "${dest}" && \
@@ -114,7 +126,8 @@ copy-to-webdir: build-container
     {{CONTAINER_RUN}} -w /repo/tmp gsi-builder \
         /bin/bash -e -c ' \
             echo "Copying to webdir..." && \
-            VERSION_TAG="{{ANDROID_VERSION}}-{{BUILD_NUMBER}}"; \
+            ANDROID_VERSION=$(cat /repo/tmp/.android_version); \
+            VERSION_TAG="${ANDROID_VERSION}-{{BUILD_NUMBER}}"; \
             RELEASE_NAME="GrapheneOS-ab-${VERSION_TAG}"; \
             mkdir -p "/web/${RELEASE_NAME}" && \
             cp -fv *.img.xz "/web/${RELEASE_NAME}/" && \
@@ -126,7 +139,8 @@ upload-to-github:
         echo "Uploading to GitHub..." && \
         git init && \
         git remote add origin "{{REPO_HOST}}/{{REPO_PATH}}.git" && \
-        RELEASE_TAG="${ANDROID_VERSION#android-}-{{BUILD_NUMBER}}" && \
+        ANDROID_VERSION=$(cat "../tmp/.android_version") && \
+        RELEASE_TAG="${ANDROID_VERSION}-{{BUILD_NUMBER}}" && \
         gh repo set-default "{{REPO_PATH}}" && \
         RELEASE_NAME="GrapheneOS-ab-${RELEASE_TAG}" && \
         RELEASE_DESCRIPTION="Download mirror: https://build.chrisaw.io/${RELEASE_NAME}/" && \

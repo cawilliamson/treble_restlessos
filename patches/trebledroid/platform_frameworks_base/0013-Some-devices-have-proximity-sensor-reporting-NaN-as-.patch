@@ -1,0 +1,28 @@
+From 33fdf12716da5df748831b7ac56e2ef2c407e9b9 Mon Sep 17 00:00:00 2001
+From: Pierre-Hugues Husson <phh@phh.me>
+Date: Tue, 29 Sep 2020 22:39:47 +0200
+Subject: [PATCH 13/55] Some devices have proximity sensor reporting NaN as max
+ range for some reason. Make them behave standard way by setting 5 cm
+
+Change-Id: I3c39e3e914a05903c140235702e0480d2d58a612
+---
+ .../server/display/DisplayPowerProximityStateController.java   | 3 +++
+ 1 file changed, 3 insertions(+)
+
+diff --git a/services/core/java/com/android/server/display/DisplayPowerProximityStateController.java b/services/core/java/com/android/server/display/DisplayPowerProximityStateController.java
+index 70c6511875bb..d9e5adddefd3 100644
+--- a/services/core/java/com/android/server/display/DisplayPowerProximityStateController.java
++++ b/services/core/java/com/android/server/display/DisplayPowerProximityStateController.java
+@@ -418,6 +418,9 @@ public final class DisplayPowerProximityStateController {
+         if (mProximitySensor != null) {
+             mProximityThreshold = Math.min(mProximitySensor.getMaximumRange(),
+                     TYPICAL_PROXIMITY_THRESHOLD);
++            if(Float.isNaN(mProximityThreshold)) {
++                mProximityThreshold = 5.0f;
++            }
+         }
+     }
+ 
+-- 
+2.52.0
+
