@@ -9,13 +9,13 @@ Change-Id: I6eb09aa71663c6fbe7563e3038bffcabdba0ff6a
  1 file changed, 2 insertions(+), 6 deletions(-)
 
 diff --git a/services/core/java/com/android/server/pm/UserManagerService.java b/services/core/java/com/android/server/pm/UserManagerService.java
-index e1e8fc231dda..f26c25424a58 100644
+index c72bf6bf8..0d71abd4c 100644
 --- a/services/core/java/com/android/server/pm/UserManagerService.java
 +++ b/services/core/java/com/android/server/pm/UserManagerService.java
-@@ -8465,12 +8465,8 @@ public class UserManagerService extends IUserManager.Stub {
-      */
-     private static int getMaxUsersOfTypePerParent(UserTypeDetails userTypeDetails) {
-         final int defaultMax = userTypeDetails.getMaxAllowedPerParent();
+@@ -9171,12 +9171,8 @@ public class UserManagerService extends IUserManager.Stub {
+             // UNLIMITED_NUMBER_OF_USERS serves as a shorthand for getMaxSupportedUsers().
+             defaultMax = UserManager.getMaxSupportedUsers();
+         }
 -        if (!Build.IS_DEBUGGABLE) {
 -            return defaultMax;
 -        } else {
