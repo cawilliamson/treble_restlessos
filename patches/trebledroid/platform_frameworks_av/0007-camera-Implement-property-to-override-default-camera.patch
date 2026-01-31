@@ -11,7 +11,7 @@ Change-Id: I002bfa974bafc2cc01365eeea31c7a5dcb5a2028
  1 file changed, 22 insertions(+)
 
 diff --git a/services/camera/libcameraservice/common/CameraProviderManager.cpp b/services/camera/libcameraservice/common/CameraProviderManager.cpp
-index 536f56a3fd..6d6c52f8ca 100644
+index 7032db0..abb041e 100644
 --- a/services/camera/libcameraservice/common/CameraProviderManager.cpp
 +++ b/services/camera/libcameraservice/common/CameraProviderManager.cpp
 @@ -45,6 +45,7 @@
@@ -20,9 +20,9 @@ index 536f56a3fd..6d6c52f8ca 100644
  #include <android-base/parseint.h>
 +#include <android-base/properties.h>
  #include <android-base/logging.h>
+ #include <android/content/res/CameraCompatibilityInfo.h>
  #include <cutils/properties.h>
- #include <hwbinder/IPCThreadState.h>
-@@ -285,6 +286,15 @@ std::vector<std::string> CameraProviderManager::getCameraDeviceIds(std::unordere
+@@ -287,6 +288,15 @@ std::vector<std::string> CameraProviderManager::getCameraDeviceIds(std::unordere
              }
          }
      }
@@ -38,7 +38,7 @@ index 536f56a3fd..6d6c52f8ca 100644
      return deviceIds;
  }
  
-@@ -351,6 +361,18 @@ std::vector<std::string> CameraProviderManager::getAPI1CompatibleCameraDeviceIds
+@@ -353,6 +363,18 @@ std::vector<std::string> CameraProviderManager::getAPI1CompatibleCameraDeviceIds
      std::sort(systemDeviceIds.begin(), systemDeviceIds.end(), sortFunc);
      deviceIds.insert(deviceIds.end(), publicDeviceIds.begin(), publicDeviceIds.end());
      deviceIds.insert(deviceIds.end(), systemDeviceIds.begin(), systemDeviceIds.end());
