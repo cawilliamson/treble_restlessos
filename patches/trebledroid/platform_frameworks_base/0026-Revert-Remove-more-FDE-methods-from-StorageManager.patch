@@ -12,11 +12,11 @@ Change-Id: Ic394934ec27b1a486c60123130825d44dad73412
  2 files changed, 78 insertions(+)
 
 diff --git a/core/java/android/os/storage/StorageManager.java b/core/java/android/os/storage/StorageManager.java
-index 24f8672c1e7c..0cc380b54469 100644
+index e2ef800b5..b39f2a549 100644
 --- a/core/java/android/os/storage/StorageManager.java
 +++ b/core/java/android/os/storage/StorageManager.java
-@@ -1755,6 +1755,15 @@ public class StorageManager {
-         return false;
+@@ -1713,6 +1713,80 @@ public class StorageManager {
+         return RoSystemProperties.CRYPTO_FILE_ENCRYPTED;
      }
  
 +    /** {@hide}
@@ -28,13 +28,6 @@ index 24f8672c1e7c..0cc380b54469 100644
 +        return RoSystemProperties.CRYPTO_ENCRYPTABLE;
 +    }
 +
-     /**
-      * {@hide}
-      * Is this device encrypted?
-@@ -1782,6 +1791,71 @@ public class StorageManager {
-         return RoSystemProperties.CRYPTO_FILE_ENCRYPTED;
-     }
- 
 +    /** {@hide}
 +     * @deprecated Use {@link #isFileEncrypted} instead, since emulated FBE is no longer supported.
 +     */
@@ -100,11 +93,11 @@ index 24f8672c1e7c..0cc380b54469 100644
 +        return false;
 +    }
 +
-     /** {@hide} */
+     /** @hide */
      public static boolean hasAdoptable() {
          switch (SystemProperties.get(PROP_ADOPTABLE)) {
 diff --git a/core/java/com/android/internal/os/RoSystemProperties.java b/core/java/com/android/internal/os/RoSystemProperties.java
-index 40d5c4761dff..66288706b0f1 100644
+index 40d5c4761..66288706b 100644
 --- a/core/java/com/android/internal/os/RoSystemProperties.java
 +++ b/core/java/com/android/internal/os/RoSystemProperties.java
 @@ -68,10 +68,14 @@ public class RoSystemProperties {
