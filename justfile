@@ -43,7 +43,7 @@ sync-grapheneos-sources: build-container
             repo init -u https://github.com/GrapheneOS/platform_manifest.git -b ${GRAPHENEOS_BRANCH} --depth=1 --git-lfs && \
             echo "${ANDROID_VERSION}" > /repo/tmp/.android_version && \
             echo "${ANDROID_VERSION_TAG}" > /repo/tmp/.android_version_tag && \
-            mkdir -p .repo/manifests && \
+            mkdir -p .repo/local_manifests && \
             cp -v /repo/configs/manifests/*.xml .repo/local_manifests/ && \
             while ! repo sync -j4 --force-sync --no-clone-bundle --no-tags; do sleep 30; done'
 
