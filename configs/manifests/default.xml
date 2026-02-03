@@ -15,9 +15,6 @@
   <!-- aosp: vndk-v29 -->
   <project path="prebuilts/vndk/v29" name="platform/prebuilts/vndk/v29" remote="aosp" revision="bef5d37dda9360940964f097d612c8032e140961" clone-depth="1" />
 
-  <!-- aosp: vndk-v30 -->
-  <project path="prebuilts/vndk/v30" name="platform/prebuilts/vndk/v30" remote="aosp" revision="5f9884aa352825291757dfd6694b874ad8c1805e" clone-depth="1" />
-
   <!-- phhusson: lptools  -->
   <project path="vendor/lptools" name="vendor_lptools" remote="phhusson" revision="master" clone-depth="1" />
 
