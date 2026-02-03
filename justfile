@@ -54,9 +54,7 @@ apply-patches: build-container
             echo "Applying patches..." && \
             cp -Rv /repo/patches/* patches/ && \
             patches/apply.sh . trebledroid && \
-            patches/apply.sh . staging && \
-            patches/apply.sh . common && \
-            patches/apply.sh . grapheneos'
+            patches/apply.sh . staging'
 
 # build treble app
 build-treble-app: build-container
