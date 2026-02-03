@@ -1,7 +1,0 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<manifest>
-  <remote name="cawilliamson-priv" fetch="ssh://git@github.com/cawilliamson/" />
-
-  <!-- vendor -->
-  <project path="vendor/chrisaw-priv" name="vendor_chrisaw-priv" remote="cawilliamson-priv" revision="main" clone-depth="1" />
-</manifest>
