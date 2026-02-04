@@ -1,0 +1,76 @@
+From 10c7bece6af3435b45cefac52796b630825d2335 Mon Sep 17 00:00:00 2001
+From: ChonDoit <thphantomblog@gmail.com>
+Date: Wed, 13 Aug 2025 16:16:36 +0100
+Subject: [PATCH 9/9] Add QS padding patch to Treble app
+
+---
+ app/src/main/java/me/phh/treble/app/Misc.kt      | 16 ++++++++++++++++
+ .../main/java/me/phh/treble/app/MiscSettings.kt  |  2 ++
+ app/src/main/res/xml/pref_misc.xml               | 12 ++++++++++++
+ 3 files changed, 30 insertions(+)
+
+diff --git a/app/src/main/java/me/phh/treble/app/Misc.kt b/app/src/main/java/me/phh/treble/app/Misc.kt
+index cf117d1..fce71f9 100644
+--- a/app/src/main/java/me/phh/treble/app/Misc.kt
++++ b/app/src/main/java/me/phh/treble/app/Misc.kt
+@@ -336,6 +336,22 @@ object Misc: EntryStartup {
+                     SystemProperties.set("persist.sys.phh.status_bar_padding_bottom", null)
+                 }
+             }
++            MiscSettings.qsclockleftpadding -> {
++                val value = sp.getString(key, "-1").toInt()
++                if(value != -1) {
++                    SystemProperties.set("persist.sys.phh.qs_clock_left_padding", value.toString())
++                } else {
++                    SystemProperties.set("persist.sys.phh.qs_clock_left_padding", null)
++                }
++            }
++            MiscSettings.qsclockrightpadding -> {
++                val value = sp.getString(key, "-1").toInt()
++                if(value != -1) {
++                    SystemProperties.set("persist.sys.phh.qs_clock_right_padding", value.toString())
++                } else {
++                    SystemProperties.set("persist.sys.phh.qs_clock_right_padding", null)
++                }
++            }
+             MiscSettings.lowGammaBrightness -> {
+                 val value = sp.getBoolean(key, false)
+                 SystemProperties.set("persist.sys.phh.low_gamma_brightness", if (value) "true" else "false")
+diff --git a/app/src/main/java/me/phh/treble/app/MiscSettings.kt b/app/src/main/java/me/phh/treble/app/MiscSettings.kt
+index 79c283f..b2430bb 100644
+--- a/app/src/main/java/me/phh/treble/app/MiscSettings.kt
++++ b/app/src/main/java/me/phh/treble/app/MiscSettings.kt
+@@ -48,6 +48,8 @@ object MiscSettings : Settings {
+     val statusbarpaddingstart = "key_misc_sb_padding_start"
+     val statusbarpaddingend = "key_misc_sb_padding_end"
+     val statusbarpaddingbottom = "key_misc_sb_padding_bottom"
++    val qsclockleftpadding = "key_misc_qs_clock_left_padding"
++    val qsclockrightpadding = "key_misc_qs_clock_right_padding"
+     val lowGammaBrightness = "key_misc_low_gamma_brightness"
+     val linearBrightness = "key_misc_linear_brightness"
+     val forceDisplay5g = "key_misc_force_display_5g"
+diff --git a/app/src/main/res/xml/pref_misc.xml b/app/src/main/res/xml/pref_misc.xml
+index b737f28..79d1341 100644
+--- a/app/src/main/res/xml/pref_misc.xml
++++ b/app/src/main/res/xml/pref_misc.xml
+@@ -69,6 +69,18 @@
+             android:title="Set status bar bottom padding"
+             android:inputType="number"
+             android:summary="Requires a SystemUI restart" />
++        <EditTextPreference
++            android:defaultValue="-1"
++            android:key="key_misc_qs_clock_left_padding"
++            android:title="Set quick settings clock left padding"
++            android:inputType="number"
++            android:summary="Requires a SystemUI restart" />
++        <EditTextPreference
++            android:defaultValue="-1"
++            android:key="key_misc_qs_clock_right_padding"
++            android:title="Set quick settings clock right padding"
++            android:inputType="number"
++            android:summary="Requires a SystemUI restart" />
+     </PreferenceCategory>
+     <PreferenceCategory android:title="Display">
+         <ListPreference
+-- 
+2.49.0

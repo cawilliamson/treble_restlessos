@@ -1,0 +1,56 @@
+From 2954f3190387ebd804b1752748463125a0288b9f Mon Sep 17 00:00:00 2001
+From: "Christopher A. Williamson" <contact@chrisaw.io>
+Date: Sun, 1 Jun 2025 14:55:46 +0100
+Subject: [PATCH 7/9] Add support for disable expensive rendering
+
+---
+ app/src/main/java/me/phh/treble/app/Misc.kt         | 4 ++++
+ app/src/main/java/me/phh/treble/app/MiscSettings.kt | 1 +
+ app/src/main/res/xml/pref_misc.xml                  | 5 +++++
+ 3 files changed, 10 insertions(+)
+
+diff --git a/app/src/main/java/me/phh/treble/app/Misc.kt b/app/src/main/java/me/phh/treble/app/Misc.kt
+index e020a33..dbeaf14 100644
+--- a/app/src/main/java/me/phh/treble/app/Misc.kt
++++ b/app/src/main/java/me/phh/treble/app/Misc.kt
+@@ -344,6 +344,10 @@ object Misc: EntryStartup {
+                 val value = sp.getBoolean(key, false)
+                 SystemProperties.set("persist.sys.phh.securize", if (value) "1" else "0")
+             }
++            MiscSettings.disableExpensiveRenderingMode -> {
++                val value = sp.getBoolean(key, false)
++                SystemProperties.set("persist.sys.phh.disable_expensive_rendering_mode", if (value) "1" else "0")
++            }
+             MiscSettings.secureAdb -> {
+                 val value = sp.getBoolean(key, false)
+                 SystemProperties.set("persist.sys.phh.adb_secure", if (value) "1" else "0")
+diff --git a/app/src/main/java/me/phh/treble/app/MiscSettings.kt b/app/src/main/java/me/phh/treble/app/MiscSettings.kt
+index afdcb46..1c16d5f 100644
+--- a/app/src/main/java/me/phh/treble/app/MiscSettings.kt
++++ b/app/src/main/java/me/phh/treble/app/MiscSettings.kt
+@@ -22,6 +22,7 @@ object MiscSettings : Settings {
+     val forceNavbarOff = "key_misc_force_navbar_off"
+     val bluetooth = "key_misc_bluetooth"
+     val securize = "key_misc_securize"
++    val disableExpensiveRenderingMode = "key_misc_disable_expensive_rendering_mode"
+     val secureAdb = "key_misc_secure_adb"
+     val removeTelephony = "key_misc_removetelephony"
+     val disableAudioEffects = "key_misc_disable_audio_effects"
+diff --git a/app/src/main/res/xml/pref_misc.xml b/app/src/main/res/xml/pref_misc.xml
+index 17bd35d..8644415 100644
+--- a/app/src/main/res/xml/pref_misc.xml
++++ b/app/src/main/res/xml/pref_misc.xml
+@@ -222,6 +222,11 @@
+             android:key="key_misc_securize"
+             android:title="Enable Securize"
+             android:summary="Disabling may fix play services on uncertified devices" />
++        <SwitchPreference
++            android:defaultValue="false"
++            android:key="key_misc_disable_expensive_rendering_mode"
++            android:title="Disable EXPENSIVE_RENDERING power mode"
++            android:summary="Fixes constant log spam on some MTK devices about power mode 6\nRequires reboot" />
+         <SwitchPreference
+             android:defaultValue="false"
+             android:key="key_misc_secure_adb"
+--
+2.47.2

@@ -1,0 +1,55 @@
+From 90ce7514d649854eba035f7f5e7f23b57d768179 Mon Sep 17 00:00:00 2001
+From: "Christopher A. Williamson" <contact@chrisaw.io>
+Date: Tue, 27 May 2025 09:38:53 +0100
+Subject: [PATCH 6/9] Add support for disable display doze suspend
+
+---
+ app/src/main/java/me/phh/treble/app/Misc.kt         | 4 ++++
+ app/src/main/java/me/phh/treble/app/MiscSettings.kt | 1 +
+ app/src/main/res/xml/pref_misc.xml                  | 4 ++++
+ 3 files changed, 9 insertions(+)
+
+diff --git a/app/src/main/java/me/phh/treble/app/Misc.kt b/app/src/main/java/me/phh/treble/app/Misc.kt
+index 709eafe..50f545f 100644
+--- a/app/src/main/java/me/phh/treble/app/Misc.kt
++++ b/app/src/main/java/me/phh/treble/app/Misc.kt
+@@ -257,6 +257,10 @@ object Misc: EntryStartup {
+                 SystemProperties.set("persist.sys.overlay.aod", if (value) "true" else "false")
+                 OverlayPicker.setOverlayEnabled("me.phh.treble.overlay.misc.aod_systemui", value)
+             }
++            MiscSettings.disableDisplayDozeSuspend -> {
++                val value = sp.getBoolean(key, true)
++                SystemProperties.set("persist.sys.phh.disable_display_doze_suspend", if (value) "true" else "false")
++            }
+             MiscSettings.dt2w -> {
+                 // Asus dt2w
+                 val value = sp.getBoolean(key, false)
+diff --git a/app/src/main/java/me/phh/treble/app/MiscSettings.kt b/app/src/main/java/me/phh/treble/app/MiscSettings.kt
+index 4f0c5a6..3da0f2a 100644
+--- a/app/src/main/java/me/phh/treble/app/MiscSettings.kt
++++ b/app/src/main/java/me/phh/treble/app/MiscSettings.kt
+@@ -38,6 +38,7 @@ object MiscSettings : Settings {
+     var patchSmsc = "key_misc_patch_smsc";
+     val minimalBrightness = "key_misc_minimal_brightness"
+     val aod = "key_misc_aod"
++    val disableDisplayDozeSuspend = "key_misc_disable_display_doze_suspend"
+     val dt2w = "key_misc_dt2w"
+     val restartSystemUI = "key_misc_restart_systemui"
+     val fodColor = "key_misc_fod_color"
+diff --git a/app/src/main/res/xml/pref_misc.xml b/app/src/main/res/xml/pref_misc.xml
+index 8ceafba..2f7e143 100644
+--- a/app/src/main/res/xml/pref_misc.xml
++++ b/app/src/main/res/xml/pref_misc.xml
+@@ -107,6 +107,10 @@
+             android:defaultValue="false"
+             android:key="key_misc_aod"
+             android:title="Force allow Always-On Display" />
++        <SwitchPreference
++            android:defaultValue="false"
++            android:key="key_misc_disable_display_doze_suspend"
++            android:title="Force disable display Doze Suspend state to allow AoD on some devices." />
+         <SwitchPreference
+             android:defaultValue="false"
+             android:key="key_misc_mediatek_touch_hint_rotate"
+--
+2.47.2

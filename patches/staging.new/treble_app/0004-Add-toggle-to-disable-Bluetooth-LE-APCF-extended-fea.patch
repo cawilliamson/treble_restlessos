@@ -1,0 +1,56 @@
+From 32780e469c8800b9dcd986505c13f3560cfce6ac Mon Sep 17 00:00:00 2001
+From: ChonDoit <thphantomblog@gmail.com>
+Date: Mon, 10 Mar 2025 23:08:52 -0300
+Subject: [PATCH 4/9] Add toggle to disable Bluetooth LE APCF extended features
+
+---
+ app/src/main/java/me/phh/treble/app/Misc.kt         | 4 ++++
+ app/src/main/java/me/phh/treble/app/MiscSettings.kt | 1 +
+ app/src/main/res/xml/pref_misc.xml                  | 5 +++++
+ 3 files changed, 10 insertions(+)
+
+diff --git a/app/src/main/java/me/phh/treble/app/Misc.kt b/app/src/main/java/me/phh/treble/app/Misc.kt
+index 6497567..927338b 100644
+--- a/app/src/main/java/me/phh/treble/app/Misc.kt
++++ b/app/src/main/java/me/phh/treble/app/Misc.kt
+@@ -344,6 +344,10 @@ object Misc: EntryStartup {
+                 val value = sp.getBoolean(key, false)
+                 SystemProperties.set("persist.sys.phh.adb_secure", if (value) "1" else "0")
+             }
++            MiscSettings.disableLeApcfExtended -> {
++                val value = sp.getBoolean(key, false)
++                SystemProperties.set("persist.sys.bt.le.disable_apcf_extended_features", if (value) "1" else "0")
++            }
+             MiscSettings.treatVirtualSensorsAsReal -> {
+                 val value = sp.getBoolean(key, false)
+                 SystemProperties.set("persist.sys.phh.virtual_sensors_are_real", if (value) "1" else "0")
+diff --git a/app/src/main/java/me/phh/treble/app/MiscSettings.kt b/app/src/main/java/me/phh/treble/app/MiscSettings.kt
+index 58612c6..97558cc 100644
+--- a/app/src/main/java/me/phh/treble/app/MiscSettings.kt
++++ b/app/src/main/java/me/phh/treble/app/MiscSettings.kt
+@@ -50,6 +50,7 @@ object MiscSettings : Settings {
+     val disableSfHwcBackpressure = "key_misc_disable_sf_hwc_backpressure"
+     val disableSaeUpgrade = "key_misc_disable_sae_upgrade"
+     val escoTransportUnitSize = "key_misc_esco_transport_unit_size"
++    val disableLeApcfExtended = "key_misc_disable_le_apcfe"
+     val treatVirtualSensorsAsReal = "key_misc_treat_virtual_sensors_as_real"
+
+     override fun enabled() = true
+diff --git a/app/src/main/res/xml/pref_misc.xml b/app/src/main/res/xml/pref_misc.xml
+index 2016122..a880bcf 100644
+--- a/app/src/main/res/xml/pref_misc.xml
++++ b/app/src/main/res/xml/pref_misc.xml
+@@ -146,6 +146,11 @@
+             android:defaultValue="true"
+             android:key="key_misc_dynamic_sysbta"
+             android:title="Use System Wide BT HAL" />
++        <SwitchPreference
++            android:key="key_misc_disable_le_apcfe"
++            android:defaultValue="false"
++            android:title="Disable LE APCF Extended features"
++            android:summary="Fix bluetooth crashing on some devices" />
+         <ListPreference
+             android:defaultValue="0"
+             android:entries="@array/pref_misc_bluetooth"
+--
+2.49.0

@@ -1,0 +1,35 @@
+From 479cf3f2e7639536ce7739a8069dd8ef21561bc8 Mon Sep 17 00:00:00 2001
+From: "Christopher A. Williamson" <contact@chrisaw.io>
+Date: Sun, 1 Jun 2025 14:45:04 +0100
+Subject: [PATCH 3/6] Allow EXPENSIVE_RENDERING mode to be disabled
+
+---
+ .../jni/com_android_server_power_PowerManagerService.cpp    | 6 ++++++
+ 1 file changed, 6 insertions(+)
+
+diff --git a/services/core/jni/com_android_server_power_PowerManagerService.cpp b/services/core/jni/com_android_server_power_PowerManagerService.cpp
+index 841f31472..4cfb07490 100644
+--- a/services/core/jni/com_android_server_power_PowerManagerService.cpp
++++ b/services/core/jni/com_android_server_power_PowerManagerService.cpp
+@@ -43,6 +43,7 @@
+ #include <utils/String8.h>
+ #include <utils/Timers.h>
+ #include <utils/misc.h>
++#include <android-base/properties.h>
+ 
+ #include "jni.h"
+ 
+@@ -89,6 +90,11 @@ static void setPowerBoost(Boost boost, int32_t durationMs) {
+ }
+ 
+ static bool setPowerMode(Mode mode, bool enabled) {
++    // disable EXPENSIVE_RENDERING mode
++    if (android::base::GetBoolProperty("persist.sys.phh.disable_expensive_rendering_mode", false) && mode == Mode::EXPENSIVE_RENDERING) {
++        return true; // pretend the operation succeeded
++    }
++
+     android::base::Timer t;
+     auto result = gPowerHalController.setMode(mode, enabled);
+     if (mode == Mode::INTERACTIVE && t.duration() > 20ms) {
+-- 
+2.47.2

@@ -1,0 +1,39 @@
+From 73a837601b946fb2ff8009c8cf35f561562c6370 Mon Sep 17 00:00:00 2001
+From: "Christopher A. Williamson" <contact@chrisaw.io>
+Date: Sun, 1 Jun 2025 21:05:59 +0100
+Subject: [PATCH 1/1] Allow EXPENSIVE_RENDERING power mode to be disabled
+
+---
+ services/surfaceflinger/PowerAdvisor/PowerAdvisor.cpp | 10 ++++++++++
+ 1 file changed, 10 insertions(+)
+
+diff --git a/services/surfaceflinger/PowerAdvisor/PowerAdvisor.cpp b/services/surfaceflinger/PowerAdvisor/PowerAdvisor.cpp
+index c7d0b2c..1c96c89 100644
+--- a/services/surfaceflinger/PowerAdvisor/PowerAdvisor.cpp
++++ b/services/surfaceflinger/PowerAdvisor/PowerAdvisor.cpp
+@@ -70,6 +70,13 @@ void traceExpensiveRendering(bool enabled) {
+ PowerAdvisor::PowerAdvisor(std::function<void()>&& sfDisableExpensiveFn,
+                            std::chrono::milliseconds timeout)
+       : mPowerHal(std::make_unique<power::PowerHalController>()) {
++    // Force disable if property is set
++    constexpr const char* kDisableProp = "persist.sys.phh.disable_expensive_rendering_mode";
++    if (android::base::GetBoolProperty(kDisableProp, false)) {
++        mHasExpensiveRendering = false;
++        ALOGI("EXPENSIVE_RENDERING forcibly disabled (property %s=1)", kDisableProp);
++    }
++
+     if (timeout > 0ms) {
+         mScreenUpdateTimer.emplace("UpdateImminentTimer", timeout,
+                                    /* resetCallback */ nullptr,
+@@ -110,6 +117,9 @@ void PowerAdvisor::setExpensiveRenderingExpected(DisplayId displayId, bool expec
+     if (!mHasExpensiveRendering) {
+         ALOGV("Skipped sending EXPENSIVE_RENDERING because HAL doesn't support it");
+         return;
++    } else if (android::base::GetBoolProperty("persist.sys.phh.disable_expensive_rendering_mode", false)) {
++        ALOGV("Skipped sending EXPENSIVE_RENDERING because property disables it");
++        return;
+     }
+     if (expected) {
+         mExpensiveDisplays.insert(displayId);
+--
+2.49.0

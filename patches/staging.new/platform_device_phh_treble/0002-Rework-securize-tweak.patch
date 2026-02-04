@@ -1,0 +1,229 @@
+From 1423a40a59b5d849e6161a3e7cdf0de003dcbad9 Mon Sep 17 00:00:00 2001
+From: Alberto Ponces <ponces26@gmail.com>
+Date: Wed, 25 Dec 2019 12:34:05 +0200
+Subject: [PATCH 2/2] Rework securize tweak
+
+---
+ base.mk             |  1 -
+ phh-on-boot.sh      | 33 ++++++++++++++++++++
+ phh-prop-handler.sh | 11 +++++++
+ rw-system.sh        | 77 +++++++++++++++++++--------------------------
+ vndk.rc             | 11 +++++++
+ 5 files changed, 86 insertions(+), 46 deletions(-)
+
+diff --git a/base.mk b/base.mk
+index bbf2ef0..47b45f6 100644
+--- a/base.mk
++++ b/base.mk
+@@ -163,7 +163,6 @@ PRODUCT_PACKAGES += \
+     resetprop_phh
+ 
+ PRODUCT_COPY_FILES += \
+-    device/phh/treble/phh-securize.sh:system/bin/phh-securize.sh \
+     device/phh/treble/files/ota.sh:system/bin/ota.sh \
+ 
+ PRODUCT_COPY_FILES += \
+diff --git a/phh-on-boot.sh b/phh-on-boot.sh
+index d2d5b0a..4e052bb 100644
+--- a/phh-on-boot.sh
++++ b/phh-on-boot.sh
+@@ -1,5 +1,38 @@
+ #!/system/bin/sh
+ 
++# spoof post-boot props
++# should be applied after boot complete to prevent breaking device features
++if [ ! -f /metadata/securize_disable ]; then
++  resetprop_phh ro.build.user nobody
++  resetprop_phh ro.build.host android-build
++  resetprop_phh ro.build.tags release-keys
++  resetprop_phh ro.product.build.tags release-keys
++  resetprop_phh ro.system.build.tags release-keys
++  resetprop_phh ro.system_ext.build.tags release-keys
++  resetprop_phh ro.vendor.build.tags release-keys
++  resetprop_phh ro.boot.vbmeta.device_state locked
++  resetprop_phh vendor.boot.vbmeta.device_state locked
++  resetprop_phh ro.boot.verifiedbootstate green
++  resetprop_phh vendor.boot.verifiedbootstate green
++  resetprop_phh ro.boot.flash.locked 1
++  resetprop_phh ro.boot.veritymode enforcing
++  resetprop_phh ro.boot.warranty_bit 0
++  resetprop_phh ro.vendor.warranty_bit 0
++  resetprop_phh ro.warranty_bit 0
++  resetprop_phh ro.debuggable 0
++  resetprop_phh ro.secure 1
++  resetprop_phh ro.build.type user
++  resetprop_phh ro.product.build.type user
++  resetprop_phh ro.system.build.type user
++  resetprop_phh ro.system_ext.build.type user
++  resetprop_phh ro.vendor.build.type user
++  resetprop_phh --delete ro.build.selinux
++  resetprop_phh ro.adb.secure 1
++  resetprop_phh -n sys.oem_unlock_allowed 0
++  resetprop_phh -n init.svc.adbd stopped
++  resetprop_phh -n init.svc.flash_recovery stopped
++fi
++
+ vndk="$(getprop persist.sys.vndk)"
+ [ -z "$vndk" ] && vndk="$(getprop ro.vndk.version |grep -oE '^[0-9]+')"
+ 
+diff --git a/phh-prop-handler.sh b/phh-prop-handler.sh
+index d036f24..777d60d 100644
+--- a/phh-prop-handler.sh
++++ b/phh-prop-handler.sh
+@@ -130,6 +130,17 @@ if [ "$1" == "persist.sys.phh.oppo.usbotg" ]; then
+     exit
+ fi
+ 
++if [ "$1" == "persist.sys.phh.securize" ]; then
++    if [[ "$prop_value" != "0" && "$prop_value" != "1" ]]; then
++        exit 1
++    fi
++    if [[ "$prop_value" == 1 ]]; then
++        rm -f /metadata/securize_disable
++    else
++        touch /metadata/securize_disable
++    fi
++fi
++
+ if [ "$1" == "persist.sys.phh.transsion.usbotg" ]; then
+     if [[ "$prop_value" != "0" && "$prop_value" != "1" ]]; then
+         exit 1
+diff --git a/rw-system.sh b/rw-system.sh
+index a7b94f6..cb64ea8 100644
+--- a/rw-system.sh
++++ b/rw-system.sh
+@@ -785,74 +785,61 @@ copyprop() {
+         resetprop_phh "$1" "$(getprop "$2")"
+     fi
+ }
+-if [ -f /system/phh/secure ] || [ -f /metadata/phh/secure ];then
++
++if [ ! -f /metadata/securize_disable ]; then
+     copyprop ro.build.device ro.vendor.build.device
+     copyprop ro.system.build.fingerprint ro.vendor.build.fingerprint
+     copyprop ro.bootimage.build.fingerprint ro.vendor.build.fingerprint
+     copyprop ro.build.fingerprint ro.vendor.build.fingerprint
++    copyprop ro.system_ext.build.fingerprint ro.vendor.build.fingerprint
++    copyprop ro.product.build.fingerprint ro.vendor.build.fingerprint
+     copyprop ro.build.device ro.vendor.product.device
+     copyprop ro.product.system.device ro.vendor.product.device
+     copyprop ro.product.device ro.vendor.product.device
+     copyprop ro.product.system.device ro.product.vendor.device
+     copyprop ro.product.device ro.product.vendor.device
++    copyprop ro.product.system_ext.device ro.vendor.product.device
++    copyprop ro.product.product.device ro.vendor.product.device
++    copyprop ro.product.system_ext.device ro.product.vendor.device
++    copyprop ro.product.product.device ro.product.vendor.device
+     copyprop ro.product.system.name ro.vendor.product.name
+     copyprop ro.product.name ro.vendor.product.name
+-    copyprop ro.product.system.name ro.product.vendor.device
+-    copyprop ro.product.name ro.product.vendor.device
++    copyprop ro.product.system.name ro.product.vendor.name
++    copyprop ro.product.name ro.product.vendor.name
++    copyprop ro.product.system_ext.name ro.vendor.product.name
++    copyprop ro.product.product.name ro.vendor.product.name
++    copyprop ro.product.system_ext.name ro.product.vendor.name
++    copyprop ro.product.product.name ro.product.vendor.name
+     copyprop ro.system.product.brand ro.vendor.product.brand
+     copyprop ro.product.brand ro.vendor.product.brand
++    copyprop ro.product.system.brand ro.vendor.product.brand
++    copyprop ro.product.system_ext.brand ro.vendor.product.brand
++    copyprop ro.product.product.brand ro.product.vendor.brand
++    copyprop ro.system.product.brand ro.product.vendor.brand
++    copyprop ro.product.brand ro.product.vendor.brand
++    copyprop ro.product.system.brand ro.product.vendor.brand
++    copyprop ro.product.system_ext.brand ro.product.vendor.brand
++    copyprop ro.product.product.brand ro.product.vendor.brand
+     copyprop ro.product.system.model ro.vendor.product.model
+     copyprop ro.product.model ro.vendor.product.model
++    copyprop ro.product.system_ext.model ro.vendor.product.model
++    copyprop ro.product.product.model ro.vendor.product.model
+     copyprop ro.product.system.model ro.product.vendor.model
+     copyprop ro.product.model ro.product.vendor.model
+     copyprop ro.build.product ro.vendor.product.model
+     copyprop ro.build.product ro.product.vendor.model
++    copyprop ro.product.system_ext.model ro.product.vendor.model
++    copyprop ro.product.product.model ro.product.vendor.model
+     copyprop ro.system.product.manufacturer ro.vendor.product.manufacturer
+     copyprop ro.product.manufacturer ro.vendor.product.manufacturer
++    copyprop ro.product.system.manufacturer ro.vendor.product.manufacturer
++    copyprop ro.product.product.manufacturer ro.vendor.product.manufacturer
++    copyprop ro.product.system_ext.manufacturer ro.vendor.product.manufacturer
+     copyprop ro.system.product.manufacturer ro.product.vendor.manufacturer
+     copyprop ro.product.manufacturer ro.product.vendor.manufacturer
+-    (getprop ro.vendor.build.security_patch; getprop ro.keymaster.xxx.security_patch) |sort |tail -n 1 |while read v;do
+-        [ -n "$v" ] && resetprop_phh ro.build.version.security_patch "$v"
+-    done
+-
+-    resetprop_phh ro.build.user nobody
+-    resetprop_phh ro.build.host android-build
+-    resetprop_phh ro.build.tags release-keys
+-    resetprop_phh ro.product.build.tags release-keys
+-    resetprop_phh ro.system.build.tags release-keys
+-    resetprop_phh ro.system_ext.build.tags release-keys
+-    resetprop_phh ro.vendor.build.tags release-keys
+-    resetprop_phh ro.boot.vbmeta.device_state locked
+-    resetprop_phh ro.boot.verifiedbootstate green
+-    resetprop_phh ro.boot.flash.locked 1
+-    resetprop_phh ro.boot.veritymode enforcing
+-    resetprop_phh ro.boot.warranty_bit 0
+-    resetprop_phh ro.warranty_bit 0
+-    resetprop_phh ro.debuggable 0
+-    resetprop_phh ro.secure 1
+-    resetprop_phh ro.build.type user
+-    resetprop_phh ro.product.build.type user
+-    resetprop_phh ro.system.build.type user
+-    resetprop_phh ro.system_ext.build.type user
+-    resetprop_phh ro.vendor.build.type user
+-    resetprop_phh --delete ro.build.selinux
+-
+-    resetprop_phh ro.adb.secure 1
+-
+-    # Hide system/xbin/su
+-    mount /mnt/phh/empty_dir /system/xbin
+-    mount /mnt/phh/empty_dir /system/app/me.phh.superuser
+-    mount /mnt/phh/empty /system/xbin/phh-su
+-else
+-    mkdir /mnt/phh/xbin
+-    chmod 0755 /mnt/phh/xbin
+-    chcon u:object_r:system_file:s0 /mnt/phh/xbin
+-
+-    #phh-su will bind over this empty file to make a real su
+-    touch /mnt/phh/xbin/su
+-    chcon u:object_r:system_file:s0 /mnt/phh/xbin/su
+-
+-    mount -o bind /mnt/phh/xbin /system/xbin
++    copyprop ro.product.system.manufacturer ro.product.vendor.manufacturer
++    copyprop ro.product.product.manufacturer ro.product.vendor.manufacturer
++    copyprop ro.product.system_ext.manufacturer ro.product.vendor.manufacturer
+ fi
+ 
+ for abi in "" 64;do
+diff --git a/vndk.rc b/vndk.rc
+index c2b8eae..876f445 100644
+--- a/vndk.rc
++++ b/vndk.rc
+@@ -34,6 +34,9 @@ on property:persist.sys.phh.oppo.dt2w=*
+ on property:persist.sys.phh.oppo.gaming_mode=*
+     exec u:r:phhsu_daemon:s0 root -- /system/bin/phh-prop-handler.sh "persist.sys.phh.oppo.gaming_mode"
+ 
++on property:persist.sys.phh.securize=*
++    exec u:r:phhsu_daemon:s0 root -- /system/bin/phh-prop-handler.sh "persist.sys.phh.securize"
++
+ on property:persist.sys.phh.oppo.usbotg=*
+     exec u:r:phhsu_daemon:s0 root -- /system/bin/phh-prop-handler.sh "persist.sys.phh.oppo.usbotg"
+ 
+@@ -112,3 +115,11 @@ service watchdogd-gsi /system/bin/watchdogd 10 20
+ on property:persist.sys.phh.adb_secure=1
+     exec u:r:phhsu_daemon:s0 root -- /system/bin/resetprop_phh ro.adb.secure 1
+     restart adbd
++
++# reset oem unlock toggle to disable
++on property:sys.oem_unlock_allowed=*
++    exec u:r:magisk:s0 root root -- /system/bin/resetprop_phh -n sys.oem_unlock_allowed 0
++
++# hide adbd is running
++on property:init.svc.adbd=*
++    exec u:r:magisk:s0 root root -- /system/bin/resetprop_phh -n init.svc.adbd stopped
+--
+2.49.0

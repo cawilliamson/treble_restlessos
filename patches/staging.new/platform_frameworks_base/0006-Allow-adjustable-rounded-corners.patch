@@ -1,0 +1,57 @@
+From 1b8edcb6da8c6dfc3c03ea7352c7fdd6babf49de Mon Sep 17 00:00:00 2001
+From: "Christopher A. Williamson" <contact@chrisaw.io>
+Date: Wed, 13 Aug 2025 16:43:05 +0100
+Subject: [PATCH 6/6] Allow adjustable rounded corners
+
+Change-Id: I55c46c579a7bb2c738dac6531a11412df8210971
+---
+ core/java/android/view/RoundedCorners.java | 13 +++++++++++++
+ 1 file changed, 13 insertions(+)
+
+diff --git a/core/java/android/view/RoundedCorners.java b/core/java/android/view/RoundedCorners.java
+index 1f841bf53..c5a5fe184 100644
+--- a/core/java/android/view/RoundedCorners.java
++++ b/core/java/android/view/RoundedCorners.java
+@@ -31,6 +31,7 @@ import android.content.res.TypedArray;
+ import android.graphics.Rect;
+ import android.os.Parcel;
+ import android.os.Parcelable;
++import android.os.SystemProperties;
+ import android.util.DisplayUtils;
+ import android.util.Pair;
+ import android.view.RoundedCorner.Position;
+@@ -197,6 +198,10 @@ public class RoundedCorners implements Parcelable {
+         } else {
+             radius = res.getDimensionPixelSize(R.dimen.rounded_corner_radius);
+         }
++        int syspropRadius = SystemProperties.getInt("persist.sys.phh.rounded_corners_padding", -1);
++        if (syspropRadius >= 0) {
++            radius = syspropRadius;
++        }
+         array.recycle();
+         // For devices with round displays (e.g. watches) that don't otherwise provide the rounded
+         // corner radius via resource overlays, we can infer the corner radius directly from the
+@@ -225,6 +230,10 @@ public class RoundedCorners implements Parcelable {
+         } else {
+             radius = res.getDimensionPixelSize(R.dimen.rounded_corner_radius_top);
+         }
++        int syspropRadius = SystemProperties.getInt("persist.sys.phh.rounded_corners_padding", -1);
++        if (syspropRadius >= 0) {
++            radius = syspropRadius;
++        }
+         array.recycle();
+         return radius;
+     }
+@@ -248,6 +257,10 @@ public class RoundedCorners implements Parcelable {
+         } else {
+             radius = res.getDimensionPixelSize(R.dimen.rounded_corner_radius_bottom);
+         }
++        int syspropRadius = SystemProperties.getInt("persist.sys.phh.rounded_corners_padding", -1);
++        if (syspropRadius >= 0) {
++            radius = syspropRadius;
++        }
+         array.recycle();
+         return radius;
+     }
+-- 
+2.49.0

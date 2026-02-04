@@ -1,0 +1,54 @@
+From 0b45739bb77f8f3bbdb0c27a4dab67464b50ccc8 Mon Sep 17 00:00:00 2001
+From: Christopher A. Williamson <contact@chrisaw.io>
+Date: Tue, 11 Mar 2025 05:29:45 +0000
+Subject: [PATCH 3/9] Remove phh remote control toggle
+
+---
+ app/src/main/java/me/phh/treble/app/Misc.kt         | 4 ----
+ app/src/main/java/me/phh/treble/app/MiscSettings.kt | 1 -
+ app/src/main/res/xml/pref_misc.xml                  | 4 ----
+ 3 files changed, 9 deletions(-)
+
+diff --git a/app/src/main/java/me/phh/treble/app/Misc.kt b/app/src/main/java/me/phh/treble/app/Misc.kt
+index 493c3f0..6497567 100644
+--- a/app/src/main/java/me/phh/treble/app/Misc.kt
++++ b/app/src/main/java/me/phh/treble/app/Misc.kt
+@@ -205,10 +205,6 @@ object Misc: EntryStartup {
+                 val value = sp.getBoolean(key, false)
+                 SystemProperties.set("persist.sys.phh.dynamic_fps", if (value) "1" else "0")
+             }
+-            MiscSettings.remotectl -> {
+-                val value = sp.getBoolean(key, false)
+-                SystemProperties.set("persist.sys.phh.remote", if (value) "true" else "false")
+-            }
+             MiscSettings.disableAudioEffects -> {
+                 val value = sp.getBoolean(key, false)
+                 SystemProperties.set("persist.sys.phh.disable_audio_effects", if (value) "1" else "0")
+diff --git a/app/src/main/java/me/phh/treble/app/MiscSettings.kt b/app/src/main/java/me/phh/treble/app/MiscSettings.kt
+index 4f75ddc..58612c6 100644
+--- a/app/src/main/java/me/phh/treble/app/MiscSettings.kt
++++ b/app/src/main/java/me/phh/treble/app/MiscSettings.kt
+@@ -24,7 +24,6 @@ object MiscSettings : Settings {
+     val securize = "key_misc_securize"
+     val secureAdb = "key_misc_secure_adb"
+     val removeTelephony = "key_misc_removetelephony"
+-    val remotectl = "key_misc_remotectl"
+     val disableAudioEffects = "key_misc_disable_audio_effects"
+     val disableFastAudio = "key_misc_disable_fast_audio"
+     val cameraTimestampOverride = "key_misc_camera_timestamp"
+diff --git a/app/src/main/res/xml/pref_misc.xml b/app/src/main/res/xml/pref_misc.xml
+index eaf3572..2016122 100644
+--- a/app/src/main/res/xml/pref_misc.xml
++++ b/app/src/main/res/xml/pref_misc.xml
+@@ -231,9 +231,5 @@
+                 android:targetPackage="me.phh.treble.app"
+                 android:targetClass="me.phh.treble.app.DebugSensors" />
+         </Preference>
+-        <SwitchPreference
+-            android:defaultValue="false"
+-            android:key="key_misc_remotectl"
+-            android:title="Allow takeover of the device by phh for debugging" />
+     </PreferenceCategory>
+ </PreferenceScreen>
+--
+2.47.2
