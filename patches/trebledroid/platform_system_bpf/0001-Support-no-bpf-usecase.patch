@@ -9,19 +9,19 @@ Change-Id: I75a427a2a41aa4ab1104ad88a891bef0dc2d9c91
  1 file changed, 1 insertion(+), 2 deletions(-)
 
 diff --git a/loader/Loader.cpp b/loader/Loader.cpp
-index 940ce19..883202b 100644
+index cde6447..6303d30 100644
 --- a/loader/Loader.cpp
 +++ b/loader/Loader.cpp
-@@ -991,8 +991,7 @@ void legacyBpfLoader() {
-             ALOGE("If this triggers randomly, you might be hitting some memory allocation "
-                   "problems or startup script race.");
-             ALOGE("--- DO NOT EXPECT SYSTEM TO BOOT SUCCESSFULLY ---");
--            sleep(20);
--            exit(121);
-+            return;
-         }
+@@ -689,8 +689,7 @@ void vendorBpfLoader() {
+         ALOGE("If this triggers randomly, you might be hitting some memory allocation "
+               "problems or startup script race.");
+         ALOGE("--- DO NOT EXPECT SYSTEM TO BOOT SUCCESSFULLY ---");
+-        sleep(20);
+-        exit(121);
++        return;
      }
- }
+ 
+     const char* args[] = {"/apex/com.android.tethering/bin/netbpfload", "done", NULL};
 -- 
 2.52.0
 
