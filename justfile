@@ -1,7 +1,7 @@
 # variables
 ANDROID_VERSION := env_var_or_default("ANDROID_VERSION", "16.0.0")
 ANDROID_VERSION_TAG := env_var_or_default("ANDROID_VERSION_TAG", "bp4a")
-GRAPHENEOS_BRANCH := env_var_or_default("GRAPHENEOS_BRANCH", "16")
+GRAPHENEOS_BRANCH := env_var_or_default("GRAPHENEOS_BRANCH", "16-qpr2")
 BUILD_DATETIME := `date "+%s"`
 BUILD_NUMBER := `date "+%Y%m%d%H%M"`
 REPO_HOST := env_var_or_default("REPO_HOST", "https://github.com")
