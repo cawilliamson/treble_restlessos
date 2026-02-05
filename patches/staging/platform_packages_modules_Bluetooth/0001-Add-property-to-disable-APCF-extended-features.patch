@@ -1,7 +1,7 @@
 From ef521afb68ba433144b1d011f3cfe7e71bb55979 Mon Sep 17 00:00:00 2001
 From: Pierre-Hugues Husson <phh@phh.me>
 Date: Wed, 4 Feb 2026 00:42:55 +0000
-Subject: [PATCH] Add property to disable APCF extended features
+Subject: [PATCH 1/1] Add property to disable APCF extended features
 
 ---
  system/gd/hci/le_scanning_manager_impl.cc | 6 +++++-

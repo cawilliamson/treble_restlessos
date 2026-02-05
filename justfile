@@ -47,14 +47,15 @@ sync-grapheneos-sources: build-container
             cp -v /repo/configs/manifests/*.xml .repo/local_manifests/ && \
             while ! repo sync -j4 --force-sync --no-clone-bundle --no-tags; do sleep 30; done'
 
-# apply patches in correct order
+# apply patches in correct order: trebledroid -> staging -> personal
 apply-patches: build-container
     {{CONTAINER_RUN}} -w /repo/src gsi-builder \
         /bin/bash -e -c ' \
             echo "Applying patches..." && \
             cp -Rv /repo/patches . && \
             patches/apply.sh . trebledroid && \
-            patches/apply.sh . staging'
+            patches/apply.sh . staging && \
+            patches/apply.sh . personal'
 
 # build treble app
 build-treble-app: build-container
