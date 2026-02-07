@@ -1,0 +1,35 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Chris Williamson <chris@chrisaw.io>
+Date: Fri, 07 Feb 2026 00:00:00 +0000
+Subject: [PATCH 4/4] Disable aosp_shared_system_image module
+
+The aosp_shared_system_image module is only used by Cuttlefish
+(PRODUCT_SOONG_DEFINED_SYSTEM_IMAGE := aosp_shared_system_image) and
+is not needed for Treble GSI builds. However, Soong still runs
+verifyGenericConfig() on all android_system_image modules regardless
+of the active build target. This causes build failures when
+TrebleDroid patches add vendor-specific HAL dependencies (e.g.
+Samsung HIDL/AIDL interfaces) to framework modules, as these are
+flagged as non-generic by the validation check.
+
+Disable the module to prevent the spurious validation error.
+
+Change-Id: I0000000000000000000000000000000000000003
+---
+ target/product/generic/Android.bp | 1 +
+ 1 file changed, 1 insertion(+)
+
+diff --git a/target/product/generic/Android.bp b/target/product/generic/Android.bp
+--- a/target/product/generic/Android.bp
++++ b/target/product/generic/Android.bp
+@@ -1092,6 +1092,7 @@
+ android_system_image {
+     name: "aosp_shared_system_image",
+     defaults: ["system_image_defaults"],
++    enabled: false,
+     dirs: android_rootdirs,
+     symlinks: android_symlinks,
+     type: "erofs",
+-- 
+2.34.1
+
