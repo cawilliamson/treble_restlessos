@@ -3,7 +3,7 @@
   <!-- device -->
   <remove-project name="device/amlogic/yukawa" />
   <remove-project name="device/amlogic/yukawa-kernel" />
-  <remove-project name="device/gneric/trusty" />
+  <remove-project name="device/generic/trusty" />
   <remove-project name="device/google/atv" />
   <remove-project name="device/google/common/etm" />
   <remove-project name="device/google/contexthub" />
