@@ -4,10 +4,6 @@
   <remove-project name="device/amlogic/yukawa" />
   <remove-project name="device/amlogic/yukawa-kernel" />
   <remove-project name="device/generic/trusty" />
-  <remove-project name="device/google/atv" />
-  <remove-project name="device/google/common/etm" />
-  <remove-project name="device/google/contexthub" />
-  <remove-project name="device/google/trout" />
   <remove-project name="device/google_car" />
   <remove-project name="device/linaro/dragonboard" />
   <remove-project name="device/linaro/dragonboard-kernel" />
@@ -16,11 +12,6 @@
 
   <!-- platform/hardware -->
   <remove-project name="platform/hardware/invensense" />
-  <remove-project name="platform/hardware/nxp/keymint" />
-  <remove-project name="platform/hardware/nxp/nfc" />
-  <remove-project name="platform/hardware/nxp/secure_element" />
-  <remove-project name="platform/hardware/nxp/uwb" />
-  <remove-project name="platform/hardware/nxp/weaver" />
   <remove-project name="platform/hardware/qcom/wlan" />
   <remove-project name="platform/hardware/samsung/nfc" />
   <remove-project name="platform/hardware/st/secure_element" />
@@ -30,9 +21,4 @@
 
   <!-- platform/packages/apps -->
   <remove-project name="platform/packages/apps/MusicFX" />
-
-  <!-- platform/prebuilts -->
-  <remove-project name="platform/prebuilts/bazel/darwin-x86_64" />
-  <remove-project name="platform/prebuilts/clang/host/darwin-x86" />
-  <remove-project name="platform/prebuilts/go/darwin-x86" />
 </manifest>
