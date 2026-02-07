@@ -1,11 +1,9 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <manifest>
-  <!-- apps -->
-  <remove-project name="platform/packages/apps/MusicFX" />
-
-  <!-- devices -->
+  <!-- device -->
   <remove-project name="device/amlogic/yukawa" />
   <remove-project name="device/amlogic/yukawa-kernel" />
+  <remove-project name="device/gneric/trusty" />
   <remove-project name="device/google/atv" />
   <remove-project name="device/google/common/etm" />
   <remove-project name="device/google/contexthub" />
@@ -16,7 +14,7 @@
   <remove-project name="device/linaro/hikey" />
   <remove-project name="device/linaro/hikey-kernel" />
 
-  <!-- platform -->
+  <!-- platform/hardware -->
   <remove-project name="platform/hardware/invensense" />
   <remove-project name="platform/hardware/nxp/keymint" />
   <remove-project name="platform/hardware/nxp/nfc" />
@@ -29,6 +27,11 @@
   <remove-project name="platform/hardware/st/secure_element2" />
   <remove-project name="platform/hardware/synaptics/wlan" />
   <remove-project name="platform/hardware/ti/am57x" />
+
+  <!-- platform/packages/apps -->
+  <remove-project name="platform/packages/apps/MusicFX" />
+
+  <!-- platform/prebuilts -->
   <remove-project name="platform/prebuilts/bazel/darwin-x86_64" />
   <remove-project name="platform/prebuilts/clang/host/darwin-x86" />
   <remove-project name="platform/prebuilts/go/darwin-x86" />
