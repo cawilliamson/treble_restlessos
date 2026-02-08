@@ -118,7 +118,6 @@
   <remove-project name="platform/packages/apps/MusicFX" />
 
   <!-- test: CTS/VTS/test suites -->
-  <remove-project name="platform/cts" />
   <remove-project name="kernel/tests" />
   <remove-project name="platform/platform_testing" />
 
