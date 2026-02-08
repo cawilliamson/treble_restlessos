@@ -119,7 +119,7 @@
   <remove-project name="platform/cts" />
   <remove-project name="kernel/tests" />
   <remove-project name="platform/platform_testing" />
-  <remove-project name="platform/test/app_compat/csuite" />
+
   <remove-project name="platform/test/catbox" />
   <remove-project name="platform/test/cts-root" />
   <remove-project name="platform/test/dittosuite" />
