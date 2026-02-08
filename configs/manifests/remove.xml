@@ -101,7 +101,9 @@
   <remove-project name="platform/packages/apps/Car/Templates" />
   <remove-project name="platform/packages/apps/Car/VoiceControl" />
   <remove-project name="platform/packages/apps/Car/systemlibs" />
-  <remove-project name="platform/packages/services/Car" />
+  <!-- NOTE: packages/services/Car must stay - it defines modules (carwatchdogd_defaults,
+       com.android.car.framework apex, android.car-stubs, team modules, etc.) referenced
+       by hardware/interfaces/automotive/, frameworks/, tools/security/, and others -->
 
   <!-- tv -->
   <remove-project name="platform/frameworks/opt/tv/tvsystem" />
