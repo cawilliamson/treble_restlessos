@@ -119,7 +119,7 @@
 
   <!-- test: CTS/VTS/test suites -->
   <remove-project name="kernel/tests" />
-  <remove-project name="platform/platform_testing" />
+
 
   <remove-project name="platform/test/catbox" />
   <remove-project name="platform/test/cts-root" />
