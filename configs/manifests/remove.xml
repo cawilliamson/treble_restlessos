@@ -87,7 +87,6 @@
   <remove-project name="platform/test/vts-testcase/nbu" />
   <remove-project name="platform/test/vts-testcase/performance" />
   <remove-project name="platform/test/vts-testcase/security" />
-  <remove-project name="platform/test/vts-testcase/vndk" />
   <remove-project name="platform/tools/test/connectivity" />
   <remove-project name="platform/tools/test/mobly_snippets" />
   <remove-project name="platform/tools/test/openhst" />
