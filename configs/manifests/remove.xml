@@ -13,11 +13,8 @@
   <remove-project name="device/linaro/dragonboard-kernel" />
   <remove-project name="device/linaro/hikey" />
   <remove-project name="device/linaro/hikey-kernel" />
-  <remove-project name="device/sample" />
 
   <!-- device: cuttlefish virtual device -->
-  <remove-project name="device/google/cuttlefish" />
-  <remove-project name="device/google/cuttlefish_prebuilts" />
   <remove-project name="device/google/cuttlefish_vmm" />
 
   <!-- device: pixel kernel repos -->
@@ -35,13 +32,10 @@
   <remove-project name="device_google_tegu-kernels_6.1" />
 
   <!-- hardware: device-specific -->
-  <remove-project name="platform/hardware/google/camera" />
   <remove-project name="platform/hardware/invensense" />
-  <remove-project name="platform/hardware/qcom/wlan" />
   <remove-project name="platform/hardware/samsung/nfc" />
   <remove-project name="platform/hardware/st/secure_element" />
   <remove-project name="platform/hardware/st/secure_element2" />
-  <remove-project name="platform/hardware/synaptics/wlan" />
   <remove-project name="platform/hardware/ti/am57x" />
 
   <!-- trusty TEE (not built in GSI) -->
@@ -53,7 +47,6 @@
   <remove-project name="trusty/device/arm/generic-arm64" />
   <remove-project name="trusty/device/arm/vexpress-a15" />
   <remove-project name="trusty/device/common" />
-  <remove-project name="trusty/device/desktop" />
   <remove-project name="trusty/device/nxp/imx7d" />
   <remove-project name="trusty/device/x86/generic-x86_64" />
   <remove-project name="trusty/lk/nxp" />
@@ -66,84 +59,37 @@
   <remove-project name="trusty/app/gatekeeper" />
   <remove-project name="trusty/app/keymaster" />
   <remove-project name="trusty/app/keymint" />
-  <remove-project name="trusty/app/sample" />
   <remove-project name="trusty/app/secretkeeper" />
   <remove-project name="trusty/app/storage" />
-  <remove-project name="trusty/lib" />
   <remove-project name="trusty/user/desktop" />
-  <remove-project name="trusty/vendor/google/aosp" />
 
   <!-- automotive -->
-  <remove-project name="platform/frameworks/opt/car/services" />
-  <remove-project name="platform/frameworks/opt/car/setupwizard" />
   <remove-project name="platform/packages/apps/Car/CalendarPrebuilt" />
-  <remove-project name="platform/packages/apps/Car/Cluster" />
   <remove-project name="platform/packages/apps/Car/DataSubscriptionReference" />
   <remove-project name="platform/packages/apps/Car/DebuggingRestrictionController" />
-  <remove-project name="platform/packages/apps/Car/DialerPrebuilt" />
   <remove-project name="platform/packages/apps/Car/DriverUIPrebuilt" />
-  <remove-project name="platform/packages/apps/Car/LatinIME" />
-  <remove-project name="platform/packages/apps/Car/Launcher" />
   <remove-project name="platform/packages/apps/Car/LinkViewer" />
-  <remove-project name="platform/packages/apps/Car/LocalMediaPlayer" />
-  <remove-project name="platform/packages/apps/Car/MediaPrebuilt" />
-  <remove-project name="platform/packages/apps/Car/MessengerPrebuilt" />
-  <remove-project name="platform/packages/apps/Car/Notification" />
-  <remove-project name="platform/packages/apps/Car/Provision" />
-  <remove-project name="platform/packages/apps/Car/RadioPrebuilt" />
   <remove-project name="platform/packages/apps/Car/References" />
-  <remove-project name="platform/packages/apps/Car/RotaryController" />
   <remove-project name="platform/packages/apps/Car/RotaryImePrebuilt" />
-  <remove-project name="platform/packages/apps/Car/Settings" />
-  <remove-project name="platform/packages/apps/Car/SettingsIntelligence" />
-  <remove-project name="platform/packages/apps/Car/SystemUI" />
-  <remove-project name="platform/packages/apps/Car/SystemUpdater" />
   <remove-project name="platform/packages/apps/Car/Templates" />
   <remove-project name="platform/packages/apps/Car/VoiceControl" />
-  <remove-project name="platform/packages/apps/Car/systemlibs" />
-  <!-- NOTE: packages/services/Car must stay - it defines modules (carwatchdogd_defaults,
-       com.android.car.framework apex, android.car-stubs, team modules, etc.) referenced
-       by hardware/interfaces/automotive/, frameworks/, tools/security/, and others -->
 
   <!-- tv -->
-  <remove-project name="platform/frameworks/opt/tv/tvsystem" />
-  <remove-project name="platform/packages/apps/TV" />
   <remove-project name="platform/packages/apps/TvFeedbackConsent" />
-  <remove-project name="platform/packages/apps/TvSettings" />
-  <remove-project name="platform/packages/apps/TvSystemUI" />
-  <remove-project name="platform/packages/inputmethods/LeanbackIME" />
-  <remove-project name="platform/packages/providers/TvProvider" />
-
-  <!-- apps -->
-  <remove-project name="platform/packages/apps/MusicFX" />
 
   <!-- test: CTS/VTS/test suites -->
   <remove-project name="kernel/tests" />
-
   <remove-project name="platform/test/catbox" />
   <remove-project name="platform/test/cts-root" />
   <remove-project name="platform/test/dittosuite" />
   <remove-project name="platform/test/graphics" />
-  <remove-project name="platform/test/mlts/benchmark" />
-  <remove-project name="platform/test/mlts/models" />
   <remove-project name="platform/test/mts" />
-  <remove-project name="platform/test/robolectric-extensions" />
-  <remove-project name="platform/test/suite_harness" />
-  <remove-project name="platform/test/vts" />
-  <remove-project name="platform/test/vts-testcase/hal" />
-  <remove-project name="platform/test/vts-testcase/kernel" />
   <remove-project name="platform/test/vts-testcase/nbu" />
   <remove-project name="platform/test/vts-testcase/performance" />
   <remove-project name="platform/test/vts-testcase/security" />
   <remove-project name="platform/test/vts-testcase/vndk" />
   <remove-project name="platform/tools/test/connectivity" />
-  <remove-project name="platform/tools/test/mobly_extensions" />
   <remove-project name="platform/tools/test/mobly_snippets" />
   <remove-project name="platform/tools/test/openhst" />
-
-  <!-- test: tradefed infrastructure -->
-  <remove-project name="platform/tools/loganalysis" />
-  <remove-project name="platform/tools/tradefederation" />
   <remove-project name="platform/tools/tradefederation/contrib" />
-  <remove-project name="platform/tools/tradefederation/prebuilts" />
 </manifest>
