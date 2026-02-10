@@ -67,5 +67,5 @@
   <remove-project name="platform/tools/test/connectivity" />
   <remove-project name="platform/tools/test/mobly_snippets" />
   <remove-project name="platform/tools/test/openhst" />
-  <remove-project name="platform/tools/tradefederation/contrib" />
+
 </manifest>
