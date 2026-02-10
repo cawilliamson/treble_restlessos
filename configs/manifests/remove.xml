@@ -38,30 +38,7 @@
   <remove-project name="platform/hardware/st/secure_element2" />
   <remove-project name="platform/hardware/ti/am57x" />
 
-  <!-- trusty TEE (not built in GSI) -->
-  <remove-project name="trusty/external/trusted-firmware-a" />
-  <remove-project name="trusty/external/trusty" />
-  <remove-project name="trusty/external/headers" />
-  <remove-project name="trusty/lk/common" />
-  <remove-project name="trusty/external/musl" />
-  <remove-project name="trusty/device/arm/generic-arm64" />
-  <remove-project name="trusty/device/arm/vexpress-a15" />
-  <remove-project name="trusty/device/common" />
-  <remove-project name="trusty/device/nxp/imx7d" />
-  <remove-project name="trusty/device/x86/generic-x86_64" />
-  <remove-project name="trusty/lk/nxp" />
-  <remove-project name="trusty/host/common" />
-  <remove-project name="trusty/lk/trusty" />
-  <remove-project name="trusty/app/authmgr" />
-  <remove-project name="trusty/app/avb" />
-  <remove-project name="trusty/app/cast-auth" />
-  <remove-project name="trusty/app/confirmationui" />
-  <remove-project name="trusty/app/gatekeeper" />
-  <remove-project name="trusty/app/keymaster" />
-  <remove-project name="trusty/app/keymint" />
-  <remove-project name="trusty/app/secretkeeper" />
-  <remove-project name="trusty/app/storage" />
-  <remove-project name="trusty/user/desktop" />
+
 
   <!-- automotive -->
   <remove-project name="platform/packages/apps/Car/CalendarPrebuilt" />
