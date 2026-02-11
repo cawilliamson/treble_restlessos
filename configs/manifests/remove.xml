@@ -1,5 +1,16 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <manifest>
+  <!-- automotive -->
+  <remove-project name="platform/packages/apps/Car/CalendarPrebuilt" />
+  <remove-project name="platform/packages/apps/Car/DataSubscriptionReference" />
+  <remove-project name="platform/packages/apps/Car/DebuggingRestrictionController" />
+  <remove-project name="platform/packages/apps/Car/DriverUIPrebuilt" />
+  <remove-project name="platform/packages/apps/Car/LinkViewer" />
+  <remove-project name="platform/packages/apps/Car/References" />
+  <remove-project name="platform/packages/apps/Car/RotaryImePrebuilt" />
+  <remove-project name="platform/packages/apps/Car/Templates" />
+  <remove-project name="platform/packages/apps/Car/VoiceControl" />
+
   <!-- device: board support -->
   <remove-project name="device/amlogic/yukawa" />
   <remove-project name="device/amlogic/yukawa-kernel" />
@@ -38,23 +49,7 @@
   <remove-project name="platform/hardware/st/secure_element2" />
   <remove-project name="platform/hardware/ti/am57x" />
 
-
-
-  <!-- automotive -->
-  <remove-project name="platform/packages/apps/Car/CalendarPrebuilt" />
-  <remove-project name="platform/packages/apps/Car/DataSubscriptionReference" />
-  <remove-project name="platform/packages/apps/Car/DebuggingRestrictionController" />
-  <remove-project name="platform/packages/apps/Car/DriverUIPrebuilt" />
-  <remove-project name="platform/packages/apps/Car/LinkViewer" />
-  <remove-project name="platform/packages/apps/Car/References" />
-  <remove-project name="platform/packages/apps/Car/RotaryImePrebuilt" />
-  <remove-project name="platform/packages/apps/Car/Templates" />
-  <remove-project name="platform/packages/apps/Car/VoiceControl" />
-
-  <!-- tv -->
-  <remove-project name="platform/packages/apps/TvFeedbackConsent" />
-
-  <!-- test: CTS/VTS/test suites -->
+  <!-- tests -->
   <remove-project name="kernel/tests" />
   <remove-project name="platform/test/catbox" />
   <remove-project name="platform/test/cts-root" />
@@ -68,4 +63,6 @@
   <remove-project name="platform/tools/test/mobly_snippets" />
   <remove-project name="platform/tools/test/openhst" />
 
+  <!-- tv -->
+  <remove-project name="platform/packages/apps/TvFeedbackConsent" />
 </manifest>

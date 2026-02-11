@@ -89,7 +89,7 @@ sign-rom-image arch:
             ANDROID_VERSION_TAG_VAL=$(cat /repo/tmp/.android_version_tag) && \
             . build/envsetup.sh && \
             lunch treble_{{arch}}_bvN-${ANDROID_VERSION_TAG_VAL}-userdebug && \
-            bash vendor/chrisaw-priv/keys/sign.sh && \
+            bash vendor/cawilliamson-priv/keys/sign.sh && \
             rm -fv ${OUT}/system.img && \
             unzip -joq ${OUT}/signed-target_files.zip IMAGES/system.img -d ${OUT}/ && \
             rm -fv ${OUT}/signed-target_files.zip && \

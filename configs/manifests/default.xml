@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <manifest>
   <remote name="andycgyan" fetch="https://github.com/AndyCGYan/" />
+  <remote name="cawilliamson-priv" fetch="ssh://git@github.com/cawilliamson/" />
   <remote name="lmodroid" fetch="https://github.com/LMODroid/" />
   <remote name="phhusson" fetch="https://github.com/phhusson/" />
   <remote name="ponces" fetch="https://github.com/ponces/" />
@@ -38,4 +39,7 @@
 
   <!-- trebledroid: vendor interface -->
   <project path="vendor/interfaces" name="vendor_interfaces" remote="trebledroid" revision="android-16.0" clone-depth="1" />
+
+  <!-- vendor-priv -->
+  <project path="vendor/cawilliamson-priv" name="vendor_cawilliamson-priv" remote="cawilliamson-priv" revision="main" clone-depth="1" />
 </manifest>
