@@ -1,4 +1,4 @@
-From 47ef835cb3c558de500252f60bc29c8f09163c98 Mon Sep 17 00:00:00 2001
+From 8940a52908274e8622616e01d8139624efc37191 Mon Sep 17 00:00:00 2001
 From: "Christopher A. Williamson" <contact@chrisaw.io>
 Date: Sat, 14 Feb 2026 17:13:17 +0000
 Subject: [PATCH] Use AOSP Scudo allocator instead of GrapheneOS
@@ -20,11 +20,11 @@ This removes:
 - Per-process hardened_malloc opt-out logic (init_prog_id)
 - h_malloc_disable_memory_tagging calls from heap tagging
 ---
- libc/Android.bp                   | 17 +-------
- libc/bionic/heap_tagging.cpp      | 14 +------
- libc/bionic/libc_init_dynamic.cpp | 68 -------------------------------
- libc/bionic/malloc_common.h       | 20 ---------
- 4 files changed, 2 insertions(+), 117 deletions(-)
+ libc/Android.bp                   | 17 +------
+ libc/bionic/heap_tagging.cpp      | 14 +-----
+ libc/bionic/libc_init_dynamic.cpp | 82 -------------------------------
+ libc/bionic/malloc_common.h       | 20 --------
+ 4 files changed, 2 insertions(+), 131 deletions(-)
 
 diff --git a/libc/Android.bp b/libc/Android.bp
 index 95a7485..df8bec4 100644
@@ -113,10 +113,31 @@ index 6b29f8e..c7b6d22 100644
        break;
      case M_HEAP_TAGGING_LEVEL_TBI:
 diff --git a/libc/bionic/libc_init_dynamic.cpp b/libc/bionic/libc_init_dynamic.cpp
-index d6ee870..a05e02c 100644
+index d6ee870..a3f960c 100644
 --- a/libc/bionic/libc_init_dynamic.cpp
 +++ b/libc/bionic/libc_init_dynamic.cpp
-@@ -93,73 +93,6 @@ extern "C" __attribute__((weak)) void __hwasan_library_unloaded(ElfW(Addr) base,
+@@ -55,20 +55,6 @@
+ #include "private/bionic_ssp.h"
+ #include "private/bionic_tls.h"
+ #include "private/KernelArgumentBlock.h"
+-#include "sys/system_properties.h"
+-#include "sysprop_helpers.h"
+-
+-static bool starts_with(const char* s, const char* prefix) {
+-  return strncmp(s, prefix, strlen(prefix)) == 0;
+-}
+-
+-static bool is_debuggable_build() {
+-  char pv[8];
+-  return get_property_value("ro.debuggable", pv, sizeof(pv)) && strcmp(pv, "1") == 0;
+-}
+-
+-extern "C" const char* __gnu_basename(const char* path);
+-
+ extern "C" {
+   extern void netdClientInit(void);
+   extern int __cxa_atexit(void (*)(void *), void *, void *);
+@@ -93,73 +79,6 @@ extern "C" __attribute__((weak)) void __hwasan_library_unloaded(ElfW(Addr) base,
                                                                  const ElfW(Phdr)* phdr,
                                                                  ElfW(Half) phnum);
  
@@ -190,7 +211,7 @@ index d6ee870..a05e02c 100644
  // We need a helper function for __libc_preinit because compiling with LTO may
  // inline functions requiring a stack protector check, but __stack_chk_guard is
  // not initialized at the start of __libc_preinit. __libc_preinit_impl will run
-@@ -192,7 +125,6 @@ static void __libc_preinit_impl() {
+@@ -192,7 +111,6 @@ static void __libc_preinit_impl() {
  
    // Hooks for various libraries to let them know that we're starting up.
    __libc_globals.mutate([](libc_globals* globals) {
