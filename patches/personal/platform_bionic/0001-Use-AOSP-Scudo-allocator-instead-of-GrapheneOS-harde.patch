@@ -1,4 +1,4 @@
-From 8940a52908274e8622616e01d8139624efc37191 Mon Sep 17 00:00:00 2001
+From d0c6471c0d1eedacbf6e9b2a5a33d206c681359b Mon Sep 17 00:00:00 2001
 From: "Christopher A. Williamson" <contact@chrisaw.io>
 Date: Sat, 14 Feb 2026 17:13:17 +0000
 Subject: [PATCH] Use AOSP Scudo allocator instead of GrapheneOS
@@ -24,7 +24,8 @@ This removes:
  libc/bionic/heap_tagging.cpp      | 14 +-----
  libc/bionic/libc_init_dynamic.cpp | 82 -------------------------------
  libc/bionic/malloc_common.h       | 20 --------
- 4 files changed, 2 insertions(+), 131 deletions(-)
+ libc/libc.map.txt                 |  1 -
+ 5 files changed, 2 insertions(+), 132 deletions(-)
 
 diff --git a/libc/Android.bp b/libc/Android.bp
 index 95a7485..df8bec4 100644
@@ -252,6 +253,18 @@ index ef4b1a4..9604296 100644
  
  #endif
  
+diff --git a/libc/libc.map.txt b/libc/libc.map.txt
+index 7002ee7..950fc4f 100644
+--- a/libc/libc.map.txt
++++ b/libc/libc.map.txt
+@@ -422,7 +422,6 @@ LIBC {
+     get_nprocs; # introduced=23
+     get_nprocs_conf; # introduced=23
+     get_phys_pages; # introduced=23
+-    get_prog_id;
+     getaddrinfo;
+     getauxval;
+     getc;
 -- 
 2.52.0
 
