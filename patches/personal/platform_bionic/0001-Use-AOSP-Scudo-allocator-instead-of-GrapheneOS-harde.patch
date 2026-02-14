@@ -1,0 +1,236 @@
+From 47ef835cb3c558de500252f60bc29c8f09163c98 Mon Sep 17 00:00:00 2001
+From: "Christopher A. Williamson" <contact@chrisaw.io>
+Date: Sat, 14 Feb 2026 17:13:17 +0000
+Subject: [PATCH] Use AOSP Scudo allocator instead of GrapheneOS
+ hardened_malloc
+
+GrapheneOS hardened_malloc requires a 3 TiB virtual address space
+reservation for its slab region (49 size classes x 64 GiB each).
+This exceeds the 512 GiB userspace limit on devices with 39-bit VA
+kernels, causing init to abort with "failed to allocate slab region"
+before any logging is available, resulting in an immediate boot loop.
+
+Since a GSI targets arbitrary hardware and cannot assume 48-bit VA
+support, revert the 64-bit allocator to AOSP's Scudo (which is
+already compiled into bionic alongside hardened_malloc).
+
+This removes:
+- hardened_malloc as the default 64-bit allocator in malloc_common.h
+- libhardened_malloc and h_malloc_wrapper from the libc build
+- Per-process hardened_malloc opt-out logic (init_prog_id)
+- h_malloc_disable_memory_tagging calls from heap tagging
+---
+ libc/Android.bp                   | 17 +-------
+ libc/bionic/heap_tagging.cpp      | 14 +------
+ libc/bionic/libc_init_dynamic.cpp | 68 -------------------------------
+ libc/bionic/malloc_common.h       | 20 ---------
+ 4 files changed, 2 insertions(+), 117 deletions(-)
+
+diff --git a/libc/Android.bp b/libc/Android.bp
+index 95a7485..df8bec4 100644
+--- a/libc/Android.bp
++++ b/libc/Android.bp
+@@ -176,25 +176,14 @@ cc_defaults {
+     header_libs: ["gwp_asan_headers"],
+     whole_static_libs: ["libscudo"],
+ 
++    cflags: ["-DUSE_SCUDO"],
+     multilib: {
+         lib32: {
+-            cflags: ["-DUSE_SCUDO"],
+             exclude_static_libs: [
+                 "libjemalloc5",
+                 "libc_jemalloc_wrapper",
+             ],
+         },
+-        lib64: {
+-            srcs: ["bionic/h_malloc_wrapper.cpp"],
+-            cflags: [
+-                "-DH_MALLOC_PREFIX",
+-                "-DUSE_H_MALLOC",
+-                "-DUSE_SCUDO",
+-            ],
+-            whole_static_libs: [
+-                "libhardened_malloc",
+-            ],
+-        },
+     },
+ }
+ 
+@@ -210,10 +199,6 @@ cc_library_static {
+             srcs: ["bionic/jemalloc_wrapper.cpp"],
+             static_libs: ["libjemalloc5"],
+         },
+-        lib64: {
+-            srcs: ["bionic/h_malloc_wrapper.cpp"],
+-            static_libs: ["libhardened_malloc"],
+-        },
+     },
+     cflags: ["-fvisibility=hidden"],
+ 
+diff --git a/libc/bionic/heap_tagging.cpp b/libc/bionic/heap_tagging.cpp
+index 6b29f8e..c7b6d22 100644
+--- a/libc/bionic/heap_tagging.cpp
++++ b/libc/bionic/heap_tagging.cpp
+@@ -36,8 +36,6 @@
+ #include <sys/auxv.h>
+ #include <sys/prctl.h>
+ 
+-extern "C" void h_malloc_disable_memory_tagging();
+-
+ extern "C" void scudo_malloc_disable_memory_tagging();
+ extern "C" void scudo_malloc_set_track_allocation_stacks(int);
+ 
+@@ -79,17 +77,10 @@ void SetDefaultHeapTaggingLevel() {
+   switch (heap_tagging_level) {
+     case M_HEAP_TAGGING_LEVEL_TBI:
+     case M_HEAP_TAGGING_LEVEL_NONE:
+-#if defined(USE_SCUDO)
+       scudo_malloc_disable_memory_tagging();
+-#endif
+-#if defined(USE_H_MALLOC)
+-      h_malloc_disable_memory_tagging();
+-#endif
+       break;
+     case M_HEAP_TAGGING_LEVEL_SYNC:
+-#if defined(USE_SCUDO)
+       scudo_malloc_set_track_allocation_stacks(1);
+-#endif
+       break;
+     default:
+       break;
+@@ -160,11 +151,8 @@ bool SetHeapTaggingLevel(HeapTaggingLevel tag_level) {
+           return false;
+         }
+       }
+-#if defined(USE_SCUDO) && !__has_feature(hwaddress_sanitizer)
++#if !__has_feature(hwaddress_sanitizer)
+       scudo_malloc_disable_memory_tagging();
+-#endif
+-#if defined(USE_H_MALLOC)
+-      h_malloc_disable_memory_tagging();
+ #endif
+       break;
+     case M_HEAP_TAGGING_LEVEL_TBI:
+diff --git a/libc/bionic/libc_init_dynamic.cpp b/libc/bionic/libc_init_dynamic.cpp
+index d6ee870..a05e02c 100644
+--- a/libc/bionic/libc_init_dynamic.cpp
++++ b/libc/bionic/libc_init_dynamic.cpp
+@@ -93,73 +93,6 @@ extern "C" __attribute__((weak)) void __hwasan_library_unloaded(ElfW(Addr) base,
+                                                                 const ElfW(Phdr)* phdr,
+                                                                 ElfW(Half) phnum);
+ 
+-static void init_prog_id(libc_globals* globals) {
+-  char exe_path[500];
+-  ssize_t readlink_res = readlink("/proc/self/exe", exe_path, sizeof(exe_path) - 1 /* space for NUL terminator */);
+-  if (readlink_res <= 0) {
+-    return;
+-  }
+-  exe_path[readlink_res] = '\0';
+-
+-  int prog_id = 0;
+-  int flags = 0;
+-
+-#define IS(prog) (!strcmp(exe_path, prog))
+-
+-  if (IS("/apex/com.google.pixel.camera.hal/bin/hw/android.hardware.camera.provider@2.7-service-google")) {
+-    prog_id = PROG_PIXEL_CAMERA_PROVIDER_SERVICE;
+-  }
+-  else if (IS("/system/bin/surfaceflinger")) {
+-    prog_id = PROG_SURFACEFLINGER;
+-  }
+-  else if (IS("/vendor/bin/hw/android.hardware.audio.service")) {
+-    // needed for Pixel Tablet as of Android 15, see https://github.com/GrapheneOS/os-issue-tracker/issues/4306
+-    flags = GLOBAL_FLAG_DISABLE_HARDENED_MALLOC;
+-  } else if (IS("/vendor/bin/shared_modem_platform")) {
+-    char device_name[PROP_VALUE_MAX];
+-    get_property_value("ro.product.name", device_name, sizeof(device_name));
+-    if (strcmp(device_name, "tokay") == 0
+-        || strcmp(device_name, "caiman") == 0
+-        || strcmp(device_name, "komodo") == 0
+-        || strcmp(device_name, "comet") == 0
+-        || strcmp(device_name, "frankel") == 0
+-        || strcmp(device_name, "blazer") == 0
+-        || strcmp(device_name, "mustang") == 0
+-        || strcmp(device_name, "rango") == 0
+-    ) {
+-      flags = GLOBAL_FLAG_DISABLE_HARDENED_MALLOC;
+-    }
+-  }
+-
+-#undef IS
+-
+-  bool is_debuggable = is_debuggable_build();
+-  const bool is_vendor_prog = starts_with(exe_path, "/vendor/") || starts_with(exe_path, "/apex/com.google.");
+-  if (is_debuggable && is_vendor_prog) {
+-    const char* basename = __gnu_basename(exe_path);
+-    static const char propName[] = "persist.device_config.memory_safety_native.hardened_malloc.mode_override.process.";
+-    char sysprop_name[512];
+-    char sysprop_value[PROP_VALUE_MAX];
+-    async_safe_format_buffer(sysprop_name, sizeof(sysprop_name), "%s%s", propName,
+-                             basename);
+-    get_property_value(sysprop_name, sysprop_value, sizeof(sysprop_value));
+-    if (strcmp("disabled", sysprop_value) == 0) {
+-      flags = GLOBAL_FLAG_DISABLE_HARDENED_MALLOC;
+-    } else if (strcmp("enabled", sysprop_value) == 0) {
+-      prog_id = 0;
+-      flags = 0;
+-    }
+-  }
+-
+-  // libc_globals struct is write-protected
+-  globals->flags = flags;
+-  globals->prog_id = prog_id;
+-}
+-
+-int get_prog_id() {
+-  return __libc_globals->prog_id;
+-}
+-
+ // We need a helper function for __libc_preinit because compiling with LTO may
+ // inline functions requiring a stack protector check, but __stack_chk_guard is
+ // not initialized at the start of __libc_preinit. __libc_preinit_impl will run
+@@ -192,7 +125,6 @@ static void __libc_preinit_impl() {
+ 
+   // Hooks for various libraries to let them know that we're starting up.
+   __libc_globals.mutate([](libc_globals* globals) {
+-    init_prog_id(globals);
+     __libc_init_malloc(globals);
+ 
+     // save the default SIGABRT handler to support restoring it with mallopt(M_BIONIC_RESTORE_DEFAULT_SIGABRT_HANDLER)
+diff --git a/libc/bionic/malloc_common.h b/libc/bionic/malloc_common.h
+index ef4b1a4..9604296 100644
+--- a/libc/bionic/malloc_common.h
++++ b/libc/bionic/malloc_common.h
+@@ -55,28 +55,8 @@ __END_DECLS
+ 
+ #else // __has_feature(hwaddress_sanitizer)
+ 
+-#ifdef  __LP64__
+-#ifndef USE_H_MALLOC
+-#error missing USE_H_MALLOC
+-#endif
+-
+-#include "h_malloc.h"
+-#define Malloc(function)  h_ ## function
+-__BEGIN_DECLS
+-int h_malloc_info(int options, FILE* fp);
+-__END_DECLS
+-
+-#if defined(USE_SCUDO)
+-#include "scudo.h"
+-void InitNativeAllocatorDispatch(libc_globals* globals);
+-#endif
+-
+-#define BOTH_H_MALLOC_AND_SCUDO
+-
+-#else // 32-bit
+ #include "scudo.h"
+ #define Malloc(function)  scudo_ ## function
+-#endif
+ 
+ #endif
+ 
+-- 
+2.52.0
+
