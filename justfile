@@ -28,7 +28,7 @@ clean:
     rm -rfv out/ src/ tmp/
 
 # full build process - simple linear chain
-build-all: clean build-container sync-grapheneos-sources apply-patches build-treble-app build-arm64 build-arm32 copy-to-webdir upload-to-github
+build-all: build-container sync-grapheneos-sources apply-patches build-treble-app build-arm64 build-arm32 copy-to-webdir upload-to-github
 
 # build the container image used for all build operations
 build-container:

@@ -71,7 +71,7 @@ index 7eba6268869c..b7a9d5f535b4 100644
 -)
 +value class GammaBrightness(val value: Int) {
 +    init {
-+        require(value in BrightnessUtils.GAMMA_SPACE_MIN..BrightnessUtils.GAMMA_SPACE_MAX) {
++        require(value == -1 || value in BrightnessUtils.GAMMA_SPACE_MIN..BrightnessUtils.GAMMA_SPACE_MAX) {
 +            "Value must be in range ${BrightnessUtils.GAMMA_SPACE_MIN} to ${BrightnessUtils.GAMMA_SPACE_MAX}"
 +        }
 +    }
