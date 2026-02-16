@@ -15,7 +15,7 @@ Change-Id: I0000000000000000000000000000000000000011
 diff --git a/target/product/handheld_product.mk b/target/product/handheld_product.mk
 --- a/target/product/handheld_product.mk
 +++ b/target/product/handheld_product.mk
-@@ -33,7 +33,6 @@
+@@ -33,6 +33,5 @@
      LatinIME \
      Music \
 -    PdfViewerGOS \
