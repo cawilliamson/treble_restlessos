@@ -21,8 +21,8 @@ Fixes https://github.com/phhusson/treble_experimentations/issues/2125.
 
 Co-authored-by: Sarah Vandomelen <sarah@sightworks.com>
 ---
- .../telephony/metrics/TelephonyMetrics.java   | 43 +++++++++++++++++++
- 1 file changed, 43 insertions(+)
+ .../telephony/metrics/TelephonyMetrics.java   | 45 +++++++++++++++++++
+ 1 file changed, 45 insertions(+)
  create mode 100644 src/java/com/android/internal/telephony/metrics/TelephonyMetrics.java
 
 diff --git a/src/java/com/android/internal/telephony/metrics/TelephonyMetrics.java b/src/java/com/android/internal/telephony/metrics/TelephonyMetrics.java
@@ -30,7 +30,7 @@ new file mode 100644
 index 0000000000..1234567890
 --- /dev/null
 +++ b/src/java/com/android/internal/telephony/metrics/TelephonyMetrics.java
-@@ -0,0 +1,43 @@
+@@ -0,0 +1,45 @@
 +/*
 + * Copyright (C) 2016 The Android Open Source Project
 + *
@@ -60,7 +60,8 @@ index 0000000000..1234567890
 +
 +    private static final TelephonyMetrics sInstance = new TelephonyMetrics();
 +
-+    public TelephonyMetrics() {}
++    public TelephonyMetrics() {
++    }
 +
 +    public static TelephonyMetrics getInstance() {
 +        return sInstance;
