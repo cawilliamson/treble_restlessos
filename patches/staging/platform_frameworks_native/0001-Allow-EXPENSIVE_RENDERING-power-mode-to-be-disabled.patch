@@ -1,7 +1,7 @@
 From 73a837601b946fb2ff8009c8cf35f561562c6370 Mon Sep 17 00:00:00 2001
 From: "Christopher A. Williamson" <contact@chrisaw.io>
 Date: Sun, 1 Jun 2025 21:05:59 +0100
-Subject: [PATCH 1/1] Allow EXPENSIVE_RENDERING power mode to be disabled
+Subject: [PATCH] Allow EXPENSIVE_RENDERING power mode to be disabled
 
 ---
  services/surfaceflinger/PowerAdvisor/PowerAdvisor.cpp | 10 ++++++++++

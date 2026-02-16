@@ -1,7 +1,7 @@
 From 1b8edcb6da8c6dfc3c03ea7352c7fdd6babf49de Mon Sep 17 00:00:00 2001
 From: "Christopher A. Williamson" <contact@chrisaw.io>
 Date: Wed, 13 Aug 2025 16:43:05 +0100
-Subject: [PATCH 6/6] Allow adjustable rounded corners
+Subject: [PATCH 6/9] Allow adjustable rounded corners
 
 Change-Id: I55c46c579a7bb2c738dac6531a11412df8210971
 ---

@@ -1,7 +1,7 @@
 From f42d9e567f2c645e527492f21dd3668fefd73bd4 Mon Sep 17 00:00:00 2001
 From: Pierre-Hugues Husson <phh@phh.me>
 Date: Wed, 4 Feb 2026 00:35:53 +0000
-Subject: [PATCH 2/6] Allow a prop to override DOZE_SUSPEND to DOZE for AoD if
+Subject: [PATCH 2/9] Allow a prop to override DOZE_SUSPEND to DOZE for AoD if
  device doesnt support DOZE_SUSPEND
 
 ---

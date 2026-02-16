@@ -1,7 +1,7 @@
 From b20af2496aaa84b80ba358d61b37eeef691527b3 Mon Sep 17 00:00:00 2001
 From: "Christopher A. Williamson" <contact@chrisaw.io>
 Date: Wed, 4 Feb 2026 00:44:31 +0000
-Subject: [PATCH 2/2] Fix: Prevent NullPointerException in BpfNetMaps during UID
+Subject: [PATCH 2/4] Fix: Prevent NullPointerException in BpfNetMaps during UID
  removal
 
 ---

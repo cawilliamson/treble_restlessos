@@ -1,7 +1,7 @@
 From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: Christopher A. Williamson <contact@chrisaw.io>
 Date: Sun, 15 Feb 2026 00:00:00 +0000
-Subject: [PATCH 2/2] Disable SELinux flags kernel support notification
+Subject: [PATCH 3/3] Disable SELinux flags kernel support notification
 
 The GSI does not ship a GrapheneOS-patched kernel so the custom
 SELinux flags proc attribute will never be present. The framework
