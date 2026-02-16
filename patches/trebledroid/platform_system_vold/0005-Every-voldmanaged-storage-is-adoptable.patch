@@ -3,9 +3,15 @@ From: Pierre-Hugues Husson <phh@phh.me>
 Date: Wed, 11 Mar 2020 14:02:35 +0100
 Subject: [PATCH 5/6] Every voldmanaged storage is adoptable
 
+Force all voldmanaged storage to be adoptable by both setting the global
+has_adoptable flag and forcing kAdoptable on each individual disk entry.
+The global flag alone is insufficient -- individual disk entries also
+need kAdoptable set for non-encryptable external storage (USB drives,
+some SD cards) to be treated as adoptable.
+
 ---
- main.cpp | 2 +-
- 1 file changed, 1 insertion(+), 1 deletion(-)
+ main.cpp | 4 ++--
+ 1 file changed, 2 insertions(+), 2 deletions(-)
 
 diff --git a/main.cpp b/main.cpp
 index 8bcc3f9..908f4bc 100644
@@ -20,6 +26,15 @@ index 8bcc3f9..908f4bc 100644
      configs->has_quota = false;
      configs->has_reserved = false;
      configs->has_compress = false;
+@@ -277,7 +277,7 @@ static int process_config(VolumeManager* vm, VoldConfigs* configs) {
+             std::string nickname(entry.label);
+             int flags = 0;
+ 
+-            if (entry.is_encryptable()) {
++            if (entry.is_encryptable() || true) {
+                 flags |= android::vold::Disk::Flags::kAdoptable;
+                 configs->has_adoptable = true;
+             }
 -- 
 2.52.0
 
