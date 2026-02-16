@@ -1,0 +1,27 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Christopher A. Williamson <contact@chrisaw.io>
+Date: Mon, 16 Feb 2026 00:00:00 +0000
+Subject: [PATCH 6/6] Remove PdfViewer from build
+
+PdfViewer is not needed as a preinstalled system app on the GSI.
+Users who want it can install it later from the GrapheneOS App
+Store. Remove it from the product packages.
+
+Change-Id: I0000000000000000000000000000000000000011
+---
+ target/product/handheld_product.mk | 1 -
+ 1 file changed, 1 deletion(-)
+
+diff --git a/target/product/handheld_product.mk b/target/product/handheld_product.mk
+--- a/target/product/handheld_product.mk
++++ b/target/product/handheld_product.mk
+@@ -33,7 +33,6 @@
+     LatinIME \
+     Music \
+-    PdfViewerGOS \
+     preinstalled-packages-platform-handheld-product.xml \
+     SettingsIntelligence \
+     ThemePicker \
+-- 
+2.34.1
+
