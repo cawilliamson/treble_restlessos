@@ -52,6 +52,7 @@ apply-patches: build-container
     {{CONTAINER_RUN}} -w /repo/src gsi-builder \
         /bin/bash -e -c ' \
             echo "Applying patches..." && \
+            rm -rf patches/ && \
             cp -Rv /repo/patches . && \
             patches/apply.sh . trebledroid && \
             patches/apply.sh . staging && \
