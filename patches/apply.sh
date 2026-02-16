@@ -18,7 +18,7 @@ for project in $(cd "$patches"/"$tree"; echo *); do
     pushd "$p" &>/dev/null
     for patch in "$patches"/"$tree"/"$project"/*.patch; do
         echo ">> ${patch}"
-        git am "$patch" || exit
+        git am "$patch" || { git am --abort; exit 1; }
     done
     popd &>/dev/null
 done
