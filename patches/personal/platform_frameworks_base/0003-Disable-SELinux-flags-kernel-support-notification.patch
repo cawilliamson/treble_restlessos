@@ -1,7 +1,7 @@
-From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
-From: Christopher A. Williamson <contact@chrisaw.io>
-Date: Sun, 15 Feb 2026 00:00:00 +0000
-Subject: [PATCH 3/3] Disable SELinux flags kernel support notification
+From 67b301b0d04ddcffbe90d902ae7a8d28e4da3220 Mon Sep 17 00:00:00 2001
+From: "Christopher A. Williamson" <contact@chrisaw.io>
+Date: Mon, 16 Feb 2026 10:31:51 +0000
+Subject: [PATCH] Disable SELinux flags kernel support notification
 
 The GSI does not ship a GrapheneOS-patched kernel so the custom
 SELinux flags proc attribute will never be present. The framework
@@ -9,16 +9,15 @@ already gracefully disables the affected hardening features when the
 kernel lacks support, but still posts a persistent notification on
 every boot for debuggable builds. Remove the notification since it is
 expected and not actionable on a GSI.
-
-Change-Id: I0000000000000000000000000000000000000007
 ---
- .../com/android/server/ext/SystemServerExt.java    | 8 --------
+ .../core/java/com/android/server/ext/SystemServerExt.java | 8 --------
  1 file changed, 8 deletions(-)
 
 diff --git a/services/core/java/com/android/server/ext/SystemServerExt.java b/services/core/java/com/android/server/ext/SystemServerExt.java
+index ace1e6fd1..c80bdcde1 100644
 --- a/services/core/java/com/android/server/ext/SystemServerExt.java
 +++ b/services/core/java/com/android/server/ext/SystemServerExt.java
-@@ -38,14 +38,6 @@
+@@ -38,13 +38,5 @@ public final class SystemServerExt {
      void initBgThread() {
          WifiAutoOff.maybeInit(this);
          BluetoothAutoOff.maybeInit(this);
@@ -33,5 +32,5 @@ diff --git a/services/core/java/com/android/server/ext/SystemServerExt.java b/se
      }
  }
 -- 
-2.34.1
+2.52.0
 

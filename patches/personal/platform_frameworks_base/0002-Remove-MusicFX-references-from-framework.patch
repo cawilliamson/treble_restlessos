@@ -1,33 +1,34 @@
-From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
-From: Christopher A. Williamson <contact@chrisaw.io>
-Date: Sun, 15 Feb 2026 00:00:00 +0000
-Subject: [PATCH 2/3] Remove MusicFX references from framework
+From f87349366e715580bb9daf2ba082c32ffd264741 Mon Sep 17 00:00:00 2001
+From: "Christopher A. Williamson" <contact@chrisaw.io>
+Date: Mon, 16 Feb 2026 10:30:26 +0000
+Subject: [PATCH] Remove MusicFX references from framework
 
 MusicFX is excluded from the build. Remove stale framework references
 to prevent dead configuration entries from lingering.
-
-Change-Id: I0000000000000000000000000000000000000005
 ---
- data/etc/hiddenapi-package-whitelist.xml      | 1 -
- data/etc/privapp-permissions-platform.xml     | 4 ----
- 2 files changed, 5 deletions(-)
+ data/etc/hiddenapi-package-whitelist.xml  | 2 +-
+ data/etc/privapp-permissions-platform.xml | 4 ----
+ 2 files changed, 1 insertion(+), 5 deletions(-)
 
 diff --git a/data/etc/hiddenapi-package-whitelist.xml b/data/etc/hiddenapi-package-whitelist.xml
-index 1111111111..2222222222 100644
+index 98f582401..1912d314f 100644
 --- a/data/etc/hiddenapi-package-whitelist.xml
 +++ b/data/etc/hiddenapi-package-whitelist.xml
-@@ -42,7 +42,6 @@
+@@ -41,7 +41,7 @@ Do NOT include any apps that are updatable via Play Store!
+   <hidden-api-whitelisted-app package="com.android.gallery" />
    <hidden-api-whitelisted-app package="com.android.launcher3" />
    <hidden-api-whitelisted-app package="com.android.mtp" />
 -  <hidden-api-whitelisted-app package="com.android.musicfx" />
++
    <hidden-api-whitelisted-app package="com.android.permissioncontroller" />
    <hidden-api-whitelisted-app package="com.android.printservice.recommendation" />
    <hidden-api-whitelisted-app package="com.android.printspooler" />
 diff --git a/data/etc/privapp-permissions-platform.xml b/data/etc/privapp-permissions-platform.xml
-index 3333333333..4444444444 100644
+index f9d078cb6..613c72c7d 100644
 --- a/data/etc/privapp-permissions-platform.xml
 +++ b/data/etc/privapp-permissions-platform.xml
-@@ -109,10 +109,6 @@
+@@ -106,10 +106,6 @@ applications that come with the platform
+         <permission name="android.permission.MANAGE_EXTERNAL_STORAGE"/>
      </privapp-permissions>
  
 -    <privapp-permissions package="com.android.musicfx">
