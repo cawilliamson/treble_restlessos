@@ -1,0 +1,45 @@
+From c9426d4b1a4980771654f961cb87c72d62432643 Mon Sep 17 00:00:00 2001
+From: Chris AW <chrisaw@localhost>
+Date: Mon, 16 Feb 2026 09:43:48 +0000
+Subject: [PATCH] KernelUtils: allow overriding kernel version via
+ ro.bpf.kver_override
+
+Add support for the ro.bpf.kver_override system property to fake the
+kernel version reported to BPF subsystem version checks. This allows
+old-kernel GSI devices to bypass BPF kernel version gates without
+requiring an actual kernel upgrade.
+
+When the property is set (e.g. ro.bpf.kver_override=5.4.0), the BPF
+subsystem will use the overridden version for all isAtLeastKernelVersion
+checks instead of the real uname value.
+---
+ bpf/headers/include/bpf/KernelUtils.h | 6 ++++++
+ 1 file changed, 6 insertions(+)
+
+diff --git a/bpf/headers/include/bpf/KernelUtils.h b/bpf/headers/include/bpf/KernelUtils.h
+index 1f2b251..83d07cc 100644
+--- a/bpf/headers/include/bpf/KernelUtils.h
++++ b/bpf/headers/include/bpf/KernelUtils.h
+@@ -20,6 +20,7 @@
+ #include <stdlib.h>
+ #include <string.h>
+ #include <sys/personality.h>
++#include <sys/system_properties.h>
+ #include <sys/utsname.h>
+ 
+ namespace android {
+@@ -34,6 +35,11 @@ static inline unsigned uncachedKernelVersion() {
+     unsigned kver_major = 0;
+     unsigned kver_minor = 0;
+     unsigned kver_sub = 0;
++    char kver_override[PROP_VALUE_MAX];
++    if (__system_property_get("ro.bpf.kver_override", kver_override) > 0) {
++        if (sscanf(kver_override, "%u.%u.%u", &kver_major, &kver_minor, &kver_sub) >= 2)
++            return KVER(kver_major, kver_minor, kver_sub);
++    }
+     if (sscanf(buf.release, "%u.%u.%u", &kver_major, &kver_minor, &kver_sub) < 2) abort();
+     return KVER(kver_major, kver_minor, kver_sub);
+ }
+-- 
+2.52.0
+

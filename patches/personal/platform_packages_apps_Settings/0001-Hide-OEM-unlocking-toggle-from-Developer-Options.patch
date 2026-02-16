@@ -1,0 +1,30 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Christopher A. Williamson <contact@chrisaw.io>
+Date: Sun, 15 Feb 2026 00:00:00 +0000
+Subject: [PATCH] Hide OEM unlocking toggle from Developer Options
+
+A GSI requires an unlocked bootloader. Exposing the OEM unlock toggle
+in Developer Options risks the user accidentally disabling OEM
+unlocking or being prompted to relock, which would brick the device.
+Hide the preference entirely by making the controller report itself as
+unavailable.
+
+Change-Id: I0000000000000000000000000000000000000006
+---
+ .../development/OemUnlockPreferenceController.java       | 3 +--
+ 1 file changed, 1 insertion(+), 2 deletions(-)
+
+diff --git a/src/com/android/settings/development/OemUnlockPreferenceController.java b/src/com/android/settings/development/OemUnlockPreferenceController.java
+--- a/src/com/android/settings/development/OemUnlockPreferenceController.java
++++ b/src/com/android/settings/development/OemUnlockPreferenceController.java
+@@ -79,7 +79,6 @@
+     @Override
+     public boolean isAvailable() {
+-        return mOemLockManager != null;
++        // GSI requires an unlocked bootloader; hide to prevent accidental relock
++        return false;
+     }
+ 
+-- 
+2.34.1
+

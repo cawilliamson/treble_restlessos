@@ -1,0 +1,37 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Christopher A. Williamson <contact@chrisaw.io>
+Date: Sun, 15 Feb 2026 00:00:00 +0000
+Subject: [PATCH 2/2] Disable SELinux flags kernel support notification
+
+The GSI does not ship a GrapheneOS-patched kernel so the custom
+SELinux flags proc attribute will never be present. The framework
+already gracefully disables the affected hardening features when the
+kernel lacks support, but still posts a persistent notification on
+every boot for debuggable builds. Remove the notification since it is
+expected and not actionable on a GSI.
+
+Change-Id: I0000000000000000000000000000000000000007
+---
+ .../com/android/server/ext/SystemServerExt.java    | 8 --------
+ 1 file changed, 8 deletions(-)
+
+diff --git a/services/core/java/com/android/server/ext/SystemServerExt.java b/services/core/java/com/android/server/ext/SystemServerExt.java
+--- a/services/core/java/com/android/server/ext/SystemServerExt.java
++++ b/services/core/java/com/android/server/ext/SystemServerExt.java
+@@ -38,14 +38,6 @@
+     void initBgThread() {
+         WifiAutoOff.maybeInit(this);
+         BluetoothAutoOff.maybeInit(this);
+-
+-        if (Build.IS_DEBUGGABLE) {
+-            if (!SELinuxFlags.kernelSupportsSELinuxFlags()) {
+-                String title = "Kernel doesn't support SELinux flags";
+-                String msg = "App hardening features that use SELinux flags, such as DCL and ptrace restrictions, do not work.";
+-                new SystemErrorNotification("missing hardening", title, msg).show(context);
+-            }
+-        }
+     }
+ }
+-- 
+2.34.1
+

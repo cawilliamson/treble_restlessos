@@ -1,0 +1,58 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Christopher A. Williamson <contact@chrisaw.io>
+Date: Sun, 15 Feb 2026 00:00:00 +0000
+Subject: [PATCH] Skip bootloader relock prompt for GSI
+
+A GSI requires an unlocked bootloader to boot. Prompting the user to
+relock during initial setup would brick the device. Always report the
+bootloader as locked to the setup wizard so the OEM unlock warning
+banner and relock prompt are never shown.
+
+Change-Id: I0000000000000000000000000000000000000005
+---
+ .../setupwizard/action/WelcomeActions.kt      | 14 +-------------
+ 1 file changed, 1 insertion(+), 13 deletions(-)
+
+diff --git a/java/app/grapheneos/setupwizard/action/WelcomeActions.kt b/java/app/grapheneos/setupwizard/action/WelcomeActions.kt
+--- a/java/app/grapheneos/setupwizard/action/WelcomeActions.kt
++++ b/java/app/grapheneos/setupwizard/action/WelcomeActions.kt
+@@ -118,23 +118,11 @@
+     fun next(activity: Activity) {
+-        if (Build.isDebuggable() && DebugFlags.getBool("enableUnlockedBootloaderHandling") != true) {
+-            // we allow free pass for development features on debug builds of the OS
+-            SetupWizard.next(activity)
+-            return
+-        }
+-        if (SetupWizard.isSecondaryUser) {
+-            // secondary users should not be bothered for this
+-            // the device setup (primary user setup) is already done at this point
+-            SetupWizard.next(activity)
+-            return
+-        }
+-        if (WelcomeData.oemUnlocked.value == true) {
+-            SetupWizard.startActivity(activity, OemUnlockActivity::class.java)
+-        } else {
+-            SetupWizard.next(activity)
+-        }
++        // GSI requires an unlocked bootloader; skip relock prompt entirely
++        SetupWizard.next(activity)
+     }
+ 
+     private fun refreshOemUnlockStatus() {
+-        if (Build.isDebuggable()) {
+-            val flag = DebugFlags.getBool("isDeviceOemUnlocked_override")
+-            if (flag != null) {
+-                WelcomeData.oemUnlocked.value = flag
+-                return
+-            }
+-        }
+-
+-        WelcomeData.oemUnlocked.value = getOemLockManager()?.isDeviceOemUnlocked ?: false
++        // GSI always runs with an unlocked bootloader; report as locked to
++        // suppress the warning banner and disable OEM unlocking prompts
++        WelcomeData.oemUnlocked.value = false
+     }
+ }
+-- 
+2.34.1
+
