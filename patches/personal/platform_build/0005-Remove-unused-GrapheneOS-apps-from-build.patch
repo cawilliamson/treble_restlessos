@@ -1,0 +1,41 @@
+From 5bc1e23411b066de880e047347dcf2da42215a0a Mon Sep 17 00:00:00 2001
+From: "Christopher A. Williamson" <contact@chrisaw.io>
+Date: Tue, 17 Feb 2026 16:29:40 +0000
+Subject: [PATCH 5/5] Remove unused GrapheneOS apps from build
+
+Remove apps that are not useful for GSI builds:
+- Auditor: relies on hardware attestation tied to specific device
+  models and will never pass verification on a GSI
+- PdfViewerGOS: can easily be installed from the app store
+- InfoApp: not relevant for GSI builds
+
+Change-Id: I0000000000000000000000000000000000000003
+---
+ target/product/handheld_product.mk | 3 ---
+ 1 file changed, 3 deletions(-)
+
+diff --git a/target/product/handheld_product.mk b/target/product/handheld_product.mk
+index dde952e..737f7f2 100644
+--- a/target/product/handheld_product.mk
++++ b/target/product/handheld_product.mk
+@@ -23,17 +23,14 @@ $(call inherit-product, $(SRC_TARGET_DIR)/product/media_product.mk)
+ # /product packages
+ PRODUCT_PACKAGES += \
+     AppStore \
+-    Auditor \
+     Calendar \
+     Camera \
+     Contacts \
+     DeskClock \
+     ExactCalculator \
+     Gallery2 \
+-    InfoApp \
+     LatinIME \
+     Music \
+-    PdfViewerGOS \
+     preinstalled-packages-platform-handheld-product.xml \
+     SettingsIntelligence \
+     ThemePicker \
+-- 
+2.52.0
+

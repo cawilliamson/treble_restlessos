@@ -1,7 +1,7 @@
 From 1641be4087abda274043b15e9157357362831891 Mon Sep 17 00:00:00 2001
 From: "Christopher A. Williamson" <contact@chrisaw.io>
 Date: Tue, 17 Feb 2026 09:53:26 +0000
-Subject: [PATCH] Add Vanadium to HighPriorityMisc WebView providers overlay
+Subject: [PATCH 1/1] Add Vanadium to HighPriorityMisc WebView providers overlay
 
 The HighPriorityMisc overlay (priority 8998) overrides the lower-priority
 device/phh/treble overlay's config_webview_packages.xml at runtime.

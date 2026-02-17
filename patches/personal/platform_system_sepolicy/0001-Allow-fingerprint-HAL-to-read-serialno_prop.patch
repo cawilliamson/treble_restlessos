@@ -1,7 +1,7 @@
 From 4a53032b64af3bfd9ed158b5bde074196866b046 Mon Sep 17 00:00:00 2001
 From: "Christopher A. Williamson" <contact@chrisaw.io>
 Date: Tue, 17 Feb 2026 14:36:17 +0000
-Subject: [PATCH] Allow fingerprint HAL to read serialno_prop
+Subject: [PATCH 1/1] Allow fingerprint HAL to read serialno_prop
 
 GrapheneOS restricts access to serialno_prop to a small set of domains
 as a privacy hardening measure. However, many vendor fingerprint HALs
