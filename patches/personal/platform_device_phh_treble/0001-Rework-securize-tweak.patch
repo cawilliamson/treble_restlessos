@@ -7,9 +7,9 @@ Subject: [PATCH] Rework securize tweak
  base.mk             |  1 -
  phh-on-boot.sh      | 33 ++++++++++++++++++++
  phh-prop-handler.sh | 11 +++++++
- rw-system.sh        | 77 +++++++++++++++++++--------------------------
+ rw-system.sh        | 90 +++++++++++++++++++++++++-----------------------
  vndk.rc             | 11 +++++++
- 5 files changed, 86 insertions(+), 46 deletions(-)
+ 5 files changed, 100 insertions(+), 46 deletions(-)
 
 diff --git a/base.mk b/base.mk
 index bbf2ef0..47b45f6 100644
@@ -92,7 +92,7 @@ diff --git a/rw-system.sh b/rw-system.sh
 index a7b94f6..cb64ea8 100644
 --- a/rw-system.sh
 +++ b/rw-system.sh
-@@ -785,74 +785,61 @@ copyprop() {
+@@ -785,74 +785,74 @@ copyprop() {
          resetprop_phh "$1" "$(getprop "$2")"
      fi
  }
@@ -196,6 +196,19 @@ index a7b94f6..cb64ea8 100644
 +    copyprop ro.product.system.manufacturer ro.product.vendor.manufacturer
 +    copyprop ro.product.product.manufacturer ro.product.vendor.manufacturer
 +    copyprop ro.product.system_ext.manufacturer ro.product.vendor.manufacturer
++
++    # update usb gadget strings so the device appears correctly when connected
++    model="$(getprop ro.product.model)"
++    manufacturer="$(getprop ro.product.manufacturer)"
++    gadget_strings="/config/usb_gadget/g1/strings/0x409"
++    legacy_usb="/sys/class/android_usb/android0"
++    if [ -d "$gadget_strings" ]; then
++        [ -n "$model" ] && echo "$model" > "$gadget_strings/product"
++        [ -n "$manufacturer" ] && echo "$manufacturer" > "$gadget_strings/manufacturer"
++    elif [ -d "$legacy_usb" ]; then
++        [ -n "$model" ] && echo "$model" > "$legacy_usb/iProduct"
++        [ -n "$manufacturer" ] && echo "$manufacturer" > "$legacy_usb/iManufacturer"
++    fi
  fi
  
  for abi in "" 64;do
