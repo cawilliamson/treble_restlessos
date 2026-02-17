@@ -1,0 +1,34 @@
+From 4a53032b64af3bfd9ed158b5bde074196866b046 Mon Sep 17 00:00:00 2001
+From: "Christopher A. Williamson" <contact@chrisaw.io>
+Date: Tue, 17 Feb 2026 14:36:17 +0000
+Subject: [PATCH] Allow fingerprint HAL to read serialno_prop
+
+GrapheneOS restricts access to serialno_prop to a small set of domains
+as a privacy hardening measure. However, many vendor fingerprint HALs
+read the device serial number to bind fingerprint templates to the
+specific device. Without this access, the HAL's TEE commands fail
+during enrollment because the TA cannot identify the device.
+
+Add hal_fingerprint_server to the neverallow exception list so the
+fingerprint HAL can read the serial number property.
+
+Change-Id: I0000000000000000000000000000000000000013
+---
+ private/domain.te | 1 +
+ 1 file changed, 1 insertion(+)
+
+diff --git a/private/domain.te b/private/domain.te
+index 77097d2..ea0206d 100644
+--- a/private/domain.te
++++ b/private/domain.te
+@@ -870,6 +870,7 @@ neverallow {
+   -hal_camera_server
+   -hal_cas_server
+   -hal_drm_server
++  -hal_fingerprint_server
+   -hal_keymint_server
+   userdebug_or_eng(`-incidentd')
+   -init
+-- 
+2.52.0
+
