@@ -1,4 +1,4 @@
-From 7068e3fd27838f5e9c1ec75881b50667958656f2 Mon Sep 17 00:00:00 2001
+From 5abef8733b1b407606821ff67b110aa151e9a872 Mon Sep 17 00:00:00 2001
 From: "Christopher A. Williamson" <contact@chrisaw.io>
 Date: Mon, 16 Feb 2026 13:04:30 +0000
 Subject: [PATCH] Add projector settings UI for Unihertz/Agold devices
@@ -15,13 +15,13 @@ Focus calibration is automatically sent before enabling the projector
 to ensure a sharp image.
 ---
  .../java/me/phh/treble/app/EntryService.kt    |   1 +
- .../main/java/me/phh/treble/app/Projector.kt  | 114 ++++++++++++++++++
- .../me/phh/treble/app/ProjectorSettings.kt    |  59 +++++++++
+ .../main/java/me/phh/treble/app/Projector.kt  | 200 ++++++++++++++++++
+ .../me/phh/treble/app/ProjectorSettings.kt    |  59 ++++++
  .../me/phh/treble/app/SettingsActivity.kt     |   3 +
  app/src/main/res/values/arrays_projector.xml  |  13 ++
  app/src/main/res/xml/pref_headers.xml         |   3 +
- app/src/main/res/xml/pref_projector.xml       |  70 +++++++++++
- 7 files changed, 263 insertions(+)
+ app/src/main/res/xml/pref_projector.xml       |  70 ++++++
+ 7 files changed, 349 insertions(+)
  create mode 100644 app/src/main/java/me/phh/treble/app/Projector.kt
  create mode 100644 app/src/main/java/me/phh/treble/app/ProjectorSettings.kt
  create mode 100644 app/src/main/res/values/arrays_projector.xml
@@ -41,29 +41,44 @@ index f6c501b..281dacd 100644
              tryC { Hct.startup(this) }
 diff --git a/app/src/main/java/me/phh/treble/app/Projector.kt b/app/src/main/java/me/phh/treble/app/Projector.kt
 new file mode 100644
-index 0000000..5cca21c
+index 0000000..7868300
 --- /dev/null
 +++ b/app/src/main/java/me/phh/treble/app/Projector.kt
-@@ -0,0 +1,114 @@
+@@ -0,0 +1,200 @@
 +package me.phh.treble.app
 +
++import android.content.ContentResolver
 +import android.content.Context
 +import android.content.SharedPreferences
++import android.os.PowerManager
 +import android.os.ServiceManager
++import android.os.SystemClock
 +import android.preference.PreferenceManager
++import android.provider.Settings
 +import android.util.Log
 +import vendor.mediatek.hardware.agolddaemon.IAgoldDaemon
 +import java.io.File
++import kotlin.concurrent.thread
 +
 +object Projector : EntryStartup {
 +    private const val SYSFS_BASE = "/sys/bus/spi/drivers/fpga_spi"
 +    private const val DEFAULT_CALIBRATION = "550,720,711,696,685,672,663,649,638,626,614,599,587,561,548,538,538"
++    private var powerManager: PowerManager? = null
++    private var contentResolver: ContentResolver? = null
 +
 +    fun writeToFileNofail(path: String, content: String) {
 +        try {
 +            File(path).printWriter().use { it.println(content) }
 +        } catch (t: Throwable) {
 +            Log.d("PHH", "Failed writing to $path", t)
++        }
++    }
++
++    private fun readFileNofail(path: String, default: String = ""): String {
++        return try {
++            File(path).readText().trim()
++        } catch (t: Throwable) {
++            default
 +        }
 +    }
 +
@@ -99,15 +114,83 @@ index 0000000..5cca21c
 +        }
 +    }
 +
++    private fun waitForSysStatus(target: Int, timeoutMs: Long = 5000): Boolean {
++        val start = SystemClock.elapsedRealtime()
++        while (SystemClock.elapsedRealtime() - start < timeoutMs) {
++            val status = readFileNofail("$SYSFS_BASE/projector_sys_status", "-1")
++            if (status == target.toString()) return true
++            Thread.sleep(100)
++        }
++        Log.w("PHH", "Timed out waiting for projector_sys_status == $target")
++        return false
++    }
++
++    private fun enableProjector(sp: SharedPreferences) {
++        // The projector requires a display sleep/wake cycle to initialize
++        // the FPGA properly. Sequence from vendor:
++        // 1. Send focus calibration
++        // 2. Temporarily disable AoD so display fully sleeps
++        // 3. Sleep the display
++        // 4. Wait for projector_sys_status == 0
++        // 5. Send projector ioctl to turn on
++        // 6. Wake the display
++        // 7. Wait for projector_sys_status == 1
++        // 8. Restore AoD to its previous state
++        thread {
++            val mode = sp.getString(ProjectorSettings.projectorMode, "3") ?: "3"
++            val pm = powerManager ?: return@thread
++            val cr = contentResolver ?: return@thread
++
++            Log.d("PHH", "Projector enable: sending calibration")
++            sendCalibration(sp)
++
++            // Save and disable AoD so goToSleep fully turns off the display
++            val aodWasEnabled = try {
++                Settings.Secure.getInt(cr, Settings.Secure.DOZE_ALWAYS_ON, 0) != 0
++            } catch (t: Throwable) { false }
++
++            if (aodWasEnabled) {
++                Log.d("PHH", "Projector enable: temporarily disabling AoD")
++                try {
++                    Settings.Secure.putInt(cr, Settings.Secure.DOZE_ALWAYS_ON, 0)
++                } catch (t: Throwable) {
++                    Log.w("PHH", "Failed to disable AoD", t)
++                }
++                // Give the system a moment to process the AoD change
++                Thread.sleep(200)
++            }
++
++            Log.d("PHH", "Projector enable: sleeping display")
++            pm.goToSleep(SystemClock.uptimeMillis())
++            waitForSysStatus(0)
++
++            Log.d("PHH", "Projector enable: sending ioctl 500 0 $mode 0")
++            sendIoctl(500, 0, mode.toInt(), 0)
++
++            Log.d("PHH", "Projector enable: waking display")
++            pm.wakeUp(SystemClock.uptimeMillis())
++            waitForSysStatus(1)
++
++            // Restore AoD if it was enabled before
++            if (aodWasEnabled) {
++                Log.d("PHH", "Projector enable: restoring AoD")
++                try {
++                    Settings.Secure.putInt(cr, Settings.Secure.DOZE_ALWAYS_ON, 1)
++                } catch (t: Throwable) {
++                    Log.w("PHH", "Failed to restore AoD", t)
++                }
++            }
++
++            Log.d("PHH", "Projector enable: done")
++        }
++    }
++
 +    val spListener = SharedPreferences.OnSharedPreferenceChangeListener { sp, key ->
 +        when (key) {
 +            ProjectorSettings.projectorEnabled -> {
 +                val enabled = sp.getBoolean(key, false)
 +                if (enabled) {
-+                    // Send focus calibration before enabling projector
-+                    sendCalibration(sp)
-+                    val mode = sp.getString(ProjectorSettings.projectorMode, "3") ?: "3"
-+                    sendIoctl(500, 0, mode.toInt(), 0)
++                    enableProjector(sp)
 +                } else {
 +                    sendIoctl(500, 0, 0, 0)
 +                }
@@ -151,6 +234,9 @@ index 0000000..5cca21c
 +
 +    override fun startup(ctxt: Context) {
 +        if (!ProjectorSettings.enabled()) return
++
++        powerManager = ctxt.getSystemService(Context.POWER_SERVICE) as PowerManager
++        contentResolver = ctxt.contentResolver
 +
 +        val sp = PreferenceManager.getDefaultSharedPreferences(ctxt)
 +        sp.registerOnSharedPreferenceChangeListener(spListener)
