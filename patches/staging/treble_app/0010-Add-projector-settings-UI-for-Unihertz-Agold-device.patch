@@ -1,5 +1,5 @@
-From 99276b4f13ce6faf758c9f56a5adacd3b72c399e Mon Sep 17 00:00:00 2001
-From: Chris Williamson <chris@chrisaw.io>
+From 7068e3fd27838f5e9c1ec75881b50667958656f2 Mon Sep 17 00:00:00 2001
+From: "Christopher A. Williamson" <contact@chrisaw.io>
 Date: Mon, 16 Feb 2026 13:04:30 +0000
 Subject: [PATCH] Add projector settings UI for Unihertz/Agold devices
 
@@ -7,18 +7,21 @@ Add a new Projector settings section to the TrebleDroid settings app,
 visible only on devices with both the Agold daemon service and projector
 sysfs nodes present.
 
-Controls include: projector power/mode, LCD toggle, brightness, keystone
-correction, auto/manual focus, fan speed, temperature readout, and laser
-ranging distance (when hardware is available).
+Controls include: projector power/mode, display toggle, brightness,
+keystone correction, auto/manual focus, fan speed, temperature readout,
+and laser ranging distance (when hardware is available).
+
+Focus calibration is automatically sent before enabling the projector
+to ensure a sharp image.
 ---
  .../java/me/phh/treble/app/EntryService.kt    |   1 +
- .../main/java/me/phh/treble/app/Projector.kt  | 107 ++++++++++++++++++
- .../me/phh/treble/app/ProjectorSettings.kt    |  59 ++++++++++
+ .../main/java/me/phh/treble/app/Projector.kt  | 114 ++++++++++++++++++
+ .../me/phh/treble/app/ProjectorSettings.kt    |  59 +++++++++
  .../me/phh/treble/app/SettingsActivity.kt     |   3 +
- app/src/main/res/values/arrays_projector.xml  |  13 +++
+ app/src/main/res/values/arrays_projector.xml  |  13 ++
  app/src/main/res/xml/pref_headers.xml         |   3 +
- app/src/main/res/xml/pref_projector.xml       |  70 ++++++++++++
- 7 files changed, 256 insertions(+)
+ app/src/main/res/xml/pref_projector.xml       |  70 +++++++++++
+ 7 files changed, 263 insertions(+)
  create mode 100644 app/src/main/java/me/phh/treble/app/Projector.kt
  create mode 100644 app/src/main/java/me/phh/treble/app/ProjectorSettings.kt
  create mode 100644 app/src/main/res/values/arrays_projector.xml
@@ -38,10 +41,10 @@ index f6c501b..281dacd 100644
              tryC { Hct.startup(this) }
 diff --git a/app/src/main/java/me/phh/treble/app/Projector.kt b/app/src/main/java/me/phh/treble/app/Projector.kt
 new file mode 100644
-index 0000000..425d2df
+index 0000000..5cca21c
 --- /dev/null
 +++ b/app/src/main/java/me/phh/treble/app/Projector.kt
-@@ -0,0 +1,107 @@
+@@ -0,0 +1,114 @@
 +package me.phh.treble.app
 +
 +import android.content.Context
@@ -85,11 +88,24 @@ index 0000000..425d2df
 +        }
 +    }
 +
++    private fun sendCalibration(sp: SharedPreferences) {
++        val calibration = sp.getString(ProjectorSettings.focusCalibration, DEFAULT_CALIBRATION) ?: DEFAULT_CALIBRATION
++        val svc = getAgoldService() ?: return
++        try {
++            svc.cmd(calibration, null)
++            Log.d("PHH", "Projector focus calibration sent: $calibration")
++        } catch (t: Throwable) {
++            Log.d("PHH", "Focus calibration failed", t)
++        }
++    }
++
 +    val spListener = SharedPreferences.OnSharedPreferenceChangeListener { sp, key ->
 +        when (key) {
 +            ProjectorSettings.projectorEnabled -> {
 +                val enabled = sp.getBoolean(key, false)
 +                if (enabled) {
++                    // Send focus calibration before enabling projector
++                    sendCalibration(sp)
 +                    val mode = sp.getString(ProjectorSettings.projectorMode, "3") ?: "3"
 +                    sendIoctl(500, 0, mode.toInt(), 0)
 +                } else {
@@ -103,7 +119,7 @@ index 0000000..425d2df
 +                    sendIoctl(500, 0, mode.toInt(), 0)
 +                }
 +            }
-+            ProjectorSettings.lcdEnabled -> {
++            ProjectorSettings.displayEnabled -> {
 +                val enabled = sp.getBoolean(key, true)
 +                if (enabled) {
 +                    sendIoctl(500, 0, 0, 3)
@@ -120,13 +136,7 @@ index 0000000..425d2df
 +                writeToFileNofail("$SYSFS_BASE/projector_pitch_set", value)
 +            }
 +            ProjectorSettings.focusCalibration -> {
-+                val calibration = sp.getString(key, DEFAULT_CALIBRATION) ?: DEFAULT_CALIBRATION
-+                val svc = getAgoldService() ?: return@OnSharedPreferenceChangeListener
-+                try {
-+                    svc.cmd(calibration, null)
-+                } catch (t: Throwable) {
-+                    Log.d("PHH", "Focus calibration failed", t)
-+                }
++                sendCalibration(sp)
 +            }
 +            ProjectorSettings.focusAdjust -> {
 +                val value = sp.getString(key, "0") ?: "0"
@@ -151,7 +161,7 @@ index 0000000..425d2df
 +}
 diff --git a/app/src/main/java/me/phh/treble/app/ProjectorSettings.kt b/app/src/main/java/me/phh/treble/app/ProjectorSettings.kt
 new file mode 100644
-index 0000000..daa9f50
+index 0000000..bc26979
 --- /dev/null
 +++ b/app/src/main/java/me/phh/treble/app/ProjectorSettings.kt
 @@ -0,0 +1,59 @@
@@ -166,7 +176,7 @@ index 0000000..daa9f50
 +object ProjectorSettings : Settings {
 +    val projectorEnabled = "projector_enabled"
 +    val projectorMode = "projector_mode"
-+    val lcdEnabled = "projector_lcd_enabled"
++    val displayEnabled = "projector_display_enabled"
 +    val brightness = "projector_brightness"
 +    val keystone = "projector_keystone"
 +    val focusCalibration = "projector_focus_calibration"
@@ -270,7 +280,7 @@ index ed5fb55..76c123d 100644
          android:title="Doze features" />
 diff --git a/app/src/main/res/xml/pref_projector.xml b/app/src/main/res/xml/pref_projector.xml
 new file mode 100644
-index 0000000..4bfd8b0
+index 0000000..0644451
 --- /dev/null
 +++ b/app/src/main/res/xml/pref_projector.xml
 @@ -0,0 +1,70 @@
@@ -296,9 +306,9 @@ index 0000000..4bfd8b0
 +            android:layout_width="wrap_content"
 +            android:layout_height="wrap_content"
 +            android:defaultValue="true"
-+            android:key="projector_lcd_enabled"
-+            android:title="LCD screen"
-+            app:summary="Keep the phone screen on while projecting" />
++            android:key="projector_display_enabled"
++            android:title="Display"
++            app:summary="Keep the phone display on while projecting" />
 +    </PreferenceCategory>
 +    <PreferenceCategory android:title="Image">
 +        <EditTextPreference

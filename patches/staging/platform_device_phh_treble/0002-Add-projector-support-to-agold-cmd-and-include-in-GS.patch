@@ -1,5 +1,5 @@
-From 355bb6b96f88f427ee697c6a06e16c3416dfc9ab Mon Sep 17 00:00:00 2001
-From: Chris Williamson <chris@chrisaw.io>
+From 5989c8e961e1ad93b26da3616bd1aa907fb763a4 Mon Sep 17 00:00:00 2001
+From: "Christopher A. Williamson" <contact@chrisaw.io>
 Date: Mon, 16 Feb 2026 18:58:59 +0000
 Subject: [PATCH] Add projector support to agold-cmd and include in GSI
 
