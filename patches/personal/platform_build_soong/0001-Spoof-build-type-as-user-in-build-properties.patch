@@ -1,0 +1,36 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: "Christopher A. Williamson" <contact@chrisaw.io>
+Date: Wed, 18 Feb 2026 00:00:00 +0000
+Subject: [PATCH 1/1] Spoof build type as user in build properties
+
+Build as userdebug to retain debugging capabilities and debug packages,
+but report the build type as "user" in all ro.build.type and
+ro.<partition>.build.type properties baked into build.prop. This makes
+the system image appear as a user build to apps performing integrity
+checks, without relying solely on runtime property spoofing.
+
+Change-Id: I0000000000000000000000000000000000000100
+---
+ scripts/gen_build_prop.py | 6 +++++-
+ 1 file changed, 5 insertions(+), 1 deletion(-)
+
+diff --git a/scripts/gen_build_prop.py b/scripts/gen_build_prop.py
+index abcdef0..1234567 100644
+--- a/scripts/gen_build_prop.py
++++ b/scripts/gen_build_prop.py
+@@ -28,7 +28,11 @@ def get_build_variant(product_config):
+   if product_config["Eng"]:
+     return "eng"
+   elif product_config["Debuggable"]:
+-    return "userdebug"
++    # Spoof build type: build as userdebug for debugging capabilities
++    # but report as user build in all build properties. This makes the
++    # system image indistinguishable from a user build to apps checking
++    # ro.build.type without relying on runtime property spoofing.
++    return "user"
+   else:
+     return "user"
+ 
+-- 
+2.52.0
+
