@@ -1,7 +1,7 @@
 From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: "Christopher A. Williamson" <contact@chrisaw.io>
 Date: Wed, 18 Feb 2026 00:00:00 +0000
-Subject: [PATCH 7/7] Spoof vendor build type as user
+Subject: [PATCH 7/8] Spoof vendor build type as user
 
 Override the vendor partition build type property to always report
 "user" instead of the actual TARGET_BUILD_VARIANT. This complements

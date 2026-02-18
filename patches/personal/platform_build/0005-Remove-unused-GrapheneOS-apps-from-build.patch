@@ -1,7 +1,7 @@
 From 5bc1e23411b066de880e047347dcf2da42215a0a Mon Sep 17 00:00:00 2001
 From: "Christopher A. Williamson" <contact@chrisaw.io>
 Date: Tue, 17 Feb 2026 16:29:40 +0000
-Subject: [PATCH 5/7] Remove unused GrapheneOS apps from build
+Subject: [PATCH 5/8] Remove unused GrapheneOS apps from build
 
 Remove apps that are not useful for GSI builds:
 - Auditor: relies on hardware attestation tied to specific device
