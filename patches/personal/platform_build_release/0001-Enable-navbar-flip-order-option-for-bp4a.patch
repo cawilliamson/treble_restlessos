@@ -1,0 +1,29 @@
+From 47d4e0aeea92d4b48c685f94419c901892331fdd Mon Sep 17 00:00:00 2001
+From: "Christopher A. Williamson" <contact@chrisaw.io>
+Date: Wed, 18 Feb 2026 09:04:54 +0000
+Subject: [PATCH] Enable navbar flip order option for bp4a
+
+Enable the navbar_flip_order_option accessibility flag for the bp4a
+release configuration. This allows users to reverse the order of the
+3-button navigation bar buttons (Back, Home, Recent) through
+Settings > System > Gestures > System navigation > Button navigation.
+---
+ .../navbar_flip_order_option_flag_values.textproto          | 6 ++++++
+ 1 file changed, 6 insertions(+)
+ create mode 100644 aconfig/bp4a/android.view.accessibility/navbar_flip_order_option_flag_values.textproto
+
+diff --git a/aconfig/bp4a/android.view.accessibility/navbar_flip_order_option_flag_values.textproto b/aconfig/bp4a/android.view.accessibility/navbar_flip_order_option_flag_values.textproto
+new file mode 100644
+index 0000000..af51ebd
+--- /dev/null
++++ b/aconfig/bp4a/android.view.accessibility/navbar_flip_order_option_flag_values.textproto
+@@ -0,0 +1,6 @@
++flag_value {
++  package: "android.view.accessibility"
++  name: "navbar_flip_order_option"
++  state: ENABLED
++  permission: READ_ONLY
++}
+-- 
+2.52.0
+
