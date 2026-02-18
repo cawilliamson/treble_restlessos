@@ -1,0 +1,37 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Chris Williamson <chris@chrisaw.io>
+Date: Tue, 18 Feb 2026 14:00:00 +0000
+Subject: [PATCH] Remove mtectrl and misctrl from GSI builds
+
+These are Pixel-specific tools that manage MTE (Memory Tagging Extension)
+boot control and misc partition flags. On GSI builds:
+
+- mtectrl writes MTE configuration to the misc partition at boot and
+  shutdown, but MTE is not supported on most non-Pixel devices
+- misctrl manages boot flags in the misc partition that are only relevant
+  to Pixel hardware
+
+Both tools write to the misc partition which can interfere with the
+vendor bootloader's TEE (Trusted Execution Environment) initialization
+on non-Pixel devices, potentially breaking biometric authentication
+and other TEE-dependent features after reboot.
+---
+ target/product/base_system.mk | 2 --
+ 1 file changed, 2 deletions(-)
+
+diff --git a/target/product/base_system.mk b/target/product/base_system.mk
+index 1234567..abcdefg 100644
+--- a/target/product/base_system.mk
++++ b/target/product/base_system.mk
+@@ -229,8 +229,6 @@ PRODUCT_PACKAGES += \
+     mke2fs \
+     mkfs.erofs \
+     monkey \
+-    misctrl \
+-    mtectrl \
+     ndc \
+     netd \
+     NetworkStack \
+-- 
+2.52.0
+
