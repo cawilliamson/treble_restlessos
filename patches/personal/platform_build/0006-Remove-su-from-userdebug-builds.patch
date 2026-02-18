@@ -1,0 +1,29 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: "Christopher A. Williamson" <contact@chrisaw.io>
+Date: Wed, 18 Feb 2026 00:00:00 +0000
+Subject: [PATCH 6/6] Remove su from userdebug builds
+
+The AOSP su binary is included by default in userdebug builds via
+PRODUCT_PACKAGES_DEBUG. Remove it to avoid shipping a root shell in
+the GSI, since root access is managed separately through Magisk.
+
+Change-Id: I0000000000000000000000000000000000000006
+---
+ target/product/base_system.mk | 1 -
+ 1 file changed, 1 deletion(-)
+
+diff --git a/target/product/base_system.mk b/target/product/base_system.mk
+index abcdef0..1234567 100644
+--- a/target/product/base_system.mk
++++ b/target/product/base_system.mk
+@@ -564,7 +564,6 @@ PRODUCT_PACKAGES_DEBUG := \
+     ss \
+     start_with_lockagent \
+     strace \
+-    su \
+     sanitizer-status \
+     tracepath \
+     tracepath6 \
+-- 
+2.52.0
+
