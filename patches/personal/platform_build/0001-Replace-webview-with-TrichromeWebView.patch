@@ -1,7 +1,7 @@
 From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: Christopher A. Williamson <contact@chrisaw.io>
 Date: Wed, 05 Feb 2026 00:00:00 +0000
-Subject: [PATCH 1/5] Replace webview with TrichromeWebView
+Subject: [PATCH 1/6] Replace webview with TrichromeWebView
 
 GrapheneOS uses Vanadium (TrichromeWebView) instead of the generic
 webview module. Replace the dependency in product_image_defaults.

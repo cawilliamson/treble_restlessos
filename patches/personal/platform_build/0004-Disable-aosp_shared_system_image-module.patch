@@ -1,7 +1,7 @@
 From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: Christopher A. Williamson <contact@chrisaw.io>
 Date: Fri, 07 Feb 2026 00:00:00 +0000
-Subject: [PATCH 4/5] Disable aosp_shared_system_image module
+Subject: [PATCH 4/6] Disable aosp_shared_system_image module
 
 The aosp_shared_system_image module is only used by Cuttlefish
 (PRODUCT_SOONG_DEFINED_SYSTEM_IMAGE := aosp_shared_system_image) and
