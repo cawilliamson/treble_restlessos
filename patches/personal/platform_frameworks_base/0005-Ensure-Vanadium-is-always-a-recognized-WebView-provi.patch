@@ -1,0 +1,52 @@
+From 9a0132ce22eed9a6328dc18899a75cd626b31f69 Mon Sep 17 00:00:00 2001
+From: "Christopher A. Williamson" <contact@chrisaw.io>
+Date: Wed, 18 Feb 2026 07:19:05 +0000
+Subject: [PATCH 5/5] Ensure Vanadium is always a recognized WebView provider
+
+Various RRO overlays from TrebleDroid and vendor partitions can
+override config_webview_packages.xml at runtime, removing Vanadium
+from the recognized provider list. Since different devices load
+different overlays at different priorities, patching individual
+overlay files is fragile and incomplete.
+
+Instead, inject Vanadium directly into the parsed provider list in
+SystemImpl if it is not already present. This runs after all overlay
+resolution, making it immune to any overlay overriding the XML config.
+Vanadium is added at position 0 (highest priority) with no signature
+requirement, since it is preinstalled on the system image.
+
+Change-Id: I0000000000000000000000000000000000000018
+---
+ .../com/android/server/webkit/SystemImpl.java    | 16 ++++++++++++++++
+ 1 file changed, 16 insertions(+)
+
+diff --git a/services/core/java/com/android/server/webkit/SystemImpl.java b/services/core/java/com/android/server/webkit/SystemImpl.java
+index 92ce251c4..a1925f988 100644
+--- a/services/core/java/com/android/server/webkit/SystemImpl.java
++++ b/services/core/java/com/android/server/webkit/SystemImpl.java
+@@ -128,6 +128,22 @@ public class SystemImpl implements SystemInterface {
+         } finally {
+             if (parser != null) parser.close();
+         }
++        // Ensure Vanadium is always included as a WebView provider for GrapheneOS GSI
++        boolean hasVanadium = false;
++        for (WebViewProviderInfo p : webViewProviders) {
++            if ("app.vanadium.webview".equals(p.packageName)) {
++                hasVanadium = true;
++                break;
++            }
++        }
++        if (!hasVanadium) {
++            webViewProviders.add(0, new WebViewProviderInfo(
++                    "app.vanadium.webview", "Vanadium",
++                    true /* availableByDefault */, false /* isFallback */,
++                    null /* signatures */));
++            numAvailableByDefaultPackages++;
++        }
++
+         if (numAvailableByDefaultPackages == 0) {
+             throw new AndroidRuntimeException("There must be at least one WebView package "
+                     + "that is available by default");
+-- 
+2.52.0
+
