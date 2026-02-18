@@ -1,15 +1,15 @@
 From 1423a40a59b5d849e6161a3e7cdf0de003dcbad9 Mon Sep 17 00:00:00 2001
 From: Alberto Ponces <ponces26@gmail.com>
 Date: Wed, 25 Dec 2019 12:34:05 +0200
-Subject: [PATCH 1/2] Rework securize tweak
+Subject: [PATCH 1/3] Rework securize tweak
 
 ---
  base.mk             |  1 -
- phh-on-boot.sh      | 33 ++++++++++++++++++++
+ phh-on-boot.sh      | 32 ++++++++++++++++++++
  phh-prop-handler.sh | 11 +++++++
  rw-system.sh        | 90 +++++++++++++++++++++++++-----------------------
- vndk.rc             | 11 +++++++
- 5 files changed, 100 insertions(+), 46 deletions(-)
+ vndk.rc             | 11 +++++---
+ 5 files changed, 97 insertions(+), 49 deletions(-)
 
 diff --git a/base.mk b/base.mk
 index bbf2ef0..47b45f6 100644
@@ -27,7 +27,7 @@ diff --git a/phh-on-boot.sh b/phh-on-boot.sh
 index d2d5b0a..4e052bb 100644
 --- a/phh-on-boot.sh
 +++ b/phh-on-boot.sh
-@@ -1,5 +1,38 @@
+@@ -1,5 +1,37 @@
  #!/system/bin/sh
  
 +# spoof post-boot props
@@ -57,7 +57,6 @@ index d2d5b0a..4e052bb 100644
 +  resetprop_phh ro.system_ext.build.type user
 +  resetprop_phh ro.vendor.build.type user
 +  resetprop_phh --delete ro.build.selinux
-+  resetprop_phh ro.adb.secure 1
 +  resetprop_phh -n sys.oem_unlock_allowed 0
 +  resetprop_phh -n init.svc.adbd stopped
 +  resetprop_phh -n init.svc.flash_recovery stopped
@@ -226,10 +225,10 @@ index c2b8eae..876f445 100644
  on property:persist.sys.phh.oppo.usbotg=*
      exec u:r:phhsu_daemon:s0 root -- /system/bin/phh-prop-handler.sh "persist.sys.phh.oppo.usbotg"
  
-@@ -112,3 +115,11 @@ service watchdogd-gsi /system/bin/watchdogd 10 20
- on property:persist.sys.phh.adb_secure=1
-     exec u:r:phhsu_daemon:s0 root -- /system/bin/resetprop_phh ro.adb.secure 1
-     restart adbd
+@@ -112,3 +115,8 @@ service watchdogd-gsi /system/bin/watchdogd 10 20
+-on property:persist.sys.phh.adb_secure=1
+-    exec u:r:phhsu_daemon:s0 root -- /system/bin/resetprop_phh ro.adb.secure 1
+-    restart adbd
 +
 +# reset oem unlock toggle to disable
 +on property:sys.oem_unlock_allowed=*
