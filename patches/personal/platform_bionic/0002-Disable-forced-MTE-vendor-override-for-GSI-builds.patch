@@ -1,0 +1,58 @@
+From d3d0145fc288d0fcfd867a3b63d72a5bb7053143 Mon Sep 17 00:00:00 2001
+From: "Christopher A. Williamson" <contact@chrisaw.io>
+Date: Wed, 19 Feb 2026 13:30:00 +0000
+Subject: [PATCH 2/2] Disable forced MTE vendor override for GSI builds
+
+GrapheneOS forces M_HEAP_TAGGING_LEVEL_ASYNC on all vendor processes
+as a security hardening measure. On devices without hardware MTE
+support this falls back to TBI, but the failed MTE prctl leaves
+partially-configured kernel state that breaks vendor TEE drivers.
+Specifically, TrustKernel's tee_context_copy_from_client fails
+intermittently with EINVAL because the TEE driver cannot handle
+tagged pointers from the fallback path.
+
+On a GSI, vendor HALs come from the device vendor and are not built
+with MTE awareness. Remove the forced vendor override entirely —
+vendor processes will still get the default TBI tagging from the
+normal ELF note / dynamic entry path without the broken MTE fallback.
+---
+ libc/bionic/libc_init_mte.cpp | 24 ------------------------
+ 1 file changed, 24 deletions(-)
+
+diff --git a/libc/bionic/libc_init_mte.cpp b/libc/bionic/libc_init_mte.cpp
+--- a/libc/bionic/libc_init_mte.cpp
++++ b/libc/bionic/libc_init_mte.cpp
+@@ -131,30 +131,6 @@ static bool get_environment_memtag_setting(HeapTaggingLevel* level) {
+ 
+   const bool is_vendor_prog = starts_with(progname, "/vendor/") || starts_with(progname, "/apex/com.google.");
+   const bool is_debug_build = is_debuggable_build();
+-  if (is_vendor_prog) {
+-    char device_name[PROP_VALUE_MAX];
+-    get_property_value("ro.product.name", device_name, sizeof(device_name));
+-    bool apply_override =
+-        strcmp(progname, "/apex/com.google.pixel.camera.hal/bin/hw/android.hardware.camera.provider@2.7-service-google") != 0
+-        && (
+-            (
+-                 strcmp(device_name, "tokay") != 0
+-                 && strcmp(device_name, "caiman") != 0
+-                 && strcmp(device_name, "komodo") != 0
+-                 && strcmp(device_name, "comet") != 0
+-                 && strcmp(device_name, "frankel") != 0
+-                 && strcmp(device_name, "blazer") != 0
+-                 && strcmp(device_name, "mustang") != 0
+-                 && strcmp(device_name, "rango") != 0
+-            ) || strcmp(progname, "/vendor/bin/shared_modem_platform") != 0
+-        )
+-    ;
+-    if (apply_override) {
+-        *level = M_HEAP_TAGGING_LEVEL_ASYNC;
+-    } else if (!is_debug_build) {
+-        return true;
+-     }
+-  }
+ 
+   if (!is_debug_build) {
+       // ignore heap memory tagging setting overrides on user builds
+-- 
+2.52.0
+

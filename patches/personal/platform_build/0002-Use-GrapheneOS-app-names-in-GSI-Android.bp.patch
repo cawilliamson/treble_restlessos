@@ -27,7 +27,7 @@ diff --git a/target/product/gsi/Android.bp b/target/product/gsi/Android.bp
          ///////////////////////////////////////////
 -        "Browser2",
 -        "Camera2",
-+        "TrichromeChrome",
++        "TrichromeChromeDualArch",
 +        "Camera",
          "Dialer",
          "LatinIME",
