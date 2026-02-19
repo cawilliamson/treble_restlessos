@@ -13,19 +13,17 @@ HAL fails to register and the sensor becomes unresponsive.
  1 file changed, 3 insertions(+)
 
 diff --git a/sepolicy/hal.te b/sepolicy/hal.te
-index 1234567..abcdefg 100644
 --- a/sepolicy/hal.te
 +++ b/sepolicy/hal.te
-@@ -4,6 +4,9 @@ hal_server_domain(hal_fingerprint_oppo_compat, hal_fingerprint)
- type hal_fingerprint_oppo_compat_exec, exec_type, vendor_file_type, file_type;
+@@ -5,6 +5,9 @@ type hal_fingerprint_oppo_compat_exec, exec_type, vendor_file_type, file_type;
  init_daemon_domain(hal_fingerprint_oppo_compat)
+ 
  
 +# Allow finding vendor oppo/oplus fingerprint HIDL services
 +# which fall through to the default hwservice label.
 +allow hal_fingerprint_oppo_compat default_android_hwservice:hwservice_manager find;
- 
  type hal_fingerprint_oppo, domain;
- allow hal_fingerprint_oppo vendor_default_prop:property_service set;
+ allow hal_fingerprint_oppo vendor_default_prop:property_service { set };
 -- 
 2.52.0
 
