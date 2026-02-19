@@ -50,13 +50,13 @@ index dd5421103..dcef85ee8 100644
 +                    && fingerprintAidlInstances != null) {
 +                boolean hasRealAidl = false;
 +                for (String instance : fingerprintAidlInstances) {
-+                    if (!instance.contains("virtual") && !instance.equals("default")) {
++                    if (!instance.contains("virtual")) {
 +                        hasRealAidl = true;
 +                        break;
 +                    }
 +                }
 +                if (!hasRealAidl) {
-+                    Slog.w(TAG, "Preferring HIDL fingerprint sensor over virtual/example AIDL sensors");
++                    Slog.w(TAG, "Preferring HIDL fingerprint sensor over virtual AIDL sensors");
 +                    preferHidlSensor = true;
 +                } else {
 +                    preferHidlSensor = false;
