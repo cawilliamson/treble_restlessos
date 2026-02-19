@@ -4,8 +4,8 @@ Date: Wed, 26 Mar 2025 20:43:15 -0300
 Subject: [PATCH 1/9] Prefer HIDL when AIDL fingerprint sensor is "virtual"
 
 ---
- .../server/biometrics/AuthService.java        | 37 +++++++++++++++++--
- 1 file changed, 34 insertions(+), 3 deletions(-)
+ .../server/biometrics/AuthService.java        | 49 +++++++++++++++++++++--
+ 1 file changed, 46 insertions(+), 3 deletions(-)
 
 diff --git a/services/core/java/com/android/server/biometrics/AuthService.java b/services/core/java/com/android/server/biometrics/AuthService.java
 index dd5421103..dcef85ee8 100644
@@ -37,18 +37,30 @@ index dd5421103..dcef85ee8 100644
                  mInjector.getFingerprintService(), handlerProvider);
          registerFaceSensors(mInjector.getFaceAidlInstances(),
                  mInjector.getFaceConfiguration(getContext()), getContext(),
-@@ -1115,12 +1131,27 @@ public class AuthService extends SystemService {
+@@ -1115,12 +1131,39 @@ public class AuthService extends SystemService {
              return;
          }
  
 +        final boolean preferHidlSensor;
-+        if (!SystemProperties.getBoolean("persist.sys.phh.virtual_sensors_are_real", false)) {
++        if (SystemProperties.getBoolean("persist.sys.phh.fingerprint.force_hidl", false)) {
++            Slog.w(TAG, "Forcing HIDL fingerprint sensor (persist.sys.phh.fingerprint.force_hidl)");
++            preferHidlSensor = hidlConfigStrings != null && hidlConfigStrings.length > 0;
++        } else if (!SystemProperties.getBoolean("persist.sys.phh.virtual_sensors_are_real", false)) {
 +            if (hidlConfigStrings != null && hidlConfigStrings.length > 0
-+                    && fingerprintAidlInstances != null && fingerprintAidlInstances.length == 1
-+                    && fingerprintAidlInstances[0].contains("virtual")) {
-+
-+                Slog.w(TAG, "Preferring HIDL fingerprint sensor over virtual AIDL sensor");
-+                preferHidlSensor = true;
++                    && fingerprintAidlInstances != null) {
++                boolean hasRealAidl = false;
++                for (String instance : fingerprintAidlInstances) {
++                    if (!instance.contains("virtual") && !instance.equals("default")) {
++                        hasRealAidl = true;
++                        break;
++                    }
++                }
++                if (!hasRealAidl) {
++                    Slog.w(TAG, "Preferring HIDL fingerprint sensor over virtual/example AIDL sensors");
++                    preferHidlSensor = true;
++                } else {
++                    preferHidlSensor = false;
++                }
 +            } else {
 +                preferHidlSensor = false;
 +            }

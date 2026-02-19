@@ -9,21 +9,19 @@ context. The hal_fingerprint_oppo_compat domain needs permission to
 find these services in the hwservice_manager, otherwise the fingerprint
 HAL fails to register and the sensor becomes unresponsive.
 ---
- sepolicy/hal.te | 3 +++
- 1 file changed, 3 insertions(+)
+ sepolicy/hal.te | 4 ++++
+ 1 file changed, 4 insertions(+)
 
 diff --git a/sepolicy/hal.te b/sepolicy/hal.te
 --- a/sepolicy/hal.te
 +++ b/sepolicy/hal.te
-@@ -5,6 +5,9 @@ type hal_fingerprint_oppo_compat_exec, exec_type, vendor_file_type, file_type;
- init_daemon_domain(hal_fingerprint_oppo_compat)
+@@ -7,5 +7,9 @@ init_daemon_domain(hal_fingerprint_oppo_compat)
  
  
+ type hal_fingerprint_oppo, domain;
++
 +# Allow finding vendor oppo/oplus fingerprint HIDL services
 +# which fall through to the default hwservice label.
 +allow hal_fingerprint_oppo_compat default_android_hwservice:hwservice_manager find;
- type hal_fingerprint_oppo, domain;
  allow hal_fingerprint_oppo vendor_default_prop:property_service { set };
--- 
-2.52.0
-
+ 
