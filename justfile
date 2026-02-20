@@ -95,7 +95,7 @@ sync-grapheneos-sources: build-container
             echo "Detected ANDROID_VERSION: ${ANDROID_VERSION}" && \
             echo "${ANDROID_VERSION}" > /repo/tmp/.android_version && \
             echo "Extracting ANDROID_VERSION_TAG from source tree..." && \
-            ANDROID_VERSION_TAG=$(grep -m1 "target:" build/release/release_config_map.textproto | sed "s/.*\"//;s/\".*//") && \
+            ANDROID_VERSION_TAG=$(grep -m1 "target:" build/release/release_config_map.textproto | sed "s/.*\"\([^\"]*\)\".*/\1/") && \
             echo "Detected ANDROID_VERSION_TAG: ${ANDROID_VERSION_TAG}" && \
             echo "${ANDROID_VERSION_TAG}" > /repo/tmp/.android_version_tag'
 

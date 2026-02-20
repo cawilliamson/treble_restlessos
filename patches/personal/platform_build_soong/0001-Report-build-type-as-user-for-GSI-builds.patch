@@ -1,0 +1,42 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: "Christopher A. Williamson" <contact@chrisaw.io>
+Date: Fri, 20 Feb 2026 12:00:00 +0000
+Subject: [PATCH] Report build type as user for GSI builds
+
+Write ro.build.type and ro.{partition}.build.type as "user" into the
+system image properties regardless of the actual build variant. This
+prevents root/integrity detection apps from flagging the build as
+development software based on the "userdebug" type string.
+
+The actual build variant remains userdebug: ro.debuggable, SELinux
+policy, adb behaviour and all other compile-time decisions are
+unaffected since they are derived from TARGET_BUILD_VARIANT and the
+Debuggable flag, not from the ro.build.type property value.
+---
+ scripts/gen_build_prop.py | 4 ++--
+ 1 file changed, 2 insertions(+), 2 deletions(-)
+
+diff --git a/scripts/gen_build_prop.py b/scripts/gen_build_prop.py
+index 1234567..abcdefg 100755
+--- a/scripts/gen_build_prop.py
++++ b/scripts/gen_build_prop.py
+@@ -160,7 +160,7 @@ def generate_common_build_props(args):
+   print(f"ro.{partition}.build.fingerprint?={config['BuildFingerprint']}")
+   print(f"ro.{partition}.build.id?={config['BuildId']}")
+   print(f"ro.{partition}.build.tags?={config['BuildVersionTags']}")
+-  print(f"ro.{partition}.build.type={config['BuildVariant']}")
++  print(f"ro.{partition}.build.type=user")
+   print(f"ro.{partition}.build.version.incremental={config['BuildNumber']}")
+   print(f"ro.{partition}.build.version.release={config['Platform_version_last_stable']}")
+   print(f"ro.{partition}.build.version.release_or_codename={config['Platform_version_name']}")
+@@ -201,7 +201,7 @@ def generate_build_info(args):
+   print(f"ro.build.date={config['Date']}")
+   print(f"ro.build.date.utc={config['DateUtc']}")
+-  print(f"ro.build.type={config['BuildVariant']}")
++  print(f"ro.build.type=user")
+   print(f"ro.build.user={config['BuildUsername']}")
+   print(f"ro.build.host={config['BuildHostname']}")
+   # TODO: Remove any tag-related optional property declarations once the goals
+-- 
+2.52.0
+
