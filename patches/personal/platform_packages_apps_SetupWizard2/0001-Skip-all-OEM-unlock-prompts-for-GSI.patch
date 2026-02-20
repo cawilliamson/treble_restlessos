@@ -1,7 +1,7 @@
 From bdc7c3e1d3917212033f3314236f1ee0d255a224 Mon Sep 17 00:00:00 2001
 From: "Christopher A. Williamson" <contact@chrisaw.io>
 Date: Tue, 17 Feb 2026 12:24:38 +0000
-Subject: [PATCH 1/1] Skip all OEM unlock prompts for GSI
+Subject: [PATCH 1/2] Skip all OEM unlock prompts for GSI
 
 A GSI requires an unlocked bootloader to boot. Suppress all OEM unlock
 related UI in the setup wizard:

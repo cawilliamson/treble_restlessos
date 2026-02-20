@@ -1,7 +1,7 @@
 From ab20b5052df6a59b0b952abecd238a6a8f84b961 Mon Sep 17 00:00:00 2001
 From: "Christopher A. Williamson" <contact@chrisaw.io>
 Date: Fri, 20 Feb 2026 11:55:03 +0000
-Subject: [PATCH] Remove service-virtualization from system server jars
+Subject: [PATCH 8/8] Remove service-virtualization from system server jars
 
 com.android.virt is excluded from PRODUCT_PACKAGES for GSI builds
 since it requires Pixel-specific pKVM firmware. Remove its system
