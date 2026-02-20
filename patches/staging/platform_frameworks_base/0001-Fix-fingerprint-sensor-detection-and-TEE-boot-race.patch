@@ -13,8 +13,8 @@ Improve fingerprint HAL integration for GSI builds:
   KeyMint/KeyPH TA initialization, corrupting the shared TEE context
   and permanently breaking the fingerprint sensor until power cycle
 ---
- .../server/biometrics/AuthService.java        | 66 +++++++++++++++++++++--
- 1 file changed, 63 insertions(+), 3 deletions(-)
+ .../server/biometrics/AuthService.java        | 73 +++++++++++++++++++++-----
+ 1 file changed, 68 insertions(+), 5 deletions(-)
 
 diff --git a/services/core/java/com/android/server/biometrics/AuthService.java b/services/core/java/com/android/server/biometrics/AuthService.java
 index dd5421103..dcef85ee8 100644
@@ -46,7 +46,7 @@ index dd5421103..dcef85ee8 100644
                  mInjector.getFingerprintService(), handlerProvider);
          registerFaceSensors(mInjector.getFaceAidlInstances(),
                  mInjector.getFaceConfiguration(getContext()), getContext(),
-@@ -1115,12 +1131,39 @@ public class AuthService extends SystemService {
+@@ -1115,12 +1131,59 @@ public class AuthService extends SystemService {
              return;
          }
  
@@ -102,6 +102,9 @@ index dd5421103..dcef85ee8 100644
 +                    new FingerprintSensorConfigurations(fingerprintAidlInstances != null
 +                            && fingerprintAidlInstances.length > 0 && !preferHidlSensor);
  
+-            final FingerprintSensorConfigurations mFingerprintSensorConfigurations =
+-                    new FingerprintSensorConfigurations(fingerprintAidlInstances != null
+-                            && fingerprintAidlInstances.length > 0);
 -            if (fingerprintAidlInstances != null && fingerprintAidlInstances.length > 0) {
 +            if (fingerprintAidlInstances != null && fingerprintAidlInstances.length > 0 && !preferHidlSensor) {
                  mFingerprintSensorConfigurations.addAidlSensors(fingerprintAidlInstances);
