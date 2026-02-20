@@ -1,0 +1,39 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: "Christopher A. Williamson" <contact@chrisaw.io>
+Date: Thu, 20 Feb 2026 12:00:00 +0000
+Subject: [PATCH 2/2] Fix LocationActivity crash for secondary users
+
+networkLocationEnabled and wifiScanningAlwaysAvailableEnabled are only
+initialised when isPrimaryUser is true (they control global settings
+that only the owner should change). However the locationEnabled change
+listener in setupActions() references them unconditionally, causing a
+UninitializedPropertyAccessException crash when a secondary user enters
+the location screen during setup.
+
+Guard the dependent-toggle logic with the same isPrimaryUser check used
+in bindViews().
+
+Change-Id: I0000000000000000000000000000000000000020
+---
+ .../setupwizard/view/activity/LocationActivity.kt  | 7 ++++---
+ 1 file changed, 4 insertions(+), 3 deletions(-)
+
+diff --git a/java/app/grapheneos/setupwizard/view/activity/LocationActivity.kt b/java/app/grapheneos/setupwizard/view/activity/LocationActivity.kt
+index abcdef1..1234567 100644
+--- a/java/app/grapheneos/setupwizard/view/activity/LocationActivity.kt
++++ b/java/app/grapheneos/setupwizard/view/activity/LocationActivity.kt
+@@ -67,9 +67,11 @@ class LocationActivity : SetupWizardActivity(
+ 
+     override fun setupActions() {
+         locationEnabled.setOnCheckedChangeListener { _, isChecked ->
+-            val areDependentsEnabled = isChecked
+-            networkLocationEnabled.isEnabled = areDependentsEnabled
+-            wifiScanningAlwaysAvailableEnabled.isEnabled = areDependentsEnabled
++            if (SetupWizard.isPrimaryUser) {
++                val areDependentsEnabled = isChecked
++                networkLocationEnabled.isEnabled = areDependentsEnabled
++                wifiScanningAlwaysAvailableEnabled.isEnabled = areDependentsEnabled
++            }
+             LocationActions.setLocationEnabled(isChecked)
+         }
+ 
