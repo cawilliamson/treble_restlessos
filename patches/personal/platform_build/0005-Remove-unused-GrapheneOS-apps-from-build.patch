@@ -1,9 +1,9 @@
 From 5bc1e23411b066de880e047347dcf2da42215a0a Mon Sep 17 00:00:00 2001
 From: "Christopher A. Williamson" <contact@chrisaw.io>
 Date: Tue, 17 Feb 2026 16:29:40 +0000
-Subject: [PATCH 5/8] Remove unused GrapheneOS apps from build
+Subject: [PATCH 5/7] Remove unused GrapheneOS apps from build
 
-Remove apps and APEXes that are not useful for GSI builds:
+Remove apps that are not useful for GSI builds:
 - Auditor: relies on hardware attestation tied to specific device
   models and will never pass verification on a GSI
 - PdfViewerGOS: can easily be installed from the app store
@@ -12,29 +12,19 @@ Remove apps and APEXes that are not useful for GSI builds:
   properly detect hardware on a GSI
 - EasterEgg: novelty app, not needed
 - HardeningTestApp: debug/testing app, not for production
-- com.android.virt: pKVM virtualization APEX, requires
-  Pixel-specific firmware support not available on GSI targets
 
 Change-Id: I0000000000000000000000000000000000000003
 ---
- target/product/base_system.mk     | 2 --
+ target/product/base_system.mk      | 1 -
  target/product/handheld_product.mk | 3 ---
  target/product/handheld_system.mk  | 2 --
- 3 files changed, 7 deletions(-)
+ 3 files changed, 6 deletions(-)
 
 diff --git a/target/product/base_system.mk b/target/product/base_system.mk
 index abc1234..def5678 100644
 --- a/target/product/base_system.mk
 +++ b/target/product/base_system.mk
-@@ -76,7 +76,6 @@ PRODUCT_PACKAGES += \
-     com.android.tethering \
-     $(RELEASE_PACKAGE_TZDATA_MODULE) \
-     com.android.uwb \
--    com.android.virt \
-     com.android.wifi \
-     ContactsProvider \
-     content \
-@@ -572,7 +571,6 @@ PRODUCT_PACKAGES += \
+@@ -572,7 +572,6 @@ PRODUCT_PACKAGES += \
      unwind_info \
      unwind_reg_info \
      unwind_symbols \

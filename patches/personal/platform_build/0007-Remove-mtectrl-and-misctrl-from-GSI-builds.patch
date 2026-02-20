@@ -1,7 +1,7 @@
 From bd742bab7db7642c73b7921c33636d71946fe81a Mon Sep 17 00:00:00 2001
 From: Chris Williamson <chris@chrisaw.io>
 Date: Wed, 18 Feb 2026 15:10:04 +0000
-Subject: [PATCH 7/8] Remove mtectrl and misctrl from GSI builds
+Subject: [PATCH 7/7] Remove mtectrl and misctrl from GSI builds
 
 These are Pixel-specific tools for managing MTE (Memory Tagging
 Extension) boot control and misc partition flags. On GSI builds
