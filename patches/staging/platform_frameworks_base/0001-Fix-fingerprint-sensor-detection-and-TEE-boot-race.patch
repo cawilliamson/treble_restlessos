@@ -1,4 +1,4 @@
-From af45d41733b1821234531bd725d3dd65facfb669 Mon Sep 17 00:00:00 2001
+From e0144432de1418982e1139768220a4f1385328d2 Mon Sep 17 00:00:00 2001
 From: TBM13 <mateotrueba@gmail.com>
 Date: Wed, 26 Mar 2025 20:43:15 -0300
 Subject: [PATCH 1/9] Fix fingerprint sensor detection and TEE boot race
@@ -13,14 +13,14 @@ Improve fingerprint HAL integration for GSI builds:
   KeyMint/KeyPH TA initialization, corrupting the shared TEE context
   and permanently breaking the fingerprint sensor until power cycle
 ---
- .../server/biometrics/AuthService.java        | 73 +++++++++++++++++++++-----
- 1 file changed, 68 insertions(+), 5 deletions(-)
+ .../server/biometrics/AuthService.java        | 69 ++++++++++++++++++-
+ 1 file changed, 66 insertions(+), 3 deletions(-)
 
 diff --git a/services/core/java/com/android/server/biometrics/AuthService.java b/services/core/java/com/android/server/biometrics/AuthService.java
-index dd5421103..dcef85ee8 100644
+index b5043f8c1..e3c990c4b 100644
 --- a/services/core/java/com/android/server/biometrics/AuthService.java
 +++ b/services/core/java/com/android/server/biometrics/AuthService.java
-@@ -990,8 +990,24 @@ public class AuthService extends SystemService {
+@@ -1083,8 +1083,24 @@ public class AuthService extends SystemService {
      private void registerAuthenticators() {
          BiometricHandlerProvider handlerProvider = mInjector.getBiometricHandlerProvider();
  
@@ -46,7 +46,7 @@ index dd5421103..dcef85ee8 100644
                  mInjector.getFingerprintService(), handlerProvider);
          registerFaceSensors(mInjector.getFaceAidlInstances(),
                  mInjector.getFaceConfiguration(getContext()), getContext(),
-@@ -1115,12 +1131,59 @@ public class AuthService extends SystemService {
+@@ -1207,12 +1223,59 @@ public class AuthService extends SystemService {
              return;
          }
  
@@ -98,17 +98,16 @@ index dd5421103..dcef85ee8 100644
 +                Slog.i(TAG, "Boot completed, proceeding with fingerprint sensor registration");
 +            }
 +
-+            final FingerprintSensorConfigurations mFingerprintSensorConfigurations =
-+                    new FingerprintSensorConfigurations(fingerprintAidlInstances != null
+             final FingerprintSensorConfigurations mFingerprintSensorConfigurations =
+                     new FingerprintSensorConfigurations(fingerprintAidlInstances != null
+-                            && fingerprintAidlInstances.length > 0);
 +                            && fingerprintAidlInstances.length > 0 && !preferHidlSensor);
  
--            final FingerprintSensorConfigurations mFingerprintSensorConfigurations =
--                    new FingerprintSensorConfigurations(fingerprintAidlInstances != null
--                            && fingerprintAidlInstances.length > 0);
 -            if (fingerprintAidlInstances != null && fingerprintAidlInstances.length > 0) {
 +            if (fingerprintAidlInstances != null && fingerprintAidlInstances.length > 0 && !preferHidlSensor) {
                  mFingerprintSensorConfigurations.addAidlSensors(fingerprintAidlInstances);
              } else if (hidlConfigStrings != null && hidlConfigStrings.length > 0) {
                  mFingerprintSensorConfigurations.addHidlSensors(hidlConfigStrings, context);
 -- 
-2.47.2
+2.52.0
+
