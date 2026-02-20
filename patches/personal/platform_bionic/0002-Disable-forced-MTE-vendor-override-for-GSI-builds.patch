@@ -1,7 +1,7 @@
 From 35d4eed2ed0212f8bbf54c7f8993b3f399520813 Mon Sep 17 00:00:00 2001
 From: "Christopher A. Williamson" <contact@chrisaw.io>
 Date: Fri, 20 Feb 2026 20:34:26 +0000
-Subject: [PATCH 2/2] Disable pointer tagging for vendor processes on GSI builds
+Subject: [PATCH 2/3] Disable pointer tagging for vendor processes on GSI builds
 
 GrapheneOS forces M_HEAP_TAGGING_LEVEL_ASYNC on all vendor processes
 as a security hardening measure. On devices without hardware MTE this

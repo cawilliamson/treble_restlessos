@@ -1,0 +1,36 @@
+From 5d1329cd3897ce6485c0067194b1d876ded01184 Mon Sep 17 00:00:00 2001
+From: "Christopher A. Williamson" <contact@chrisaw.io>
+Date: Fri, 20 Feb 2026 23:26:42 +0000
+Subject: [PATCH 3/3] Revert 8MB default thread stack to 1MB for GSI builds
+
+GrapheneOS increases the default 64-bit thread stack from 1MB to 8MB
+as a hardening measure against stack clash attacks. On a GSI, this
+changes the virtual address layout for all vendor processes including
+TEE daemons (teed) and HALs (KeyMint, Gatekeeper, fingerprint).
+Vendor TEE kernel drivers (e.g. TrustKernel tkcore) may have
+assumptions about process memory layout that break with the larger
+stacks and randomized guard gaps, causing intermittent
+tee_context_copy_from_client failures.
+
+Revert to the AOSP default of 1MB to match what vendor code was
+built and tested against.
+---
+ libc/bionic/pthread_internal.h | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/libc/bionic/pthread_internal.h b/libc/bionic/pthread_internal.h
+index c10e25f..429e988 100644
+--- a/libc/bionic/pthread_internal.h
++++ b/libc/bionic/pthread_internal.h
+@@ -270,7 +270,7 @@ __LIBC_HIDDEN__ void pthread_key_clean_all(void);
+ // from the default thread stack size. This should keep memory usage
+ // roughly constant.
+ #ifdef __LP64__
+-#define PTHREAD_STACK_SIZE_DEFAULT ((8 * 1024 * 1024) - SIGNAL_STACK_SIZE_WITHOUT_GUARD)
++#define PTHREAD_STACK_SIZE_DEFAULT ((1 * 1024 * 1024) - SIGNAL_STACK_SIZE_WITHOUT_GUARD)
+ #else
+ #define PTHREAD_STACK_SIZE_DEFAULT ((1 * 1024 * 1024) - SIGNAL_STACK_SIZE_WITHOUT_GUARD)
+ #endif
+-- 
+2.52.0
+
