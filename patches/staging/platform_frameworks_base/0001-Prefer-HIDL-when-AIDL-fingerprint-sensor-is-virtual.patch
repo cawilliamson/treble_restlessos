@@ -1,26 +1,17 @@
-From e0144432de1418982e1139768220a4f1385328d2 Mon Sep 17 00:00:00 2001
+From af45d41733b1821234531bd725d3dd65facfb669 Mon Sep 17 00:00:00 2001
 From: TBM13 <mateotrueba@gmail.com>
 Date: Wed, 26 Mar 2025 20:43:15 -0300
-Subject: [PATCH 1/9] Fix fingerprint sensor detection and TEE boot race
+Subject: [PATCH 1/6] Prefer HIDL when AIDL fingerprint sensor is "virtual"
 
-Improve fingerprint HAL integration for GSI builds:
-
-- Prefer HIDL fingerprint sensor when the only AIDL instance is
-  virtual, allowing devices with legacy HIDL HALs to work correctly
-- Defer fingerprint sensor registration until sys.boot_completed to
-  avoid a TEE driver race condition where the framework's first
-  command to the fingerprint HAL (setActiveGroup) collides with
-  KeyMint/KeyPH TA initialization, corrupting the shared TEE context
-  and permanently breaking the fingerprint sensor until power cycle
 ---
- .../server/biometrics/AuthService.java        | 69 ++++++++++++++++++-
- 1 file changed, 66 insertions(+), 3 deletions(-)
+ .../server/biometrics/AuthService.java        | 37 +++++++++++++++++--
+ 1 file changed, 34 insertions(+), 3 deletions(-)
 
 diff --git a/services/core/java/com/android/server/biometrics/AuthService.java b/services/core/java/com/android/server/biometrics/AuthService.java
-index b5043f8c1..e3c990c4b 100644
+index dd5421103..dcef85ee8 100644
 --- a/services/core/java/com/android/server/biometrics/AuthService.java
 +++ b/services/core/java/com/android/server/biometrics/AuthService.java
-@@ -1083,8 +1083,24 @@ public class AuthService extends SystemService {
+@@ -990,8 +990,24 @@ public class AuthService extends SystemService {
      private void registerAuthenticators() {
          BiometricHandlerProvider handlerProvider = mInjector.getBiometricHandlerProvider();
  
@@ -46,30 +37,18 @@ index b5043f8c1..e3c990c4b 100644
                  mInjector.getFingerprintService(), handlerProvider);
          registerFaceSensors(mInjector.getFaceAidlInstances(),
                  mInjector.getFaceConfiguration(getContext()), getContext(),
-@@ -1207,12 +1223,59 @@ public class AuthService extends SystemService {
+@@ -1115,12 +1131,27 @@ public class AuthService extends SystemService {
              return;
          }
  
 +        final boolean preferHidlSensor;
-+        if (SystemProperties.getBoolean("persist.sys.phh.fingerprint.force_hidl", false)) {
-+            Slog.w(TAG, "Forcing HIDL fingerprint sensor (persist.sys.phh.fingerprint.force_hidl)");
-+            preferHidlSensor = hidlConfigStrings != null && hidlConfigStrings.length > 0;
-+        } else if (!SystemProperties.getBoolean("persist.sys.phh.virtual_sensors_are_real", false)) {
++        if (!SystemProperties.getBoolean("persist.sys.phh.virtual_sensors_are_real", false)) {
 +            if (hidlConfigStrings != null && hidlConfigStrings.length > 0
-+                    && fingerprintAidlInstances != null) {
-+                boolean hasRealAidl = false;
-+                for (String instance : fingerprintAidlInstances) {
-+                    if (!instance.contains("virtual")) {
-+                        hasRealAidl = true;
-+                        break;
-+                    }
-+                }
-+                if (!hasRealAidl) {
-+                    Slog.w(TAG, "Preferring HIDL fingerprint sensor over virtual AIDL sensors");
-+                    preferHidlSensor = true;
-+                } else {
-+                    preferHidlSensor = false;
-+                }
++                    && fingerprintAidlInstances != null && fingerprintAidlInstances.length == 1
++                    && fingerprintAidlInstances[0].contains("virtual")) {
++
++                Slog.w(TAG, "Preferring HIDL fingerprint sensor over virtual AIDL sensor");
++                preferHidlSensor = true;
 +            } else {
 +                preferHidlSensor = false;
 +            }
@@ -78,26 +57,6 @@ index b5043f8c1..e3c990c4b 100644
 +        }
 +
          handlerProvider.getFingerprintHandler().post(() -> {
-+            // Wait for boot to complete before registering fingerprint sensors.
-+            // On some devices (e.g. TrustKernel TEE), the fingerprint HAL's first
-+            // TEE command (setActiveGroup) can race with KeyMint/KeyPH TA operations
-+            // during early boot, corrupting the shared TEE context and permanently
-+            // breaking the fingerprint sensor until the next power cycle.
-+            // Waiting for boot_completed ensures all other TEE clients have finished
-+            // their initialization before we start talking to the fingerprint HAL.
-+            if (!SystemProperties.getBoolean("sys.boot_completed", false)) {
-+                Slog.i(TAG, "Waiting for boot to complete before registering fingerprint sensors");
-+                while (!SystemProperties.getBoolean("sys.boot_completed", false)) {
-+                    try {
-+                        Thread.sleep(100);
-+                    } catch (InterruptedException e) {
-+                        Thread.currentThread().interrupt();
-+                        return;
-+                    }
-+                }
-+                Slog.i(TAG, "Boot completed, proceeding with fingerprint sensor registration");
-+            }
-+
              final FingerprintSensorConfigurations mFingerprintSensorConfigurations =
                      new FingerprintSensorConfigurations(fingerprintAidlInstances != null
 -                            && fingerprintAidlInstances.length > 0);
@@ -109,5 +68,4 @@ index b5043f8c1..e3c990c4b 100644
              } else if (hidlConfigStrings != null && hidlConfigStrings.length > 0) {
                  mFingerprintSensorConfigurations.addHidlSensors(hidlConfigStrings, context);
 -- 
-2.52.0
-
+2.47.2

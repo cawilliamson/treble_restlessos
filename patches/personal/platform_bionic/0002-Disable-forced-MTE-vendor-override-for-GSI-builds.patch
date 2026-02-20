@@ -1,28 +1,37 @@
 From d3d0145fc288d0fcfd867a3b63d72a5bb7053143 Mon Sep 17 00:00:00 2001
 From: "Christopher A. Williamson" <contact@chrisaw.io>
 Date: Wed, 19 Feb 2026 13:30:00 +0000
-Subject: [PATCH 2/2] Disable forced MTE vendor override for GSI builds
+Subject: [PATCH 2/2] Disable pointer tagging for vendor processes on GSI
+ builds
 
 GrapheneOS forces M_HEAP_TAGGING_LEVEL_ASYNC on all vendor processes
-as a security hardening measure. On devices without hardware MTE
-support this falls back to TBI, but the failed MTE prctl leaves
-partially-configured kernel state that breaks vendor TEE drivers.
-Specifically, TrustKernel's tee_context_copy_from_client fails
-intermittently with EINVAL because the TEE driver cannot handle
-tagged pointers from the fallback path.
+as a security hardening measure. On devices without hardware MTE this
+falls back to TBI (Top Byte Ignore), which stores random tags in the
+top byte of heap pointers. Vendor kernel drivers that validate pointer
+ranges in their copy_from_user/copy_to_user paths (notably
+TrustKernel's tkcore TEE driver) reject these tagged pointers with
+EINVAL, causing intermittent failures — e.g. fingerprint sensor
+calibration fails on ~1/3 of cold boots because
+tee_context_copy_from_client cannot handle the tagged addresses.
 
-On a GSI, vendor HALs come from the device vendor and are not built
-with MTE awareness. Remove the forced vendor override entirely —
-vendor processes will still get the default TBI tagging from the
-normal ELF note / dynamic entry path without the broken MTE fallback.
+On a GSI, vendor binaries come from the device vendor and are not
+built with tagged pointer awareness. Replace the forced ASYNC
+override with M_HEAP_TAGGING_LEVEL_NONE for all vendor processes,
+which skips the PR_TAGGED_ADDR_ENABLE prctl entirely and leaves
+pointers completely untagged.
+
+Also add "none" as a recognized memtag property value (alongside
+"sync", "async", "off") for per-process override via
+persist.arm64.memtag.process.<name>, and teach __libc_init_mte to
+skip all tagging setup when the level is NONE.
 ---
- libc/bionic/libc_init_mte.cpp | 24 ------------------------
- 1 file changed, 24 deletions(-)
+ libc/bionic/libc_init_mte.cpp | 38 ++++++++++++++--------------------
+ 1 file changed, 15 insertions(+), 23 deletions(-)
 
 diff --git a/libc/bionic/libc_init_mte.cpp b/libc/bionic/libc_init_mte.cpp
 --- a/libc/bionic/libc_init_mte.cpp
 +++ b/libc/bionic/libc_init_mte.cpp
-@@ -131,30 +131,6 @@ static bool get_environment_memtag_setting(HeapTaggingLevel* level) {
+@@ -131,30 +131,14 @@ static bool get_environment_memtag_setting(HeapTaggingLevel* level) {
  
    const bool is_vendor_prog = starts_with(progname, "/vendor/") || starts_with(progname, "/apex/com.google.");
    const bool is_debug_build = is_debuggable_build();
@@ -49,10 +58,54 @@ diff --git a/libc/bionic/libc_init_mte.cpp b/libc/bionic/libc_init_mte.cpp
 -    } else if (!is_debug_build) {
 -        return true;
 -     }
--  }
++
++  // On GSI builds, vendor binaries are not built with tagged pointer awareness
++  // and vendor kernel drivers (TEE, fingerprint SPI, etc.) often cannot handle
++  // tagged pointers in their copy_from_user paths. Disable all pointer tagging
++  // for vendor processes to avoid intermittent EINVAL failures.
++  if (is_vendor_prog) {
++    *level = M_HEAP_TAGGING_LEVEL_NONE;
++    return true;
+   }
  
    if (!is_debug_build) {
-       // ignore heap memory tagging setting overrides on user builds
+@@ -173,10 +157,12 @@ static bool get_environment_memtag_setting(HeapTaggingLevel* level) {
+   if (!get_config_from_env_or_sysprops("MEMTAG_OPTIONS", sys_prop_names, arraysize(sys_prop_names),
+                                        options_str, sizeof(options_str))) {
+-    return is_vendor_prog;
++    return false;
+   }
+ 
+   if (strcmp("sync", options_str) == 0) {
+@@ -185,10 +171,12 @@ static bool get_environment_memtag_setting(HeapTaggingLevel* level) {
+     *level = M_HEAP_TAGGING_LEVEL_ASYNC;
+   } else if (strcmp("off", options_str) == 0) {
+     *level = M_HEAP_TAGGING_LEVEL_TBI;
++  } else if (strcmp("none", options_str) == 0) {
++    *level = M_HEAP_TAGGING_LEVEL_NONE;
+   } else {
+     async_safe_format_log(
+         ANDROID_LOG_ERROR, "libc",
+-        "unrecognized memtag level: \"%s\" (options are \"sync\", \"async\", or \"off\").",
++        "unrecognized memtag level: \"%s\" (options are \"sync\", \"async\", \"off\", or \"none\").",
+         options_str);
+     return false;
+   }
+@@ -282,6 +270,14 @@ __attribute__((no_sanitize("hwaddress", "memtag"))) void __libc_init_mte(
+   if (memtag_stack) __libc_shared_globals()->initial_memtag_stack_abi = true;
+ 
++  // "none" means fully disable all pointer tagging (no MTE, no TBI). This is
++  // needed for processes that communicate with kernel drivers (e.g. TEE drivers)
++  // that cannot handle tagged pointers in their copy_from_user/copy_to_user paths.
++  if (level == M_HEAP_TAGGING_LEVEL_NONE) {
++    __libc_shared_globals()->initial_heap_tagging_level = M_HEAP_TAGGING_LEVEL_NONE;
++    __libc_shared_globals()->heap_tagging_upgrade_timer_sec = 0;
++    return;
++  }
++
+   if (int64_t timed_upgrade = __get_memtag_upgrade_secs()) {
+     if (level == M_HEAP_TAGGING_LEVEL_ASYNC) {
+       async_safe_format_log(ANDROID_LOG_INFO, "libc",
 -- 
 2.52.0
 
