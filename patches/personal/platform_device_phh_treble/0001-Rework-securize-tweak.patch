@@ -1,21 +1,21 @@
-From 1423a40a59b5d849e6161a3e7cdf0de003dcbad9 Mon Sep 17 00:00:00 2001
+From c81531690bb62bc4671bfa013a44a34cdd7f159c Mon Sep 17 00:00:00 2001
 From: Alberto Ponces <ponces26@gmail.com>
 Date: Wed, 25 Dec 2019 12:34:05 +0200
 Subject: [PATCH 1/3] Rework securize tweak
 
 ---
- base.mk             |  1 -
- phh-on-boot.sh      | 36 +++++++++++++++++++++++++++
- phh-prop-handler.sh | 11 +++++++
- rw-system.sh        | 108 +++++++++++++++++++++++++++++++++++-----------------------
- vndk.rc             | 11 +++++---
- 5 files changed, 121 insertions(+), 49 deletions(-)
+ base.mk             |   1 -
+ phh-on-boot.sh      |  36 ++++++++++++++
+ phh-prop-handler.sh |  11 +++++
+ rw-system.sh        | 112 ++++++++++++++++++++++++++------------------
+ vndk.rc             |  14 ++++--
+ 5 files changed, 125 insertions(+), 49 deletions(-)
 
 diff --git a/base.mk b/base.mk
-index bbf2ef0..47b45f6 100644
+index 9314eba..2f9a77a 100644
 --- a/base.mk
 +++ b/base.mk
-@@ -163,7 +163,6 @@ PRODUCT_PACKAGES += \
+@@ -169,7 +169,6 @@ PRODUCT_PACKAGES += \
      resetprop_phh
  
  PRODUCT_COPY_FILES += \
@@ -24,7 +24,7 @@ index bbf2ef0..47b45f6 100644
  
  PRODUCT_COPY_FILES += \
 diff --git a/phh-on-boot.sh b/phh-on-boot.sh
-index d2d5b0a..4e052bb 100644
+index d2d5b0a..f037615 100644
 --- a/phh-on-boot.sh
 +++ b/phh-on-boot.sh
 @@ -1,5 +1,41 @@
@@ -92,15 +92,14 @@ index d036f24..777d60d 100644
      if [[ "$prop_value" != "0" && "$prop_value" != "1" ]]; then
          exit 1
 diff --git a/rw-system.sh b/rw-system.sh
-index a7b94f6..cb64ea8 100644
+index 3ac9aa5..570d7f4 100644
 --- a/rw-system.sh
 +++ b/rw-system.sh
-@@ -785,74 +785,110 @@ copyprop() {
+@@ -800,74 +800,96 @@ copyprop() {
          resetprop_phh "$1" "$(getprop "$2")"
      fi
  }
 -if [ -f /system/phh/secure ] || [ -f /metadata/phh/secure ];then
-+
 +# Detect GSI system image changes before securize overwrites fingerprints.
 +# PackageManagerService uses PackagePartitions.FINGERPRINT (a SHA-1 digest of
 +# all partition fingerprint properties) to detect upgrades. Because securize
@@ -239,10 +238,10 @@ index a7b94f6..cb64ea8 100644
  
  for abi in "" 64;do
 diff --git a/vndk.rc b/vndk.rc
-index c2b8eae..876f445 100644
+index 2f56680..52985db 100644
 --- a/vndk.rc
 +++ b/vndk.rc
-@@ -34,6 +34,9 @@ on property:persist.sys.phh.oppo.dt2w=*
+@@ -36,6 +36,9 @@ on property:persist.sys.phh.oppo.dt2w=*
  on property:persist.sys.phh.oppo.gaming_mode=*
      exec u:r:phhsu_daemon:s0 root -- /system/bin/phh-prop-handler.sh "persist.sys.phh.oppo.gaming_mode"
  
@@ -252,7 +251,10 @@ index c2b8eae..876f445 100644
  on property:persist.sys.phh.oppo.usbotg=*
      exec u:r:phhsu_daemon:s0 root -- /system/bin/phh-prop-handler.sh "persist.sys.phh.oppo.usbotg"
  
-@@ -112,3 +115,8 @@ service watchdogd-gsi /system/bin/watchdogd 10 20
+@@ -112,6 +115,11 @@ service watchdogd-gsi /system/bin/watchdogd 10 20
+     disabled
+     seclabel u:r:watchdogd:s0
+ 
 -on property:persist.sys.phh.adb_secure=1
 -    exec u:r:phhsu_daemon:s0 root -- /system/bin/resetprop_phh ro.adb.secure 1
 -    restart adbd
@@ -264,5 +266,6 @@ index c2b8eae..876f445 100644
 +# hide adbd is running
 +on property:init.svc.adbd=*
 +    exec u:r:magisk:s0 root root -- /system/bin/resetprop_phh -n init.svc.adbd stopped
---
-2.49.0
+-- 
+2.52.0
+
