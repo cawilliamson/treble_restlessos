@@ -1,7 +1,7 @@
 From c9426d4b1a4980771654f961cb87c72d62432643 Mon Sep 17 00:00:00 2001
 From: Chris AW <chrisaw@localhost>
 Date: Mon, 16 Feb 2026 09:43:48 +0000
-Subject: [PATCH 4/4] KernelUtils: allow overriding kernel version via
+Subject: [PATCH 3/3] KernelUtils: allow overriding kernel version via
  ro.bpf.kver_override
 
 Add support for the ro.bpf.kver_override system property to fake the

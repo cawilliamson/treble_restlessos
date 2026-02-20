@@ -1,9 +1,16 @@
-From b20af2496aaa84b80ba358d61b37eeef691527b3 Mon Sep 17 00:00:00 2001
-From: "Christopher A. Williamson" <contact@chrisaw.io>
-Date: Wed, 4 Feb 2026 00:44:31 +0000
-Subject: [PATCH 2/4] Fix: Prevent NullPointerException in BpfNetMaps during UID
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Doze-off <Doze@off.com>
+Date: Wed, 16 Jul 2025 05:50:01 -0300
+Subject: [PATCH] Fix: Prevent NullPointerException in BpfNetMaps during UID
  removal
 
+This patch adds null checks and exception handling when removing UIDs
+from sLocalNetBlockedUidMap in BpfNetMaps and PermissionMonitor.
+It prevents potential system_server crashes during boot or app
+install/uninstall events on devices where the BPF UID map may be null.
+
+This change improves system stability and avoids random reboots
+also tested on custom roms, with old kernels 4.9 4.14
 ---
  service/src/com/android/server/BpfNetMaps.java  |  4 ++++
  .../server/connectivity/PermissionMonitor.java  | 17 ++++++++++++++---
@@ -53,5 +60,5 @@ index 519d998..6da1da2 100755
          // Get the appId permission from all users then send the latest permission to netd.
          final int appId = UserHandle.getAppId(uid);
 -- 
-2.52.0
+2.34.1
 

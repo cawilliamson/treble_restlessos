@@ -1,0 +1,34 @@
+From 6c5f4f865220e27cda2a9f4210023a7a10f5bafc Mon Sep 17 00:00:00 2001
+From: kyasu <kyasu.dev@gmail.com>
+Date: Thu, 15 Jan 2026 10:45:32 +0900
+Subject: [PATCH 1/4] bpfloader: Allow overriding kernel version
+
+This allows devices to pretend that they are on a different kernel version, in order to support different bpf features when kernel backports are in place.
+
+Test: set ro.bpf.kver_override=5.10.239 in product.prop on sm8250 device
+      based on 4.19 kernel with 5.10 bpf backported, skfilter_oom_kill
+      loaded: bpftool prog | grep skfilter_oom_k
+
+Change-Id: Ic32a279c562679408728483d5a5ed79a70af217d
+---
+ loader/bpfloader.rs | 4 ++++
+ 1 file changed, 4 insertions(+)
+
+diff --git a/loader/bpfloader.rs b/loader/bpfloader.rs
+index a9e599a..34e9b68 100644
+--- a/loader/bpfloader.rs
++++ b/loader/bpfloader.rs
+@@ -426,6 +426,10 @@ fn parse_release(release: &str) -> (u32, u32, u32) {
+ }
+ 
+ fn kernel_version() -> Result<u32, anyhow::Error> {
++    if let Some(kver_override) = system_properties::read("ro.bpf.kver_override")? {
++        let (major, minor, sub) = parse_release(&kver_override);
++        return Ok(kver(major, minor, sub));
++    }
+     let mut buf: MaybeUninit<utsname> = MaybeUninit::zeroed();
+     // SAFETY: If uname returns 0, the buf should be properly initialized.
+     if unsafe { uname(buf.as_mut_ptr()) } != 0 {
+-- 
+2.34.1
+
