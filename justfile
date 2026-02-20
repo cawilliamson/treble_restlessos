@@ -1,7 +1,7 @@
 # variables
-ANDROID_VERSION := env_var_or_default("ANDROID_VERSION", "16.0.0")
-ANDROID_VERSION_TAG := env_var_or_default("ANDROID_VERSION_TAG", "bp4a")
-GRAPHENEOS_BRANCH := env_var_or_default("GRAPHENEOS_BRANCH", "16-qpr2")
+GRAPHENEOS_RELEASE_CHANNEL := env_var_or_default("GRAPHENEOS_RELEASE_CHANNEL", "stable")
+GRAPHENEOS_TAG := env_var_or_default("GRAPHENEOS_TAG", "")
+GRAPHENEOS_BRANCH := env_var_or_default("GRAPHENEOS_BRANCH", "")
 BUILD_DATETIME := `date "+%s"`
 BUILD_NUMBER := `date "+%Y%m%d%H%M"`
 REPO_HOST := env_var_or_default("REPO_HOST", "https://github.com")
@@ -14,9 +14,6 @@ CONTAINER_RUN := "podman run --rm --privileged" + \
     " -v \"$(pwd):/repo:Z\"" + \
     " -v \"" + WEB_DIR + ":/web:Z\"" + \
     " -v \"$HOME/.ssh:/root/.ssh:Z\"" + \
-    " -e ANDROID_VERSION=\"" + ANDROID_VERSION + "\"" + \
-    " -e ANDROID_VERSION_TAG=\"" + ANDROID_VERSION_TAG + "\"" + \
-    " -e GRAPHENEOS_BRANCH=\"" + GRAPHENEOS_BRANCH + "\"" + \
     " -e BUILD_DATETIME=\"" + BUILD_DATETIME + "\"" + \
     " -e BUILD_NUMBER=\"" + BUILD_NUMBER + "\""
 
@@ -28,7 +25,45 @@ clean:
     rm -rfv out/ src/ tmp/
 
 # full build process - simple linear chain
-build-all: build-container sync-grapheneos-sources apply-patches build-treble-app build-arm64
+build-all: build-container resolve-grapheneos-tag sync-grapheneos-sources apply-patches build-treble-app build-arm64
+
+# resolve which grapheneos tag to build from
+# priority: GRAPHENEOS_TAG env var > auto-detect from releases API > GRAPHENEOS_BRANCH env var
+resolve-grapheneos-tag:
+    #!/usr/bin/env bash
+    set -euo pipefail
+    mkdir -p tmp/
+    # clean stale state from previous runs
+    rm -f tmp/.grapheneos_tag tmp/.grapheneos_branch
+    if [[ -n "{{GRAPHENEOS_TAG}}" ]]; then
+        echo "Using manually specified tag: {{GRAPHENEOS_TAG}}"
+        echo "{{GRAPHENEOS_TAG}}" > tmp/.grapheneos_tag
+    elif [[ -n "{{GRAPHENEOS_BRANCH}}" ]]; then
+        echo "WARNING: Building from branch '{{GRAPHENEOS_BRANCH}}' (HEAD) - not a stable release!"
+        echo "Set GRAPHENEOS_TAG or unset GRAPHENEOS_BRANCH to auto-detect the latest stable tag."
+        echo "{{GRAPHENEOS_BRANCH}}" > tmp/.grapheneos_branch
+    else
+        CHANNEL="{{GRAPHENEOS_RELEASE_CHANNEL}}"
+        echo "Fetching latest ${CHANNEL} GrapheneOS tag from releases page..."
+        # Extract tags directly from the releases page HTML. Each device/channel row
+        # has the structure: id={device}-{channel}><td>...<a href=#{tag}>{tag}</a>
+        # We grab all tags for the requested channel and take the highest one.
+        RELEASES_HTML=$(curl -sf "https://grapheneos.org/releases")
+        if [[ -z "${RELEASES_HTML}" ]]; then
+            echo "ERROR: Failed to fetch https://grapheneos.org/releases"
+            exit 1
+        fi
+        TAG=$(echo "${RELEASES_HTML}" \
+            | grep -oP "id=[a-z]+-${CHANNEL}><td>[^<]+</td><td><a href=#\K[0-9]{10}" \
+            | sort -rn \
+            | head -1)
+        if [[ -z "${TAG}" ]]; then
+            echo "ERROR: Failed to extract a valid ${CHANNEL} tag from releases page"
+            exit 1
+        fi
+        echo "Resolved latest ${CHANNEL} tag: ${TAG}"
+        echo "${TAG}" > tmp/.grapheneos_tag
+    fi
 
 # build the container image used for all build operations
 build-container:
@@ -40,12 +75,29 @@ sync-grapheneos-sources: build-container
     {{CONTAINER_RUN}} -w /repo/src gsi-builder \
         /bin/bash -e -c ' \
             echo "Syncing GrapheneOS sources..." && \
-            repo init -u https://github.com/GrapheneOS/platform_manifest.git -b ${GRAPHENEOS_BRANCH} --depth=1 --git-lfs && \
-            echo "${ANDROID_VERSION}" > /repo/tmp/.android_version && \
-            echo "${ANDROID_VERSION_TAG}" > /repo/tmp/.android_version_tag && \
+            GRAPHENEOS_TAG=$(cat /repo/tmp/.grapheneos_tag 2>/dev/null || true) && \
+            GRAPHENEOS_BRANCH=$(cat /repo/tmp/.grapheneos_branch 2>/dev/null || true) && \
+            if [[ -n "${GRAPHENEOS_TAG}" ]]; then \
+                echo "Initializing from stable tag: ${GRAPHENEOS_TAG}" && \
+                repo init -u https://github.com/GrapheneOS/platform_manifest.git -b "refs/tags/${GRAPHENEOS_TAG}" --depth=1 --git-lfs; \
+            elif [[ -n "${GRAPHENEOS_BRANCH}" ]]; then \
+                echo "Initializing from branch: ${GRAPHENEOS_BRANCH}" && \
+                repo init -u https://github.com/GrapheneOS/platform_manifest.git -b "${GRAPHENEOS_BRANCH}" --depth=1 --git-lfs; \
+            else \
+                echo "ERROR: No tag or branch resolved. Run resolve-grapheneos-tag first." && exit 1; \
+            fi && \
             mkdir -p .repo/local_manifests && \
             cp -v /repo/configs/manifests/*.xml .repo/local_manifests/ && \
-            while ! repo sync -j4 --force-sync --no-clone-bundle --no-tags; do sleep 30; done'
+            while ! repo sync -j4 --force-sync --no-clone-bundle --no-tags; do sleep 30; done && \
+            echo "Extracting ANDROID_VERSION from source tree..." && \
+            AOSP_TAG=$(grep -m1 "aosp_revision:" .repo/manifests/config.yml | sed "s/.*: *//") && \
+            ANDROID_VERSION=$(echo "${AOSP_TAG}" | sed "s/android-//;s/_r.*//") && \
+            echo "Detected ANDROID_VERSION: ${ANDROID_VERSION}" && \
+            echo "${ANDROID_VERSION}" > /repo/tmp/.android_version && \
+            echo "Extracting ANDROID_VERSION_TAG from source tree..." && \
+            ANDROID_VERSION_TAG=$(grep -m1 "target:" build/release/release_config_map.textproto | sed "s/.*\"//;s/\".*//") && \
+            echo "Detected ANDROID_VERSION_TAG: ${ANDROID_VERSION_TAG}" && \
+            echo "${ANDROID_VERSION_TAG}" > /repo/tmp/.android_version_tag'
 
 # apply patches in correct order: trebledroid -> staging -> personal
 apply-patches: build-container
