@@ -131,6 +131,7 @@ build-rom-image arch:
             popd && \
             rm -rfv out/target/product/tdgsi_{{arch}}_ab/ && \
             rm -fv /repo/tmp/*.img /repo/tmp/*.img.xz /repo/out/*.img.xz && \
+            rm -rf out/soong/.intermediates/prebuilts/ && \
             . build/envsetup.sh && \
             lunch treble_{{arch}}_bvN-${ANDROID_VERSION_TAG_VAL}-userdebug && \
             make systemimage -j$(nproc --all) && \
