@@ -130,6 +130,7 @@ build-rom-image arch:
                 bash generate.sh grapheneos && \
             popd && \
             rm -rfv out/target/product/tdgsi_{{arch}}_ab/ && \
+            rm -fv /repo/tmp/*.img /repo/tmp/*.img.xz /repo/out/*.img.xz && \
             . build/envsetup.sh && \
             lunch treble_{{arch}}_bvN-${ANDROID_VERSION_TAG_VAL}-userdebug && \
             make systemimage -j$(nproc --all) && \
@@ -154,6 +155,7 @@ compress-rom-image arch:
     {{CONTAINER_RUN}} -w /repo/tmp gsi-builder \
         /bin/bash -e -c ' \
             echo "Compressing ROM image..." && \
+            echo "{{BUILD_NUMBER}}" > /repo/tmp/.build_number && \
             ANDROID_VERSION=$(cat /repo/tmp/.android_version) && \
             VERSION_TAG="${ANDROID_VERSION}-{{BUILD_NUMBER}}" && \
             src="system_{{arch}}.img" && \
@@ -179,11 +181,12 @@ copy-to-webdir: build-container
     {{CONTAINER_RUN}} -w /repo/tmp gsi-builder \
         /bin/bash -e -c ' \
             echo "Copying to webdir..." && \
-            ANDROID_VERSION=$(cat /repo/tmp/.android_version); \
-            VERSION_TAG="${ANDROID_VERSION}-{{BUILD_NUMBER}}"; \
-            RELEASE_NAME="GrapheneOS-ab-${VERSION_TAG}"; \
+            ANDROID_VERSION=$(cat /repo/tmp/.android_version) && \
+            BUILD_NUM=$(cat /repo/tmp/.build_number) && \
+            VERSION_TAG="${ANDROID_VERSION}-${BUILD_NUM}" && \
+            RELEASE_NAME="GrapheneOS-ab-${VERSION_TAG}" && \
             mkdir -p "/web/${RELEASE_NAME}" && \
-            cp -fv *.img.xz "/web/${RELEASE_NAME}/" && \
+            cp -fv /repo/out/*.img.xz "/web/${RELEASE_NAME}/" && \
             echo "Images copied to /web/${RELEASE_NAME}/"'
 
 # step 7: upload images to github
@@ -193,7 +196,8 @@ upload-to-github:
         git init && \
         git remote add origin "{{REPO_HOST}}/{{REPO_PATH}}.git" && \
         ANDROID_VERSION=$(cat "../tmp/.android_version") && \
-        RELEASE_TAG="${ANDROID_VERSION}-{{BUILD_NUMBER}}" && \
+        BUILD_NUM=$(cat "../tmp/.build_number") && \
+        RELEASE_TAG="${ANDROID_VERSION}-${BUILD_NUM}" && \
         gh repo set-default "{{REPO_PATH}}" && \
         RELEASE_NAME="GrapheneOS-ab-${RELEASE_TAG}" && \
         RELEASE_DESCRIPTION="Download mirror: https://build.chrisaw.io/${RELEASE_NAME}/" && \
