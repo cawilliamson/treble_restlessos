@@ -1,7 +1,7 @@
-From 10c7bece6af3435b45cefac52796b630825d2335 Mon Sep 17 00:00:00 2001
+From cd2732af319910c95f882b478593cd2313e8056c Mon Sep 17 00:00:00 2001
 From: ChonDoit <thphantomblog@gmail.com>
 Date: Wed, 13 Aug 2025 16:16:36 +0100
-Subject: [PATCH 9/9] Add QS padding patch to Treble app
+Subject: [PATCH 09/13] Add QS padding patch to Treble app
 
 ---
  app/src/main/java/me/phh/treble/app/Misc.kt      | 16 ++++++++++++++++
@@ -73,4 +73,5 @@ index b737f28..79d1341 100644
      <PreferenceCategory android:title="Display">
          <ListPreference
 -- 
-2.49.0
+2.52.0
+

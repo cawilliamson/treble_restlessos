@@ -1,7 +1,7 @@
-From 9c824a54485c112f1308cf12d941ab9b74545fcc Mon Sep 17 00:00:00 2001
+From 820c3e6e942d442421c3ba066b03c136c6096f9f Mon Sep 17 00:00:00 2001
 From: ahnet-69 <syedmusicrealise@gmail.com>
 Date: Mon, 13 May 2024 10:25:26 +0000
-Subject: [PATCH 2/9] Move treble app to system menu
+Subject: [PATCH 02/13] Move treble app to system menu
 
 Co-Authored-By: ahnet-69 <www.rajsonu13@gmail.com>
 ---
@@ -23,4 +23,5 @@ index 25d3277..d1e06c9 100644
              <meta-data android:name="com.android.settings.title" android:resource="@string/title_activity_top_level"/>
              <meta-data android:name="com.android.settings.icon" android:resource="@drawable/ic_settings"/>
 -- 
-2.34.1
+2.52.0
+

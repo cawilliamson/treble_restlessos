@@ -1,0 +1,110 @@
+From 9211770cb3ce0a0a5e598efaddc7cf0322f3dfb9 Mon Sep 17 00:00:00 2001
+From: "Christopher A. Williamson" <contact@chrisaw.io>
+Date: Sat, 21 Feb 2026 23:36:48 +0000
+Subject: [PATCH 13/13] Fix projector auto focus by triggering
+ focus_auto_calibration
+
+The projector was always blurry because the auto focus was never
+triggered. The calibration table was sent to the Agold daemon via
+svc.cmd(), but the kernel driver's focus_auto_calibration sysfs node
+was never written to, so the focus motor never moved.
+
+Fix by writing to /sys/bus/spi/drivers/fpga_spi/focus_auto_calibration
+after the projector is fully initialized (projector_sys_status == 1).
+Also add an 'Auto focus' button in the UI to re-trigger focus on demand.
+---
+ .../main/java/me/phh/treble/app/Tank8849.kt   | 19 +++++++++++++++++++
+ .../me/phh/treble/app/Tank8849Settings.kt     | 10 ++++++++++
+ app/src/main/res/xml/pref_tank8849.xml        |  4 ++++
+ 3 files changed, 33 insertions(+)
+
+diff --git a/app/src/main/java/me/phh/treble/app/Tank8849.kt b/app/src/main/java/me/phh/treble/app/Tank8849.kt
+index e7f3d17..7471dcd 100644
+--- a/app/src/main/java/me/phh/treble/app/Tank8849.kt
++++ b/app/src/main/java/me/phh/treble/app/Tank8849.kt
+@@ -78,6 +78,14 @@ object Tank8849 : EntryStartup {
+         return false
+     }
+ 
++    private fun triggerAutoFocus() {
++        writeToFileNofail("$SYSFS_BASE/focus_auto_calibration", "1")
++        // Give the motor time to settle
++        Thread.sleep(500)
++        val result = readFileNofail("$SYSFS_BASE/focus_auto_calibration", "-1")
++        Log.d("PHH", "Tank8849 auto focus result: $result")
++    }
++
+     private fun enableProjector(sp: SharedPreferences) {
+         // The projector requires a display sleep/wake cycle to initialize
+         // the FPGA properly. Sequence from vendor:
+@@ -124,6 +132,10 @@ object Tank8849 : EntryStartup {
+             pm.wakeUp(SystemClock.uptimeMillis())
+             waitForSysStatus(1)
+ 
++            // Trigger auto focus now that projector is running
++            Log.d("PHH", "Tank8849 enable: triggering auto focus")
++            triggerAutoFocus()
++
+             // Restore AoD if it was enabled before
+             if (aodWasEnabled) {
+                 Log.d("PHH", "Tank8849 enable: restoring AoD")
+@@ -187,6 +199,13 @@ object Tank8849 : EntryStartup {
+                 val value = sp.getString(key, "0") ?: "0"
+                 writeToFileNofail("$SYSFS_BASE/projector_pitch_set", value)
+             }
++            Tank8849Settings.autoFocus -> {
++                Log.d("PHH", "Tank8849 manual auto focus trigger")
++                thread {
++                    sendCalibration(sp)
++                    triggerAutoFocus()
++                }
++            }
+             Tank8849Settings.focusCalibration -> {
+                 sendCalibration(sp)
+             }
+diff --git a/app/src/main/java/me/phh/treble/app/Tank8849Settings.kt b/app/src/main/java/me/phh/treble/app/Tank8849Settings.kt
+index 372fed6..a4a2136 100644
+--- a/app/src/main/java/me/phh/treble/app/Tank8849Settings.kt
++++ b/app/src/main/java/me/phh/treble/app/Tank8849Settings.kt
+@@ -15,6 +15,7 @@ object Tank8849Settings : Settings {
+     val displayEnabled = "tank8849_display_enabled"
+     val brightness = "tank8849_brightness"
+     val keystone = "tank8849_keystone"
++    val autoFocus = "tank8849_auto_focus"
+     val focusCalibration = "tank8849_focus_calibration"
+     val focusAdjust = "tank8849_focus_adjust"
+     val fanSpeed = "tank8849_fan_speed"
+@@ -37,6 +38,15 @@ class Tank8849SettingsFragment : SettingsFragment() {
+     override fun onCreatePreferences(savedInstanceState: Bundle?, rootKey: String?) {
+         super.onCreatePreferences(savedInstanceState, rootKey)
+ 
++        // Auto focus button: toggle a boolean pref to trigger the spListener
++        val afPref = findPreference<androidx.preference.Preference>("tank8849_auto_focus")
++        afPref?.setOnPreferenceClickListener {
++            val sp = preferenceManager.sharedPreferences ?: return@setOnPreferenceClickListener false
++            val current = sp.getBoolean(Tank8849Settings.autoFocus, false)
++            sp.edit().putBoolean(Tank8849Settings.autoFocus, !current).apply()
++            true
++        }
++
+         // Show temperature as a read-only summary
+         val tempPref = findPreference<androidx.preference.Preference>("tank8849_temp_display")
+         try {
+diff --git a/app/src/main/res/xml/pref_tank8849.xml b/app/src/main/res/xml/pref_tank8849.xml
+index 8e2122e..ad4b3d0 100644
+--- a/app/src/main/res/xml/pref_tank8849.xml
++++ b/app/src/main/res/xml/pref_tank8849.xml
+@@ -62,6 +62,10 @@
+             app:summary="Adjust keystone pitch" />
+     </PreferenceCategory>
+     <PreferenceCategory android:title="Focus">
++        <Preference
++            android:key="tank8849_auto_focus"
++            android:title="Auto focus"
++            app:summary="Trigger auto focus using the laser rangefinder" />
+         <EditTextPreference
+             android:defaultValue="550,720,711,696,685,672,663,649,638,626,614,599,587,561,548,538,538"
+             android:key="tank8849_focus_calibration"
+-- 
+2.52.0
+

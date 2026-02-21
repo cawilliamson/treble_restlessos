@@ -1,7 +1,8 @@
-From 32780e469c8800b9dcd986505c13f3560cfce6ac Mon Sep 17 00:00:00 2001
+From 4a52211b78bce4c54c5a035d5902dafb23dca060 Mon Sep 17 00:00:00 2001
 From: ChonDoit <thphantomblog@gmail.com>
 Date: Mon, 10 Mar 2025 23:08:52 -0300
-Subject: [PATCH 4/9] Add toggle to disable Bluetooth LE APCF extended features
+Subject: [PATCH 04/13] Add toggle to disable Bluetooth LE APCF extended
+ features
 
 ---
  app/src/main/java/me/phh/treble/app/Misc.kt         | 4 ++++
@@ -34,7 +35,7 @@ index 58612c6..97558cc 100644
      val escoTransportUnitSize = "key_misc_esco_transport_unit_size"
 +    val disableLeApcfExtended = "key_misc_disable_le_apcfe"
      val treatVirtualSensorsAsReal = "key_misc_treat_virtual_sensors_as_real"
-
+ 
      override fun enabled() = true
 diff --git a/app/src/main/res/xml/pref_misc.xml b/app/src/main/res/xml/pref_misc.xml
 index 2016122..a880bcf 100644
@@ -52,5 +53,6 @@ index 2016122..a880bcf 100644
          <ListPreference
              android:defaultValue="0"
              android:entries="@array/pref_misc_bluetooth"
---
-2.49.0
+-- 
+2.52.0
+

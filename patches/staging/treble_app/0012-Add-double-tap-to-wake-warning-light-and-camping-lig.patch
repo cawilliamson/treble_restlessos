@@ -1,0 +1,146 @@
+From 8715f7ae9198ed487755bf2fd3bfbd1f0ea997a2 Mon Sep 17 00:00:00 2001
+From: "Christopher A. Williamson" <contact@chrisaw.io>
+Date: Sat, 21 Feb 2026 23:35:37 +0000
+Subject: [PATCH 12/13] Add double-tap to wake, warning light, and camping
+ light controls
+
+Add three new 8849-specific hardware features to the settings menu:
+
+- Double-tap to wake (ioctl 100): toggle on/off, restored on boot
+- Warning light (ioctl 310): off, red, blue, green
+- Camping light (ioctl 301): off, full, medium, low, fast flash, SOS
+
+Ioctl values sourced from vendor Agold HAL reverse engineering.
+---
+ .../main/java/me/phh/treble/app/Tank8849.kt   | 18 ++++++++++++
+ .../me/phh/treble/app/Tank8849Settings.kt     |  3 ++
+ app/src/main/res/values/arrays_tank8849.xml   | 28 +++++++++++++++++++
+ app/src/main/res/xml/pref_tank8849.xml        | 25 +++++++++++++++++
+ 4 files changed, 74 insertions(+)
+
+diff --git a/app/src/main/java/me/phh/treble/app/Tank8849.kt b/app/src/main/java/me/phh/treble/app/Tank8849.kt
+index add07a5..e7f3d17 100644
+--- a/app/src/main/java/me/phh/treble/app/Tank8849.kt
++++ b/app/src/main/java/me/phh/treble/app/Tank8849.kt
+@@ -140,6 +140,22 @@ object Tank8849 : EntryStartup {
+ 
+     val spListener = SharedPreferences.OnSharedPreferenceChangeListener { sp, key ->
+         when (key) {
++            Tank8849Settings.dt2w -> {
++                val enabled = sp.getBoolean(key, false)
++                val v = if (enabled) 1 else 0
++                Log.d("PHH", "Tank8849 dt2w: $enabled")
++                sendIoctl(100, 0, v, v)
++            }
++            Tank8849Settings.warningLight -> {
++                val value = (sp.getString(key, "0") ?: "0").toInt()
++                Log.d("PHH", "Tank8849 warning light: $value")
++                sendIoctl(310, 0, value, 0)
++            }
++            Tank8849Settings.campingLight -> {
++                val value = (sp.getString(key, "0") ?: "0").toInt()
++                Log.d("PHH", "Tank8849 camping light: $value")
++                sendIoctl(301, 0, value, 0)
++            }
+             Tank8849Settings.projectorEnabled -> {
+                 val enabled = sp.getBoolean(key, false)
+                 if (enabled) {
+@@ -194,6 +210,8 @@ object Tank8849 : EntryStartup {
+         val sp = PreferenceManager.getDefaultSharedPreferences(ctxt)
+         sp.registerOnSharedPreferenceChangeListener(spListener)
+ 
++        // Restore dt2w state on boot
++        spListener.onSharedPreferenceChanged(sp, Tank8849Settings.dt2w)
+         // Refresh fan speed on boot (don't auto-enable projector on boot)
+         spListener.onSharedPreferenceChanged(sp, Tank8849Settings.fanSpeed)
+     }
+diff --git a/app/src/main/java/me/phh/treble/app/Tank8849Settings.kt b/app/src/main/java/me/phh/treble/app/Tank8849Settings.kt
+index e36f88a..372fed6 100644
+--- a/app/src/main/java/me/phh/treble/app/Tank8849Settings.kt
++++ b/app/src/main/java/me/phh/treble/app/Tank8849Settings.kt
+@@ -7,6 +7,9 @@ import vendor.mediatek.hardware.agolddaemon.IAgoldDaemon
+ import java.io.File
+ 
+ object Tank8849Settings : Settings {
++    val dt2w = "tank8849_dt2w"
++    val warningLight = "tank8849_warning_light"
++    val campingLight = "tank8849_camping_light"
+     val projectorEnabled = "tank8849_projector_enabled"
+     val projectorMode = "tank8849_projector_mode"
+     val displayEnabled = "tank8849_display_enabled"
+diff --git a/app/src/main/res/values/arrays_tank8849.xml b/app/src/main/res/values/arrays_tank8849.xml
+index e27ec42..5ffe677 100644
+--- a/app/src/main/res/values/arrays_tank8849.xml
++++ b/app/src/main/res/values/arrays_tank8849.xml
+@@ -10,4 +10,32 @@
+         <item>3</item>
+         <item>6</item>
+     </string-array>
++    <string-array name="pref_tank8849_warning_light">
++        <item>Off</item>
++        <item>Red</item>
++        <item>Blue</item>
++        <item>Green</item>
++    </string-array>
++    <string-array name="pref_tank8849_warning_light_values">
++        <item>0</item>
++        <item>1</item>
++        <item>16</item>
++        <item>256</item>
++    </string-array>
++    <string-array name="pref_tank8849_camping_light">
++        <item>Off</item>
++        <item>Full</item>
++        <item>Medium</item>
++        <item>Low</item>
++        <item>Fast flash</item>
++        <item>SOS flash</item>
++    </string-array>
++    <string-array name="pref_tank8849_camping_light_values">
++        <item>0</item>
++        <item>1</item>
++        <item>2</item>
++        <item>3</item>
++        <item>4</item>
++        <item>5</item>
++    </string-array>
+ </resources>
+diff --git a/app/src/main/res/xml/pref_tank8849.xml b/app/src/main/res/xml/pref_tank8849.xml
+index b264dea..8e2122e 100644
+--- a/app/src/main/res/xml/pref_tank8849.xml
++++ b/app/src/main/res/xml/pref_tank8849.xml
+@@ -1,6 +1,31 @@
+ <?xml version="1.0" encoding="utf-8"?>
+ <PreferenceScreen xmlns:app="http://schemas.android.com/apk/res-auto"
+     xmlns:android="http://schemas.android.com/apk/res/android">
++    <PreferenceCategory android:title="Input">
++        <CheckBoxPreference
++            android:layout_width="wrap_content"
++            android:layout_height="wrap_content"
++            android:defaultValue="false"
++            android:key="tank8849_dt2w"
++            android:title="Double-tap to wake"
++            app:summary="Wake the device by double-tapping the screen" />
++    </PreferenceCategory>
++    <PreferenceCategory android:title="Lights">
++        <ListPreference
++            android:defaultValue="0"
++            android:entries="@array/pref_tank8849_warning_light"
++            android:entryValues="@array/pref_tank8849_warning_light_values"
++            android:key="tank8849_warning_light"
++            android:title="Warning light"
++            app:summary="LED warning light color" />
++        <ListPreference
++            android:defaultValue="0"
++            android:entries="@array/pref_tank8849_camping_light"
++            android:entryValues="@array/pref_tank8849_camping_light_values"
++            android:key="tank8849_camping_light"
++            android:title="Camping light"
++            app:summary="Camping light mode" />
++    </PreferenceCategory>
+     <PreferenceCategory android:title="Projector controls">
+         <CheckBoxPreference
+             android:layout_width="wrap_content"
+-- 
+2.52.0
+

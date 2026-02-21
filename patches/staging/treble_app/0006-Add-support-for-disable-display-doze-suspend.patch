@@ -1,7 +1,7 @@
-From 90ce7514d649854eba035f7f5e7f23b57d768179 Mon Sep 17 00:00:00 2001
+From a43af3266af36a6410f66e9c8c27f5ffff7e6725 Mon Sep 17 00:00:00 2001
 From: "Christopher A. Williamson" <contact@chrisaw.io>
 Date: Tue, 27 May 2025 09:38:53 +0100
-Subject: [PATCH 6/9] Add support for disable display doze suspend
+Subject: [PATCH 06/13] Add support for disable display doze suspend
 
 ---
  app/src/main/java/me/phh/treble/app/Misc.kt         | 4 ++++
@@ -10,10 +10,10 @@ Subject: [PATCH 6/9] Add support for disable display doze suspend
  3 files changed, 9 insertions(+)
 
 diff --git a/app/src/main/java/me/phh/treble/app/Misc.kt b/app/src/main/java/me/phh/treble/app/Misc.kt
-index 709eafe..50f545f 100644
+index 927338b..e020a33 100644
 --- a/app/src/main/java/me/phh/treble/app/Misc.kt
 +++ b/app/src/main/java/me/phh/treble/app/Misc.kt
-@@ -257,6 +257,10 @@ object Misc: EntryStartup {
+@@ -251,6 +251,10 @@ object Misc: EntryStartup {
                  SystemProperties.set("persist.sys.overlay.aod", if (value) "true" else "false")
                  OverlayPicker.setOverlayEnabled("me.phh.treble.overlay.misc.aod_systemui", value)
              }
@@ -25,10 +25,10 @@ index 709eafe..50f545f 100644
                  // Asus dt2w
                  val value = sp.getBoolean(key, false)
 diff --git a/app/src/main/java/me/phh/treble/app/MiscSettings.kt b/app/src/main/java/me/phh/treble/app/MiscSettings.kt
-index 4f0c5a6..3da0f2a 100644
+index 97558cc..afdcb46 100644
 --- a/app/src/main/java/me/phh/treble/app/MiscSettings.kt
 +++ b/app/src/main/java/me/phh/treble/app/MiscSettings.kt
-@@ -38,6 +38,7 @@ object MiscSettings : Settings {
+@@ -36,6 +36,7 @@ object MiscSettings : Settings {
      var patchSmsc = "key_misc_patch_smsc";
      val minimalBrightness = "key_misc_minimal_brightness"
      val aod = "key_misc_aod"
@@ -37,10 +37,10 @@ index 4f0c5a6..3da0f2a 100644
      val restartSystemUI = "key_misc_restart_systemui"
      val fodColor = "key_misc_fod_color"
 diff --git a/app/src/main/res/xml/pref_misc.xml b/app/src/main/res/xml/pref_misc.xml
-index 8ceafba..2f7e143 100644
+index a880bcf..17bd35d 100644
 --- a/app/src/main/res/xml/pref_misc.xml
 +++ b/app/src/main/res/xml/pref_misc.xml
-@@ -107,6 +107,10 @@
+@@ -69,6 +69,10 @@
              android:defaultValue="false"
              android:key="key_misc_aod"
              android:title="Force allow Always-On Display" />
@@ -51,5 +51,6 @@ index 8ceafba..2f7e143 100644
          <SwitchPreference
              android:defaultValue="false"
              android:key="key_misc_mediatek_touch_hint_rotate"
---
-2.47.2
+-- 
+2.52.0
+

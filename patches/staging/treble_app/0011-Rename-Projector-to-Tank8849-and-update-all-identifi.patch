@@ -1,0 +1,413 @@
+From 0cca04509058a72a52c82880651705852aba0e22 Mon Sep 17 00:00:00 2001
+From: "Christopher A. Williamson" <contact@chrisaw.io>
+Date: Sat, 21 Feb 2026 23:34:34 +0000
+Subject: [PATCH 11/13] Rename Projector to Tank8849 and update all identifiers
+
+Rename all classes, files, preference keys, array resources, and log
+messages from Projector/projector_ to Tank8849/tank8849_. The menu
+entry is now labeled "8849" instead of "Projector".
+
+Sysfs hardware paths (projector_sys_status, projector_rgb_current, etc.)
+are left unchanged as they are kernel-defined.
+---
+ .../java/me/phh/treble/app/EntryService.kt    |  2 +-
+ .../me/phh/treble/app/SettingsActivity.kt     |  6 +--
+ .../treble/app/{Projector.kt => Tank8849.kt}  | 44 +++++++++----------
+ ...ojectorSettings.kt => Tank8849Settings.kt} | 28 ++++++------
+ ...rays_projector.xml => arrays_tank8849.xml} |  4 +-
+ app/src/main/res/xml/pref_headers.xml         |  4 +-
+ .../{pref_projector.xml => pref_tank8849.xml} | 26 +++++------
+ 7 files changed, 57 insertions(+), 57 deletions(-)
+ rename app/src/main/java/me/phh/treble/app/{Projector.kt => Tank8849.kt} (82%)
+ rename app/src/main/java/me/phh/treble/app/{ProjectorSettings.kt => Tank8849Settings.kt} (70%)
+ rename app/src/main/res/values/{arrays_projector.xml => arrays_tank8849.xml} (73%)
+ rename app/src/main/res/xml/{pref_projector.xml => pref_tank8849.xml} (78%)
+
+diff --git a/app/src/main/java/me/phh/treble/app/EntryService.kt b/app/src/main/java/me/phh/treble/app/EntryService.kt
+index 281dacd..a66f3e7 100644
+--- a/app/src/main/java/me/phh/treble/app/EntryService.kt
++++ b/app/src/main/java/me/phh/treble/app/EntryService.kt
+@@ -53,7 +53,7 @@ class EntryService: Service() {
+             tryC { Qualcomm.startup(this) }
+             tryC { Vsmart.startup(this) }
+             tryC { Nubia.startup(this) }
+-            tryC { Projector.startup(this) }
++            tryC { Tank8849.startup(this) }
+             tryC { Ims.startup(this) }
+             tryC { Custom.startup(this) }
+             tryC { Hct.startup(this) }
+diff --git a/app/src/main/java/me/phh/treble/app/SettingsActivity.kt b/app/src/main/java/me/phh/treble/app/SettingsActivity.kt
+index 5106f2d..6ed0103 100644
+--- a/app/src/main/java/me/phh/treble/app/SettingsActivity.kt
++++ b/app/src/main/java/me/phh/treble/app/SettingsActivity.kt
+@@ -73,8 +73,8 @@ class SettingsActivity : PreferenceActivity() {
+             target.removeIf { it.fragment == MyDeviceSettingsFragment::class.java.name }
+         if (!NubiaSettings.enabled())
+             target.removeIf { it.fragment == NubiaSettingsFragment::class.java.name }
+-        if (!ProjectorSettings.enabled())
+-            target.removeIf { it.fragment == ProjectorSettingsFragment::class.java.name }
++        if (!Tank8849Settings.enabled())
++            target.removeIf { it.fragment == Tank8849SettingsFragment::class.java.name }
+         if (!ImsSettings.enabled())
+             target.removeIf { it.fragment == ImsSettingsFragment::class.java.name }
+         if (!CustomSettings.enabled())
+@@ -104,7 +104,7 @@ class SettingsActivity : PreferenceActivity() {
+                 || VsmartSettingsFragment::class.java.name == fragmentName
+                 || MyDeviceSettingsFragment::class.java.name == fragmentName
+                 || NubiaSettingsFragment::class.java.name == fragmentName
+-                || ProjectorSettingsFragment::class.java.name == fragmentName
++                || Tank8849SettingsFragment::class.java.name == fragmentName
+                 || ImsSettingsFragment::class.java.name == fragmentName
+                 || CustomSettingsFragment::class.java.name == fragmentName
+                 || AudioEffectsFragment::class.java.name == fragmentName
+diff --git a/app/src/main/java/me/phh/treble/app/Projector.kt b/app/src/main/java/me/phh/treble/app/Tank8849.kt
+similarity index 82%
+rename from app/src/main/java/me/phh/treble/app/Projector.kt
+rename to app/src/main/java/me/phh/treble/app/Tank8849.kt
+index 7868300..add07a5 100644
+--- a/app/src/main/java/me/phh/treble/app/Projector.kt
++++ b/app/src/main/java/me/phh/treble/app/Tank8849.kt
+@@ -13,7 +13,7 @@ import vendor.mediatek.hardware.agolddaemon.IAgoldDaemon
+ import java.io.File
+ import kotlin.concurrent.thread
+ 
+-object Projector : EntryStartup {
++object Tank8849 : EntryStartup {
+     private const val SYSFS_BASE = "/sys/bus/spi/drivers/fpga_spi"
+     private const val DEFAULT_CALIBRATION = "550,720,711,696,685,672,663,649,638,626,614,599,587,561,548,538,538"
+     private var powerManager: PowerManager? = null
+@@ -57,11 +57,11 @@ object Projector : EntryStartup {
+     }
+ 
+     private fun sendCalibration(sp: SharedPreferences) {
+-        val calibration = sp.getString(ProjectorSettings.focusCalibration, DEFAULT_CALIBRATION) ?: DEFAULT_CALIBRATION
++        val calibration = sp.getString(Tank8849Settings.focusCalibration, DEFAULT_CALIBRATION) ?: DEFAULT_CALIBRATION
+         val svc = getAgoldService() ?: return
+         try {
+             svc.cmd(calibration, null)
+-            Log.d("PHH", "Projector focus calibration sent: $calibration")
++            Log.d("PHH", "Tank8849 focus calibration sent: $calibration")
+         } catch (t: Throwable) {
+             Log.d("PHH", "Focus calibration failed", t)
+         }
+@@ -90,11 +90,11 @@ object Projector : EntryStartup {
+         // 7. Wait for projector_sys_status == 1
+         // 8. Restore AoD to its previous state
+         thread {
+-            val mode = sp.getString(ProjectorSettings.projectorMode, "3") ?: "3"
++            val mode = sp.getString(Tank8849Settings.projectorMode, "3") ?: "3"
+             val pm = powerManager ?: return@thread
+             val cr = contentResolver ?: return@thread
+ 
+-            Log.d("PHH", "Projector enable: sending calibration")
++            Log.d("PHH", "Tank8849 enable: sending calibration")
+             sendCalibration(sp)
+ 
+             // Save and disable AoD so goToSleep fully turns off the display
+@@ -103,7 +103,7 @@ object Projector : EntryStartup {
+             } catch (t: Throwable) { false }
+ 
+             if (aodWasEnabled) {
+-                Log.d("PHH", "Projector enable: temporarily disabling AoD")
++                Log.d("PHH", "Tank8849 enable: temporarily disabling AoD")
+                 try {
+                     Settings.Secure.putInt(cr, Settings.Secure.DOZE_ALWAYS_ON, 0)
+                 } catch (t: Throwable) {
+@@ -113,20 +113,20 @@ object Projector : EntryStartup {
+                 Thread.sleep(200)
+             }
+ 
+-            Log.d("PHH", "Projector enable: sleeping display")
++            Log.d("PHH", "Tank8849 enable: sleeping display")
+             pm.goToSleep(SystemClock.uptimeMillis())
+             waitForSysStatus(0)
+ 
+-            Log.d("PHH", "Projector enable: sending ioctl 500 0 $mode 0")
++            Log.d("PHH", "Tank8849 enable: sending ioctl 500 0 $mode 0")
+             sendIoctl(500, 0, mode.toInt(), 0)
+ 
+-            Log.d("PHH", "Projector enable: waking display")
++            Log.d("PHH", "Tank8849 enable: waking display")
+             pm.wakeUp(SystemClock.uptimeMillis())
+             waitForSysStatus(1)
+ 
+             // Restore AoD if it was enabled before
+             if (aodWasEnabled) {
+-                Log.d("PHH", "Projector enable: restoring AoD")
++                Log.d("PHH", "Tank8849 enable: restoring AoD")
+                 try {
+                     Settings.Secure.putInt(cr, Settings.Secure.DOZE_ALWAYS_ON, 1)
+                 } catch (t: Throwable) {
+@@ -134,13 +134,13 @@ object Projector : EntryStartup {
+                 }
+             }
+ 
+-            Log.d("PHH", "Projector enable: done")
++            Log.d("PHH", "Tank8849 enable: done")
+         }
+     }
+ 
+     val spListener = SharedPreferences.OnSharedPreferenceChangeListener { sp, key ->
+         when (key) {
+-            ProjectorSettings.projectorEnabled -> {
++            Tank8849Settings.projectorEnabled -> {
+                 val enabled = sp.getBoolean(key, false)
+                 if (enabled) {
+                     enableProjector(sp)
+@@ -148,14 +148,14 @@ object Projector : EntryStartup {
+                     sendIoctl(500, 0, 0, 0)
+                 }
+             }
+-            ProjectorSettings.projectorMode -> {
+-                val enabled = sp.getBoolean(ProjectorSettings.projectorEnabled, false)
++            Tank8849Settings.projectorMode -> {
++                val enabled = sp.getBoolean(Tank8849Settings.projectorEnabled, false)
+                 if (enabled) {
+                     val mode = sp.getString(key, "3") ?: "3"
+                     sendIoctl(500, 0, mode.toInt(), 0)
+                 }
+             }
+-            ProjectorSettings.displayEnabled -> {
++            Tank8849Settings.displayEnabled -> {
+                 val enabled = sp.getBoolean(key, true)
+                 if (enabled) {
+                     sendIoctl(500, 0, 0, 3)
+@@ -163,22 +163,22 @@ object Projector : EntryStartup {
+                     sendIoctl(500, 0, 0, 4)
+                 }
+             }
+-            ProjectorSettings.brightness -> {
++            Tank8849Settings.brightness -> {
+                 val value = sp.getString(key, "128") ?: "128"
+                 writeToFileNofail("$SYSFS_BASE/projector_rgb_current", value)
+             }
+-            ProjectorSettings.keystone -> {
++            Tank8849Settings.keystone -> {
+                 val value = sp.getString(key, "0") ?: "0"
+                 writeToFileNofail("$SYSFS_BASE/projector_pitch_set", value)
+             }
+-            ProjectorSettings.focusCalibration -> {
++            Tank8849Settings.focusCalibration -> {
+                 sendCalibration(sp)
+             }
+-            ProjectorSettings.focusAdjust -> {
++            Tank8849Settings.focusAdjust -> {
+                 val value = sp.getString(key, "0") ?: "0"
+                 writeToFileNofail("$SYSFS_BASE/motor_turn_mode_step", value)
+             }
+-            ProjectorSettings.fanSpeed -> {
++            Tank8849Settings.fanSpeed -> {
+                 val value = sp.getString(key, "50") ?: "50"
+                 writeToFileNofail("$SYSFS_BASE/projector_fan_en", value)
+             }
+@@ -186,7 +186,7 @@ object Projector : EntryStartup {
+     }
+ 
+     override fun startup(ctxt: Context) {
+-        if (!ProjectorSettings.enabled()) return
++        if (!Tank8849Settings.enabled()) return
+ 
+         powerManager = ctxt.getSystemService(Context.POWER_SERVICE) as PowerManager
+         contentResolver = ctxt.contentResolver
+@@ -195,6 +195,6 @@ object Projector : EntryStartup {
+         sp.registerOnSharedPreferenceChangeListener(spListener)
+ 
+         // Refresh fan speed on boot (don't auto-enable projector on boot)
+-        spListener.onSharedPreferenceChanged(sp, ProjectorSettings.fanSpeed)
++        spListener.onSharedPreferenceChanged(sp, Tank8849Settings.fanSpeed)
+     }
+ }
+diff --git a/app/src/main/java/me/phh/treble/app/ProjectorSettings.kt b/app/src/main/java/me/phh/treble/app/Tank8849Settings.kt
+similarity index 70%
+rename from app/src/main/java/me/phh/treble/app/ProjectorSettings.kt
+rename to app/src/main/java/me/phh/treble/app/Tank8849Settings.kt
+index bc26979..e36f88a 100644
+--- a/app/src/main/java/me/phh/treble/app/ProjectorSettings.kt
++++ b/app/src/main/java/me/phh/treble/app/Tank8849Settings.kt
+@@ -6,15 +6,15 @@ import android.util.Log
+ import vendor.mediatek.hardware.agolddaemon.IAgoldDaemon
+ import java.io.File
+ 
+-object ProjectorSettings : Settings {
+-    val projectorEnabled = "projector_enabled"
+-    val projectorMode = "projector_mode"
+-    val displayEnabled = "projector_display_enabled"
+-    val brightness = "projector_brightness"
+-    val keystone = "projector_keystone"
+-    val focusCalibration = "projector_focus_calibration"
+-    val focusAdjust = "projector_focus_adjust"
+-    val fanSpeed = "projector_fan_speed"
++object Tank8849Settings : Settings {
++    val projectorEnabled = "tank8849_projector_enabled"
++    val projectorMode = "tank8849_projector_mode"
++    val displayEnabled = "tank8849_display_enabled"
++    val brightness = "tank8849_brightness"
++    val keystone = "tank8849_keystone"
++    val focusCalibration = "tank8849_focus_calibration"
++    val focusAdjust = "tank8849_focus_adjust"
++    val fanSpeed = "tank8849_fan_speed"
+ 
+     override fun enabled(): Boolean {
+         try {
+@@ -22,20 +22,20 @@ object ProjectorSettings : Settings {
+             if (binder == null) return false
+             return File("/sys/bus/spi/drivers/fpga_spi/projector_sys_status").exists()
+         } catch (t: Throwable) {
+-            Log.d("PHH", "Projector detection failed", t)
++            Log.d("PHH", "Tank8849 detection failed", t)
+             return false
+         }
+     }
+ }
+ 
+-class ProjectorSettingsFragment : SettingsFragment() {
+-    override val preferencesResId = R.xml.pref_projector
++class Tank8849SettingsFragment : SettingsFragment() {
++    override val preferencesResId = R.xml.pref_tank8849
+ 
+     override fun onCreatePreferences(savedInstanceState: Bundle?, rootKey: String?) {
+         super.onCreatePreferences(savedInstanceState, rootKey)
+ 
+         // Show temperature as a read-only summary
+-        val tempPref = findPreference<androidx.preference.Preference>("projector_temp_display")
++        val tempPref = findPreference<androidx.preference.Preference>("tank8849_temp_display")
+         try {
+             val temp = File("/sys/bus/spi/drivers/fpga_spi/projector_temp").readText().trim()
+             tempPref?.summary = "${temp}\u00B0C"
+@@ -44,7 +44,7 @@ class ProjectorSettingsFragment : SettingsFragment() {
+         }
+ 
+         // Show laser distance as a read-only summary, hide if hardware absent
+-        val laserPref = findPreference<androidx.preference.Preference>("projector_laser_display")
++        val laserPref = findPreference<androidx.preference.Preference>("tank8849_laser_display")
+         if (!File("/sys/nds03_ctrl/nds03_read").exists()) {
+             laserPref?.isVisible = false
+         } else {
+diff --git a/app/src/main/res/values/arrays_projector.xml b/app/src/main/res/values/arrays_tank8849.xml
+similarity index 73%
+rename from app/src/main/res/values/arrays_projector.xml
+rename to app/src/main/res/values/arrays_tank8849.xml
+index 60ddd68..e27ec42 100644
+--- a/app/src/main/res/values/arrays_projector.xml
++++ b/app/src/main/res/values/arrays_tank8849.xml
+@@ -1,11 +1,11 @@
+ <?xml version="1.0" encoding="utf-8"?>
+ <resources>
+-    <string-array name="pref_projector_mode">
++    <string-array name="pref_tank8849_mode">
+         <item>Portrait</item>
+         <item>Landscape</item>
+         <item>Landscape (inverted)</item>
+     </string-array>
+-    <string-array name="pref_projector_mode_values">
++    <string-array name="pref_tank8849_mode_values">
+         <item>1</item>
+         <item>3</item>
+         <item>6</item>
+diff --git a/app/src/main/res/xml/pref_headers.xml b/app/src/main/res/xml/pref_headers.xml
+index 76c123d..a33546d 100644
+--- a/app/src/main/res/xml/pref_headers.xml
++++ b/app/src/main/res/xml/pref_headers.xml
+@@ -36,8 +36,8 @@
+         android:fragment="me.phh.treble.app.AsusSettingsFragment"
+         android:title="Asus features" />
+     <header
+-        android:fragment="me.phh.treble.app.ProjectorSettingsFragment"
+-        android:title="Projector" />
++        android:fragment="me.phh.treble.app.Tank8849SettingsFragment"
++        android:title="8849" />
+     <header
+         android:fragment="me.phh.treble.app.DozeSettingsFragment"
+         android:title="Doze features" />
+diff --git a/app/src/main/res/xml/pref_projector.xml b/app/src/main/res/xml/pref_tank8849.xml
+similarity index 78%
+rename from app/src/main/res/xml/pref_projector.xml
+rename to app/src/main/res/xml/pref_tank8849.xml
+index 0644451..b264dea 100644
+--- a/app/src/main/res/xml/pref_projector.xml
++++ b/app/src/main/res/xml/pref_tank8849.xml
+@@ -1,68 +1,68 @@
+ <?xml version="1.0" encoding="utf-8"?>
+ <PreferenceScreen xmlns:app="http://schemas.android.com/apk/res-auto"
+     xmlns:android="http://schemas.android.com/apk/res/android">
+-    <PreferenceCategory android:title="Projector">
++    <PreferenceCategory android:title="Projector controls">
+         <CheckBoxPreference
+             android:layout_width="wrap_content"
+             android:layout_height="wrap_content"
+             android:defaultValue="false"
+-            android:key="projector_enabled"
++            android:key="tank8849_projector_enabled"
+             android:title="Enable projector"
+             app:summary="Turn on the built-in projector" />
+         <ListPreference
+             android:defaultValue="3"
+-            android:entries="@array/pref_projector_mode"
+-            android:entryValues="@array/pref_projector_mode_values"
+-            android:key="projector_mode"
++            android:entries="@array/pref_tank8849_mode"
++            android:entryValues="@array/pref_tank8849_mode_values"
++            android:key="tank8849_projector_mode"
+             android:title="Projection mode"
+             app:summary="Orientation and aspect ratio" />
+         <CheckBoxPreference
+             android:layout_width="wrap_content"
+             android:layout_height="wrap_content"
+             android:defaultValue="true"
+-            android:key="projector_display_enabled"
++            android:key="tank8849_display_enabled"
+             android:title="Display"
+             app:summary="Keep the phone display on while projecting" />
+     </PreferenceCategory>
+     <PreferenceCategory android:title="Image">
+         <EditTextPreference
+             android:defaultValue="128"
+-            android:key="projector_brightness"
++            android:key="tank8849_brightness"
+             android:title="Brightness"
+             app:summary="Projector brightness (1-255)" />
+         <EditTextPreference
+             android:defaultValue="0"
+-            android:key="projector_keystone"
++            android:key="tank8849_keystone"
+             android:title="Keystone correction"
+             app:summary="Adjust keystone pitch" />
+     </PreferenceCategory>
+     <PreferenceCategory android:title="Focus">
+         <EditTextPreference
+             android:defaultValue="550,720,711,696,685,672,663,649,638,626,614,599,587,561,548,538,538"
+-            android:key="projector_focus_calibration"
++            android:key="tank8849_focus_calibration"
+             android:title="Auto focus calibration"
+             app:summary="Comma-separated calibration values for auto focus motor" />
+         <EditTextPreference
+             android:defaultValue="0"
+-            android:key="projector_focus_adjust"
++            android:key="tank8849_focus_adjust"
+             android:title="Manual focus adjustment"
+             app:summary="Relative focus motor step (e.g. +10 or -10)" />
+     </PreferenceCategory>
+     <PreferenceCategory android:title="Hardware">
+         <EditTextPreference
+             android:defaultValue="50"
+-            android:key="projector_fan_speed"
++            android:key="tank8849_fan_speed"
+             android:title="Fan speed"
+             app:summary="Fan speed (0-100)" />
+         <Preference
+-            android:key="projector_temp_display"
++            android:key="tank8849_temp_display"
+             android:title="Projector temperature"
+             android:selectable="false"
+             app:summary="Reading..." />
+     </PreferenceCategory>
+     <PreferenceCategory android:title="Laser ranging">
+         <Preference
+-            android:key="projector_laser_display"
++            android:key="tank8849_laser_display"
+             android:title="Distance measurement"
+             android:selectable="false"
+             app:summary="Reading..." />
+-- 
+2.52.0
+

@@ -1,7 +1,7 @@
 From 5abef8733b1b407606821ff67b110aa151e9a872 Mon Sep 17 00:00:00 2001
 From: "Christopher A. Williamson" <contact@chrisaw.io>
 Date: Mon, 16 Feb 2026 13:04:30 +0000
-Subject: [PATCH] Add projector settings UI for Unihertz/Agold devices
+Subject: [PATCH 10/13] Add projector settings UI for Unihertz/Agold devices
 
 Add a new Projector settings section to the TrebleDroid settings app,
 visible only on devices with both the Agold daemon service and projector

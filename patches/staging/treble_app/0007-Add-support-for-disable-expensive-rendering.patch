@@ -1,7 +1,7 @@
-From 2954f3190387ebd804b1752748463125a0288b9f Mon Sep 17 00:00:00 2001
+From d58199d8154adf5a4747a81688cda75e9581be42 Mon Sep 17 00:00:00 2001
 From: "Christopher A. Williamson" <contact@chrisaw.io>
 Date: Sun, 1 Jun 2025 14:55:46 +0100
-Subject: [PATCH 7/9] Add support for disable expensive rendering
+Subject: [PATCH 07/13] Add support for disable expensive rendering
 
 ---
  app/src/main/java/me/phh/treble/app/Misc.kt         | 4 ++++
@@ -52,5 +52,6 @@ index 17bd35d..8644415 100644
          <SwitchPreference
              android:defaultValue="false"
              android:key="key_misc_secure_adb"
---
-2.47.2
+-- 
+2.52.0
+
