@@ -1,0 +1,47 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: "Christopher A. Williamson" <contact@chrisaw.io>
+Date: Fri, 07 Feb 2026 00:00:00 +0000
+Subject: [PATCH 4/4] GSI build fixes
+
+Disable the aosp_shared_system_image module which is only used by
+Cuttlefish. Soong runs verifyGenericConfig() on all android_system_image
+modules regardless of the active build target, causing build failures
+when TrebleDroid patches add vendor-specific HAL dependencies (e.g.
+Samsung HIDL/AIDL interfaces) to framework modules.
+
+Default ZYGOTE_FORCE_64 to true so the build selects the 64-bit only
+zygote. GrapheneOS Vanadium (TrichromeWebView/TrichromeChrome) only
+ships 64-bit native libraries, so the 32-bit zygote cannot load
+WebView.
+---
+ target/product/core_64_bit.mk     | 3 +++
+ target/product/generic/Android.bp | 1 +
+ 2 files changed, 4 insertions(+)
+
+diff --git a/target/product/core_64_bit.mk b/target/product/core_64_bit.mk
+--- a/target/product/core_64_bit.mk
++++ b/target/product/core_64_bit.mk
+@@ -22,6 +22,9 @@
+ # For now this will allow 64-bit apps, but still compile all apps with JNI
+ # for 32-bit only.
+ 
++# Default to 64-bit only zygote (can be overridden by setting before include)
++ZYGOTE_FORCE_64 ?= true
++
+ # Copy the 64-bit primary, 32-bit secondary zygote startup script
+ PRODUCT_PACKAGES += init.zygote64.rc init.zygote64_32.rc
+ 
+diff --git a/target/product/generic/Android.bp b/target/product/generic/Android.bp
+--- a/target/product/generic/Android.bp
++++ b/target/product/generic/Android.bp
+@@ -1092,6 +1092,7 @@
+ android_system_image {
+     name: "aosp_shared_system_image",
+     defaults: ["system_image_defaults"],
++    enabled: false,
+     dirs: android_rootdirs,
+     symlinks: android_symlinks,
+     type: "erofs",
+-- 
+2.52.0
+
