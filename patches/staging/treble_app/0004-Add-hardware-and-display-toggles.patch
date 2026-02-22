@@ -30,7 +30,7 @@ index 6497567..dbeaf14 100644
              MiscSettings.dt2w -> {
                  // Asus dt2w
                  val value = sp.getBoolean(key, false)
-@@ -340,6 +344,10 @@ object Misc: EntryStartup {
+@@ -340,10 +344,18 @@ object Misc: EntryStartup {
                  val value = sp.getBoolean(key, false)
                  SystemProperties.set("persist.sys.phh.securize", if (value) "1" else "0")
              }
@@ -39,9 +39,6 @@ index 6497567..dbeaf14 100644
 +                SystemProperties.set("persist.sys.phh.disable_expensive_rendering_mode", if (value) "1" else "0")
 +            }
              MiscSettings.secureAdb -> {
-                 val value = sp.getBoolean(key, false)
-                 SystemProperties.set("persist.sys.phh.adb_secure", if (value) "1" else "0")
-@@ -348,6 +356,10 @@ object Misc: EntryStartup {
                  val value = sp.getBoolean(key, false)
                  SystemProperties.set("persist.sys.phh.adb_secure", if (value) "1" else "0")
              }
