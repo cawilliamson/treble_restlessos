@@ -1,7 +1,7 @@
 From be3a93e54e0a2c28c6c1eb2fd55484e9912a44ea Mon Sep 17 00:00:00 2001
 From: Chris Williamson <chris@chrisaw.io>
 Date: Wed, 18 Feb 2026 10:31:19 +0000
-Subject: [PATCH 3/4] Remove ro.adb.secure=0 from system.prop
+Subject: [PATCH 3/5] Remove ro.adb.secure=0 from system.prop
 
 The AOSP build system already sets ro.adb.secure based on the build
 variant. Having it in system.prop causes duplicate sysprop assignment

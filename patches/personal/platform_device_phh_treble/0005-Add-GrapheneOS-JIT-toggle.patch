@@ -1,0 +1,30 @@
+From 4c9fbbf84b3d271f63e6e2e2e62dd6d719e2d467 Mon Sep 17 00:00:00 2001
+From: "Christopher A. Williamson" <contact@chrisaw.io>
+Date: Sun, 22 Feb 2026 09:56:54 +0000
+Subject: [PATCH 5/5] Add GrapheneOS JIT toggle
+
+Add JIT compilation toggle gated on persist.sys.phh.gos.disable_jit.
+GrapheneOS disables JIT by default (dalvik.vm.usejit=false) for
+security. Override it back to true (AOSP default) unless the user
+has explicitly enabled the disable_jit toggle in TrebleApp.
+---
+ rw-system.sh | 6 ++++++
+ 1 file changed, 6 insertions(+)
+
+diff --git a/rw-system.sh b/rw-system.sh
+index 3ac9aa5..636f78c 100644
+--- a/rw-system.sh
++++ b/rw-system.sh
+@@ -1248,3 +1248,9 @@ fi
+ 
+ # Enable pen mode on Lenovo/goodix
+ echo 1 > /sys/devices/platform/goodix_ts.0/support_pen
++
++# GrapheneOS disables JIT compilation by default (dalvik.vm.usejit=false in build.prop).
++# Re-enable JIT unless the user has explicitly opted into disabling it.
++if [ "$(getprop persist.sys.phh.gos.disable_jit)" != "true" ]; then
++    setprop dalvik.vm.usejit true
++fi
+-- 
+2.52.0
+
