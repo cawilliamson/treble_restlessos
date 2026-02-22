@@ -3,6 +3,12 @@ From: "Christopher A. Williamson" <contact@chrisaw.io>
 Date: Sun, 1 Jun 2025 14:45:04 +0100
 Subject: [PATCH 3/9] Allow EXPENSIVE_RENDERING mode to be disabled
 
+Suppress the EXPENSIVE_RENDERING power mode hint in PowerManagerService
+when persist.sys.phh.disable_expensive_rendering_mode is set. Fixes
+constant log spam on some MediaTek devices.
+
+Companion patch: staging/platform_frameworks_native/0001 (SurfaceFlinger
+side of the same feature).
 ---
  .../jni/com_android_server_power_PowerManagerService.cpp    | 6 ++++++
  1 file changed, 6 insertions(+)
