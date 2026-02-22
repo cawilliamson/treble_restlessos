@@ -36,7 +36,6 @@ diff --git a/target/product/generic/Android.bp b/target/product/generic/Android.
                  "ONS", // telephony_system
                  "PacProcessor", // handheld_system
 diff --git a/target/product/base_system.mk b/target/product/base_system.mk
-index 35a3c2f..3cd1804 100644
 --- a/target/product/base_system.mk
 +++ b/target/product/base_system.mk
 @@ -229,8 +229,6 @@ PRODUCT_PACKAGES += \
@@ -65,7 +64,6 @@ index 35a3c2f..3cd1804 100644
  # The set of packages whose code can be loaded by the system server.
  PRODUCT_SYSTEM_SERVER_APPS += \
 diff --git a/target/product/handheld_product.mk b/target/product/handheld_product.mk
-index dde952e..737f7f2 100644
 --- a/target/product/handheld_product.mk
 +++ b/target/product/handheld_product.mk
 @@ -23,17 +23,14 @@ $(call inherit-product, $(SRC_TARGET_DIR)/product/media_product.mk)
@@ -89,7 +87,7 @@ index dde952e..737f7f2 100644
 diff --git a/target/product/handheld_system.mk b/target/product/handheld_system.mk
 --- a/target/product/handheld_system.mk
 +++ b/target/product/handheld_system.mk
-@@ -47,10 +47,8 @@ PRODUCT_PACKAGES += \
+@@ -47,11 +47,9 @@ PRODUCT_PACKAGES += \
      CaptivePortalLogin \
      CertInstaller \
      CredentialManager \
