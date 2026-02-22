@@ -1,7 +1,7 @@
-From 554e914aafa2d0aa815f33847c1a562178226fee Mon Sep 17 00:00:00 2001
+From 5e40f6118b27ad6e28367c1ccf1682d8f30b080b Mon Sep 17 00:00:00 2001
 From: "Christopher A. Williamson" <contact@chrisaw.io>
 Date: Sun, 22 Feb 2026 16:32:11 +0000
-Subject: [PATCH] Add projector support to agold-cmd and include in GSI
+Subject: [PATCH 2/3] Add projector support to agold-cmd and include in GSI
 
 Update agold-cmd to support ioctl and cmd subcommands for controlling
 the Unihertz/Agold projector hardware. The cmd() AIDL method takes an
