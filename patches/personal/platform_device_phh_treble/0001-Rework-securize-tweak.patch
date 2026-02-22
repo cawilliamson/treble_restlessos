@@ -1,6 +1,6 @@
-From c96d9bccbbb0b479198c1a73c1920c74d8b6d0b8 Mon Sep 17 00:00:00 2001
+From 3c9287f09a6000bfc0c5f75b2ee05c4d972f85da Mon Sep 17 00:00:00 2001
 From: Alberto Ponces <ponces26@gmail.com>
-Date: Fri, 20 Feb 2026 13:50:22 +0000
+Date: Sun, 22 Feb 2026 16:53:31 +0000
 Subject: [PATCH 1/5] Rework securize tweak
 
 ---
@@ -12,10 +12,10 @@ Subject: [PATCH 1/5] Rework securize tweak
  5 files changed, 116 insertions(+), 49 deletions(-)
 
 diff --git a/base.mk b/base.mk
-index a29e402..1928cdc 100644
+index 9314eba..2f9a77a 100644
 --- a/base.mk
 +++ b/base.mk
-@@ -168,7 +168,6 @@ PRODUCT_PACKAGES += \
+@@ -169,7 +169,6 @@ PRODUCT_PACKAGES += \
      resetprop_phh
  
  PRODUCT_COPY_FILES += \
@@ -61,10 +61,10 @@ index d2d5b0a..6f2fd68 100644
  [ -z "$vndk" ] && vndk="$(getprop ro.vndk.version |grep -oE '^[0-9]+')"
  
 diff --git a/phh-prop-handler.sh b/phh-prop-handler.sh
-index d036f24..777d60d 100644
+index cae90d6..199f054 100644
 --- a/phh-prop-handler.sh
 +++ b/phh-prop-handler.sh
-@@ -130,6 +130,17 @@ if [ "$1" == "persist.sys.phh.oppo.usbotg" ]; then
+@@ -146,6 +146,17 @@ if [ "$1" == "persist.sys.phh.oppo.usbotg" ]; then
      exit
  fi
  
@@ -229,12 +229,12 @@ index 3ac9aa5..570d7f4 100644
  
  for abi in "" 64;do
 diff --git a/vndk.rc b/vndk.rc
-index 2f56680..52985db 100644
+index 960e47f..6a9ce16 100644
 --- a/vndk.rc
 +++ b/vndk.rc
-@@ -36,6 +36,9 @@ on property:persist.sys.phh.oppo.dt2w=*
- on property:persist.sys.phh.oppo.gaming_mode=*
-     exec u:r:phhsu_daemon:s0 root -- /system/bin/phh-prop-handler.sh "persist.sys.phh.oppo.gaming_mode"
+@@ -39,6 +39,9 @@ on property:persist.sys.phh.oppo.gaming_mode=*
+ on property:sys.phh.oplus.fppress=*
+     exec u:r:phhsu_daemon:s0 root -- /system/bin/phh-prop-handler.sh "sys.phh.oplus.fppress"
  
 +on property:persist.sys.phh.securize=*
 +    exec u:r:phhsu_daemon:s0 root -- /system/bin/phh-prop-handler.sh "persist.sys.phh.securize"
@@ -242,7 +242,7 @@ index 2f56680..52985db 100644
  on property:persist.sys.phh.oppo.usbotg=*
      exec u:r:phhsu_daemon:s0 root -- /system/bin/phh-prop-handler.sh "persist.sys.phh.oppo.usbotg"
  
-@@ -112,6 +115,11 @@ service watchdogd-gsi /system/bin/watchdogd 10 20
+@@ -115,6 +118,11 @@ service watchdogd-gsi /system/bin/watchdogd 10 20
      disabled
      seclabel u:r:watchdogd:s0
  

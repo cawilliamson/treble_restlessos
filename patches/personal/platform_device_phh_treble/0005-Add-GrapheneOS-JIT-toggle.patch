@@ -1,4 +1,4 @@
-From 4c9fbbf84b3d271f63e6e2e2e62dd6d719e2d467 Mon Sep 17 00:00:00 2001
+From 5688e99112a6b6bf36dadbe2990dad541551449e Mon Sep 17 00:00:00 2001
 From: "Christopher A. Williamson" <contact@chrisaw.io>
 Date: Sun, 22 Feb 2026 09:56:54 +0000
 Subject: [PATCH 5/5] Add GrapheneOS JIT toggle
@@ -12,10 +12,10 @@ has explicitly enabled the disable_jit toggle in TrebleApp.
  1 file changed, 6 insertions(+)
 
 diff --git a/rw-system.sh b/rw-system.sh
-index 3ac9aa5..636f78c 100644
+index 570d7f4..1e6f964 100644
 --- a/rw-system.sh
 +++ b/rw-system.sh
-@@ -1248,3 +1248,9 @@ fi
+@@ -1270,3 +1270,9 @@ fi
  
  # Enable pen mode on Lenovo/goodix
  echo 1 > /sys/devices/platform/goodix_ts.0/support_pen

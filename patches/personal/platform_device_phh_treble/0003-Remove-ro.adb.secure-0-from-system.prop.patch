@@ -1,6 +1,6 @@
-From be3a93e54e0a2c28c6c1eb2fd55484e9912a44ea Mon Sep 17 00:00:00 2001
+From cd12ed2337965e75d6861a79925eef3601041126 Mon Sep 17 00:00:00 2001
 From: Chris Williamson <chris@chrisaw.io>
-Date: Wed, 18 Feb 2026 10:31:19 +0000
+Date: Sun, 22 Feb 2026 16:56:33 +0000
 Subject: [PATCH 3/5] Remove ro.adb.secure=0 from system.prop
 
 The AOSP build system already sets ro.adb.secure based on the build
@@ -13,10 +13,10 @@ handles setting ro.adb.secure=1 at runtime.
  2 files changed, 2 deletions(-)
 
 diff --git a/base.mk b/base.mk
-index 2f9a77a..b0463ea 100644
+index f59cae3..37f6d38 100644
 --- a/base.mk
 +++ b/base.mk
-@@ -33,7 +33,6 @@ PRODUCT_SYSTEM_DEFAULT_PROPERTIES += \
+@@ -37,7 +37,6 @@ PRODUCT_SYSTEM_DEFAULT_PROPERTIES += \
      ro.build.version.all_codenames=$(PLATFORM_VERSION_ALL_CODENAMES) \
      ro.build.version.release=$(PLATFORM_VERSION) \
      ro.build.version.security_patch=$(PLATFORM_SECURITY_PATCH) \
