@@ -1,4 +1,4 @@
-From 8715f7ae9198ed487755bf2fd3bfbd1f0ea997a2 Mon Sep 17 00:00:00 2001
+From 7e211662927caaa5f0f5d9d34734a9bcfbcb72c3 Mon Sep 17 00:00:00 2001
 From: "Christopher A. Williamson" <contact@chrisaw.io>
 Date: Sat, 21 Feb 2026 23:35:37 +0000
 Subject: [PATCH 12/13] Add double-tap to wake, warning light, and camping

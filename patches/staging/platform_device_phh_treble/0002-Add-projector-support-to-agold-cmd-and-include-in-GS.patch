@@ -1,20 +1,22 @@
-From 5989c8e961e1ad93b26da3616bd1aa907fb763a4 Mon Sep 17 00:00:00 2001
+From fac0f479d64100b22b9fedb145e07e2064a8c72a Mon Sep 17 00:00:00 2001
 From: "Christopher A. Williamson" <contact@chrisaw.io>
 Date: Mon, 16 Feb 2026 18:58:59 +0000
 Subject: [PATCH] Add projector support to agold-cmd and include in GSI
 
 Update agold-cmd to support ioctl and cmd subcommands for controlling
-the Unihertz/Agold projector hardware. The cmd() AIDL method takes an
-IAgoldDaemon binder (not a callback), so pass the service reference.
+the Unihertz/Agold projector hardware. The cmd() AIDL method requires
+a proper IAgoldDaemonCallback, so implement BnAgoldDaemonCallback to
+avoid crashing the daemon (passing the service binder directly causes
+a SIGSEGV in AgoldDaemon::cmd).
 
 Include agold-cmd in PRODUCT_PACKAGES so it ships in the GSI image.
 ---
  base.mk            |  3 ++-
- cmds/agold-cmd.cpp | 18 +++++++-----------
- 2 files changed, 9 insertions(+), 12 deletions(-)
+ cmds/agold-cmd.cpp | 30 +++++++++++++++++++-----------
+ 2 files changed, 21 insertions(+), 12 deletions(-)
 
 diff --git a/base.mk b/base.mk
-index 1928cdc..2f9a77a 100644
+index a29e402..9314eba 100644
 --- a/base.mk
 +++ b/base.mk
 @@ -147,7 +147,8 @@ PRODUCT_PACKAGES += \
@@ -28,11 +30,28 @@ index 1928cdc..2f9a77a 100644
  PRODUCT_COPY_FILES += \
      device/phh/treble/files/adbd.rc:system/etc/init/adbd.rc
 diff --git a/cmds/agold-cmd.cpp b/cmds/agold-cmd.cpp
-index 9943557..a7e7ced 100644
+index 9943557..462526a 100644
 --- a/cmds/agold-cmd.cpp
 +++ b/cmds/agold-cmd.cpp
-@@ -7,16 +7,12 @@ using ::android::sp;
+@@ -1,22 +1,30 @@
+ #include <iostream>
+ #include <vendor/mediatek/hardware/agolddaemon/IAgoldDaemon.h>
++#include <vendor/mediatek/hardware/agolddaemon/BnAgoldDaemonCallback.h>
+ #include <binder/IServiceManager.h>
++#include <utils/String8.h>
  
+ using ::vendor::mediatek::hardware::agolddaemon::IAgoldDaemon;
++using ::vendor::mediatek::hardware::agolddaemon::BnAgoldDaemonCallback;
+ using ::android::sp;
+ 
++class AgoldDaemonCallback : public BnAgoldDaemonCallback {
++    public:
++        ::android::binder::Status onResult(const ::android::String16& result) override {
++            std::cout << "Result: " << ::android::String8(result).c_str() << std::endl;
++            return ::android::binder::Status::ok();
++        }
++};
++
  int main(int argc, char **argv) {
  	auto svc = android::checkVintfService<IAgoldDaemon>();
 -    android::String16 a;
@@ -51,7 +70,8 @@ index 9943557..a7e7ced 100644
 +    if (std::string(argv[1]) == "ioctl") {
 +        svc->SendMessageToIoctl(atoi(argv[2]), atoi(argv[3]), atoi(argv[4]), atoi(argv[5]), &ret);
 +    } else {
-+        svc->cmd(android::String16(argv[2]), svc);
++        sp<AgoldDaemonCallback> cb = new AgoldDaemonCallback();
++        svc->cmd(android::String16(argv[2]), cb);
 +    }
 +    printf("Returned %d\n", ret);
  }
