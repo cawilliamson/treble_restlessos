@@ -1,19 +1,19 @@
-From 2a4f294e6bb8e51cedbc12b9e132d82ea4c3f586 Mon Sep 17 00:00:00 2001
+From 554e914aafa2d0aa815f33847c1a562178226fee Mon Sep 17 00:00:00 2001
 From: "Christopher A. Williamson" <contact@chrisaw.io>
-Date: Mon, 16 Feb 2026 18:58:59 +0000
+Date: Sun, 22 Feb 2026 16:32:11 +0000
 Subject: [PATCH] Add projector support to agold-cmd and include in GSI
 
 Update agold-cmd to support ioctl and cmd subcommands for controlling
-the Unihertz/Agold projector hardware. The cmd() AIDL method requires
-a proper IAgoldDaemonCallback, so implement BnAgoldDaemonCallback to
-avoid crashing the daemon (passing the service binder directly causes
-a SIGSEGV in AgoldDaemon::cmd).
+the Unihertz/Agold projector hardware. The cmd() AIDL method takes an
+IAgoldDaemon as its callback parameter. Implement a stub BnAgoldDaemon
+with the cmd() override printing results, to avoid crashing the daemon
+(passing the service binder back to itself causes recursion/SIGSEGV).
 
 Include agold-cmd in PRODUCT_PACKAGES so it ships in the GSI image.
 ---
  base.mk            |  3 ++-
- cmds/agold-cmd.cpp | 32 ++++++++++++++++++++------------
- 2 files changed, 22 insertions(+), 13 deletions(-)
+ cmds/agold-cmd.cpp | 51 ++++++++++++++++++++++++++++++++++++----------
+ 2 files changed, 42 insertions(+), 12 deletions(-)
 
 diff --git a/base.mk b/base.mk
 index a29e402..9314eba 100644
@@ -30,19 +30,22 @@ index a29e402..9314eba 100644
  PRODUCT_COPY_FILES += \
      device/phh/treble/files/adbd.rc:system/etc/init/adbd.rc
 diff --git a/cmds/agold-cmd.cpp b/cmds/agold-cmd.cpp
-index 9943557..cd19275 100644
+index 9943557..360bcd9 100644
 --- a/cmds/agold-cmd.cpp
 +++ b/cmds/agold-cmd.cpp
-@@ -1,22 +1,30 @@
+@@ -1,22 +1,51 @@
  #include <iostream>
  #include <vendor/mediatek/hardware/agolddaemon/IAgoldDaemon.h>
-+#include <vendor/mediatek/hardware/agolddaemon/BnAgoldDaemonCallback.h>
++#include <vendor/mediatek/hardware/agolddaemon/BnAgoldDaemon.h>
  #include <binder/IServiceManager.h>
 +#include <utils/String8.h>
  
  using ::vendor::mediatek::hardware::agolddaemon::IAgoldDaemon;
-+using ::vendor::mediatek::hardware::agolddaemon::BnAgoldDaemonCallback;
++using ::vendor::mediatek::hardware::agolddaemon::IAgoldDaemonCallback;
++using ::vendor::mediatek::hardware::agolddaemon::BnAgoldDaemon;
++using ::android::binder::Status;
  using ::android::sp;
++using ::android::String16;
  
 -int main(int argc, char **argv) {
 -	auto svc = android::checkVintfService<IAgoldDaemon>();
@@ -52,27 +55,44 @@ index 9943557..cd19275 100644
 -    if (argc >= 2) {
 -        android::String16 b(argv[1]);
 -        svc->setNotGsi(b);
--    }
++// Stub IAgoldDaemon used as the callback for cmd().
++// The AIDL signature is: void cmd(String a, IAgoldDaemon cb)
++// The daemon calls cb->cmd(result, ...) to report results.
++class AgoldCmdCallback : public BnAgoldDaemon {
++public:
++    Status CommonGetResult(const sp<IAgoldDaemonCallback>&, int32_t) override { return Status::ok(); }
++    Status GetGasData(const sp<IAgoldDaemonCallback>&) override { return Status::ok(); }
++    Status SendMessageToIoctl(int32_t, int32_t, int32_t, int32_t, int32_t*) override { return Status::ok(); }
++    Status SmartpaGetResult(const sp<IAgoldDaemonCallback>&) override { return Status::ok(); }
++    Status StartGasSensor(int32_t, bool*) override { return Status::ok(); }
++    Status WriteIntDataToIoCtrl(const std::vector<uint8_t>&, int32_t) override { return Status::ok(); }
++    Status WriteStringDataToIoCtrl(const String16&, int32_t) override { return Status::ok(); }
++    Status checkGoogleKey(bool*) override { return Status::ok(); }
++    Status checkTeeKey(bool*) override { return Status::ok(); }
++    Status cmd(const String16& a, const sp<IAgoldDaemon>&) override {
++        std::cout << "Result: " << ::android::String8(a).c_str() << std::endl;
++        return Status::ok();
+     }
 -    svc->getNotGsi(&a);
 -    std::cout << "notgsi is " << a << std::endl;
-+class AgoldDaemonCallback : public BnAgoldDaemonCallback {
-+    public:
-+        ::android::binder::Status onResult(const ::android::String16& result) override {
-+            std::cout << "Result: " << ::android::String8(result).c_str() << std::endl;
-+            return ::android::binder::Status::ok();
-+        }
++    Status getCameraClientPackageName(String16*) override { return Status::ok(); }
++    Status getNotGsi(String16*) override { return Status::ok(); }
++    Status readSysFile(const String16&, String16*) override { return Status::ok(); }
++    Status setCameraClientPackageName(const String16&) override { return Status::ok(); }
++    Status setNotGsi(const String16&) override { return Status::ok(); }
++    Status smartpaCalibration(bool*) override { return Status::ok(); }
 +};
  
 -    svc->setCameraClientPackageName(android::String16("com.mediatek.camera"));
 +int main(int argc [[maybe_unused]], char **argv) {
-+	auto svc = android::checkVintfService<IAgoldDaemon>();
++    auto svc = android::checkVintfService<IAgoldDaemon>();
 +    int32_t ret = 0;
  
 +    if (std::string(argv[1]) == "ioctl") {
 +        svc->SendMessageToIoctl(atoi(argv[2]), atoi(argv[3]), atoi(argv[4]), atoi(argv[5]), &ret);
 +    } else {
-+        sp<AgoldDaemonCallback> cb = new AgoldDaemonCallback();
-+        svc->cmd(android::String16(argv[2]), cb);
++        sp<AgoldCmdCallback> cb = new AgoldCmdCallback();
++        svc->cmd(String16(argv[2]), cb);
 +    }
 +    printf("Returned %d\n", ret);
  }
