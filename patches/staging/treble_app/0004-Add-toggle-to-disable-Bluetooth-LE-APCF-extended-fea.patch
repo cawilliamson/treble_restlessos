@@ -1,8 +1,7 @@
 From 4a52211b78bce4c54c5a035d5902dafb23dca060 Mon Sep 17 00:00:00 2001
 From: ChonDoit <thphantomblog@gmail.com>
 Date: Mon, 10 Mar 2025 23:08:52 -0300
-Subject: [PATCH 04/13] Add toggle to disable Bluetooth LE APCF extended
- features
+Subject: [PATCH 4/9] Add toggle to disable Bluetooth LE APCF extended features
 
 ---
  app/src/main/java/me/phh/treble/app/Misc.kt         | 4 ++++

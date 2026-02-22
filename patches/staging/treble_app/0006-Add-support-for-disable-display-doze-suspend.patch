@@ -1,7 +1,7 @@
 From a43af3266af36a6410f66e9c8c27f5ffff7e6725 Mon Sep 17 00:00:00 2001
 From: "Christopher A. Williamson" <contact@chrisaw.io>
 Date: Tue, 27 May 2025 09:38:53 +0100
-Subject: [PATCH 06/13] Add support for disable display doze suspend
+Subject: [PATCH 6/9] Add support for disable display doze suspend
 
 ---
  app/src/main/java/me/phh/treble/app/Misc.kt         | 4 ++++

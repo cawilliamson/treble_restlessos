@@ -1,7 +1,7 @@
-From 31f72f7ef3b3b992f9197a60728d912bf816f47c Mon Sep 17 00:00:00 2001
+From 4b24bd86348254cee312c45a62d69d69266c2183 Mon Sep 17 00:00:00 2001
 From: "Christopher A. Williamson" <contact@chrisaw.io>
-Date: Sun, 22 Feb 2026 09:54:26 +0000
-Subject: [PATCH] Add GrapheneOS hardening toggles menu
+Date: Sun, 22 Feb 2026 13:47:44 +0000
+Subject: [PATCH 1/2] Add GrapheneOS hardening toggles menu
 
 Add a new 'GrapheneOS features' submenu to TrebleApp with toggles
 for GrapheneOS security hardening features that may cause vendor
@@ -27,11 +27,11 @@ break. All require a reboot to take effect.
  create mode 100644 app/src/main/res/xml/pref_grapheneos.xml
 
 diff --git a/app/src/main/java/me/phh/treble/app/EntryService.kt b/app/src/main/java/me/phh/treble/app/EntryService.kt
-index 281dacd..0f2c6db 100644
+index f6c501b..971f354 100644
 --- a/app/src/main/java/me/phh/treble/app/EntryService.kt
 +++ b/app/src/main/java/me/phh/treble/app/EntryService.kt
-@@ -56,6 +56,7 @@ class EntryService: Service() {
-             tryC { Tank8849.startup(this) }
+@@ -55,6 +55,7 @@ class EntryService: Service() {
+             tryC { Nubia.startup(this) }
              tryC { Ims.startup(this) }
              tryC { Custom.startup(this) }
 +            tryC { GrapheneOS.startup(this) }
@@ -101,10 +101,10 @@ index 0000000..9ca42c8
 +    override val preferencesResId = R.xml.pref_grapheneos
 +}
 diff --git a/app/src/main/java/me/phh/treble/app/SettingsActivity.kt b/app/src/main/java/me/phh/treble/app/SettingsActivity.kt
-index 5106f2d..2cb082a 100644
+index 547c579..02832b0 100644
 --- a/app/src/main/java/me/phh/treble/app/SettingsActivity.kt
 +++ b/app/src/main/java/me/phh/treble/app/SettingsActivity.kt
-@@ -79,6 +79,8 @@ class SettingsActivity : PreferenceActivity() {
+@@ -77,6 +77,8 @@ class SettingsActivity : PreferenceActivity() {
              target.removeIf { it.fragment == ImsSettingsFragment::class.java.name }
          if (!CustomSettings.enabled())
              target.removeIf { it.fragment == CustomSettingsFragment::class.java.name }
@@ -113,7 +113,7 @@ index 5106f2d..2cb082a 100644
          val p = SystemProperties.get("ro.system.ota.json_url", "")
          if (p.trim() == "")
              target.removeIf { it.id.compareTo(R.id.updater) == 0 }
-@@ -108,6 +110,7 @@ class SettingsActivity : PreferenceActivity() {
+@@ -105,6 +107,7 @@ class SettingsActivity : PreferenceActivity() {
                  || ImsSettingsFragment::class.java.name == fragmentName
                  || CustomSettingsFragment::class.java.name == fragmentName
                  || AudioEffectsFragment::class.java.name == fragmentName
@@ -149,10 +149,10 @@ index 0000000..edf55fe
 +    </PreferenceCategory>
 +</PreferenceScreen>
 diff --git a/app/src/main/res/xml/pref_headers.xml b/app/src/main/res/xml/pref_headers.xml
-index 76c123d..14097e3 100644
+index ed5fb55..a2e7404 100644
 --- a/app/src/main/res/xml/pref_headers.xml
 +++ b/app/src/main/res/xml/pref_headers.xml
-@@ -41,6 +41,9 @@
+@@ -38,6 +38,9 @@
      <header
          android:fragment="me.phh.treble.app.DozeSettingsFragment"
          android:title="Doze features" />

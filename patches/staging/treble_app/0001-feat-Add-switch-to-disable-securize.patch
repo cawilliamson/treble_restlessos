@@ -1,7 +1,7 @@
 From 269a23d6dbff7c1ec6d4c694d09ebda562fd0bef Mon Sep 17 00:00:00 2001
 From: "Christopher A. Williamson" <contact@chrisaw.io>
 Date: Thu, 10 Apr 2025 22:48:35 +0100
-Subject: [PATCH 01/13] feat: Add switch to disable securize
+Subject: [PATCH 1/9] feat: Add switch to disable securize
 
 ---
  app/src/main/java/me/phh/treble/app/Misc.kt   |  4 +++

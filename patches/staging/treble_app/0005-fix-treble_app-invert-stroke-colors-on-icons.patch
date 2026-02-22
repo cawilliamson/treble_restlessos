@@ -1,7 +1,7 @@
 From 2f2e4a1977048e0ca04ebc1f66aef2d61580ddb9 Mon Sep 17 00:00:00 2001
 From: mytja <mitja@severkar.eu>
 Date: Sat, 17 May 2025 01:24:04 +0200
-Subject: [PATCH 05/13] fix(treble_app): invert stroke colors on icons
+Subject: [PATCH 5/9] fix(treble_app): invert stroke colors on icons
 
 ---
  app/src/main/res/drawable-night/ic_settings.xml | 2 +-

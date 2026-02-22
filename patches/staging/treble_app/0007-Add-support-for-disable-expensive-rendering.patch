@@ -1,7 +1,7 @@
 From d58199d8154adf5a4747a81688cda75e9581be42 Mon Sep 17 00:00:00 2001
 From: "Christopher A. Williamson" <contact@chrisaw.io>
 Date: Sun, 1 Jun 2025 14:55:46 +0100
-Subject: [PATCH 07/13] Add support for disable expensive rendering
+Subject: [PATCH 7/9] Add support for disable expensive rendering
 
 ---
  app/src/main/java/me/phh/treble/app/Misc.kt         | 4 ++++
