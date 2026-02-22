@@ -1,0 +1,66 @@
+From 89b7ef65c9f79a2329f24c5794798abb1e360e5e Mon Sep 17 00:00:00 2001
+From: Pierre-Hugues Husson <phh@phh.me>
+Date: Sun, 22 Feb 2026 20:27:02 +0000
+Subject: [PATCH] Fix Agold AIDL: cmd() callback should be IAgoldDaemonCallback
+
+The cmd() method's second parameter was incorrectly typed as
+IAgoldDaemon (self-reference) instead of IAgoldDaemonCallback.
+This caused the generated C++ code to expect the service interface
+itself as a callback, making it impossible to pass a proper callback
+without the daemon crashing from self-recursion.
+---
+ .../aidl_api/vendor.mediatek.hardware.agolddaemon/1/.hash       | 2 +-
+ .../1/vendor/mediatek/hardware/agolddaemon/IAgoldDaemon.aidl    | 2 +-
+ .../vendor/mediatek/hardware/agolddaemon/IAgoldDaemon.aidl      | 2 +-
+ .../vendor/mediatek/hardware/agolddaemon/IAgoldDaemon.aidl      | 2 +-
+ 4 files changed, 4 insertions(+), 4 deletions(-)
+
+diff --git a/aidl/vendor/mediatek/hardware/agolddaemon/aidl_api/vendor.mediatek.hardware.agolddaemon/1/.hash b/aidl/vendor/mediatek/hardware/agolddaemon/aidl_api/vendor.mediatek.hardware.agolddaemon/1/.hash
+index 3311202..28dbcf3 100644
+--- a/aidl/vendor/mediatek/hardware/agolddaemon/aidl_api/vendor.mediatek.hardware.agolddaemon/1/.hash
++++ b/aidl/vendor/mediatek/hardware/agolddaemon/aidl_api/vendor.mediatek.hardware.agolddaemon/1/.hash
+@@ -1 +1 @@
+-ab2b7ece41a7e50ccd4c7477a5f595f3757604a7
++36df88f195da7e7d80b6d125b75b9b9eb2f59e8c
+diff --git a/aidl/vendor/mediatek/hardware/agolddaemon/aidl_api/vendor.mediatek.hardware.agolddaemon/1/vendor/mediatek/hardware/agolddaemon/IAgoldDaemon.aidl b/aidl/vendor/mediatek/hardware/agolddaemon/aidl_api/vendor.mediatek.hardware.agolddaemon/1/vendor/mediatek/hardware/agolddaemon/IAgoldDaemon.aidl
+index 84be174..c93a070 100644
+--- a/aidl/vendor/mediatek/hardware/agolddaemon/aidl_api/vendor.mediatek.hardware.agolddaemon/1/vendor/mediatek/hardware/agolddaemon/IAgoldDaemon.aidl
++++ b/aidl/vendor/mediatek/hardware/agolddaemon/aidl_api/vendor.mediatek.hardware.agolddaemon/1/vendor/mediatek/hardware/agolddaemon/IAgoldDaemon.aidl
+@@ -28,7 +28,7 @@ interface IAgoldDaemon {
+   void WriteStringDataToIoCtrl(String a, int b);
+   boolean checkGoogleKey();
+   boolean checkTeeKey();
+-  void cmd(String a, vendor.mediatek.hardware.agolddaemon.IAgoldDaemon cb);
++  void cmd(String a, vendor.mediatek.hardware.agolddaemon.IAgoldDaemonCallback cb);
+   String getCameraClientPackageName();
+   String getNotGsi();
+   String readSysFile(String path);
+diff --git a/aidl/vendor/mediatek/hardware/agolddaemon/aidl_api/vendor.mediatek.hardware.agolddaemon/current/vendor/mediatek/hardware/agolddaemon/IAgoldDaemon.aidl b/aidl/vendor/mediatek/hardware/agolddaemon/aidl_api/vendor.mediatek.hardware.agolddaemon/current/vendor/mediatek/hardware/agolddaemon/IAgoldDaemon.aidl
+index 84be174..c93a070 100644
+--- a/aidl/vendor/mediatek/hardware/agolddaemon/aidl_api/vendor.mediatek.hardware.agolddaemon/current/vendor/mediatek/hardware/agolddaemon/IAgoldDaemon.aidl
++++ b/aidl/vendor/mediatek/hardware/agolddaemon/aidl_api/vendor.mediatek.hardware.agolddaemon/current/vendor/mediatek/hardware/agolddaemon/IAgoldDaemon.aidl
+@@ -28,7 +28,7 @@ interface IAgoldDaemon {
+   void WriteStringDataToIoCtrl(String a, int b);
+   boolean checkGoogleKey();
+   boolean checkTeeKey();
+-  void cmd(String a, vendor.mediatek.hardware.agolddaemon.IAgoldDaemon cb);
++  void cmd(String a, vendor.mediatek.hardware.agolddaemon.IAgoldDaemonCallback cb);
+   String getCameraClientPackageName();
+   String getNotGsi();
+   String readSysFile(String path);
+diff --git a/aidl/vendor/mediatek/hardware/agolddaemon/vendor/mediatek/hardware/agolddaemon/IAgoldDaemon.aidl b/aidl/vendor/mediatek/hardware/agolddaemon/vendor/mediatek/hardware/agolddaemon/IAgoldDaemon.aidl
+index 2f39e9b..4a96b57 100644
+--- a/aidl/vendor/mediatek/hardware/agolddaemon/vendor/mediatek/hardware/agolddaemon/IAgoldDaemon.aidl
++++ b/aidl/vendor/mediatek/hardware/agolddaemon/vendor/mediatek/hardware/agolddaemon/IAgoldDaemon.aidl
+@@ -13,7 +13,7 @@ void WriteIntDataToIoCtrl(in byte[] a, int b);
+ void WriteStringDataToIoCtrl(String a, int b);
+ boolean checkGoogleKey();
+ boolean checkTeeKey();
+-void cmd(String a, IAgoldDaemon cb);
++void cmd(String a, IAgoldDaemonCallback cb);
+ String getCameraClientPackageName();
+ String getNotGsi();
+ String readSysFile(String path);
+-- 
+2.52.0
+
