@@ -1,4 +1,4 @@
-From e920a39ece816eb7deb82f5b39123a45d93503e8 Mon Sep 17 00:00:00 2001
+From c170a3e75bb137100e2a2da22620eeaa83096674 Mon Sep 17 00:00:00 2001
 From: "Christopher A. Williamson" <contact@chrisaw.io>
 Date: Sun, 22 Feb 2026 13:49:15 +0000
 Subject: [PATCH 2/2] Add Unihertz 8849 hardware controls
@@ -9,7 +9,7 @@ hardware, detected via the Agold HAL and FPGA sysfs interface.
 Features:
 - Warning light with red/blue/green modes (ioctl 310)
 - Camping light with off/full/medium/low/flash/SOS modes (ioctl 301)
-- Projector enable/disable with sleep/wake FPGA init sequence (ioctl 500)
+- Projector enable/disable via ioctl 500
 - Projector mode selection (portrait, landscape, landscape inverted)
 - Phone display toggle while projecting
 - Projector brightness, keystone correction, fan speed
@@ -19,18 +19,18 @@ Features:
 - Display viewport shrinks to 16:9 when projector is active to
   prevent clipping the projected image
 
-The focus calibration button runs a per-device motor sweep, parses
-the results from dmesg (init_cali_buff), and saves them as the
-calibration table for the Agold daemon's continuous auto focus.
+Sysfs reads use the Agold daemon's readSysFile() method with shell
+fallback to avoid SELinux denials for system_app context. Sysfs
+writes use shell exec for the same reason.
 ---
  .../java/me/phh/treble/app/EntryService.kt    |   1 +
  .../me/phh/treble/app/SettingsActivity.kt     |   3 +
- .../main/java/me/phh/treble/app/Tank8849.kt   | 291 ++++++++++++++++++
- .../me/phh/treble/app/Tank8849Settings.kt     |  71 +++++
+ .../main/java/me/phh/treble/app/Tank8849.kt   | 237 ++++++++++++++++++
+ .../me/phh/treble/app/Tank8849Settings.kt     | 102 ++++++++
  app/src/main/res/values/arrays_tank8849.xml   |  41 +++
  app/src/main/res/xml/pref_headers.xml         |   3 +
- app/src/main/res/xml/pref_tank8849.xml        |  90 ++++++
- 7 files changed, 500 insertions(+)
+ app/src/main/res/xml/pref_tank8849.xml        |  90 +++++++
+ 7 files changed, 477 insertions(+)
  create mode 100644 app/src/main/java/me/phh/treble/app/Tank8849.kt
  create mode 100644 app/src/main/java/me/phh/treble/app/Tank8849Settings.kt
  create mode 100644 app/src/main/res/values/arrays_tank8849.xml
@@ -71,21 +71,17 @@ index 02832b0..bbf87f5 100644
      companion object {
 diff --git a/app/src/main/java/me/phh/treble/app/Tank8849.kt b/app/src/main/java/me/phh/treble/app/Tank8849.kt
 new file mode 100644
-index 0000000..897f2cc
+index 0000000..cdaac3d
 --- /dev/null
 +++ b/app/src/main/java/me/phh/treble/app/Tank8849.kt
-@@ -0,0 +1,291 @@
+@@ -0,0 +1,237 @@
 +package me.phh.treble.app
 +
-+import android.content.ContentResolver
 +import android.content.Context
 +import android.content.SharedPreferences
 +import android.graphics.Point
-+import android.os.PowerManager
 +import android.os.ServiceManager
-+import android.os.SystemClock
 +import android.preference.PreferenceManager
-+import android.provider.Settings
 +import android.util.Log
 +import android.view.Display
 +import android.view.IWindowManager
@@ -96,23 +92,35 @@ index 0000000..897f2cc
 +object Tank8849 : EntryStartup {
 +    private const val SYSFS_BASE = "/sys/bus/spi/drivers/fpga_spi"
 +    private const val DEFAULT_CALIBRATION = "550,720,711,696,685,672,663,649,638,626,614,599,587,561,548,538,538"
-+    private var powerManager: PowerManager? = null
-+    private var contentResolver: ContentResolver? = null
++
 +
 +    fun writeToFileNofail(path: String, content: String) {
++        // Direct file writes are blocked by SELinux for system_app.
++        // Use shell to write as the app's uid with shell context.
 +        try {
-+            File(path).printWriter().use { it.println(content) }
++            val proc = Runtime.getRuntime().exec(arrayOf("sh", "-c", "echo '$content' > $path"))
++            proc.waitFor()
 +        } catch (t: Throwable) {
 +            Log.d("PHH", "Failed writing to $path", t)
 +        }
 +    }
 +
 +    private fun readFileNofail(path: String, default: String = ""): String {
-+        return try {
-+            File(path).readText().trim()
-+        } catch (t: Throwable) {
-+            default
-+        }
++        // Try the Agold daemon's readSysFile first, then fall back to shell
++        try {
++            val svc = getAgoldService()
++            if (svc != null) {
++                val result = svc.readSysFile(path)
++                if (result != null) return result.trim()
++            }
++        } catch (_: Throwable) {}
++        try {
++            val proc = Runtime.getRuntime().exec(arrayOf("cat", path))
++            val result = proc.inputStream.bufferedReader().readText().trim()
++            proc.waitFor()
++            if (result.isNotEmpty()) return result
++        } catch (_: Throwable) {}
++        return default
 +    }
 +
 +    private fun getAgoldService(): IAgoldDaemon? {
@@ -145,17 +153,6 @@ index 0000000..897f2cc
 +        } catch (t: Throwable) {
 +            Log.d("PHH", "Focus calibration failed", t)
 +        }
-+    }
-+
-+    private fun waitForSysStatus(target: Int, timeoutMs: Long = 5000): Boolean {
-+        val start = SystemClock.elapsedRealtime()
-+        while (SystemClock.elapsedRealtime() - start < timeoutMs) {
-+            val status = readFileNofail("$SYSFS_BASE/projector_sys_status", "-1")
-+            if (status == target.toString()) return true
-+            Thread.sleep(100)
-+        }
-+        Log.w("PHH", "Timed out waiting for projector_sys_status == $target")
-+        return false
 +    }
 +
 +    fun runFocusCalibration(sp: SharedPreferences) {
@@ -199,14 +196,13 @@ index 0000000..897f2cc
 +        // The projector has a 16:9 aspect ratio but the phone display is taller
 +        // (e.g. 20:9). Shrink the display viewport to 16:9 so the full UI fits
 +        // within the projected area, with black bars top and bottom on the phone.
-+        val wm = getWindowManager() ?: return
 +        try {
++            val wm = getWindowManager() ?: return
 +            val size = Point()
 +            wm.getInitialDisplaySize(Display.DEFAULT_DISPLAY, size)
 +            val width = size.x
 +            val height16x9 = width * 16 / 9
 +            Log.d("PHH", "Tank8849: shrinking display from ${size.x}x${size.y} to ${width}x${height16x9}")
-+            wm.setForcedDisplayScalingMode(Display.DEFAULT_DISPLAY, 1) // DISABLED
 +            wm.setForcedDisplaySize(Display.DEFAULT_DISPLAY, width, height16x9)
 +        } catch (t: Throwable) {
 +            Log.e("PHH", "Tank8849: failed to shrink display", t)
@@ -214,10 +210,9 @@ index 0000000..897f2cc
 +    }
 +
 +    private fun restoreDisplay() {
-+        val wm = getWindowManager() ?: return
 +        try {
++            val wm = getWindowManager() ?: return
 +            Log.d("PHH", "Tank8849: restoring display to original size")
-+            wm.setForcedDisplayScalingMode(Display.DEFAULT_DISPLAY, 0) // AUTO
 +            wm.clearForcedDisplaySize(Display.DEFAULT_DISPLAY)
 +        } catch (t: Throwable) {
 +            Log.e("PHH", "Tank8849: failed to restore display", t)
@@ -225,63 +220,17 @@ index 0000000..897f2cc
 +    }
 +
 +    private fun enableProjector(sp: SharedPreferences) {
-+        // The projector requires a display sleep/wake cycle to initialize
-+        // the FPGA properly. Sequence from vendor:
-+        // 1. Send focus calibration
-+        // 2. Temporarily disable AoD so display fully sleeps
-+        // 3. Sleep the display
-+        // 4. Wait for projector_sys_status == 0
-+        // 5. Send projector ioctl to turn on
-+        // 6. Wake the display
-+        // 7. Wait for projector_sys_status == 1
-+        // 8. Restore AoD to its previous state
 +        thread {
 +            val mode = sp.getString(Tank8849Settings.projectorMode, "3") ?: "3"
-+            val pm = powerManager ?: return@thread
-+            val cr = contentResolver ?: return@thread
 +
 +            Log.d("PHH", "Tank8849 enable: sending calibration")
 +            sendCalibration(sp)
 +
-+            // Save and disable AoD so goToSleep fully turns off the display
-+            val aodWasEnabled = try {
-+                Settings.Secure.getInt(cr, Settings.Secure.DOZE_ALWAYS_ON, 0) != 0
-+            } catch (t: Throwable) { false }
-+
-+            if (aodWasEnabled) {
-+                Log.d("PHH", "Tank8849 enable: temporarily disabling AoD")
-+                try {
-+                    Settings.Secure.putInt(cr, Settings.Secure.DOZE_ALWAYS_ON, 0)
-+                } catch (t: Throwable) {
-+                    Log.w("PHH", "Failed to disable AoD", t)
-+                }
-+                // Give the system a moment to process the AoD change
-+                Thread.sleep(200)
-+            }
-+
-+            Log.d("PHH", "Tank8849 enable: sleeping display")
-+            pm.goToSleep(SystemClock.uptimeMillis())
-+            waitForSysStatus(0)
-+
 +            Log.d("PHH", "Tank8849 enable: sending ioctl 500 0 $mode 0")
 +            sendIoctl(500, 0, mode.toInt(), 0)
 +
-+            Log.d("PHH", "Tank8849 enable: waking display")
-+            pm.wakeUp(SystemClock.uptimeMillis())
-+            waitForSysStatus(1)
-+
 +            // Shrink display viewport to match projector aspect ratio
 +            shrinkDisplayForProjector()
-+
-+            // Restore AoD if it was enabled before
-+            if (aodWasEnabled) {
-+                Log.d("PHH", "Tank8849 enable: restoring AoD")
-+                try {
-+                    Settings.Secure.putInt(cr, Settings.Secure.DOZE_ALWAYS_ON, 1)
-+                } catch (t: Throwable) {
-+                    Log.w("PHH", "Failed to restore AoD", t)
-+                }
-+            }
 +
 +            Log.d("PHH", "Tank8849 enable: done")
 +        }
@@ -356,9 +305,6 @@ index 0000000..897f2cc
 +    override fun startup(ctxt: Context) {
 +        if (!Tank8849Settings.enabled()) return
 +
-+        powerManager = ctxt.getSystemService(Context.POWER_SERVICE) as PowerManager
-+        contentResolver = ctxt.contentResolver
-+
 +        val sp = PreferenceManager.getDefaultSharedPreferences(ctxt)
 +        sp.registerOnSharedPreferenceChangeListener(spListener)
 +
@@ -368,10 +314,10 @@ index 0000000..897f2cc
 +}
 diff --git a/app/src/main/java/me/phh/treble/app/Tank8849Settings.kt b/app/src/main/java/me/phh/treble/app/Tank8849Settings.kt
 new file mode 100644
-index 0000000..e20b428
+index 0000000..a3a452f
 --- /dev/null
 +++ b/app/src/main/java/me/phh/treble/app/Tank8849Settings.kt
-@@ -0,0 +1,71 @@
+@@ -0,0 +1,102 @@
 +package me.phh.treble.app
 +
 +import android.os.Bundle
@@ -379,6 +325,7 @@ index 0000000..e20b428
 +import android.util.Log
 +import vendor.mediatek.hardware.agolddaemon.IAgoldDaemon
 +import java.io.File
++import java.io.IOException
 +
 +object Tank8849Settings : Settings {
 +    val warningLight = "tank8849_warning_light"
@@ -408,6 +355,32 @@ index 0000000..e20b428
 +class Tank8849SettingsFragment : SettingsFragment() {
 +    override val preferencesResId = R.xml.pref_tank8849
 +
++    private fun readSysFile(path: String): String {
++        // Direct file reads are blocked by SELinux for system_app.
++        // Use the Agold daemon's readSysFile method instead, falling
++        // back to shell cat if the daemon is unavailable.
++        try {
++            val binder = ServiceManager.checkService(IAgoldDaemon.DESCRIPTOR + "/default")
++            if (binder != null) {
++                val svc = IAgoldDaemon.Stub.asInterface(binder)
++                val result = svc.readSysFile(path)
++                if (result != null) return result.trim()
++            }
++        } catch (t: Throwable) {
++            Log.d("PHH", "readSysFile via daemon failed for $path", t)
++        }
++        // Fallback: try shell
++        try {
++            val proc = Runtime.getRuntime().exec(arrayOf("cat", path))
++            val result = proc.inputStream.bufferedReader().readText().trim()
++            proc.waitFor()
++            return result
++        } catch (t: Throwable) {
++            Log.d("PHH", "readSysFile via shell failed for $path", t)
++        }
++        return ""
++    }
++
 +    override fun onCreatePreferences(savedInstanceState: Bundle?, rootKey: String?) {
 +        super.onCreatePreferences(savedInstanceState, rootKey)
 +
@@ -423,23 +396,27 @@ index 0000000..e20b428
 +        // Show temperature as a read-only summary
 +        val tempPref = findPreference<androidx.preference.Preference>("tank8849_temp_display")
 +        try {
-+            val temp = File("/sys/bus/spi/drivers/fpga_spi/projector_temp").readText().trim()
-+            tempPref?.summary = "${temp}\u00B0C"
++            val temp = readSysFile("/sys/bus/spi/drivers/fpga_spi/projector_temp")
++            if (temp.isNotEmpty() && temp != "N/A") {
++                tempPref?.summary = "${temp}\u00B0C"
++            } else {
++                tempPref?.summary = "Projector off"
++            }
 +        } catch (t: Throwable) {
-+            tempPref?.isVisible = false
++            tempPref?.summary = "Unavailable"
 +        }
 +
-+        // Show laser distance as a read-only summary, hide if hardware absent
++        // Show laser distance as a read-only summary
 +        val laserPref = findPreference<androidx.preference.Preference>("tank8849_laser_display")
-+        if (!File("/sys/nds03_ctrl/nds03_read").exists()) {
-+            laserPref?.isVisible = false
-+        } else {
-+            try {
-+                val distance = File("/sys/nds03_ctrl/nds03_read").readText().trim()
++        try {
++            val distance = readSysFile("/sys/nds03_ctrl/nds03_read")
++            if (distance.isNotEmpty()) {
 +                laserPref?.summary = "${distance} mm"
-+            } catch (t: Throwable) {
-+                laserPref?.isVisible = false
++            } else {
++                laserPref?.summary = "Unavailable"
 +            }
++        } catch (t: Throwable) {
++            laserPref?.summary = "Unavailable"
 +        }
 +    }
 +}

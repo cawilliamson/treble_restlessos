@@ -1,4 +1,4 @@
-From dccf3c89ecdc1adcfa304b2b2838fe209c285f51 Mon Sep 17 00:00:00 2001
+From 47fb619460510334825b76ce60ca872dc7841a8d Mon Sep 17 00:00:00 2001
 From: "Christopher A. Williamson" <contact@chrisaw.io>
 Date: Mon, 23 Feb 2026 10:27:17 +0000
 Subject: [PATCH 1/2] Add GrapheneOS hardening toggles menu
