@@ -1,4 +1,4 @@
-From c170a3e75bb137100e2a2da22620eeaa83096674 Mon Sep 17 00:00:00 2001
+From 5cf3b3742b2e17b45d45ed826a8bae77a87fcca3 Mon Sep 17 00:00:00 2001
 From: "Christopher A. Williamson" <contact@chrisaw.io>
 Date: Sun, 22 Feb 2026 13:49:15 +0000
 Subject: [PATCH 2/2] Add Unihertz 8849 hardware controls
@@ -9,28 +9,31 @@ hardware, detected via the Agold HAL and FPGA sysfs interface.
 Features:
 - Warning light with red/blue/green modes (ioctl 310)
 - Camping light with off/full/medium/low/flash/SOS modes (ioctl 301)
-- Projector enable/disable via ioctl 500
+- Projector enable/disable via ioctl 500 with display sleep/wake
+  cycle for clean FPGA initialization
 - Projector mode selection (portrait, landscape, landscape inverted)
 - Phone display toggle while projecting
 - Projector brightness, keystone correction, fan speed
-- Focus calibration via motor sweep (focus_auto_calibration sysfs)
+- Per-device focus calibration via motor sweep with +243 ADC offset
 - Manual focus adjustment via motor_turn_mode_step
 - Projector temperature and laser rangefinder readout
-- Display viewport shrinks to 16:9 when projector is active to
-  prevent clipping the projected image
+- Display viewport shrinks to 16:9 when projector is active
 
-Sysfs reads use the Agold daemon's readSysFile() method with shell
-fallback to avoid SELinux denials for system_app context. Sysfs
-writes use shell exec for the same reason.
+The calibration sends cmd() with focus values before the projector
+ioctl so the motor_routine_thread starts with the correct table.
+AoD is temporarily disabled during enable so the display fully
+sleeps for FPGA initialization, then restored afterwards.
+Sysfs reads use the Agold daemon's readSysFile() with shell fallback
+to avoid SELinux denials for system_app context.
 ---
  .../java/me/phh/treble/app/EntryService.kt    |   1 +
  .../me/phh/treble/app/SettingsActivity.kt     |   3 +
- .../main/java/me/phh/treble/app/Tank8849.kt   | 237 ++++++++++++++++++
- .../me/phh/treble/app/Tank8849Settings.kt     | 102 ++++++++
+ .../main/java/me/phh/treble/app/Tank8849.kt   | 323 ++++++++++++++++++
+ .../me/phh/treble/app/Tank8849Settings.kt     | 102 ++++++
  app/src/main/res/values/arrays_tank8849.xml   |  41 +++
  app/src/main/res/xml/pref_headers.xml         |   3 +
- app/src/main/res/xml/pref_tank8849.xml        |  90 +++++++
- 7 files changed, 477 insertions(+)
+ app/src/main/res/xml/pref_tank8849.xml        |  90 +++++
+ 7 files changed, 563 insertions(+)
  create mode 100644 app/src/main/java/me/phh/treble/app/Tank8849.kt
  create mode 100644 app/src/main/java/me/phh/treble/app/Tank8849Settings.kt
  create mode 100644 app/src/main/res/values/arrays_tank8849.xml
@@ -71,17 +74,21 @@ index 02832b0..bbf87f5 100644
      companion object {
 diff --git a/app/src/main/java/me/phh/treble/app/Tank8849.kt b/app/src/main/java/me/phh/treble/app/Tank8849.kt
 new file mode 100644
-index 0000000..cdaac3d
+index 0000000..b60a717
 --- /dev/null
 +++ b/app/src/main/java/me/phh/treble/app/Tank8849.kt
-@@ -0,0 +1,237 @@
+@@ -0,0 +1,323 @@
 +package me.phh.treble.app
 +
++import android.content.ContentResolver
 +import android.content.Context
 +import android.content.SharedPreferences
 +import android.graphics.Point
++import android.os.PowerManager
 +import android.os.ServiceManager
++import android.os.SystemClock
 +import android.preference.PreferenceManager
++import android.provider.Settings
 +import android.util.Log
 +import android.view.Display
 +import android.view.IWindowManager
@@ -92,6 +99,10 @@ index 0000000..cdaac3d
 +object Tank8849 : EntryStartup {
 +    private const val SYSFS_BASE = "/sys/bus/spi/drivers/fpga_spi"
 +    private const val DEFAULT_CALIBRATION = "550,720,711,696,685,672,663,649,638,626,614,599,587,561,548,538,538"
++    private const val FOCUS_PREFIX = 550
++    private const val FOCUS_OFFSET = 243
++    private var powerManager: PowerManager? = null
++    private var contentResolver: ContentResolver? = null
 +
 +
 +    fun writeToFileNofail(path: String, content: String) {
@@ -155,26 +166,66 @@ index 0000000..cdaac3d
 +        }
 +    }
 +
++    private fun waitForSysStatus(target: Int, timeoutMs: Long = 5000): Boolean {
++        val start = SystemClock.elapsedRealtime()
++        while (SystemClock.elapsedRealtime() - start < timeoutMs) {
++            val status = readFileNofail("$SYSFS_BASE/projector_sys_status", "-1")
++            if (status == target.toString()) return true
++            Thread.sleep(100)
++        }
++        Log.w("PHH", "Timed out waiting for projector_sys_status == $target")
++        return false
++    }
++
 +    fun runFocusCalibration(sp: SharedPreferences) {
 +        // Run the hardware motor calibration sweep to determine per-device
-+        // focus values. The kernel driver logs the results as init_cali_buff
-+        // entries in dmesg. We parse those and prepend the fixed offset 550
-+        // to form the 17-value calibration string expected by the daemon.
-+        Log.d("PHH", "Tank8849: starting focus calibration sweep")
++        // focus values. The projector must be on but NO calibration table
++        // should be loaded via cmd() first, otherwise the sweep just echoes
++        // the loaded values instead of measuring.
++        //
++        // The sweep produces raw motor ADC positions. These need a fixed
++        // offset of +243 added, then the whole table is prefixed with 550,
++        // to form the 17-value string the daemon expects.
++        //
++        // Sequence: turn on projector without cmd -> sweep -> turn off ->
++        // send corrected values via cmd -> turn on again.
++        Log.d("PHH", "Tank8849: starting focus calibration")
++
++        // Turn on projector without sending calibration first
++        val mode = sp.getString(Tank8849Settings.projectorMode, "3") ?: "3"
++        sendIoctl(500, 0, mode.toInt(), 0)
++        Thread.sleep(2000)
++
++        // Run the sweep
++        Log.d("PHH", "Tank8849: running motor sweep")
 +        writeToFileNofail("$SYSFS_BASE/focus_auto_calibration", "1")
-+        // The sweep takes ~8 seconds to complete
 +        Thread.sleep(10000)
 +
 +        try {
-+            val dmesg = Runtime.getRuntime().exec("dmesg").inputStream.bufferedReader().readText()
++            val proc = Runtime.getRuntime().exec(arrayOf("dmesg"))
++            val dmesg = proc.inputStream.bufferedReader().readText()
++            proc.waitFor()
 +            val pattern = Regex("""\[init_cali_buff\]\[(\d+)\]\[(\d+)\]""")
 +            val matches = pattern.findAll(dmesg).toList()
 +            if (matches.size >= 16) {
-+                // Take the last 16 matches (in case calibration ran multiple times)
-+                val values = matches.takeLast(16).map { it.groupValues[2] }
-+                val calibration = "550," + values.joinToString(",")
++                val rawValues = matches.takeLast(16).map { it.groupValues[2].toInt() }
++                // Check the values are real measurements (not echoed back)
++                if (rawValues.all { it == 0 }) {
++                    Log.w("PHH", "Tank8849: sweep returned all zeros, calibration table was pre-loaded")
++                    return
++                }
++                val correctedValues = rawValues.map { it + FOCUS_OFFSET }
++                val calibration = "$FOCUS_PREFIX," + correctedValues.joinToString(",")
 +                Log.d("PHH", "Tank8849: calibration result: $calibration")
++                Log.d("PHH", "Tank8849: raw sweep values: ${rawValues.joinToString(",")}")
 +                sp.edit().putString(Tank8849Settings.focusCalibration, calibration).apply()
++
++                // Turn off and restart with the new calibration
++                sendIoctl(500, 0, 0, 0)
++                Thread.sleep(1000)
++                sendCalibration(sp)
++                sendIoctl(500, 0, mode.toInt(), 0)
++                Log.d("PHH", "Tank8849: projector restarted with calibrated values")
 +            } else {
 +                Log.w("PHH", "Tank8849: calibration sweep produced ${matches.size} values, expected 16")
 +            }
@@ -222,15 +273,52 @@ index 0000000..cdaac3d
 +    private fun enableProjector(sp: SharedPreferences) {
 +        thread {
 +            val mode = sp.getString(Tank8849Settings.projectorMode, "3") ?: "3"
++            val pm = powerManager ?: return@thread
++            val cr = contentResolver ?: return@thread
 +
 +            Log.d("PHH", "Tank8849 enable: sending calibration")
 +            sendCalibration(sp)
 +
++            // Temporarily disable AoD so goToSleep fully turns off the display
++            val aodWasEnabled = try {
++                Settings.Secure.getInt(cr, Settings.Secure.DOZE_ALWAYS_ON, 0) != 0
++            } catch (t: Throwable) { false }
++
++            if (aodWasEnabled) {
++                Log.d("PHH", "Tank8849 enable: temporarily disabling AoD")
++                try {
++                    Settings.Secure.putInt(cr, Settings.Secure.DOZE_ALWAYS_ON, 0)
++                } catch (t: Throwable) {
++                    Log.w("PHH", "Failed to disable AoD", t)
++                }
++                Thread.sleep(200)
++            }
++
++            // Sleep the display so the FPGA can initialize cleanly
++            Log.d("PHH", "Tank8849 enable: sleeping display")
++            pm.goToSleep(SystemClock.uptimeMillis())
++            waitForSysStatus(0)
++
 +            Log.d("PHH", "Tank8849 enable: sending ioctl 500 0 $mode 0")
 +            sendIoctl(500, 0, mode.toInt(), 0)
 +
++            // Wake the display back up
++            Log.d("PHH", "Tank8849 enable: waking display")
++            pm.wakeUp(SystemClock.uptimeMillis())
++            waitForSysStatus(1)
++
 +            // Shrink display viewport to match projector aspect ratio
 +            shrinkDisplayForProjector()
++
++            // Restore AoD if it was enabled before
++            if (aodWasEnabled) {
++                Log.d("PHH", "Tank8849 enable: restoring AoD")
++                try {
++                    Settings.Secure.putInt(cr, Settings.Secure.DOZE_ALWAYS_ON, 1)
++                } catch (t: Throwable) {
++                    Log.w("PHH", "Failed to restore AoD", t)
++                }
++            }
 +
 +            Log.d("PHH", "Tank8849 enable: done")
 +        }
@@ -284,8 +372,6 @@ index 0000000..cdaac3d
 +                Log.d("PHH", "Tank8849: running focus calibration")
 +                thread {
 +                    runFocusCalibration(sp)
-+                    // Re-send the newly calibrated values to the daemon
-+                    sendCalibration(sp)
 +                }
 +            }
 +            Tank8849Settings.focusCalibration -> {
@@ -304,6 +390,9 @@ index 0000000..cdaac3d
 +
 +    override fun startup(ctxt: Context) {
 +        if (!Tank8849Settings.enabled()) return
++
++        powerManager = ctxt.getSystemService(Context.POWER_SERVICE) as PowerManager
++        contentResolver = ctxt.contentResolver
 +
 +        val sp = PreferenceManager.getDefaultSharedPreferences(ctxt)
 +        sp.registerOnSharedPreferenceChangeListener(spListener)
@@ -483,7 +572,7 @@ index a2e7404..be22e72 100644
          android:title="Misc features" />
 diff --git a/app/src/main/res/xml/pref_tank8849.xml b/app/src/main/res/xml/pref_tank8849.xml
 new file mode 100644
-index 0000000..ca0c9e9
+index 0000000..768babc
 --- /dev/null
 +++ b/app/src/main/res/xml/pref_tank8849.xml
 @@ -0,0 +1,90 @@
@@ -545,7 +634,7 @@ index 0000000..ca0c9e9
 +        <Preference
 +            android:key="tank8849_auto_focus"
 +            android:title="Calibrate focus"
-+            app:summary="Run motor calibration sweep to determine per-device focus values (takes ~10s)" />
++            app:summary="Run per-device motor calibration. The projector will cycle on/off (~15s). Only needs to be done once." />
 +        <EditTextPreference
 +            android:defaultValue="550,720,711,696,685,672,663,649,638,626,614,599,587,561,548,538,538"
 +            android:key="tank8849_focus_calibration"
