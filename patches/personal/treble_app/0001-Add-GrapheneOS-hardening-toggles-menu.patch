@@ -1,6 +1,6 @@
-From 4b24bd86348254cee312c45a62d69d69266c2183 Mon Sep 17 00:00:00 2001
+From dccf3c89ecdc1adcfa304b2b2838fe209c285f51 Mon Sep 17 00:00:00 2001
 From: "Christopher A. Williamson" <contact@chrisaw.io>
-Date: Sun, 22 Feb 2026 13:47:44 +0000
+Date: Mon, 23 Feb 2026 10:27:17 +0000
 Subject: [PATCH 1/2] Add GrapheneOS hardening toggles menu
 
 Add a new 'GrapheneOS features' submenu to TrebleApp with toggles
@@ -9,19 +9,17 @@ compatibility issues on GSI builds:
 
 - Memory tagging for vendor processes (persist.sys.phh.gos.mte_vendor)
 - Hardened thread stacks (persist.sys.phh.gos.stack_hardening)
-- Disable JIT compilation (persist.sys.phh.gos.disable_jit)
 
-All toggles default to OFF for maximum compatibility. Each toggle
-includes a description of the security benefit and what it may
-break. All require a reboot to take effect.
+All toggles default to OFF for maximum compatibility. Each requires
+a reboot to take effect.
 ---
  .../java/me/phh/treble/app/EntryService.kt    |  1 +
- .../main/java/me/phh/treble/app/GrapheneOS.kt | 37 +++++++++++++++++++
- .../me/phh/treble/app/GrapheneOSSettings.kt   | 13 +++++++
+ .../main/java/me/phh/treble/app/GrapheneOS.kt | 32 +++++++++++++++++++
+ .../me/phh/treble/app/GrapheneOSSettings.kt   | 12 +++++++
  .../me/phh/treble/app/SettingsActivity.kt     |  3 ++
- app/src/main/res/xml/pref_grapheneos.xml      | 21 +++++++++++
+ app/src/main/res/xml/pref_grapheneos.xml      | 15 +++++++++
  app/src/main/res/xml/pref_headers.xml         |  3 ++
- 6 files changed, 78 insertions(+)
+ 6 files changed, 66 insertions(+)
  create mode 100644 app/src/main/java/me/phh/treble/app/GrapheneOS.kt
  create mode 100644 app/src/main/java/me/phh/treble/app/GrapheneOSSettings.kt
  create mode 100644 app/src/main/res/xml/pref_grapheneos.xml
@@ -40,10 +38,10 @@ index f6c501b..971f354 100644
              tryC { Desktop.startup(this) }
 diff --git a/app/src/main/java/me/phh/treble/app/GrapheneOS.kt b/app/src/main/java/me/phh/treble/app/GrapheneOS.kt
 new file mode 100644
-index 0000000..4697635
+index 0000000..d4ade1e
 --- /dev/null
 +++ b/app/src/main/java/me/phh/treble/app/GrapheneOS.kt
-@@ -0,0 +1,37 @@
+@@ -0,0 +1,32 @@
 +package me.phh.treble.app
 +
 +import android.content.Context
@@ -63,10 +61,6 @@ index 0000000..4697635
 +                val value = sp.getBoolean(key, false)
 +                Misc.safeSetprop("persist.sys.phh.gos.stack_hardening", if (value) "true" else "false")
 +            }
-+            GrapheneOSSettings.disableJit -> {
-+                val value = sp.getBoolean(key, false)
-+                Misc.safeSetprop("persist.sys.phh.gos.disable_jit", if (value) "true" else "false")
-+            }
 +        }
 +    }
 +
@@ -78,21 +72,19 @@ index 0000000..4697635
 +        // Re-apply on boot
 +        spListener.onSharedPreferenceChanged(sp, GrapheneOSSettings.mteVendor)
 +        spListener.onSharedPreferenceChanged(sp, GrapheneOSSettings.stackHardening)
-+        spListener.onSharedPreferenceChanged(sp, GrapheneOSSettings.disableJit)
 +    }
 +}
 diff --git a/app/src/main/java/me/phh/treble/app/GrapheneOSSettings.kt b/app/src/main/java/me/phh/treble/app/GrapheneOSSettings.kt
 new file mode 100644
-index 0000000..9ca42c8
+index 0000000..ce79f0a
 --- /dev/null
 +++ b/app/src/main/java/me/phh/treble/app/GrapheneOSSettings.kt
-@@ -0,0 +1,13 @@
+@@ -0,0 +1,12 @@
 +package me.phh.treble.app
 +
 +object GrapheneOSSettings : Settings {
 +    val mteVendor = "key_grapheneos_mte_vendor"
 +    val stackHardening = "key_grapheneos_stack_hardening"
-+    val disableJit = "key_grapheneos_disable_jit"
 +
 +    override fun enabled() = true
 +}
@@ -123,14 +115,13 @@ index 547c579..02832b0 100644
      companion object {
 diff --git a/app/src/main/res/xml/pref_grapheneos.xml b/app/src/main/res/xml/pref_grapheneos.xml
 new file mode 100644
-index 0000000..edf55fe
+index 0000000..69279cc
 --- /dev/null
 +++ b/app/src/main/res/xml/pref_grapheneos.xml
-@@ -0,0 +1,21 @@
+@@ -0,0 +1,15 @@
 +<?xml version="1.0" encoding="utf-8"?>
 +<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android">
-+    <PreferenceCategory android:title="GrapheneOS hardening"
-+        android:summary="These features are disabled by default for maximum vendor compatibility. Enable them individually to improve security, but be aware they may cause issues on some devices. All toggles require a reboot to take effect.">
++    <PreferenceCategory android:title="GrapheneOS hardening">
 +        <SwitchPreference
 +            android:defaultValue="false"
 +            android:key="key_grapheneos_mte_vendor"
@@ -141,11 +132,6 @@ index 0000000..edf55fe
 +            android:key="key_grapheneos_stack_hardening"
 +            android:title="Hardened thread stacks"
 +            android:summary="Increases thread stack size from 1MB to 8MB and inserts randomly-sized unmapped guard regions between the stack and thread-local storage. Makes stack clash attacks and address prediction significantly harder.\n\nLikely to break: TEE drivers (fingerprint, KeyMint, Gatekeeper) and other vendor kernel drivers that assume contiguous thread memory layouts. Can cause intermittent failures that vary per boot due to the randomized guard gaps.\n\nReboot required." />
-+        <SwitchPreference
-+            android:defaultValue="false"
-+            android:key="key_grapheneos_disable_jit"
-+            android:title="Disable JIT compilation"
-+            android:summary="Disables the Android Runtime JIT compiler and uses full ahead-of-time (AOT) compilation instead. Removes JIT as an attack surface for code injection exploits.\n\nLikely to break: Nothing. May slightly increase app install times and memory usage. Apps that rely on dynamic code generation patterns may run slower.\n\nReboot required." />
 +    </PreferenceCategory>
 +</PreferenceScreen>
 diff --git a/app/src/main/res/xml/pref_headers.xml b/app/src/main/res/xml/pref_headers.xml

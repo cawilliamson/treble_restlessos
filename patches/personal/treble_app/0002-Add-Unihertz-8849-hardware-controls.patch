@@ -1,4 +1,4 @@
-From 38aa37439059b41ad17741db0a9b354153055316 Mon Sep 17 00:00:00 2001
+From e920a39ece816eb7deb82f5b39123a45d93503e8 Mon Sep 17 00:00:00 2001
 From: "Christopher A. Williamson" <contact@chrisaw.io>
 Date: Sun, 22 Feb 2026 13:49:15 +0000
 Subject: [PATCH 2/2] Add Unihertz 8849 hardware controls
