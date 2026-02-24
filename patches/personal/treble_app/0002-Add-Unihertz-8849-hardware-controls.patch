@@ -1,6 +1,6 @@
-From 5a364d99f656f56747f5aa9302e3f60260383e49 Mon Sep 17 00:00:00 2001
+From d28875d921375c5332660accbf3a40898b8c72f1 Mon Sep 17 00:00:00 2001
 From: "Christopher A. Williamson" <contact@chrisaw.io>
-Date: Tue, 24 Feb 2026 17:50:02 +0000
+Date: Tue, 24 Feb 2026 22:37:58 +0000
 Subject: [PATCH] Add Unihertz 8849 hardware controls
 
 Add a settings menu for the Unihertz 8849 (Tank) device-specific
@@ -50,7 +50,7 @@ only used as a fallback if proinfo read fails.
  create mode 100644 app/src/main/res/xml/pref_tank8849.xml
 
 diff --git a/app/src/main/java/me/phh/treble/app/EntryService.kt b/app/src/main/java/me/phh/treble/app/EntryService.kt
-index f6c501b..a66f3e7 100644
+index 971f354..1a55f66 100644
 --- a/app/src/main/java/me/phh/treble/app/EntryService.kt
 +++ b/app/src/main/java/me/phh/treble/app/EntryService.kt
 @@ -53,6 +53,7 @@ class EntryService: Service() {
@@ -60,24 +60,24 @@ index f6c501b..a66f3e7 100644
 +            tryC { Tank8849.startup(this) }
              tryC { Ims.startup(this) }
              tryC { Custom.startup(this) }
-             tryC { Hct.startup(this) }
+             tryC { GrapheneOS.startup(this) }
 diff --git a/app/src/main/java/me/phh/treble/app/SettingsActivity.kt b/app/src/main/java/me/phh/treble/app/SettingsActivity.kt
-index 547c579..71f3fa5 100644
+index 02832b0..bbf87f5 100644
 --- a/app/src/main/java/me/phh/treble/app/SettingsActivity.kt
 +++ b/app/src/main/java/me/phh/treble/app/SettingsActivity.kt
-@@ -77,6 +77,8 @@ class SettingsActivity : PreferenceActivity() {
-             target.removeIf { it.fragment == ImsSettingsFragment::class.java.name }
-         if (!CustomSettings.enabled())
+@@ -79,6 +79,8 @@ class SettingsActivity : PreferenceActivity() {
              target.removeIf { it.fragment == CustomSettingsFragment::class.java.name }
+         if (!GrapheneOSSettings.enabled())
+             target.removeIf { it.fragment == GrapheneOSSettingsFragment::class.java.name }
 +        if (!Tank8849Settings.enabled())
 +            target.removeIf { it.fragment == Tank8849SettingsFragment::class.java.name }
          val p = SystemProperties.get("ro.system.ota.json_url", "")
          if (p.trim() == "")
              target.removeIf { it.id.compareTo(R.id.updater) == 0 }
-@@ -105,6 +107,7 @@ class SettingsActivity : PreferenceActivity() {
-                 || ImsSettingsFragment::class.java.name == fragmentName
+@@ -108,6 +110,7 @@ class SettingsActivity : PreferenceActivity() {
                  || CustomSettingsFragment::class.java.name == fragmentName
                  || AudioEffectsFragment::class.java.name == fragmentName
+                 || GrapheneOSSettingsFragment::class.java.name == fragmentName
 +                || Tank8849SettingsFragment::class.java.name == fragmentName
      }
  
@@ -958,13 +958,13 @@ index 0000000..5ffe677
 +    </string-array>
 +</resources>
 diff --git a/app/src/main/res/xml/pref_headers.xml b/app/src/main/res/xml/pref_headers.xml
-index ed5fb55..f83eecf 100644
+index a2e7404..be22e72 100644
 --- a/app/src/main/res/xml/pref_headers.xml
 +++ b/app/src/main/res/xml/pref_headers.xml
-@@ -38,6 +38,9 @@
+@@ -41,6 +41,9 @@
      <header
-         android:fragment="me.phh.treble.app.DozeSettingsFragment"
-         android:title="Doze features" />
+         android:fragment="me.phh.treble.app.GrapheneOSSettingsFragment"
+         android:title="GrapheneOS features" />
 +    <header
 +        android:fragment="me.phh.treble.app.Tank8849SettingsFragment"
 +        android:title="8849" />
