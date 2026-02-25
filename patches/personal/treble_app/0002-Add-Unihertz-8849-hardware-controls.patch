@@ -1,4 +1,4 @@
-From c7e17d548d29f80148b5bc763873f94268e92bfb Mon Sep 17 00:00:00 2001
+From d00bcf7b4b8e984567fd0f9415a449f39d54828f Mon Sep 17 00:00:00 2001
 From: "Christopher A. Williamson" <contact@chrisaw.io>
 Date: Wed, 25 Feb 2026 10:54:51 +0000
 Subject: [PATCH] Add Unihertz 8849 hardware controls
@@ -83,7 +83,7 @@ index 02832b0..27a7118 100644
      companion object {
 diff --git a/app/src/main/java/me/phh/treble/app/Unihertz8849.kt b/app/src/main/java/me/phh/treble/app/Unihertz8849.kt
 new file mode 100644
-index 0000000..b0a908c
+index 0000000..2cc9cb0
 --- /dev/null
 +++ b/app/src/main/java/me/phh/treble/app/Unihertz8849.kt
 @@ -0,0 +1,715 @@
@@ -302,7 +302,7 @@ index 0000000..b0a908c
 +            override fun run() {
 +                sosPhase = !sosPhase
 +                sendIoctl(310, 0, if (sosPhase) WARNING_RED else WARNING_BLUE, 0)
-+                sosHandler.postDelayed(this, 333L)  // ~3Hz flash
++                sosHandler.postDelayed(this, 167L)  // ~6Hz flash
 +            }
 +        }
 +        sosRunnable = runnable
