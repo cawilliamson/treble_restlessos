@@ -1,0 +1,484 @@
+name: Build GrapheneOS GSI
+
+on:
+  workflow_dispatch:
+    inputs:
+      grapheneos_tag:
+        description: 'GrapheneOS tag to build (blank = auto-detect latest stable)'
+        required: false
+        default: ''
+      grapheneos_branch:
+        description: 'GrapheneOS branch to build from HEAD (ignored if tag is set)'
+        required: false
+        default: ''
+      release_channel:
+        description: 'Release channel for auto-detection (stable/beta/alpha)'
+        required: false
+        default: 'stable'
+
+# Only one build at a time - droplets are expensive and DO has per-account limits
+concurrency:
+  group: build
+  cancel-in-progress: false
+
+jobs:
+  # ---------------------------------------------------------------------------
+  # Job 1: Provision
+  # Runs on a free GitHub-hosted runner. Creates the DO droplet, registers it
+  # as an ephemeral self-hosted runner, and waits for it to come online.
+  # ---------------------------------------------------------------------------
+  provision:
+    name: Provision DO Droplet
+    runs-on: ubuntu-latest
+    outputs:
+      droplet_id: ${{ steps.create_droplet.outputs.droplet_id }}
+      runner_label: ${{ steps.runner_label.outputs.label }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Generate unique runner label
+        id: runner_label
+        run: |
+          # Unique label scopes this runner to this exact workflow run
+          LABEL="gsi-build-${{ github.run_id }}"
+          echo "label=${LABEL}" >> "$GITHUB_OUTPUT"
+          echo "Runner label: ${LABEL}"
+
+      - name: Get GitHub Actions runner registration token
+        id: runner_token
+        run: |
+          RESPONSE=$(curl -sf -X POST \
+            -H "Authorization: Bearer ${{ secrets.GH_PAT }}" \
+            -H "Accept: application/vnd.github+json" \
+            "https://api.github.com/repos/${{ github.repository }}/actions/runners/registration-token")
+          TOKEN=$(echo "$RESPONSE" | jq -r '.token')
+          if [ -z "$TOKEN" ] || [ "$TOKEN" = "null" ]; then
+            echo "ERROR: Failed to get runner registration token"
+            echo "$RESPONSE" | jq .
+            exit 1
+          fi
+          # Mask the token so it never appears in logs
+          echo "::add-mask::${TOKEN}"
+          echo "token=${TOKEN}" >> "$GITHUB_OUTPUT"
+
+      - name: Render cloud-init user-data
+        run: |
+          SSH_KEY_B64=$(echo "${{ secrets.BUILD_SSH_KEY }}" | base64 -w0)
+          REPO_URL="https://github.com/${{ github.repository }}"
+          RUNNER_LABEL="${{ steps.runner_label.outputs.label }}"
+          RUNNER_TOKEN="${{ steps.runner_token.outputs.token }}"
+
+          sed \
+            -e "s|__SSH_KEY_B64__|${SSH_KEY_B64}|g" \
+            -e "s|__REPO_URL__|${REPO_URL}|g" \
+            -e "s|__RUNNER_LABELS__|${RUNNER_LABEL}|g" \
+            -e "s|__RUNNER_TOKEN__|${RUNNER_TOKEN}|g" \
+            .github/cloud-init/user-data.yml \
+            > /tmp/user-data.yml
+
+          echo "user-data rendered: $(wc -c < /tmp/user-data.yml) bytes"
+
+      - name: Register build SSH key with DigitalOcean
+        id: do_ssh_key
+        run: |
+          PUB_KEY=$(echo "${{ secrets.BUILD_SSH_KEY }}" \
+            | ssh-keygen -y -f /dev/stdin 2>/dev/null)
+          FINGERPRINT=$(echo "$PUB_KEY" \
+            | ssh-keygen -lf /dev/stdin -E md5 2>/dev/null \
+            | awk '{print $2}' | sed 's/MD5://')
+
+          # Check if already registered
+          EXISTING_ID=$(curl -sf \
+            -H "Authorization: Bearer ${{ secrets.DO_API_TOKEN }}" \
+            "https://api.digitalocean.com/v2/account/keys" \
+            | jq -r --arg fp "$FINGERPRINT" \
+              '.ssh_keys[] | select(.fingerprint==$fp) | .id')
+
+          if [ -n "$EXISTING_ID" ]; then
+            echo "SSH key already registered (id=${EXISTING_ID})"
+            echo "key_id=${EXISTING_ID}" >> "$GITHUB_OUTPUT"
+          else
+            RESPONSE=$(curl -sf -X POST \
+              -H "Authorization: Bearer ${{ secrets.DO_API_TOKEN }}" \
+              -H "Content-Type: application/json" \
+              -d "$(jq -n --arg name "gha-build-${{ github.run_id }}" --arg pub "$PUB_KEY" \
+                '{name: $name, public_key: $pub}')" \
+              "https://api.digitalocean.com/v2/account/keys")
+            KEY_ID=$(echo "$RESPONSE" | jq -r '.ssh_key.id')
+            echo "key_id=${KEY_ID}" >> "$GITHUB_OUTPUT"
+            echo "Registered SSH key (id=${KEY_ID})"
+          fi
+
+      - name: Create DO droplet
+        id: create_droplet
+        run: |
+          USER_DATA=$(cat /tmp/user-data.yml)
+          RESPONSE=$(curl -sf -X POST \
+            -H "Authorization: Bearer ${{ secrets.DO_API_TOKEN }}" \
+            -H "Content-Type: application/json" \
+            -d "$(jq -n \
+              --arg name "gsi-build-${{ github.run_id }}" \
+              --argjson keys '[${{ steps.do_ssh_key.outputs.key_id }}]' \
+              --arg ud "$USER_DATA" \
+              '{
+                name: $name,
+                region: "lon1",
+                size: "c2-60vcpu-120gb",
+                image: "ubuntu-24-04-x64",
+                ssh_keys: $keys,
+                user_data: $ud,
+                tags: ["gsi-build", "ephemeral"],
+                monitoring: true,
+                backups: false
+              }')" \
+            "https://api.digitalocean.com/v2/droplets")
+
+          DROPLET_ID=$(echo "$RESPONSE" | jq -r '.droplet.id')
+          if [ -z "$DROPLET_ID" ] || [ "$DROPLET_ID" = "null" ]; then
+            echo "ERROR: Failed to create droplet"
+            echo "$RESPONSE" | jq .
+            exit 1
+          fi
+
+          echo "droplet_id=${DROPLET_ID}" >> "$GITHUB_OUTPUT"
+          echo "Created droplet id=${DROPLET_ID} in lon1 (c2-60vcpu-120gb)"
+
+      - name: Wait for runner to register with GitHub Actions
+        run: |
+          LABEL="${{ steps.runner_label.outputs.label }}"
+          echo "Waiting for runner with label '${LABEL}' to register..."
+
+          for i in $(seq 1 60); do
+            ONLINE=$(curl -sf \
+              -H "Authorization: Bearer ${{ secrets.GH_PAT }}" \
+              -H "Accept: application/vnd.github+json" \
+              "https://api.github.com/repos/${{ github.repository }}/actions/runners" \
+              | jq -r --arg label "$LABEL" \
+                '[.runners[] | select(.labels[].name == $label) | select(.status == "online")] | length')
+
+            echo "  attempt ${i}/60: ${ONLINE} runner(s) online with label '${LABEL}'"
+
+            if [ "${ONLINE}" -ge 1 ] 2>/dev/null; then
+              echo "Runner is online and ready"
+              exit 0
+            fi
+            sleep 15
+          done
+
+          echo "ERROR: Runner never came online after 15 minutes"
+          exit 1
+
+  # ---------------------------------------------------------------------------
+  # Job 2: Build
+  # Runs DIRECTLY ON the DO droplet via the ephemeral self-hosted runner.
+  # All steps execute on the 60-vCPU machine - no SSH needed.
+  # ---------------------------------------------------------------------------
+  build:
+    name: Build ROM
+    needs: provision
+    runs-on: [ self-hosted, "${{ needs.provision.outputs.runner_label }}" ]
+    # Hard cap slightly under the cloud-init shutdown timer (9 hrs)
+    timeout-minutes: 500
+
+    env:
+      GRAPHENEOS_TAG: ${{ github.event.inputs.grapheneos_tag }}
+      GRAPHENEOS_BRANCH: ${{ github.event.inputs.grapheneos_branch }}
+      GRAPHENEOS_RELEASE_CHANNEL: ${{ github.event.inputs.release_channel || 'stable' }}
+      WEB_DIR: /var/www/build.chrisaw.io
+      REPO_PATH: ${{ github.repository }}
+
+    steps:
+      - name: Checkout build scripts
+        uses: actions/checkout@v4
+
+      - name: Authenticate gh CLI
+        run: |
+          echo "${{ secrets.GH_PAT }}" | gh auth login --with-token
+
+      - name: Resolve GrapheneOS tag
+        id: resolve_tag
+        run: |
+          mkdir -p tmp/
+          rm -f tmp/.grapheneos_tag tmp/.grapheneos_branch
+
+          if [ -n "${GRAPHENEOS_TAG}" ]; then
+            echo "Using manually specified tag: ${GRAPHENEOS_TAG}"
+            echo "${GRAPHENEOS_TAG}" > tmp/.grapheneos_tag
+
+          elif [ -n "${GRAPHENEOS_BRANCH}" ]; then
+            echo "WARNING: Building from branch '${GRAPHENEOS_BRANCH}' (HEAD) - not a stable release!"
+            echo "${GRAPHENEOS_BRANCH}" > tmp/.grapheneos_branch
+
+          else
+            echo "Fetching latest ${GRAPHENEOS_RELEASE_CHANNEL} tag from grapheneos.org/releases..."
+            RELEASES_HTML=$(curl -sf "https://grapheneos.org/releases")
+            TAG=$(echo "${RELEASES_HTML}" \
+              | grep -oP "id=[a-z]+-${GRAPHENEOS_RELEASE_CHANNEL}><td>[^<]+</td><td><a href=#\K[0-9]{10}" \
+              | sort -rn | head -1)
+            if [ -z "${TAG}" ]; then
+              echo "ERROR: Failed to extract a valid ${GRAPHENEOS_RELEASE_CHANNEL} tag"
+              exit 1
+            fi
+            echo "Resolved latest ${GRAPHENEOS_RELEASE_CHANNEL} tag: ${TAG}"
+            echo "${TAG}" > tmp/.grapheneos_tag
+          fi
+
+      - name: Build Podman container image
+        run: podman build -t gsi-builder -f Containerfile .
+
+      - name: Sync GrapheneOS sources
+        run: |
+          mkdir -p out/ src/ tmp/
+          podman run --rm --privileged --pids-limit=0 \
+            -v "$(pwd):/repo:Z" \
+            -w /repo/src \
+            gsi-builder \
+            /bin/bash -e -c '
+              GRAPHENEOS_TAG=$(cat /repo/tmp/.grapheneos_tag 2>/dev/null || true)
+              GRAPHENEOS_BRANCH=$(cat /repo/tmp/.grapheneos_branch 2>/dev/null || true)
+              if [ -n "${GRAPHENEOS_TAG}" ]; then
+                echo "Initializing from tag: ${GRAPHENEOS_TAG}"
+                repo init -u https://github.com/GrapheneOS/platform_manifest.git \
+                  -b "refs/tags/${GRAPHENEOS_TAG}" --depth=1 --git-lfs
+              elif [ -n "${GRAPHENEOS_BRANCH}" ]; then
+                echo "Initializing from branch: ${GRAPHENEOS_BRANCH}"
+                repo init -u https://github.com/GrapheneOS/platform_manifest.git \
+                  -b "${GRAPHENEOS_BRANCH}" --depth=1 --git-lfs
+              else
+                echo "ERROR: No tag or branch resolved"
+                exit 1
+              fi
+              mkdir -p .repo/local_manifests
+              cp -v /repo/configs/manifests/*.xml .repo/local_manifests/
+              while ! repo sync -j8 --force-sync --no-clone-bundle --no-tags; do
+                echo "repo sync failed, retrying in 30s..."
+                sleep 30
+              done
+              AOSP_TAG=$(grep -m1 "aosp_revision:" .repo/manifests/config.yml | sed "s/.*: *//")
+              ANDROID_VERSION=$(echo "${AOSP_TAG}" | sed "s/android-//;s/_r.*//")
+              echo "Detected ANDROID_VERSION: ${ANDROID_VERSION}"
+              echo "${ANDROID_VERSION}" > /repo/tmp/.android_version
+              ANDROID_VERSION_TAG=$(grep -m1 "target:" build/release/release_config_map.textproto \
+                | sed "s/.*\"\([^\"]*\)\".*/\1/")
+              echo "Detected ANDROID_VERSION_TAG: ${ANDROID_VERSION_TAG}"
+              echo "${ANDROID_VERSION_TAG}" > /repo/tmp/.android_version_tag
+            '
+
+      - name: Apply patches
+        run: |
+          podman run --rm --privileged --pids-limit=0 \
+            -v "$(pwd):/repo:Z" \
+            -w /repo/src \
+            gsi-builder \
+            /bin/bash -e -c '
+              rm -rf patches/
+              cp -Rv /repo/patches .
+              patches/apply.sh . trebledroid
+              patches/apply.sh . staging
+              patches/apply.sh . personal
+            '
+
+      - name: Build TrebleApp
+        run: |
+          podman run --rm --privileged --pids-limit=0 \
+            -v "$(pwd):/repo:Z" \
+            -w /repo/src/treble_app \
+            gsi-builder \
+            /bin/bash -e -c 'bash build.sh release'
+
+      - name: Build ROM image (arm64)
+        run: |
+          podman run --rm --privileged --pids-limit=0 \
+            -v "$(pwd):/repo:Z" \
+            -w /repo/src \
+            gsi-builder \
+            /bin/bash -e -c '
+              ANDROID_VERSION_TAG_VAL=$(cat /repo/tmp/.android_version_tag)
+              pushd device/phh/treble
+                cp -fv /repo/configs/rom/grapheneos.mk .
+                bash generate.sh grapheneos
+              popd
+              rm -rfv out/target/product/tdgsi_arm64_ab/
+              rm -fv /repo/tmp/*.img /repo/tmp/*.img.xz /repo/out/*.img.xz
+              rm -rf out/soong/.intermediates/prebuilts/
+              . build/envsetup.sh
+              lunch treble_arm64_bvN-${ANDROID_VERSION_TAG_VAL}-userdebug
+              make systemimage -j$(nproc --all)
+              make target-files-package otatools -j$(nproc --all)
+            '
+
+      - name: Sign ROM image (arm64)
+        run: |
+          podman run --rm --privileged --pids-limit=0 \
+            -v "$(pwd):/repo:Z" \
+            -v "$HOME/.ssh:/root/.ssh:Z" \
+            -w /repo/src \
+            gsi-builder \
+            /bin/bash -e -c '
+              ANDROID_VERSION_TAG_VAL=$(cat /repo/tmp/.android_version_tag)
+              . build/envsetup.sh
+              lunch treble_arm64_bvN-${ANDROID_VERSION_TAG_VAL}-userdebug
+              bash vendor/cawilliamson-priv/keys/sign.sh
+              rm -fv ${OUT}/system.img
+              unzip -joq ${OUT}/signed-target_files.zip IMAGES/system.img -d ${OUT}/
+              rm -fv ${OUT}/signed-target_files.zip
+              mv -v ${OUT}/system.img /repo/tmp/system_arm64.img
+            '
+
+      - name: Compress ROM image (arm64)
+        id: compress
+        run: |
+          BUILD_NUMBER=$(date "+%Y%m%d%H%M")
+          echo "${BUILD_NUMBER}" > tmp/.build_number
+
+          ANDROID_VERSION=$(cat tmp/.android_version)
+          VERSION_TAG="${ANDROID_VERSION}-${BUILD_NUMBER}"
+
+          podman run --rm --privileged --pids-limit=0 \
+            -v "$(pwd):/repo:Z" \
+            -w /repo/tmp \
+            gsi-builder \
+            /bin/bash -e -c "
+              mv -v system_arm64.img GrapheneOS-arm64-ab-${VERSION_TAG}.img
+              xz -9 -T0 -v -z GrapheneOS-arm64-ab-${VERSION_TAG}.img
+              cp -fv GrapheneOS-arm64-ab-${VERSION_TAG}.img.xz /repo/out/
+            "
+
+          echo "version_tag=${VERSION_TAG}" >> "$GITHUB_OUTPUT"
+          echo "release_name=GrapheneOS-ab-${VERSION_TAG}" >> "$GITHUB_OUTPUT"
+
+      - name: Upload artifacts to build.chrisaw.io
+        run: |
+          RELEASE_NAME="${{ steps.compress.outputs.release_name }}"
+          rsync -avz --mkpath \
+            out/*.img.xz \
+            "build.chrisaw.io:/var/www/build.chrisaw.io/${RELEASE_NAME}/"
+
+      - name: Create GitHub release
+        run: |
+          VERSION_TAG="${{ steps.compress.outputs.version_tag }}"
+          RELEASE_NAME="${{ steps.compress.outputs.release_name }}"
+          RELEASE_DESCRIPTION="Download mirror: https://build.chrisaw.io/${RELEASE_NAME}/"
+
+          cd out/
+          gh release create \
+            --draft \
+            --title "GrapheneOS ${VERSION_TAG}" \
+            --notes "${RELEASE_DESCRIPTION}" \
+            "${VERSION_TAG}" \
+            *.img.xz
+
+      - name: Upload build logs on failure
+        if: failure()
+        run: |
+          LOG_DIR="build-logs-${{ github.run_id }}"
+          mkdir -p "/tmp/${LOG_DIR}"
+
+          # Collect any available logs
+          cp -v /var/log/actions-runner.log "/tmp/${LOG_DIR}/" 2>/dev/null || true
+          journalctl -u cloud-init --no-pager > "/tmp/${LOG_DIR}/cloud-init.log" 2>/dev/null || true
+          ls -lah out/ tmp/ > "/tmp/${LOG_DIR}/build-dir-listing.txt" 2>/dev/null || true
+
+          # Rsync logs to build.chrisaw.io so they're accessible even after droplet dies
+          rsync -avz \
+            "/tmp/${LOG_DIR}/" \
+            "build.chrisaw.io:/var/www/build.chrisaw.io/${LOG_DIR}/" \
+            || echo "WARNING: Failed to rsync logs - check build.chrisaw.io SSH access"
+
+          echo "Logs uploaded to https://build.chrisaw.io/${LOG_DIR}/"
+
+  # ---------------------------------------------------------------------------
+  # Job 3: Teardown
+  # Always runs - destroys the droplet via DO API and verifies it's gone.
+  # The cloud-init shutdown timer is the backup if this job itself fails.
+  # ---------------------------------------------------------------------------
+  teardown:
+    name: Destroy DO Droplet
+    needs: [ provision, build ]
+    runs-on: ubuntu-latest
+    # Critical: run even if build fails or is cancelled
+    if: always()
+
+    steps:
+      - name: Destroy droplet
+        env:
+          DROPLET_ID: ${{ needs.provision.outputs.droplet_id }}
+        run: |
+          if [ -z "${DROPLET_ID}" ] || [ "${DROPLET_ID}" = "null" ]; then
+            echo "No droplet ID found - nothing to destroy (provision may have failed before creating one)"
+            exit 0
+          fi
+
+          echo "Destroying droplet ${DROPLET_ID}..."
+          HTTP_STATUS=$(curl -s -o /dev/null -w "%{http_code}" -X DELETE \
+            -H "Authorization: Bearer ${{ secrets.DO_API_TOKEN }}" \
+            "https://api.digitalocean.com/v2/droplets/${DROPLET_ID}")
+
+          if [ "$HTTP_STATUS" = "204" ]; then
+            echo "Droplet ${DROPLET_ID} destroyed successfully"
+          elif [ "$HTTP_STATUS" = "404" ]; then
+            echo "Droplet ${DROPLET_ID} already gone (404) - safety timer may have fired"
+          else
+            echo "::error::DELETE returned HTTP ${HTTP_STATUS} - droplet may still be running!"
+            echo "::error::MANUAL ACTION REQUIRED: https://cloud.digitalocean.com/droplets"
+            exit 1
+          fi
+
+      - name: Verify droplet is gone
+        env:
+          DROPLET_ID: ${{ needs.provision.outputs.droplet_id }}
+        run: |
+          if [ -z "${DROPLET_ID}" ] || [ "${DROPLET_ID}" = "null" ]; then
+            exit 0
+          fi
+
+          sleep 15
+          HTTP_STATUS=$(curl -s -o /dev/null -w "%{http_code}" \
+            -H "Authorization: Bearer ${{ secrets.DO_API_TOKEN }}" \
+            "https://api.digitalocean.com/v2/droplets/${DROPLET_ID}")
+
+          if [ "$HTTP_STATUS" = "404" ]; then
+            echo "Confirmed: droplet ${DROPLET_ID} no longer exists"
+          else
+            echo "::error::Droplet ${DROPLET_ID} still exists after deletion (HTTP ${HTTP_STATUS})!"
+            echo "::error::MANUAL ACTION REQUIRED: https://cloud.digitalocean.com/droplets"
+            exit 1
+          fi
+
+      - name: Remove ephemeral runner from GitHub
+        env:
+          RUNNER_LABEL: ${{ needs.provision.outputs.runner_label }}
+        run: |
+          # Clean up the runner registration so it doesn't sit as offline in the UI
+          RUNNER_ID=$(curl -sf \
+            -H "Authorization: Bearer ${{ secrets.GH_PAT }}" \
+            -H "Accept: application/vnd.github+json" \
+            "https://api.github.com/repos/${{ github.repository }}/actions/runners" \
+            | jq -r --arg label "${RUNNER_LABEL}" \
+              '.runners[] | select(.labels[].name == $label) | .id' \
+            | head -1)
+
+          if [ -n "$RUNNER_ID" ] && [ "$RUNNER_ID" != "null" ]; then
+            curl -sf -X DELETE \
+              -H "Authorization: Bearer ${{ secrets.GH_PAT }}" \
+              -H "Accept: application/vnd.github+json" \
+              "https://api.github.com/repos/${{ github.repository }}/actions/runners/${RUNNER_ID}"
+            echo "Removed runner ${RUNNER_ID} from GitHub"
+          else
+            echo "Runner already removed (ephemeral runners deregister themselves on exit)"
+          fi
+
+      - name: Build summary
+        if: always()
+        run: |
+          BUILD_RESULT="${{ needs.build.result }}"
+          echo "## Build Summary" >> "$GITHUB_STEP_SUMMARY"
+          echo "" >> "$GITHUB_STEP_SUMMARY"
+          echo "| Item | Value |" >> "$GITHUB_STEP_SUMMARY"
+          echo "|------|-------|" >> "$GITHUB_STEP_SUMMARY"
+          echo "| Build result | ${BUILD_RESULT} |" >> "$GITHUB_STEP_SUMMARY"
+          echo "| Droplet ID | ${{ needs.provision.outputs.droplet_id }} |" >> "$GITHUB_STEP_SUMMARY"
+          echo "| Runner label | ${{ needs.provision.outputs.runner_label }} |" >> "$GITHUB_STEP_SUMMARY"
+          echo "| Droplet destroyed | yes |" >> "$GITHUB_STEP_SUMMARY"
