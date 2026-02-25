@@ -1,4 +1,4 @@
-From 487c040adeeabe9be0eb903f4b57b5d59a82e1ca Mon Sep 17 00:00:00 2001
+From c7e17d548d29f80148b5bc763873f94268e92bfb Mon Sep 17 00:00:00 2001
 From: "Christopher A. Williamson" <contact@chrisaw.io>
 Date: Wed, 25 Feb 2026 10:54:51 +0000
 Subject: [PATCH] Add Unihertz 8849 hardware controls
@@ -37,12 +37,12 @@ policy patch (sysfs_fpga_spi type, system_app rw_file_perms).
 ---
  .../java/me/phh/treble/app/EntryService.kt    |   1 +
  .../me/phh/treble/app/SettingsActivity.kt     |   3 +
- .../java/me/phh/treble/app/Unihertz8849.kt    | 709 ++++++++++++++++++
+ .../java/me/phh/treble/app/Unihertz8849.kt    | 715 ++++++++++++++++++
  .../me/phh/treble/app/Unihertz8849Settings.kt | 109 +++
  .../main/res/values/arrays_unihertz8849.xml   |  55 ++
  app/src/main/res/xml/pref_headers.xml         |   3 +
  app/src/main/res/xml/pref_unihertz8849.xml    |  64 ++
- 7 files changed, 944 insertions(+)
+ 7 files changed, 950 insertions(+)
  create mode 100644 app/src/main/java/me/phh/treble/app/Unihertz8849.kt
  create mode 100644 app/src/main/java/me/phh/treble/app/Unihertz8849Settings.kt
  create mode 100644 app/src/main/res/values/arrays_unihertz8849.xml
@@ -83,10 +83,10 @@ index 02832b0..27a7118 100644
      companion object {
 diff --git a/app/src/main/java/me/phh/treble/app/Unihertz8849.kt b/app/src/main/java/me/phh/treble/app/Unihertz8849.kt
 new file mode 100644
-index 0000000..22ede9e
+index 0000000..b0a908c
 --- /dev/null
 +++ b/app/src/main/java/me/phh/treble/app/Unihertz8849.kt
-@@ -0,0 +1,709 @@
+@@ -0,0 +1,715 @@
 +package me.phh.treble.app
 +
 +import android.content.ContentResolver
@@ -108,6 +108,7 @@ index 0000000..22ede9e
 +import android.view.Display
 +import android.view.IWindowManager
 +import vendor.mediatek.hardware.agolddaemon.IAgoldDaemon
++import vendor.mediatek.hardware.agolddaemon.IAgoldDaemonCallback
 +import java.io.File
 +import kotlin.concurrent.thread
 +import kotlin.math.abs
@@ -268,7 +269,12 @@ index 0000000..22ede9e
 +                continue
 +            }
 +            try {
-+                svc.cmd(calibration, null)
++                val cb = object : IAgoldDaemonCallback.Stub() {
++                    override fun onResult(result: String?) {
++                        Log.d(TAG, "Agold cmd result: $result")
++                    }
++                }
++                svc.cmd(calibration, cb)
 +                Log.d(TAG, "Unihertz8849 focus calibration sent (attempt $attempt): $calibration")
 +                return
 +            } catch (t: android.os.DeadObjectException) {
