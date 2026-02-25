@@ -23,8 +23,8 @@ Fixes https://github.com/phhusson/treble_experimentations/issues/2125.
 
 Co-authored-by: Sarah Vandomelen <sarah@sightworks.com>
 ---
- .../telephony/metrics/TelephonyMetrics.java   | 61 +++++++++++++++++++
- 1 file changed, 61 insertions(+)
+ .../telephony/metrics/TelephonyMetrics.java   | 68 +++++++++++++++++++
+ 1 file changed, 68 insertions(+)
  create mode 100644 src/java/com/android/internal/telephony/metrics/TelephonyMetrics.java
 
 diff --git a/src/java/com/android/internal/telephony/metrics/TelephonyMetrics.java b/src/java/com/android/internal/telephony/metrics/TelephonyMetrics.java
@@ -32,7 +32,7 @@ new file mode 100644
 index 0000000000..1234567890
 --- /dev/null
 +++ b/src/java/com/android/internal/telephony/metrics/TelephonyMetrics.java
-@@ -0,0 +1,61 @@
+@@ -0,0 +1,68 @@
 +/*
 + * Copyright (C) 2016 The Android Open Source Project
 + *
