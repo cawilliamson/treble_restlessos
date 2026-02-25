@@ -1,4 +1,4 @@
-From c7ba60425f0e262ee5bc909e401e3a3aea6b4273 Mon Sep 17 00:00:00 2001
+From 487c040adeeabe9be0eb903f4b57b5d59a82e1ca Mon Sep 17 00:00:00 2001
 From: "Christopher A. Williamson" <contact@chrisaw.io>
 Date: Wed, 25 Feb 2026 10:54:51 +0000
 Subject: [PATCH] Add Unihertz 8849 hardware controls
@@ -37,12 +37,12 @@ policy patch (sysfs_fpga_spi type, system_app rw_file_perms).
 ---
  .../java/me/phh/treble/app/EntryService.kt    |   1 +
  .../me/phh/treble/app/SettingsActivity.kt     |   3 +
- .../java/me/phh/treble/app/Unihertz8849.kt    | 696 ++++++++++++++++++
+ .../java/me/phh/treble/app/Unihertz8849.kt    | 709 ++++++++++++++++++
  .../me/phh/treble/app/Unihertz8849Settings.kt | 109 +++
  .../main/res/values/arrays_unihertz8849.xml   |  55 ++
  app/src/main/res/xml/pref_headers.xml         |   3 +
  app/src/main/res/xml/pref_unihertz8849.xml    |  64 ++
- 7 files changed, 931 insertions(+)
+ 7 files changed, 944 insertions(+)
  create mode 100644 app/src/main/java/me/phh/treble/app/Unihertz8849.kt
  create mode 100644 app/src/main/java/me/phh/treble/app/Unihertz8849Settings.kt
  create mode 100644 app/src/main/res/values/arrays_unihertz8849.xml
@@ -83,10 +83,10 @@ index 02832b0..27a7118 100644
      companion object {
 diff --git a/app/src/main/java/me/phh/treble/app/Unihertz8849.kt b/app/src/main/java/me/phh/treble/app/Unihertz8849.kt
 new file mode 100644
-index 0000000..15ebd16
+index 0000000..22ede9e
 --- /dev/null
 +++ b/app/src/main/java/me/phh/treble/app/Unihertz8849.kt
-@@ -0,0 +1,696 @@
+@@ -0,0 +1,709 @@
 +package me.phh.treble.app
 +
 +import android.content.ContentResolver
@@ -736,13 +736,19 @@ index 0000000..15ebd16
 +    // ─── SharedPreferences listener ─────────────────────────────────────
 +
 +    val spListener = SharedPreferences.OnSharedPreferenceChangeListener { sp, key ->
++        // NOTE: onSharedPreferenceChanged fires for ALL keys when the listener
++        // is first registered. Guard every action to only run when meaningful.
++        val projectorOn = sp.getBoolean(Unihertz8849Settings.projectorEnabled, false)
++
 +        when (key) {
 +            Unihertz8849Settings.warningLight -> {
-+                val value = (sp.getString(key, "0") ?: "0").toInt()
++                // Only send if value actually changed to something -- the listener
++                // fires at startup for all keys including the default (0=off).
++                val value = (sp.getString(key, "0") ?: "0").toIntOrNull() ?: 0
 +                setWarningLight(value)
 +            }
 +            Unihertz8849Settings.campingLight -> {
-+                val value = (sp.getString(key, "0") ?: "0").toInt()
++                val value = (sp.getString(key, "0") ?: "0").toIntOrNull() ?: 0
 +                setCampingLight(value, sp)
 +            }
 +            Unihertz8849Settings.projectorEnabled -> {
@@ -750,20 +756,27 @@ index 0000000..15ebd16
 +                if (enabled) enableProjector(sp) else disableProjector()
 +            }
 +            Unihertz8849Settings.projectorMode -> {
-+                val enabled = sp.getBoolean(Unihertz8849Settings.projectorEnabled, false)
-+                if (enabled) {
++                // Only send mode change if projector is actually running
++                if (projectorOn) {
 +                    val mode = sp.getString(key, "3") ?: "3"
 +                    sendIoctl(500, 0, mode.toInt(), 0)
 +                    sendCalibration(sp)
 +                }
 +            }
 +            Unihertz8849Settings.displayEnabled -> {
-+                val enabled = sp.getBoolean(key, true)
-+                sendIoctl(500, 0, 0, if (enabled) 3 else 4)
++                // Only send display toggle if projector is running --
++                // ioctl 500 0 0 3/4 crashes the Agold daemon when projector is off
++                if (projectorOn) {
++                    val enabled = sp.getBoolean(key, true)
++                    sendIoctl(500, 0, 0, if (enabled) 3 else 4)
++                }
 +            }
 +            Unihertz8849Settings.brightness -> {
-+                val value = sp.getInt(key, 128)
-+                writeToFileNofail("$SYSFS_BASE/projector_rgb_current", value.toString())
++                // Only write brightness if projector is running
++                if (projectorOn) {
++                    val value = sp.getInt(key, 128)
++                    writeToFileNofail("$SYSFS_BASE/projector_rgb_current", value.toString())
++                }
 +            }
 +        }
 +    }
