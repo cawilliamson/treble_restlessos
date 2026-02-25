@@ -1,76 +1,75 @@
-From d28875d921375c5332660accbf3a40898b8c72f1 Mon Sep 17 00:00:00 2001
+From c7ba60425f0e262ee5bc909e401e3a3aea6b4273 Mon Sep 17 00:00:00 2001
 From: "Christopher A. Williamson" <contact@chrisaw.io>
-Date: Tue, 24 Feb 2026 22:37:58 +0000
+Date: Wed, 25 Feb 2026 10:54:51 +0000
 Subject: [PATCH] Add Unihertz 8849 hardware controls
 
 Add a settings menu for the Unihertz 8849 (Tank) device-specific
 hardware, detected via the Agold HAL and FPGA sysfs interface.
 
 Features:
-- Warning light with red/blue/green modes (ioctl 310)
-- Camping light with off/full/medium/low/flash/SOS modes (ioctl 301)
+- Warning light: Off/Red/Blue/Green/SOS modes (ioctl 310)
+  SOS is app-driven red/blue alternating flash at ~3Hz
+- Camping light: Off/Full/Medium/Low/Flash/SOS modes (ioctl 301)
+  Full brightness auto-steps down to medium after configurable
+  duration (5/10/15/30 min) to prevent overheating
 - Projector enable/disable matching stock powerOnOffForPrejectorOn/Off
   sequence: display resize, AoD disable, sleep/wake via PowerManager,
   ioctl 500 sub-commands (0,4 / 0,6 / mode / 0,3), calibration
 - Projector mode selection (portrait, landscape, landscape inverted)
 - Phone display toggle while projecting
-- Projector brightness, manual keystone, fan speed
-- Auto-keystone correction via accelerometer (exact replica of stock
-  ProjectorController.calculateOrientation: 10-sample accumulation,
-  3-second cycle, 1.68*0.4 scaling, GSI sign correction)
-- Per-device factory focus calibration read from proinfo partition
-  (offset 0x1000cc for focus table, 0x10014c for AWB/H3 scan)
-- Focus calibration sweep via motor_turn_mode_step with dmesg parsing
-- Manual focus adjustment via motor_turn_mode_step
-- Projector temperature and laser rangefinder readout
-- Display viewport shrinks to 16:9 when projector is active
+- Brightness slider (1-255) with live value display
+- Auto-keystone always on: exact replica of stock calculateOrientation
+  (10-sample accumulation, 3s cycle, GSI sign correction)
+- Temperature-reactive fan control matching stock ElephantProduct
+  (start 20%, ramp to 30% at >40C, 100% at >48C, gradual delta)
+- Per-device factory focus calibration from proinfo partition
+- Laser distance readout updating every second while in settings
 
-The projector enable sequence sends ioctl 500 0 0 4 (disable display),
-sleeps via PowerManager.goToSleep(), waits for projector_sys_status==0,
-sends ioctl 500 0 0 6 (hardware init, ignored if unsupported), wakes
-via PowerManager.wakeUp(), sets projector mode, then re-enables phone
-display with ioctl 500 0 0 3. AoD is temporarily disabled during
-sleep/wake to prevent the display staying in Doze state.
+The Agold daemon can restart after ioctl calls causing DeadObjectException
+on stale binders. sendCalibration() retries up to 5 times with backoff,
+and sendIoctl() retries once, ensuring calibration is always delivered.
 
-Focus calibration is loaded from the proinfo factory partition on first
-boot and stored in SharedPreferences. The default hardcoded values are
-only used as a fallback if proinfo read fails.
+Removed: manual keystone, focus calibration/adjust, fan override,
+projector temperature display (all handled automatically).
+
+Sysfs writes use direct File I/O, requiring the companion SELinux
+policy patch (sysfs_fpga_spi type, system_app rw_file_perms).
 ---
  .../java/me/phh/treble/app/EntryService.kt    |   1 +
  .../me/phh/treble/app/SettingsActivity.kt     |   3 +
- .../main/java/me/phh/treble/app/Tank8849.kt   | 716 ++++++++++++++++++
- .../me/phh/treble/app/Tank8849Settings.kt     | 100 +++
- app/src/main/res/values/arrays_tank8849.xml   |  41 +
+ .../java/me/phh/treble/app/Unihertz8849.kt    | 696 ++++++++++++++++++
+ .../me/phh/treble/app/Unihertz8849Settings.kt | 109 +++
+ .../main/res/values/arrays_unihertz8849.xml   |  55 ++
  app/src/main/res/xml/pref_headers.xml         |   3 +
- app/src/main/res/xml/pref_tank8849.xml        |  97 +++
- 7 files changed, 961 insertions(+)
- create mode 100644 app/src/main/java/me/phh/treble/app/Tank8849.kt
- create mode 100644 app/src/main/java/me/phh/treble/app/Tank8849Settings.kt
- create mode 100644 app/src/main/res/values/arrays_tank8849.xml
- create mode 100644 app/src/main/res/xml/pref_tank8849.xml
+ app/src/main/res/xml/pref_unihertz8849.xml    |  64 ++
+ 7 files changed, 931 insertions(+)
+ create mode 100644 app/src/main/java/me/phh/treble/app/Unihertz8849.kt
+ create mode 100644 app/src/main/java/me/phh/treble/app/Unihertz8849Settings.kt
+ create mode 100644 app/src/main/res/values/arrays_unihertz8849.xml
+ create mode 100644 app/src/main/res/xml/pref_unihertz8849.xml
 
 diff --git a/app/src/main/java/me/phh/treble/app/EntryService.kt b/app/src/main/java/me/phh/treble/app/EntryService.kt
-index 971f354..1a55f66 100644
+index 971f354..8f96ca6 100644
 --- a/app/src/main/java/me/phh/treble/app/EntryService.kt
 +++ b/app/src/main/java/me/phh/treble/app/EntryService.kt
 @@ -53,6 +53,7 @@ class EntryService: Service() {
              tryC { Qualcomm.startup(this) }
              tryC { Vsmart.startup(this) }
              tryC { Nubia.startup(this) }
-+            tryC { Tank8849.startup(this) }
++            tryC { Unihertz8849.startup(this) }
              tryC { Ims.startup(this) }
              tryC { Custom.startup(this) }
              tryC { GrapheneOS.startup(this) }
 diff --git a/app/src/main/java/me/phh/treble/app/SettingsActivity.kt b/app/src/main/java/me/phh/treble/app/SettingsActivity.kt
-index 02832b0..bbf87f5 100644
+index 02832b0..27a7118 100644
 --- a/app/src/main/java/me/phh/treble/app/SettingsActivity.kt
 +++ b/app/src/main/java/me/phh/treble/app/SettingsActivity.kt
 @@ -79,6 +79,8 @@ class SettingsActivity : PreferenceActivity() {
              target.removeIf { it.fragment == CustomSettingsFragment::class.java.name }
          if (!GrapheneOSSettings.enabled())
              target.removeIf { it.fragment == GrapheneOSSettingsFragment::class.java.name }
-+        if (!Tank8849Settings.enabled())
-+            target.removeIf { it.fragment == Tank8849SettingsFragment::class.java.name }
++        if (!Unihertz8849Settings.enabled())
++            target.removeIf { it.fragment == Unihertz8849SettingsFragment::class.java.name }
          val p = SystemProperties.get("ro.system.ota.json_url", "")
          if (p.trim() == "")
              target.removeIf { it.id.compareTo(R.id.updater) == 0 }
@@ -78,16 +77,16 @@ index 02832b0..bbf87f5 100644
                  || CustomSettingsFragment::class.java.name == fragmentName
                  || AudioEffectsFragment::class.java.name == fragmentName
                  || GrapheneOSSettingsFragment::class.java.name == fragmentName
-+                || Tank8849SettingsFragment::class.java.name == fragmentName
++                || Unihertz8849SettingsFragment::class.java.name == fragmentName
      }
  
      companion object {
-diff --git a/app/src/main/java/me/phh/treble/app/Tank8849.kt b/app/src/main/java/me/phh/treble/app/Tank8849.kt
+diff --git a/app/src/main/java/me/phh/treble/app/Unihertz8849.kt b/app/src/main/java/me/phh/treble/app/Unihertz8849.kt
 new file mode 100644
-index 0000000..fbd7224
+index 0000000..15ebd16
 --- /dev/null
-+++ b/app/src/main/java/me/phh/treble/app/Tank8849.kt
-@@ -0,0 +1,716 @@
++++ b/app/src/main/java/me/phh/treble/app/Unihertz8849.kt
+@@ -0,0 +1,696 @@
 +package me.phh.treble.app
 +
 +import android.content.ContentResolver
@@ -98,6 +97,8 @@ index 0000000..fbd7224
 +import android.hardware.SensorEvent
 +import android.hardware.SensorEventListener
 +import android.hardware.SensorManager
++import android.os.Handler
++import android.os.Looper
 +import android.os.PowerManager
 +import android.os.ServiceManager
 +import android.os.SystemClock
@@ -129,7 +130,7 @@ index 0000000..fbd7224
 + * - Focus table at offset 0x1000cc (17 CSV values, prefix 550)
 + * - Other calibration at offset 0x10014c (3 CSV values: awb,hori,vert)
 + */
-+object Tank8849 : EntryStartup {
++object Unihertz8849 : EntryStartup {
 +    private const val TAG = "PHH"
 +    private const val SYSFS_BASE = "/sys/bus/spi/drivers/fpga_spi"
 +    private const val DEFAULT_CALIBRATION = "550,720,711,696,685,672,663,649,638,626,614,599,587,561,548,538,538"
@@ -138,9 +139,27 @@ index 0000000..fbd7224
 +    private const val PROINFO_OTHER_OFFSET = 1048908   // 0x10014c
 +    private const val PROINFO_OTHER_LENGTH = 128
 +
++    // Warning light ioctl 310 mode values
++    private const val WARNING_OFF   = 0
++    private const val WARNING_RED   = 1
++    private const val WARNING_BLUE  = 16
++    private const val WARNING_GREEN = 256
++
++    // Camping light ioctl 301 mode values
++    private const val CAMPING_OFF    = 0
++    private const val CAMPING_FULL   = 1   // time-limited: auto-steps down after duration
++    private const val CAMPING_MEDIUM = 2
++    private const val CAMPING_LOW    = 3
++    private const val CAMPING_FLASH  = 4
++    private const val CAMPING_SOS    = 5
++
++    // Camping full-blast time limit (stock: BRIGHT_TYPE_MINUTES_5/10/15/30)
++    // After this time, step down to medium to prevent overheating.
++    private const val CAMPING_FULL_TIMEOUT_DEFAULT_MS = 10 * 60 * 1000L  // 10 minutes
++
 +    // Keystone constants from stock calculateOrientation()
 +    private const val KEYSTONE_SAMPLE_COUNT = 10
-+    private const val KEYSTONE_CYCLE_MS = 3000L         // BackupAgentTimeoutParameters.DEFAULT_QUOTA_EXCEEDED_TIMEOUT_MILLIS
++    private const val KEYSTONE_CYCLE_MS = 3000L  // BackupAgentTimeoutParameters.DEFAULT_QUOTA_EXCEEDED_TIMEOUT_MILLIS
 +    private const val KEYSTONE_CHANGE_THRESHOLD = 3.0f
 +    private const val PITCH_MIN = -40
 +    private const val PITCH_MAX = 25
@@ -150,6 +169,20 @@ index 0000000..fbd7224
 +    private var sensorManager: SensorManager? = null
 +    private var accelerometer: Sensor? = null
 +    private var keystoneListener: SensorEventListener? = null
++    private var fanControlThread: Thread? = null
++
++    // SOS flashing state (app-driven: alternates red/blue)
++    private val sosHandler = Handler(Looper.getMainLooper())
++    private var sosRunnable: Runnable? = null
++    private var sosPhase = false
++
++    // Camping light full-blast timer
++    private val campingHandler = Handler(Looper.getMainLooper())
++    private var campingTimeoutRunnable: Runnable? = null
++
++    // Fan control state (mirrors stock ElephantProduct fields)
++    private var mFanDuty = 20
++    private var mPreTemperature = 0
 +
 +    // Keystone accumulator state (mirrors stock ProjectorController fields)
 +    private var mX = 0f
@@ -165,9 +198,11 @@ index 0000000..fbd7224
 +    // ─── Utility ────────────────────────────────────────────────────────
 +
 +    fun writeToFileNofail(path: String, content: String) {
++        // Direct file write. Requires SELinux policy allowing system_app
++        // to write to the target sysfs type (sysfs_fpga_spi).
++        // See sepolicy patch: 0004-Allow-system_app-to-write-FPGA-sysfs
 +        try {
-+            val proc = Runtime.getRuntime().exec(arrayOf("sh", "-c", "echo '$content' > $path"))
-+            proc.waitFor()
++            File(path).writeText(content)
 +        } catch (t: Throwable) {
 +            Log.d(TAG, "Failed writing to $path", t)
 +        }
@@ -190,6 +225,9 @@ index 0000000..fbd7224
 +        return default
 +    }
 +
++    // Always does a fresh service lookup -- never caches the binder.
++    // The Agold daemon can restart (e.g. after ioctl calls), causing a
++    // DeadObjectException on the old binder. Always fetching fresh avoids this.
 +    private fun getAgoldService(): IAgoldDaemon? {
 +        return try {
 +            val binder = android.os.Binder.allowBlocking(
@@ -202,32 +240,115 @@ index 0000000..fbd7224
 +    }
 +
 +    private fun sendIoctl(a: Int, b: Int, c: Int, d: Int): Int {
-+        val svc = getAgoldService() ?: return -1
-+        return try {
-+            svc.SendMessageToIoctl(a, b, c, d)
-+        } catch (t: Throwable) {
-+            Log.d(TAG, "SendMessageToIoctl($a, $b, $c, $d) failed", t)
-+            -1
++        // Retry once on DeadObjectException -- daemon may have restarted
++        repeat(2) { attempt ->
++            val svc = getAgoldService() ?: return -1
++            try {
++                return svc.SendMessageToIoctl(a, b, c, d)
++            } catch (t: android.os.DeadObjectException) {
++                Log.w(TAG, "Agold daemon dead on ioctl($a,$b,$c,$d), attempt $attempt -- retrying")
++                Thread.sleep(500)
++            } catch (t: Throwable) {
++                Log.d(TAG, "SendMessageToIoctl($a, $b, $c, $d) failed", t)
++                return -1
++            }
 +        }
++        return -1
 +    }
 +
 +    private fun sendCalibration(sp: SharedPreferences) {
-+        val calibration = sp.getString(Tank8849Settings.focusCalibration, DEFAULT_CALIBRATION) ?: DEFAULT_CALIBRATION
-+        val svc = getAgoldService() ?: return
-+        try {
-+            svc.cmd(calibration, null)
-+            Log.d(TAG, "Tank8849 focus calibration sent: $calibration")
-+        } catch (t: Throwable) {
-+            Log.d(TAG, "Focus calibration failed", t)
++        val calibration = sp.getString(Unihertz8849Settings.focusCalibration, DEFAULT_CALIBRATION) ?: DEFAULT_CALIBRATION
++        // Retry up to 5 times with increasing delays -- daemon may restart
++        // after ioctl calls, causing DeadObjectException on the cached binder.
++        for (attempt in 1..5) {
++            val svc = getAgoldService()
++            if (svc == null) {
++                Log.d(TAG, "Agold service unavailable, attempt $attempt -- waiting")
++                Thread.sleep(500L * attempt)
++                continue
++            }
++            try {
++                svc.cmd(calibration, null)
++                Log.d(TAG, "Unihertz8849 focus calibration sent (attempt $attempt): $calibration")
++                return
++            } catch (t: android.os.DeadObjectException) {
++                Log.w(TAG, "Agold daemon dead during calibration, attempt $attempt -- retrying")
++                Thread.sleep(500L * attempt)
++            } catch (t: Throwable) {
++                Log.d(TAG, "Focus calibration failed", t)
++                return
++            }
++        }
++        Log.e(TAG, "Unihertz8849: failed to send focus calibration after 5 attempts")
++    }
++
++    // ─── Warning light (ioctl 310) ──────────────────────────────────────
++
++    /**
++     * SOS mode: police-style alternating red/blue flash at ~3Hz.
++     * Implemented in-app since the FPGA has no native SOS mode.
++     * Stock app (com.agui.warninglights) implements this the same way.
++     */
++    private fun startSos() {
++        stopSos()
++        sosPhase = false
++        val runnable = object : Runnable {
++            override fun run() {
++                sosPhase = !sosPhase
++                sendIoctl(310, 0, if (sosPhase) WARNING_RED else WARNING_BLUE, 0)
++                sosHandler.postDelayed(this, 333L)  // ~3Hz flash
++            }
++        }
++        sosRunnable = runnable
++        sosHandler.post(runnable)
++        Log.d(TAG, "Unihertz8849: SOS warning light started")
++    }
++
++    private fun stopSos() {
++        sosRunnable?.let { sosHandler.removeCallbacks(it) }
++        sosRunnable = null
++    }
++
++    private fun setWarningLight(mode: Int) {
++        stopSos()
++        when (mode) {
++            -1 -> startSos()  // SOS sentinel value
++            else -> sendIoctl(310, 0, mode, 0)
++        }
++    }
++
++    // ─── Camping light (ioctl 301) ──────────────────────────────────────
++
++    /**
++     * Full-brightness time limit.
++     * Stock (AguiCampingLamp): BRIGHT_TYPE_MINUTES_5/10/15/30.
++     * After the duration, automatically step down to medium to prevent
++     * overheating. Default is 10 minutes.
++     */
++    private fun setCampingLight(mode: Int, sp: SharedPreferences) {
++        // Cancel any existing full-blast timer
++        campingTimeoutRunnable?.let { campingHandler.removeCallbacks(it) }
++        campingTimeoutRunnable = null
++
++        sendIoctl(301, 0, mode, 0)
++
++        if (mode == CAMPING_FULL) {
++            // Read timeout from preference (minutes), default 10
++            val timeoutMinutes = sp.getString(Unihertz8849Settings.campingLightDuration, "10")?.toIntOrNull() ?: 10
++            val timeoutMs = timeoutMinutes * 60 * 1000L
++            Log.d(TAG, "Unihertz8849: camping full blast, stepping down in ${timeoutMinutes}min")
++            val runnable = Runnable {
++                Log.d(TAG, "Unihertz8849: camping full blast timeout, stepping down to medium")
++                sendIoctl(301, 0, CAMPING_MEDIUM, 0)
++                // Update the preference to reflect the new state
++            }
++            campingTimeoutRunnable = runnable
++            campingHandler.postDelayed(runnable, timeoutMs)
 +        }
 +    }
 +
 +    // ─── proinfo calibration ────────────────────────────────────────────
 +
-+    /**
-+     * Read factory focus calibration from the proinfo partition.
-+     * Returns the 17-value CSV string (e.g. "550,554,541,...,348") or null.
-+     */
 +    private fun readProinfoFocusCalibration(): String? {
 +        try {
 +            val proc = Runtime.getRuntime().exec(arrayOf(
@@ -238,7 +359,7 @@ index 0000000..fbd7224
 +                .replace("\u0000", "").trim()
 +            proc.waitFor()
 +            if (raw.startsWith("550,")) {
-+                Log.d(TAG, "Tank8849 proinfo focus calibration: $raw")
++                Log.d(TAG, "Unihertz8849 proinfo focus calibration: $raw")
 +                return raw
 +            }
 +        } catch (t: Throwable) {
@@ -247,10 +368,6 @@ index 0000000..fbd7224
 +        return null
 +    }
 +
-+    /**
-+     * Read factory "other" calibration from proinfo (awb,scan_hori,scan_vert).
-+     * Returns the 3-value CSV string or null.
-+     */
 +    private fun readProinfoOtherCalibration(): String? {
 +        try {
 +            val proc = Runtime.getRuntime().exec(arrayOf(
@@ -262,7 +379,7 @@ index 0000000..fbd7224
 +            proc.waitFor()
 +            val parts = raw.split(",")
 +            if (parts.size >= 3 && parts.all { it.matches(Regex("\\d+")) }) {
-+                Log.d(TAG, "Tank8849 proinfo other calibration: $raw")
++                Log.d(TAG, "Unihertz8849 proinfo other calibration: $raw")
 +                return raw
 +            }
 +        } catch (t: Throwable) {
@@ -271,50 +388,36 @@ index 0000000..fbd7224
 +        return null
 +    }
 +
-+    /**
-+     * Load factory calibration from proinfo into SharedPreferences if not already set.
-+     * Called once at startup.
-+     */
 +    private fun loadFactoryCalibration(sp: SharedPreferences) {
-+        // Focus calibration
-+        val currentCal = sp.getString(Tank8849Settings.focusCalibration, null)
++        val currentCal = sp.getString(Unihertz8849Settings.focusCalibration, null)
 +        if (currentCal == null || currentCal == DEFAULT_CALIBRATION) {
 +            val factoryCal = readProinfoFocusCalibration()
 +            if (factoryCal != null) {
-+                sp.edit().putString(Tank8849Settings.focusCalibration, factoryCal).apply()
-+                Log.d(TAG, "Tank8849: loaded factory focus calibration from proinfo")
++                sp.edit().putString(Unihertz8849Settings.focusCalibration, factoryCal).apply()
++                Log.d(TAG, "Unihertz8849: loaded factory focus calibration from proinfo")
 +            }
 +        }
 +
-+        // Other calibration (AWB + H3 scan offsets)
-+        val currentOther = sp.getString(Tank8849Settings.otherCalibration, null)
++        val currentOther = sp.getString(Unihertz8849Settings.otherCalibration, null)
 +        if (currentOther == null) {
 +            val factoryOther = readProinfoOtherCalibration()
 +            if (factoryOther != null) {
-+                sp.edit().putString(Tank8849Settings.otherCalibration, factoryOther).apply()
-+                Log.d(TAG, "Tank8849: loaded factory other calibration from proinfo")
++                sp.edit().putString(Unihertz8849Settings.otherCalibration, factoryOther).apply()
++                Log.d(TAG, "Unihertz8849: loaded factory other calibration from proinfo")
 +            }
 +        }
 +    }
 +
 +    // ─── Display management ─────────────────────────────────────────────
 +
-+    /**
-+     * Wait for projector_sys_status to reach the target value.
-+     * Re-sends sleep/wake on each poll iteration matching stock checkLcmStatus().
-+     */
 +    private fun waitForSysStatus(target: Int, timeoutMs: Long = 8000): Boolean {
 +        val pm = powerManager ?: return false
 +        val start = SystemClock.elapsedRealtime()
 +        while (SystemClock.elapsedRealtime() - start < timeoutMs) {
 +            val status = readFileNofail("$SYSFS_BASE/projector_sys_status", "-1")
 +            if (status == target.toString()) return true
-+            // Re-send sleep/wake on each poll, matching stock behavior
-+            if (target == 0) {
-+                pm.goToSleep(SystemClock.uptimeMillis())
-+            } else {
-+                pm.wakeUp(SystemClock.uptimeMillis())
-+            }
++            if (target == 0) pm.goToSleep(SystemClock.uptimeMillis())
++            else pm.wakeUp(SystemClock.uptimeMillis())
 +            Thread.sleep(200)
 +        }
 +        Log.w(TAG, "Timed out waiting for projector_sys_status == $target")
@@ -325,7 +428,7 @@ index 0000000..fbd7224
 +        return try {
 +            IWindowManager.Stub.asInterface(ServiceManager.getService("window"))
 +        } catch (t: Throwable) {
-+            Log.e(TAG, "Tank8849: failed to get IWindowManager", t)
++            Log.e(TAG, "Unihertz8849: failed to get IWindowManager", t)
 +            null
 +        }
 +    }
@@ -337,34 +440,27 @@ index 0000000..fbd7224
 +            wm.getInitialDisplaySize(Display.DEFAULT_DISPLAY, size)
 +            val width = size.x
 +            val height16x9 = width * 16 / 9
-+            Log.d(TAG, "Tank8849: shrinking display from ${size.x}x${size.y} to ${width}x${height16x9}")
++            Log.d(TAG, "Unihertz8849: shrinking display to ${width}x${height16x9}")
 +            wm.setForcedDisplaySize(Display.DEFAULT_DISPLAY, width, height16x9)
 +        } catch (t: Throwable) {
-+            Log.e(TAG, "Tank8849: failed to shrink display", t)
++            Log.e(TAG, "Unihertz8849: failed to shrink display", t)
 +        }
 +    }
 +
 +    private fun restoreDisplay() {
 +        try {
 +            val wm = getWindowManager() ?: return
-+            Log.d(TAG, "Tank8849: restoring display to original size")
 +            wm.clearForcedDisplaySize(Display.DEFAULT_DISPLAY)
 +        } catch (t: Throwable) {
-+            Log.e(TAG, "Tank8849: failed to restore display", t)
++            Log.e(TAG, "Unihertz8849: failed to restore display", t)
 +        }
 +    }
 +
-+    /**
-+     * Temporarily disable Always-on Display. Returns true if AoD was enabled.
-+     * GrapheneOS enables AoD by default; stock Unihertz ROM does not.
-+     * AoD prevents the display from fully sleeping (stays in Doze state).
-+     */
 +    private fun disableAoD(): Boolean {
 +        val cr = contentResolver ?: return false
 +        val wasEnabled = try {
 +            Settings.Secure.getInt(cr, Settings.Secure.DOZE_ALWAYS_ON, 0) != 0
 +        } catch (_: Throwable) { false }
-+
 +        if (wasEnabled) {
 +            try {
 +                Settings.Secure.putInt(cr, Settings.Secure.DOZE_ALWAYS_ON, 0)
@@ -388,134 +484,98 @@ index 0000000..fbd7224
 +
 +    // ─── Projector enable/disable ───────────────────────────────────────
 +
-+    /**
-+     * Enable the projector. Matches stock powerOnOffForPrejectorOn() sequence
-+     * for PROJECT_NEW_FIRMWARE=true, ElephantProduct device.
-+     */
 +    private fun enableProjector(sp: SharedPreferences) {
 +        thread {
-+            val mode = sp.getString(Tank8849Settings.projectorMode, "3") ?: "3"
++            val mode = sp.getString(Unihertz8849Settings.projectorMode, "3") ?: "3"
 +            val pm = powerManager ?: return@thread
 +
-+            // Step 1: Shrink display to 16:9 FIRST (stock does changeScreenSize(1) first)
-+            Log.d(TAG, "Tank8849 enable: shrinking display to 16:9")
++            // Step 1: Shrink display to 16:9 first
 +            shrinkDisplayForProjector()
 +
 +            // Step 2: Disable AoD
 +            val aodWasEnabled = disableAoD()
 +
-+            // Step 3: Pre-load focus calibration (motor_routine_thread needs it before projector on)
-+            Log.d(TAG, "Tank8849 enable: pre-loading focus calibration")
++            // Step 3: Pre-load focus calibration
 +            sendCalibration(sp)
 +
 +            // Step 4: Sleep display and wait for sys_status == 0
-+            Log.d(TAG, "Tank8849 enable: sleeping display")
 +            pm.goToSleep(SystemClock.uptimeMillis())
 +            if (!waitForSysStatus(0)) {
-+                Log.e(TAG, "Tank8849 enable: display failed to sleep, aborting")
++                Log.e(TAG, "Unihertz8849 enable: display failed to sleep, aborting")
 +                restoreAoD(aodWasEnabled)
 +                restoreDisplay()
 +                return@thread
 +            }
 +
 +            // Step 5: Disable phone display
-+            Log.d(TAG, "Tank8849 enable: ioctl 500 0 0 4")
 +            sendIoctl(500, 0, 0, 4)
 +
 +            // Step 6: Hardware init (may not be supported on all firmware)
-+            Log.d(TAG, "Tank8849 enable: ioctl 500 0 0 6")
 +            val initResult = sendIoctl(500, 0, 0, 6)
-+            if (initResult == -1) {
-+                Log.d(TAG, "Tank8849 enable: ioctl 500 0 0 6 not supported, continuing")
-+            }
++            if (initResult == -1) Log.d(TAG, "Unihertz8849 enable: ioctl 500 0 0 6 not supported")
 +
 +            // Step 7: Wake display and wait for sys_status == 1
-+            Log.d(TAG, "Tank8849 enable: waking display")
 +            pm.wakeUp(SystemClock.uptimeMillis())
 +            if (!waitForSysStatus(1)) {
-+                Log.e(TAG, "Tank8849 enable: display failed to wake, aborting")
++                Log.e(TAG, "Unihertz8849 enable: display failed to wake, aborting")
 +                restoreAoD(aodWasEnabled)
 +                restoreDisplay()
 +                return@thread
 +            }
 +
 +            // Step 8: Set projector mode
-+            Log.d(TAG, "Tank8849 enable: ioctl 500 0 $mode 0")
 +            sendIoctl(500, 0, mode.toInt(), 0)
 +            Thread.sleep(100)
 +
 +            // Step 9: Re-enable phone display
-+            Log.d(TAG, "Tank8849 enable: ioctl 500 0 0 3")
 +            sendIoctl(500, 0, 0, 3)
 +
 +            // Step 10: Restore AoD
 +            restoreAoD(aodWasEnabled)
 +
-+            // Step 11: Apply "other" calibration (AWB + H3 scan offsets from proinfo)
-+            val otherCal = sp.getString(Tank8849Settings.otherCalibration, null)
++            // Step 11: Apply other calibration (AWB + H3 scan)
++            val otherCal = sp.getString(Unihertz8849Settings.otherCalibration, null)
 +            if (otherCal != null) {
 +                val parts = otherCal.split(",")
 +                if (parts.size >= 3) {
-+                    Log.d(TAG, "Tank8849 enable: applying other calibration: $otherCal")
 +                    writeToFileNofail("$SYSFS_BASE/dlpc3421_awb_cali", parts[0])
 +                    writeToFileNofail("$SYSFS_BASE/fpga_h3_scan_hori", parts[1])
 +                    writeToFileNofail("$SYSFS_BASE/fpga_h3_scan_vert", parts[2])
 +                }
 +            }
 +
-+            // Step 12: Re-send focus calibration (reinforcement after mode set)
-+            Log.d(TAG, "Tank8849 enable: re-sending focus calibration")
++            // Step 12: Re-send focus calibration
 +            sendCalibration(sp)
 +
-+            // Step 13: Set initial pitch to 0 (no keystone correction when flat)
++            // Step 13: Set initial pitch to 0
 +            writeToFileNofail("$SYSFS_BASE/projector_pitch_setting", "0")
 +
-+            // Step 14: Set fan speed
-+            val fanSpeed = sp.getString(Tank8849Settings.fanSpeed, "50") ?: "50"
-+            writeToFileNofail("$SYSFS_BASE/projector_fan_en", fanSpeed)
++            // Step 14: Set brightness from preference
++            val brightness = sp.getInt(Unihertz8849Settings.brightness, 128)
++            writeToFileNofail("$SYSFS_BASE/projector_rgb_current", brightness.toString())
 +
-+            // Step 15: Set brightness
-+            val brightness = sp.getString(Tank8849Settings.brightness, "128") ?: "128"
-+            writeToFileNofail("$SYSFS_BASE/projector_rgb_current", brightness)
++            // Step 15: Start temperature-reactive fan control
++            startFanControl()
 +
-+            // Step 16: Start auto-keystone if enabled
-+            val autoKeystone = sp.getBoolean(Tank8849Settings.autoKeystone, true)
-+            if (autoKeystone) {
-+                startAutoKeystone()
-+            }
++            // Step 16: Start auto-keystone (always on)
++            startAutoKeystone()
 +
-+            Log.d(TAG, "Tank8849 enable: done")
++            Log.d(TAG, "Unihertz8849 enable: done")
 +        }
 +    }
 +
-+    /**
-+     * Disable the projector. Matches stock powerOnOffForPrejectorOff() sequence
-+     * for PROJECT_NEW_FIRMWARE=true, ElephantProduct device.
-+     */
 +    private fun disableProjector() {
 +        thread {
-+            // Stop auto-keystone first
 +            stopAutoKeystone()
++            stopFanControl()
 +
-+            // Step 1: Disable phone display
-+            Log.d(TAG, "Tank8849 disable: ioctl 500 0 0 4")
 +            sendIoctl(500, 0, 0, 4)
 +            Thread.sleep(500)
-+
-+            // Step 2: Turn off projector LED
-+            Log.d(TAG, "Tank8849 disable: ioctl 500 0 0 1")
 +            sendIoctl(500, 0, 0, 1)
-+
-+            // Step 3: Set mode off
-+            Log.d(TAG, "Tank8849 disable: ioctl 500 0 0 0")
 +            sendIoctl(500, 0, 0, 0)
-+
-+            // Step 4: Re-enable phone display
-+            Log.d(TAG, "Tank8849 disable: ioctl 500 0 0 3")
 +            sendIoctl(500, 0, 0, 3)
 +            Thread.sleep(50)
 +
-+            // Step 5: Sleep/wake cycle for display reset
 +            val aodWasEnabled = disableAoD()
 +            val pm = powerManager
 +            if (pm != null) {
@@ -527,192 +587,149 @@ index 0000000..fbd7224
 +            restoreAoD(aodWasEnabled)
 +            Thread.sleep(100)
 +
-+            // Step 6: Restore display
 +            restoreDisplay()
-+
-+            Log.d(TAG, "Tank8849 disable: done")
++            Log.d(TAG, "Unihertz8849 disable: done")
 +        }
 +    }
 +
-+    // ─── Auto-keystone ──────────────────────────────────────────────────
++    // ─── Auto-keystone (always on when projector is active) ─────────────
 +
-+    /**
-+     * Start auto-keystone correction via accelerometer.
-+     * Exact replica of stock ProjectorController.computeKeystoneFromSensor()
-+     * and calculateOrientation().
-+     */
 +    private fun startAutoKeystone() {
-+        if (keystoneListener != null) return  // already running
++        if (keystoneListener != null) return
 +        val sm = sensorManager ?: return
 +        val accel = accelerometer ?: return
 +
-+        // Reset accumulator state
 +        mX = 0f; mY = 0f; mZ = 0f
-+        mRaiseAngle = 0f
-+        mNewGrivatyVal = 0f
-+        mOldGrivatyVal = 0f
-+        mCount = KEYSTONE_SAMPLE_COUNT
-+        mCountStartTime = 0L
-+        mKeystoneChange = 1000
++        mRaiseAngle = 0f; mNewGrivatyVal = 0f; mOldGrivatyVal = 0f
++        mCount = KEYSTONE_SAMPLE_COUNT; mCountStartTime = 0L; mKeystoneChange = 1000
 +
 +        val listener = object : SensorEventListener {
-+            override fun onSensorChanged(event: SensorEvent) {
-+                calculateOrientation(event)
-+            }
++            override fun onSensorChanged(event: SensorEvent) { calculateOrientation(event) }
 +            override fun onAccuracyChanged(sensor: Sensor?, accuracy: Int) {}
 +        }
 +        keystoneListener = listener
-+
-+        // Stock uses SENSOR_DELAY_NORMAL (3) = ~200ms between samples
 +        sm.registerListener(listener, accel, SensorManager.SENSOR_DELAY_NORMAL)
-+        Log.d(TAG, "Tank8849: auto-keystone started")
++        Log.d(TAG, "Unihertz8849: auto-keystone started")
 +    }
 +
 +    private fun stopAutoKeystone() {
 +        val listener = keystoneListener ?: return
 +        sensorManager?.unregisterListener(listener)
 +        keystoneListener = null
-+
-+        // Reset pitch to 0 on stop
 +        writeToFileNofail("$SYSFS_BASE/projector_pitch_setting", "0")
-+        Log.d(TAG, "Tank8849: auto-keystone stopped, pitch reset to 0")
++        Log.d(TAG, "Unihertz8849: auto-keystone stopped")
 +    }
 +
 +    /**
 +     * Stock calculateOrientation() algorithm, exact replica.
++     * Accumulates 10 samples over ~2s, computes pitch correction,
++     * writes to projector_pitch_setting, resets every 3s.
 +     *
-+     * Accumulation phase (mCount > 0):
-+     *   Sum raw X, Y, Z values over 10 samples (~2 seconds at 200ms)
-+     *   mRaiseAngle = accumulated Y sum (non-tablet mode)
-+     *
-+     * Compute phase (mCount == 0):
-+     *   If |mRaiseAngle| >= 75: use Z; else use mRaiseAngle
-+     *   Scale by 1.68, clamp -100..+100
-+     *   ElephantProduct: negate and scale by 0.4
-+     *   If change > 3: write pitch to sysfs
-+     *
-+     * Idle phase (mCount < 0):
-+     *   Do nothing until 3-second timer resets cycle.
++     * GSI note: sign is inverted vs stock -- use (int)(mNewGrivatyVal)
++     * instead of -(int)(mNewGrivatyVal).
 +     */
 +    private fun calculateOrientation(event: SensorEvent) {
-+        if (mCountStartTime == 0L) {
-+            mCountStartTime = SystemClock.elapsedRealtime()
-+        }
++        if (mCountStartTime == 0L) mCountStartTime = SystemClock.elapsedRealtime()
 +
 +        val values = event.values
 +
 +        if (mCount > 0) {
-+            // Accumulate phase: sum raw values (NOT average)
-+            mX += values[0]
-+            mY += values[1]
-+            mZ += values[2]
++            mX += values[0]; mY += values[1]; mZ += values[2]
 +            mCount--
-+
-+            // Non-tablet: raise angle = accumulated Y
 +            mRaiseAngle = mY
-+
 +        } else if (mCount == 0) {
-+            // Compute phase
-+            var gval: Float
 +            var raise = mRaiseAngle
-+
++            val gval: Float
 +            if (raise >= 75.0f) {
 +                gval = mZ
 +            } else if (raise < -75.0f) {
 +                gval = -mZ
 +            } else {
-+                if (mZ > 80.0f) {
-+                    raise = -raise
-+                }
++                if (mZ > 80.0f) raise = -raise
 +                gval = raise
 +            }
 +
-+            // Scale by 1.68
-+            gval = (gval * 1.68).toFloat()
++            var g = (gval * 1.68).toFloat()
++            if (g > 100.0f) g = 100.0f
++            if (g < -100.0f) g = -100.0f
++            mNewGrivatyVal = (-g) * 0.4f
 +
-+            // Clamp to -100..+100
-+            if (gval > 100.0f) gval = 100.0f
-+            if (gval < -100.0f) gval = -100.0f
-+
-+            // ElephantProduct: negate and scale by 0.4
-+            mNewGrivatyVal = (-gval) * 0.4f
-+
-+            // Only update if change exceeds threshold (stock uses 3.0)
 +            if (abs(mNewGrivatyVal - mOldGrivatyVal) > KEYSTONE_CHANGE_THRESHOLD) {
 +                mOldGrivatyVal = mNewGrivatyVal
-+
-+                // Stock saves -((int)mNewGrivatyVal) to settings.
-+                // On GSI the correction direction is inverted, so we use
-+                // (int)(mNewGrivatyVal) directly (drop the outer negation).
-+                var keystoneValue = mNewGrivatyVal.toInt()
-+
-+                // Clamp to DLPC3421 valid range
-+                if (keystoneValue > PITCH_MAX) keystoneValue = PITCH_MAX
-+                if (keystoneValue < PITCH_MIN) keystoneValue = PITCH_MIN
-+
-+                if (keystoneValue != mKeystoneChange) {
-+                    mKeystoneChange = keystoneValue
-+                    writeToFileNofail("$SYSFS_BASE/projector_pitch_setting", keystoneValue.toString())
-+                    Log.d(TAG, "Tank8849 keystone: pitch=$keystoneValue (raise=$mRaiseAngle gval=$gval)")
++                var pitch = mNewGrivatyVal.toInt()  // GSI: no outer negation
++                if (pitch > PITCH_MAX) pitch = PITCH_MAX
++                if (pitch < PITCH_MIN) pitch = PITCH_MIN
++                if (pitch != mKeystoneChange) {
++                    mKeystoneChange = pitch
++                    writeToFileNofail("$SYSFS_BASE/projector_pitch_setting", pitch.toString())
++                    Log.d(TAG, "Unihertz8849 keystone: pitch=$pitch (raise=$mRaiseAngle)")
 +                }
 +            }
-+
-+            // Move to idle phase
 +            mCount--
 +        }
-+        // mCount < 0: idle, do nothing until timer resets
 +
-+        // Reset every 3 seconds (stock: BackupAgentTimeoutParameters.DEFAULT_QUOTA_EXCEEDED_TIMEOUT_MILLIS = 3000)
 +        if (SystemClock.elapsedRealtime() - mCountStartTime > KEYSTONE_CYCLE_MS) {
-+            mCountStartTime = 0L
-+            mCount = KEYSTONE_SAMPLE_COUNT
-+            mX = 0f
-+            mY = 0f
-+            mZ = 0f
-+            mRaiseAngle = 0f
-+            mNewGrivatyVal = 0f
++            mCountStartTime = 0L; mCount = KEYSTONE_SAMPLE_COUNT
++            mX = 0f; mY = 0f; mZ = 0f
++            mRaiseAngle = 0f; mNewGrivatyVal = 0f
 +        }
 +    }
 +
-+    // ─── Focus calibration sweep ────────────────────────────────────────
++    // ─── Fan control ────────────────────────────────────────────────────
 +
-+    fun runFocusCalibration(sp: SharedPreferences) {
-+        Log.d(TAG, "Tank8849: starting focus calibration sweep")
-+
-+        val mode = sp.getString(Tank8849Settings.projectorMode, "3") ?: "3"
-+        sendIoctl(500, 0, mode.toInt(), 0)
-+        Thread.sleep(2000)
-+
-+        Log.d(TAG, "Tank8849: running motor sweep")
-+        writeToFileNofail("$SYSFS_BASE/focus_auto_calibration", "1")
-+        Thread.sleep(10000)
-+
-+        try {
-+            val proc = Runtime.getRuntime().exec(arrayOf("dmesg"))
-+            val dmesg = proc.inputStream.bufferedReader().readText()
-+            proc.waitFor()
-+            val pattern = Regex("""\[init_cali_buff\]\[(\d+)\]\[(\d+)\]""")
-+            val matches = pattern.findAll(dmesg).toList()
-+            if (matches.size >= 16) {
-+                val rawValues = matches.takeLast(16).map { it.groupValues[2].toInt() }
-+                if (rawValues.all { it == 0 }) {
-+                    Log.w(TAG, "Tank8849: sweep returned all zeros")
-+                    return
-+                }
-+                val calibration = "550," + rawValues.joinToString(",")
-+                Log.d(TAG, "Tank8849: calibration result: $calibration")
-+                sp.edit().putString(Tank8849Settings.focusCalibration, calibration).apply()
-+
-+                sendIoctl(500, 0, 0, 0)
-+                Thread.sleep(1000)
-+                sendCalibration(sp)
-+                sendIoctl(500, 0, mode.toInt(), 0)
-+                Log.d(TAG, "Tank8849: projector restarted with calibrated values")
-+            } else {
-+                Log.w(TAG, "Tank8849: sweep produced ${matches.size} values, expected 16")
++    /**
++     * Temperature-reactive fan control, exact replica of stock
++     * ElephantProduct.getTemperature/setFanDuty logic polled every 1500ms.
++     *
++     * - Open:  start at 20%
++     * - Close: set to 0%
++     * - temp > 40°C and fan < 30% → ramp to 30%
++     * - temp > 48°C               → full blast 100%
++     * - |temp delta| >= 2°C       → gradual adjustment (delta/2 * 8 duty points)
++     */
++    private fun startFanControl() {
++        if (fanControlThread?.isAlive == true) return
++        mFanDuty = 20; mPreTemperature = 0
++        writeToFileNofail("$SYSFS_BASE/projector_fan_en", "20")
++        fanControlThread = thread {
++            while (!Thread.currentThread().isInterrupted) {
++                try {
++                    Thread.sleep(1500)
++                    updateFanFromTemperature()
++                } catch (_: InterruptedException) { break }
++                  catch (t: Throwable) { Log.w(TAG, "Fan control error", t) }
 +            }
-+        } catch (t: Throwable) {
-+            Log.e(TAG, "Tank8849: failed to parse calibration from dmesg", t)
++        }
++    }
++
++    private fun stopFanControl() {
++        fanControlThread?.interrupt()
++        fanControlThread = null
++        mPreTemperature = 0; mFanDuty = 20
++        writeToFileNofail("$SYSFS_BASE/projector_fan_en", "0")
++    }
++
++    private fun updateFanFromTemperature() {
++        val tempStr = readFileNofail("$SYSFS_BASE/projector_temp", "N/A")
++        if (tempStr == "N/A" || tempStr.isEmpty()) return
++        val temp = try {
++            if (tempStr.contains(",")) tempStr.split(",")[0].trim().toInt()
++            else tempStr.trim().toInt()
++        } catch (_: NumberFormatException) { return }
++
++        if (mPreTemperature <= 0) mPreTemperature = temp
++
++        if (temp > 40 && mFanDuty < 30) {
++            mFanDuty = 30; writeToFileNofail("$SYSFS_BASE/projector_fan_en", "30")
++        } else if (temp > 48) {
++            mFanDuty = 100; writeToFileNofail("$SYSFS_BASE/projector_fan_en", "100")
++        }
++
++        if (abs(temp - mPreTemperature) >= 2) {
++            val delta = (temp - mPreTemperature) / 2
++            mFanDuty = (mFanDuty + delta * 8).coerceIn(20, 100)
++            writeToFileNofail("$SYSFS_BASE/projector_fan_en", mFanDuty.toString())
++            mPreTemperature = temp
 +        }
 +    }
 +
@@ -720,65 +737,33 @@ index 0000000..fbd7224
 +
 +    val spListener = SharedPreferences.OnSharedPreferenceChangeListener { sp, key ->
 +        when (key) {
-+            Tank8849Settings.warningLight -> {
++            Unihertz8849Settings.warningLight -> {
 +                val value = (sp.getString(key, "0") ?: "0").toInt()
-+                sendIoctl(310, 0, value, 0)
++                setWarningLight(value)
 +            }
-+            Tank8849Settings.campingLight -> {
++            Unihertz8849Settings.campingLight -> {
 +                val value = (sp.getString(key, "0") ?: "0").toInt()
-+                sendIoctl(301, 0, value, 0)
++                setCampingLight(value, sp)
 +            }
-+            Tank8849Settings.projectorEnabled -> {
++            Unihertz8849Settings.projectorEnabled -> {
 +                val enabled = sp.getBoolean(key, false)
-+                if (enabled) {
-+                    enableProjector(sp)
-+                } else {
-+                    disableProjector()
-+                }
++                if (enabled) enableProjector(sp) else disableProjector()
 +            }
-+            Tank8849Settings.projectorMode -> {
-+                val enabled = sp.getBoolean(Tank8849Settings.projectorEnabled, false)
++            Unihertz8849Settings.projectorMode -> {
++                val enabled = sp.getBoolean(Unihertz8849Settings.projectorEnabled, false)
 +                if (enabled) {
 +                    val mode = sp.getString(key, "3") ?: "3"
 +                    sendIoctl(500, 0, mode.toInt(), 0)
-+                    // Re-send calibration after mode switch
 +                    sendCalibration(sp)
 +                }
 +            }
-+            Tank8849Settings.displayEnabled -> {
++            Unihertz8849Settings.displayEnabled -> {
 +                val enabled = sp.getBoolean(key, true)
 +                sendIoctl(500, 0, 0, if (enabled) 3 else 4)
 +            }
-+            Tank8849Settings.brightness -> {
-+                val value = sp.getString(key, "128") ?: "128"
-+                writeToFileNofail("$SYSFS_BASE/projector_rgb_current", value)
-+            }
-+            Tank8849Settings.keystone -> {
-+                val value = sp.getString(key, "0") ?: "0"
-+                writeToFileNofail("$SYSFS_BASE/projector_pitch_setting", value)
-+            }
-+            Tank8849Settings.autoKeystone -> {
-+                val enabled = sp.getBoolean(key, true)
-+                val projectorOn = sp.getBoolean(Tank8849Settings.projectorEnabled, false)
-+                if (enabled && projectorOn) {
-+                    startAutoKeystone()
-+                } else {
-+                    stopAutoKeystone()
-+                }
-+            }
-+            Tank8849Settings.autoFocus -> {
-+                thread { runFocusCalibration(sp) }
-+            }
-+            Tank8849Settings.focusCalibration -> {
-+                sendCalibration(sp)
-+            }
-+            Tank8849Settings.focusAdjust -> {
-+                val value = sp.getString(key, "0") ?: "0"
-+                writeToFileNofail("$SYSFS_BASE/motor_turn_mode_step", value)
-+            }
-+            Tank8849Settings.fanSpeed -> {
-+                val value = sp.getString(key, "50") ?: "50"
-+                writeToFileNofail("$SYSFS_BASE/projector_fan_en", value)
++            Unihertz8849Settings.brightness -> {
++                val value = sp.getInt(key, 128)
++                writeToFileNofail("$SYSFS_BASE/projector_rgb_current", value.toString())
 +            }
 +        }
 +    }
@@ -786,7 +771,7 @@ index 0000000..fbd7224
 +    // ─── Startup ────────────────────────────────────────────────────────
 +
 +    override fun startup(ctxt: Context) {
-+        if (!Tank8849Settings.enabled()) return
++        if (!Unihertz8849Settings.enabled()) return
 +
 +        powerManager = ctxt.getSystemService(Context.POWER_SERVICE) as PowerManager
 +        contentResolver = ctxt.contentResolver
@@ -794,45 +779,36 @@ index 0000000..fbd7224
 +        accelerometer = sensorManager?.getDefaultSensor(Sensor.TYPE_ACCELEROMETER)
 +
 +        val sp = PreferenceManager.getDefaultSharedPreferences(ctxt)
-+
-+        // Load factory calibration from proinfo on first boot
 +        loadFactoryCalibration(sp)
-+
 +        sp.registerOnSharedPreferenceChangeListener(spListener)
-+
-+        // Refresh fan speed on boot (don't auto-enable projector on boot)
-+        spListener.onSharedPreferenceChanged(sp, Tank8849Settings.fanSpeed)
 +    }
 +}
-diff --git a/app/src/main/java/me/phh/treble/app/Tank8849Settings.kt b/app/src/main/java/me/phh/treble/app/Tank8849Settings.kt
+diff --git a/app/src/main/java/me/phh/treble/app/Unihertz8849Settings.kt b/app/src/main/java/me/phh/treble/app/Unihertz8849Settings.kt
 new file mode 100644
-index 0000000..44ba30e
+index 0000000..606ad0e
 --- /dev/null
-+++ b/app/src/main/java/me/phh/treble/app/Tank8849Settings.kt
-@@ -0,0 +1,100 @@
++++ b/app/src/main/java/me/phh/treble/app/Unihertz8849Settings.kt
+@@ -0,0 +1,109 @@
 +package me.phh.treble.app
 +
 +import android.os.Bundle
++import android.os.Handler
++import android.os.Looper
 +import android.os.ServiceManager
 +import android.util.Log
 +import vendor.mediatek.hardware.agolddaemon.IAgoldDaemon
 +import java.io.File
-+import java.io.IOException
 +
-+object Tank8849Settings : Settings {
-+    val warningLight = "tank8849_warning_light"
-+    val campingLight = "tank8849_camping_light"
-+    val projectorEnabled = "tank8849_projector_enabled"
-+    val projectorMode = "tank8849_projector_mode"
-+    val displayEnabled = "tank8849_display_enabled"
-+    val brightness = "tank8849_brightness"
-+    val keystone = "tank8849_keystone"
-+    val autoKeystone = "tank8849_auto_keystone"
-+    val autoFocus = "tank8849_auto_focus"
-+    val focusCalibration = "tank8849_focus_calibration"
-+    val otherCalibration = "tank8849_other_calibration"
-+    val focusAdjust = "tank8849_focus_adjust"
-+    val fanSpeed = "tank8849_fan_speed"
++object Unihertz8849Settings : Settings {
++    val warningLight = "unihertz8849_warning_light"
++    val campingLight = "unihertz8849_camping_light"
++    val campingLightDuration = "unihertz8849_camping_light_duration"
++    val projectorEnabled = "unihertz8849_projector_enabled"
++    val projectorMode = "unihertz8849_projector_mode"
++    val displayEnabled = "unihertz8849_display_enabled"
++    val brightness = "unihertz8849_brightness"
++    val otherCalibration = "unihertz8849_other_calibration"
++    val focusCalibration = "unihertz8849_focus_calibration"
 +
 +    override fun enabled(): Boolean {
 +        try {
@@ -840,14 +816,17 @@ index 0000000..44ba30e
 +            if (binder == null) return false
 +            return File("/sys/bus/spi/drivers/fpga_spi/projector_sys_status").exists()
 +        } catch (t: Throwable) {
-+            Log.d("PHH", "Tank8849 detection failed", t)
++            Log.d("PHH", "Unihertz8849 detection failed", t)
 +            return false
 +        }
 +    }
 +}
 +
-+class Tank8849SettingsFragment : SettingsFragment() {
-+    override val preferencesResId = R.xml.pref_tank8849
++class Unihertz8849SettingsFragment : SettingsFragment() {
++    override val preferencesResId = R.xml.pref_unihertz8849
++
++    private val handler = Handler(Looper.getMainLooper())
++    private var laserRunnable: Runnable? = null
 +
 +    private fun readSysFile(path: String): String {
 +        try {
@@ -873,82 +852,93 @@ index 0000000..44ba30e
 +
 +    override fun onCreatePreferences(savedInstanceState: Bundle?, rootKey: String?) {
 +        super.onCreatePreferences(savedInstanceState, rootKey)
++        startLaserUpdates()
++    }
 +
-+        // Calibrate focus button
-+        val afPref = findPreference<androidx.preference.Preference>("tank8849_auto_focus")
-+        afPref?.setOnPreferenceClickListener {
-+            val sp = preferenceManager.sharedPreferences ?: return@setOnPreferenceClickListener false
-+            val current = sp.getBoolean(Tank8849Settings.autoFocus, false)
-+            sp.edit().putBoolean(Tank8849Settings.autoFocus, !current).apply()
-+            true
-+        }
++    override fun onResume() {
++        super.onResume()
++        startLaserUpdates()
++    }
 +
-+        // Temperature display
-+        val tempPref = findPreference<androidx.preference.Preference>("tank8849_temp_display")
-+        try {
-+            val temp = readSysFile("/sys/bus/spi/drivers/fpga_spi/projector_temp")
-+            if (temp.isNotEmpty() && temp != "N/A") {
-+                tempPref?.summary = "${temp}\u00B0C"
-+            } else {
-+                tempPref?.summary = "Projector off"
++    override fun onPause() {
++        super.onPause()
++        stopLaserUpdates()
++    }
++
++    override fun onDestroyView() {
++        super.onDestroyView()
++        stopLaserUpdates()
++    }
++
++    private fun startLaserUpdates() {
++        val laserPref = findPreference<androidx.preference.Preference>("unihertz8849_laser_display")
++            ?: return
++
++        val runnable = object : Runnable {
++            override fun run() {
++                try {
++                    val distance = readSysFile("/sys/nds03_ctrl/nds03_read")
++                    val pref = findPreference<androidx.preference.Preference>("unihertz8849_laser_display")
++                    pref?.summary = if (distance.isNotEmpty() && distance != "65300")
++                        "$distance mm"
++                    else
++                        "Out of range"
++                } catch (t: Throwable) {
++                    // ignore
++                }
++                handler.postDelayed(this, 1000)
 +            }
-+        } catch (t: Throwable) {
-+            tempPref?.summary = "Unavailable"
 +        }
++        laserRunnable = runnable
++        handler.post(runnable)
++    }
 +
-+        // Laser distance display
-+        val laserPref = findPreference<androidx.preference.Preference>("tank8849_laser_display")
-+        try {
-+            val distance = readSysFile("/sys/nds03_ctrl/nds03_read")
-+            if (distance.isNotEmpty()) {
-+                laserPref?.summary = "${distance} mm"
-+            } else {
-+                laserPref?.summary = "Unavailable"
-+            }
-+        } catch (t: Throwable) {
-+            laserPref?.summary = "Unavailable"
-+        }
++    private fun stopLaserUpdates() {
++        laserRunnable?.let { handler.removeCallbacks(it) }
++        laserRunnable = null
 +    }
 +}
-diff --git a/app/src/main/res/values/arrays_tank8849.xml b/app/src/main/res/values/arrays_tank8849.xml
+diff --git a/app/src/main/res/values/arrays_unihertz8849.xml b/app/src/main/res/values/arrays_unihertz8849.xml
 new file mode 100644
-index 0000000..5ffe677
+index 0000000..9306ce4
 --- /dev/null
-+++ b/app/src/main/res/values/arrays_tank8849.xml
-@@ -0,0 +1,41 @@
++++ b/app/src/main/res/values/arrays_unihertz8849.xml
+@@ -0,0 +1,55 @@
 +<?xml version="1.0" encoding="utf-8"?>
 +<resources>
-+    <string-array name="pref_tank8849_mode">
++    <string-array name="pref_unihertz8849_mode">
 +        <item>Portrait</item>
 +        <item>Landscape</item>
 +        <item>Landscape (inverted)</item>
 +    </string-array>
-+    <string-array name="pref_tank8849_mode_values">
++    <string-array name="pref_unihertz8849_mode_values">
 +        <item>1</item>
 +        <item>3</item>
 +        <item>6</item>
 +    </string-array>
-+    <string-array name="pref_tank8849_warning_light">
++    <string-array name="pref_unihertz8849_warning_light">
 +        <item>Off</item>
 +        <item>Red</item>
 +        <item>Blue</item>
 +        <item>Green</item>
++        <item>SOS (red/blue flash)</item>
 +    </string-array>
-+    <string-array name="pref_tank8849_warning_light_values">
++    <string-array name="pref_unihertz8849_warning_light_values">
 +        <item>0</item>
 +        <item>1</item>
 +        <item>16</item>
 +        <item>256</item>
++        <item>-1</item>
 +    </string-array>
-+    <string-array name="pref_tank8849_camping_light">
++    <string-array name="pref_unihertz8849_camping_light">
 +        <item>Off</item>
-+        <item>Full</item>
++        <item>Full (time-limited)</item>
 +        <item>Medium</item>
 +        <item>Low</item>
 +        <item>Fast flash</item>
 +        <item>SOS flash</item>
 +    </string-array>
-+    <string-array name="pref_tank8849_camping_light_values">
++    <string-array name="pref_unihertz8849_camping_light_values">
 +        <item>0</item>
 +        <item>1</item>
 +        <item>2</item>
@@ -956,9 +946,21 @@ index 0000000..5ffe677
 +        <item>4</item>
 +        <item>5</item>
 +    </string-array>
++    <string-array name="pref_unihertz8849_camping_duration">
++        <item>5 minutes</item>
++        <item>10 minutes</item>
++        <item>15 minutes</item>
++        <item>30 minutes</item>
++    </string-array>
++    <string-array name="pref_unihertz8849_camping_duration_values">
++        <item>5</item>
++        <item>10</item>
++        <item>15</item>
++        <item>30</item>
++    </string-array>
 +</resources>
 diff --git a/app/src/main/res/xml/pref_headers.xml b/app/src/main/res/xml/pref_headers.xml
-index a2e7404..be22e72 100644
+index a2e7404..5d019f4 100644
 --- a/app/src/main/res/xml/pref_headers.xml
 +++ b/app/src/main/res/xml/pref_headers.xml
 @@ -41,6 +41,9 @@
@@ -966,114 +968,81 @@ index a2e7404..be22e72 100644
          android:fragment="me.phh.treble.app.GrapheneOSSettingsFragment"
          android:title="GrapheneOS features" />
 +    <header
-+        android:fragment="me.phh.treble.app.Tank8849SettingsFragment"
-+        android:title="8849" />
++        android:fragment="me.phh.treble.app.Unihertz8849SettingsFragment"
++        android:title="Unihertz 8849" />
      <header
          android:fragment="me.phh.treble.app.MiscSettingsFragment"
          android:title="Misc features" />
-diff --git a/app/src/main/res/xml/pref_tank8849.xml b/app/src/main/res/xml/pref_tank8849.xml
+diff --git a/app/src/main/res/xml/pref_unihertz8849.xml b/app/src/main/res/xml/pref_unihertz8849.xml
 new file mode 100644
-index 0000000..051eeb1
+index 0000000..97c3980
 --- /dev/null
-+++ b/app/src/main/res/xml/pref_tank8849.xml
-@@ -0,0 +1,97 @@
++++ b/app/src/main/res/xml/pref_unihertz8849.xml
+@@ -0,0 +1,64 @@
 +<?xml version="1.0" encoding="utf-8"?>
 +<PreferenceScreen xmlns:app="http://schemas.android.com/apk/res-auto"
 +    xmlns:android="http://schemas.android.com/apk/res/android">
 +    <PreferenceCategory android:title="Lights">
 +        <ListPreference
 +            android:defaultValue="0"
-+            android:entries="@array/pref_tank8849_warning_light"
-+            android:entryValues="@array/pref_tank8849_warning_light_values"
-+            android:key="tank8849_warning_light"
++            android:entries="@array/pref_unihertz8849_warning_light"
++            android:entryValues="@array/pref_unihertz8849_warning_light_values"
++            android:key="unihertz8849_warning_light"
 +            android:title="Warning light"
-+            app:summary="LED warning light color" />
++            app:summary="LED warning light mode" />
 +        <ListPreference
 +            android:defaultValue="0"
-+            android:entries="@array/pref_tank8849_camping_light"
-+            android:entryValues="@array/pref_tank8849_camping_light_values"
-+            android:key="tank8849_camping_light"
++            android:entries="@array/pref_unihertz8849_camping_light"
++            android:entryValues="@array/pref_unihertz8849_camping_light_values"
++            android:key="unihertz8849_camping_light"
 +            android:title="Camping light"
 +            app:summary="Camping light mode" />
++        <ListPreference
++            android:defaultValue="10"
++            android:entries="@array/pref_unihertz8849_camping_duration"
++            android:entryValues="@array/pref_unihertz8849_camping_duration_values"
++            android:key="unihertz8849_camping_light_duration"
++            android:title="Full brightness duration"
++            app:summary="How long to run at full blast before stepping down to medium" />
 +    </PreferenceCategory>
-+    <PreferenceCategory android:title="Projector controls">
++    <PreferenceCategory android:title="Projector">
 +        <CheckBoxPreference
 +            android:layout_width="wrap_content"
 +            android:layout_height="wrap_content"
 +            android:defaultValue="false"
-+            android:key="tank8849_projector_enabled"
++            android:key="unihertz8849_projector_enabled"
 +            android:title="Enable projector"
 +            app:summary="Turn on the built-in projector" />
 +        <ListPreference
 +            android:defaultValue="3"
-+            android:entries="@array/pref_tank8849_mode"
-+            android:entryValues="@array/pref_tank8849_mode_values"
-+            android:key="tank8849_projector_mode"
++            android:entries="@array/pref_unihertz8849_mode"
++            android:entryValues="@array/pref_unihertz8849_mode_values"
++            android:key="unihertz8849_projector_mode"
 +            android:title="Projection mode"
 +            app:summary="Orientation and aspect ratio" />
 +        <CheckBoxPreference
 +            android:layout_width="wrap_content"
 +            android:layout_height="wrap_content"
 +            android:defaultValue="true"
-+            android:key="tank8849_display_enabled"
++            android:key="unihertz8849_display_enabled"
 +            android:title="Display"
 +            app:summary="Keep the phone display on while projecting" />
-+    </PreferenceCategory>
-+    <PreferenceCategory android:title="Image">
-+        <EditTextPreference
++        <SeekBarPreference
 +            android:defaultValue="128"
-+            android:key="tank8849_brightness"
++            android:key="unihertz8849_brightness"
++            android:max="255"
++            android:min="1"
 +            android:title="Brightness"
-+            app:summary="Projector brightness (1-255)" />
-+        <CheckBoxPreference
-+            android:layout_width="wrap_content"
-+            android:layout_height="wrap_content"
-+            android:defaultValue="true"
-+            android:key="tank8849_auto_keystone"
-+            android:title="Auto keystone"
-+            app:summary="Automatic tilt-based keystone correction via accelerometer" />
-+        <EditTextPreference
-+            android:defaultValue="0"
-+            android:key="tank8849_keystone"
-+            android:title="Manual keystone"
-+            app:summary="Manual keystone pitch correction (-40 to +25). Disabled when auto-keystone is on." />
++            app:summary="Projector brightness" />
 +    </PreferenceCategory>
-+    <PreferenceCategory android:title="Focus">
++    <PreferenceCategory android:title="Laser range">
 +        <Preference
-+            android:key="tank8849_auto_focus"
-+            android:title="Calibrate focus"
-+            app:summary="Run per-device motor calibration. The projector will cycle on/off (~15s). Only needs to be done once." />
-+        <EditTextPreference
-+            android:defaultValue=""
-+            android:key="tank8849_focus_calibration"
-+            android:title="Focus calibration"
-+            app:summary="Per-device focus values (auto-loaded from factory proinfo)" />
-+        <EditTextPreference
-+            android:defaultValue="0"
-+            android:key="tank8849_focus_adjust"
-+            android:title="Manual focus adjustment"
-+            app:summary="Relative focus motor step (e.g. +10 or -10)" />
-+    </PreferenceCategory>
-+    <PreferenceCategory android:title="Hardware">
-+        <EditTextPreference
-+            android:defaultValue="50"
-+            android:key="tank8849_fan_speed"
-+            android:title="Fan speed"
-+            app:summary="Fan speed (0-100)" />
-+        <Preference
-+            android:key="tank8849_temp_display"
-+            android:title="Projector temperature"
++            android:key="unihertz8849_laser_display"
++            android:title="Distance"
 +            android:selectable="false"
-+            app:summary="Reading..." />
-+    </PreferenceCategory>
-+    <PreferenceCategory android:title="Laser ranging">
-+        <Preference
-+            android:key="tank8849_laser_display"
-+            android:title="Distance measurement"
-+            android:selectable="false"
-+            app:summary="Reading..." />
++            app:summary="---" />
 +    </PreferenceCategory>
 +</PreferenceScreen>
 -- 
-2.52.0
+2.53.0
 
