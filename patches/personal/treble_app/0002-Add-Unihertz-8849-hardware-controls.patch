@@ -1,24 +1,24 @@
-From 5d93dc2b1e2072c96a666e3c17defc81473aa53e Mon Sep 17 00:00:00 2001
+From 42befb8d8cbff69e0b1bb664051c0e4879419792 Mon Sep 17 00:00:00 2001
 From: "Christopher A. Williamson" <contact@chrisaw.io>
 Date: Thu, 26 Feb 2026 11:23:00 +0000
 Subject: [PATCH] Add Unihertz 8849 hardware controls
 
 ---
  .../java/me/phh/treble/app/EntryService.kt    |   1 +
- .../me/phh/treble/app/SettingsActivity.kt     |   6 +
+ .../me/phh/treble/app/SettingsActivity.kt     |   3 +
  .../java/me/phh/treble/app/Unihertz8849.kt    | 669 ++++++++++++++++++
  .../me/phh/treble/app/Unihertz8849Settings.kt | 100 +++
  .../main/res/values/arrays_unihertz8849.xml   |  55 ++
- app/src/main/res/xml/pref_headers.xml         |   6 +
+ app/src/main/res/xml/pref_headers.xml         |   3 +
  app/src/main/res/xml/pref_unihertz8849.xml    |  64 ++
- 7 files changed, 901 insertions(+)
+ 7 files changed, 895 insertions(+)
  create mode 100644 app/src/main/java/me/phh/treble/app/Unihertz8849.kt
  create mode 100644 app/src/main/java/me/phh/treble/app/Unihertz8849Settings.kt
  create mode 100644 app/src/main/res/values/arrays_unihertz8849.xml
  create mode 100644 app/src/main/res/xml/pref_unihertz8849.xml
 
 diff --git a/app/src/main/java/me/phh/treble/app/EntryService.kt b/app/src/main/java/me/phh/treble/app/EntryService.kt
-index f6c501b..d15d054 100644
+index 971f354..8f96ca6 100644
 --- a/app/src/main/java/me/phh/treble/app/EntryService.kt
 +++ b/app/src/main/java/me/phh/treble/app/EntryService.kt
 @@ -53,6 +53,7 @@ class EntryService: Service() {
@@ -28,27 +28,24 @@ index f6c501b..d15d054 100644
 +            tryC { Unihertz8849.startup(this) }
              tryC { Ims.startup(this) }
              tryC { Custom.startup(this) }
-             tryC { Hct.startup(this) }
+             tryC { GrapheneOS.startup(this) }
 diff --git a/app/src/main/java/me/phh/treble/app/SettingsActivity.kt b/app/src/main/java/me/phh/treble/app/SettingsActivity.kt
-index 547c579..27a7118 100644
+index 02832b0..27a7118 100644
 --- a/app/src/main/java/me/phh/treble/app/SettingsActivity.kt
 +++ b/app/src/main/java/me/phh/treble/app/SettingsActivity.kt
-@@ -77,6 +77,10 @@ class SettingsActivity : PreferenceActivity() {
-             target.removeIf { it.fragment == ImsSettingsFragment::class.java.name }
-         if (!CustomSettings.enabled())
+@@ -79,6 +79,8 @@ class SettingsActivity : PreferenceActivity() {
              target.removeIf { it.fragment == CustomSettingsFragment::class.java.name }
-+        if (!GrapheneOSSettings.enabled())
-+            target.removeIf { it.fragment == GrapheneOSSettingsFragment::class.java.name }
+         if (!GrapheneOSSettings.enabled())
+             target.removeIf { it.fragment == GrapheneOSSettingsFragment::class.java.name }
 +        if (!Unihertz8849Settings.enabled())
 +            target.removeIf { it.fragment == Unihertz8849SettingsFragment::class.java.name }
          val p = SystemProperties.get("ro.system.ota.json_url", "")
          if (p.trim() == "")
              target.removeIf { it.id.compareTo(R.id.updater) == 0 }
-@@ -105,6 +109,8 @@ class SettingsActivity : PreferenceActivity() {
-                 || ImsSettingsFragment::class.java.name == fragmentName
+@@ -108,6 +110,7 @@ class SettingsActivity : PreferenceActivity() {
                  || CustomSettingsFragment::class.java.name == fragmentName
                  || AudioEffectsFragment::class.java.name == fragmentName
-+                || GrapheneOSSettingsFragment::class.java.name == fragmentName
+                 || GrapheneOSSettingsFragment::class.java.name == fragmentName
 +                || Unihertz8849SettingsFragment::class.java.name == fragmentName
      }
  
@@ -896,16 +893,13 @@ index 0000000..9306ce4
 +    </string-array>
 +</resources>
 diff --git a/app/src/main/res/xml/pref_headers.xml b/app/src/main/res/xml/pref_headers.xml
-index ed5fb55..5d019f4 100644
+index a2e7404..5d019f4 100644
 --- a/app/src/main/res/xml/pref_headers.xml
 +++ b/app/src/main/res/xml/pref_headers.xml
-@@ -38,6 +38,12 @@
+@@ -41,6 +41,9 @@
      <header
-         android:fragment="me.phh.treble.app.DozeSettingsFragment"
-         android:title="Doze features" />
-+    <header
-+        android:fragment="me.phh.treble.app.GrapheneOSSettingsFragment"
-+        android:title="GrapheneOS features" />
+         android:fragment="me.phh.treble.app.GrapheneOSSettingsFragment"
+         android:title="GrapheneOS features" />
 +    <header
 +        android:fragment="me.phh.treble.app.Unihertz8849SettingsFragment"
 +        android:title="Unihertz 8849" />
