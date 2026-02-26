@@ -203,13 +203,12 @@ index 0000000..e7a756a
 +        // Always read factory calibration from proinfo partition.
 +        // Each device has unique per-unit values programmed at the factory.
 +        val calibration = readProinfoFocusCalibration() ?: DEFAULT_CALIBRATION
-+        try {
-+            val proc = Runtime.getRuntime().exec(arrayOf("agold-cmd", "cmd", calibration))
-+            proc.waitFor()
-+            Log.d(TAG, "Unihertz8849 focus calibration sent via agold-cmd: $calibration")
-+        } catch (t: Throwable) {
-+            Log.e(TAG, "Unihertz8849: failed to send focus calibration", t)
-+        }
++        // Write directly to the focus_auto_calibration sysfs node. The kernel
++        // driver parses the same CSV format and loads it into the motor lookup
++        // table -- identical end result to going via agold-cmd cmd, but with no
++        // binder involvement and no root required.
++        writeToFileNofail("$SYSFS_BASE/focus_auto_calibration", calibration)
++        Log.d(TAG, "Unihertz8849 focus calibration written to sysfs: $calibration")
 +    }
 +
 +    // ─── Warning light (ioctl 310) ──────────────────────────────────────
