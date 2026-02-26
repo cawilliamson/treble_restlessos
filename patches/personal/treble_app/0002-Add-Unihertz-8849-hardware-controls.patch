@@ -1,4 +1,4 @@
-From 8341233db5f5151f51cec2ea7a9fd4c94d089ffb Mon Sep 17 00:00:00 2001
+From 36e228dc8d9a9c6609011bd3c5e84844c95a1109 Mon Sep 17 00:00:00 2001
 From: "Christopher A. Williamson" <contact@chrisaw.io>
 Date: Thu, 26 Feb 2026 11:23:00 +0000
 Subject: [PATCH] Add Unihertz 8849 hardware controls
@@ -7,11 +7,11 @@ Subject: [PATCH] Add Unihertz 8849 hardware controls
  .../java/me/phh/treble/app/EntryService.kt    |   1 +
  .../me/phh/treble/app/SettingsActivity.kt     |   3 +
  .../java/me/phh/treble/app/Unihertz8849.kt    | 669 ++++++++++++++++++
- .../me/phh/treble/app/Unihertz8849Settings.kt |  95 +++
+ .../me/phh/treble/app/Unihertz8849Settings.kt | 101 +++
  .../main/res/values/arrays_unihertz8849.xml   |  55 ++
  app/src/main/res/xml/pref_headers.xml         |   3 +
  app/src/main/res/xml/pref_unihertz8849.xml    |  64 ++
- 7 files changed, 890 insertions(+)
+ 7 files changed, 896 insertions(+)
  create mode 100644 app/src/main/java/me/phh/treble/app/Unihertz8849.kt
  create mode 100644 app/src/main/java/me/phh/treble/app/Unihertz8849Settings.kt
  create mode 100644 app/src/main/res/values/arrays_unihertz8849.xml
@@ -727,10 +727,10 @@ index 0000000..c3dc326
 +}
 diff --git a/app/src/main/java/me/phh/treble/app/Unihertz8849Settings.kt b/app/src/main/java/me/phh/treble/app/Unihertz8849Settings.kt
 new file mode 100644
-index 0000000..d8c1385
+index 0000000..f023567
 --- /dev/null
 +++ b/app/src/main/java/me/phh/treble/app/Unihertz8849Settings.kt
-@@ -0,0 +1,95 @@
+@@ -0,0 +1,101 @@
 +package me.phh.treble.app
 +
 +import android.os.Bundle
@@ -807,9 +807,15 @@ index 0000000..d8c1385
 +                try {
 +                    val distance = readSysFile("/sys/nds03_ctrl/nds03_read")
 +                    val pref = findPreference<androidx.preference.Preference>("unihertz8849_laser_display")
-+                    pref?.summary = if (distance.isNotEmpty() && distance != "65300")
-+                        "$distance mm"
-+                    else
++                    pref?.summary = if (distance.isNotEmpty() && distance != "65300") {
++                        val mm = distance.toIntOrNull()
++                        when {
++                            mm == null        -> "$distance mm"
++                            mm >= 1000        -> "${"%.2f".format(mm / 1000.0)} m"
++                            mm >= 10          -> "${"%.1f".format(mm / 10.0)} cm"
++                            else              -> "$mm mm"
++                        }
++                    } else
 +                        "Out of range"
 +                } catch (t: Throwable) {
 +                    // ignore
