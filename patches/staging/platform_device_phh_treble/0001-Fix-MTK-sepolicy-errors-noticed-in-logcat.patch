@@ -22,5 +22,5 @@ index 0344d0f..2b24965 100644
  type mtk_hal_power, domain;
  allow mtk_hal_power system_data_root_file:file create_file_perms;
 -- 
-2.52.0
+2.53.0
 
