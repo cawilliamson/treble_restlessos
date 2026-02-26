@@ -1,4 +1,4 @@
-From 42befb8d8cbff69e0b1bb664051c0e4879419792 Mon Sep 17 00:00:00 2001
+From 8341233db5f5151f51cec2ea7a9fd4c94d089ffb Mon Sep 17 00:00:00 2001
 From: "Christopher A. Williamson" <contact@chrisaw.io>
 Date: Thu, 26 Feb 2026 11:23:00 +0000
 Subject: [PATCH] Add Unihertz 8849 hardware controls
@@ -7,11 +7,11 @@ Subject: [PATCH] Add Unihertz 8849 hardware controls
  .../java/me/phh/treble/app/EntryService.kt    |   1 +
  .../me/phh/treble/app/SettingsActivity.kt     |   3 +
  .../java/me/phh/treble/app/Unihertz8849.kt    | 669 ++++++++++++++++++
- .../me/phh/treble/app/Unihertz8849Settings.kt | 100 +++
+ .../me/phh/treble/app/Unihertz8849Settings.kt |  95 +++
  .../main/res/values/arrays_unihertz8849.xml   |  55 ++
  app/src/main/res/xml/pref_headers.xml         |   3 +
  app/src/main/res/xml/pref_unihertz8849.xml    |  64 ++
- 7 files changed, 895 insertions(+)
+ 7 files changed, 890 insertions(+)
  create mode 100644 app/src/main/java/me/phh/treble/app/Unihertz8849.kt
  create mode 100644 app/src/main/java/me/phh/treble/app/Unihertz8849Settings.kt
  create mode 100644 app/src/main/res/values/arrays_unihertz8849.xml
@@ -727,10 +727,10 @@ index 0000000..c3dc326
 +}
 diff --git a/app/src/main/java/me/phh/treble/app/Unihertz8849Settings.kt b/app/src/main/java/me/phh/treble/app/Unihertz8849Settings.kt
 new file mode 100644
-index 0000000..3da9d70
+index 0000000..d8c1385
 --- /dev/null
 +++ b/app/src/main/java/me/phh/treble/app/Unihertz8849Settings.kt
-@@ -0,0 +1,100 @@
+@@ -0,0 +1,95 @@
 +package me.phh.treble.app
 +
 +import android.os.Bundle
@@ -770,15 +770,10 @@ index 0000000..3da9d70
 +    private var laserRunnable: Runnable? = null
 +
 +    private fun readSysFile(path: String): String {
-+        // Direct binder calls to the Agold daemon crash due to interface
-+        // hash mismatch. Use shell to read sysfs files instead.
 +        try {
-+            val proc = Runtime.getRuntime().exec(arrayOf("cat", path))
-+            val result = proc.inputStream.bufferedReader().readText().trim()
-+            proc.waitFor()
-+            return result
++            return File(path).readText().trim()
 +        } catch (t: Throwable) {
-+            Log.d("PHH", "readSysFile via shell failed for $path", t)
++            Log.d("PHH", "readSysFile failed for $path", t)
 +        }
 +        return ""
 +    }
