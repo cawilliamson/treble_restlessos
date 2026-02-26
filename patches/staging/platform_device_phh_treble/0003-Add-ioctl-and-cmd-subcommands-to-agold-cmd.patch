@@ -1,18 +1,22 @@
-From c7621c2222e2711deeae0b35c7f0848ae459aa95 Mon Sep 17 00:00:00 2001
+From 404d3b90c2fd38c9206107dcd97aa9e1eff0cb0a Mon Sep 17 00:00:00 2001
 From: "Christopher A. Williamson" <contact@chrisaw.io>
 Date: Sun, 22 Feb 2026 16:32:11 +0000
-Subject: [PATCH 2/3] Add Unihertz/Agold hardware control tool (agold-cmd)
+Subject: [PATCH 3/3] Add ioctl and cmd subcommands to agold-cmd
 
-Update agold-cmd to support ioctl and cmd subcommands for controlling
-Unihertz 8849 device hardware (projector, lights, sensors). The cmd()
-AIDL method takes an IAgoldDaemonCallback, so implement
+Extend agold-cmd with ioctl and cmd subcommands for controlling
+Unihertz 8849 device hardware (projector, lights, sensors). Retain
+the existing setNotGsi and setCameraClientPackageName calls which
+run on every invocation to ensure the Agold daemon operates in
+non-GSI mode.
+
+The cmd() AIDL method takes an IAgoldDaemonCallback, so implement
 BnAgoldDaemonCallback with an onResult() handler.
 
 Include agold-cmd in PRODUCT_PACKAGES so it ships in the GSI image.
 ---
  base.mk            |  3 ++-
- cmds/agold-cmd.cpp | 32 ++++++++++++++++++++------------
- 2 files changed, 22 insertions(+), 13 deletions(-)
+ cmds/agold-cmd.cpp | 36 ++++++++++++++++++++++++++----------
+ 2 files changed, 28 insertions(+), 11 deletions(-)
 
 diff --git a/base.mk b/base.mk
 index a29e402..9314eba 100644
@@ -29,10 +33,10 @@ index a29e402..9314eba 100644
  PRODUCT_COPY_FILES += \
      device/phh/treble/files/adbd.rc:system/etc/init/adbd.rc
 diff --git a/cmds/agold-cmd.cpp b/cmds/agold-cmd.cpp
-index 9943557..cd19275 100644
+index 9943557..3d66bae 100644
 --- a/cmds/agold-cmd.cpp
 +++ b/cmds/agold-cmd.cpp
-@@ -1,22 +1,30 @@
+@@ -1,22 +1,38 @@
  #include <iostream>
  #include <vendor/mediatek/hardware/agolddaemon/IAgoldDaemon.h>
 +#include <vendor/mediatek/hardware/agolddaemon/BnAgoldDaemonCallback.h>
@@ -44,7 +48,16 @@ index 9943557..cd19275 100644
  using ::android::sp;
  
 -int main(int argc, char **argv) {
--	auto svc = android::checkVintfService<IAgoldDaemon>();
++class AgoldDaemonCallback : public BnAgoldDaemonCallback {
++    public:
++        ::android::binder::Status onResult(const ::android::String16& result) override {
++            std::cout << "Result: " << ::android::String8(result).c_str() << std::endl;
++            return ::android::binder::Status::ok();
++        }
++};
++
++int main(int argc [[maybe_unused]], char **argv) {
+ 	auto svc = android::checkVintfService<IAgoldDaemon>();
 -    android::String16 a;
 -    svc->getNotGsi(&a);
 -    std::cout << "notgsi is " << a << std::endl;
@@ -54,22 +67,19 @@ index 9943557..cd19275 100644
 -    }
 -    svc->getNotGsi(&a);
 -    std::cout << "notgsi is " << a << std::endl;
-+class AgoldDaemonCallback : public BnAgoldDaemonCallback {
-+    public:
-+        ::android::binder::Status onResult(const ::android::String16& result) override {
-+            std::cout << "Result: " << ::android::String8(result).c_str() << std::endl;
-+            return ::android::binder::Status::ok();
-+        }
-+};
- 
--    svc->setCameraClientPackageName(android::String16("com.mediatek.camera"));
-+int main(int argc [[maybe_unused]], char **argv) {
-+	auto svc = android::checkVintfService<IAgoldDaemon>();
 +    int32_t ret = 0;
  
++    // Always set NotGsi and camera package name on startup
++    svc->setNotGsi(android::String16("NotGsi"));
+     svc->setCameraClientPackageName(android::String16("com.mediatek.camera"));
+ 
++    if (argc < 2) {
++        return 0;
++    }
++
 +    if (std::string(argv[1]) == "ioctl") {
 +        svc->SendMessageToIoctl(atoi(argv[2]), atoi(argv[3]), atoi(argv[4]), atoi(argv[5]), &ret);
-+    } else {
++    } else if (std::string(argv[1]) == "cmd") {
 +        sp<AgoldDaemonCallback> cb = new AgoldDaemonCallback();
 +        svc->cmd(android::String16(argv[2]), cb);
 +    }
