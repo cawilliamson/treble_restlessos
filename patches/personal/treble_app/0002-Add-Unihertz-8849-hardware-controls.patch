@@ -1,4 +1,4 @@
-From e2cc16698d9d1c9ee4e375f6f3d992a6069a6f87 Mon Sep 17 00:00:00 2001
+From d049df158ff1aef09730b6b790db82ad410b74a9 Mon Sep 17 00:00:00 2001
 From: "Christopher A. Williamson" <contact@chrisaw.io>
 Date: Thu, 26 Feb 2026 11:23:00 +0000
 Subject: [PATCH] Add Unihertz 8849 hardware controls
@@ -6,12 +6,12 @@ Subject: [PATCH] Add Unihertz 8849 hardware controls
 ---
  .../java/me/phh/treble/app/EntryService.kt    |   1 +
  .../me/phh/treble/app/SettingsActivity.kt     |   3 +
- .../java/me/phh/treble/app/Unihertz8849.kt    | 671 ++++++++++++++++++
- .../me/phh/treble/app/Unihertz8849Settings.kt | 101 +++
+ .../java/me/phh/treble/app/Unihertz8849.kt    | 670 ++++++++++++++++++
+ .../me/phh/treble/app/Unihertz8849Settings.kt | 100 +++
  .../main/res/values/arrays_unihertz8849.xml   |  55 ++
  app/src/main/res/xml/pref_headers.xml         |   3 +
  app/src/main/res/xml/pref_unihertz8849.xml    |  64 ++
- 7 files changed, 898 insertions(+)
+ 7 files changed, 896 insertions(+)
  create mode 100644 app/src/main/java/me/phh/treble/app/Unihertz8849.kt
  create mode 100644 app/src/main/java/me/phh/treble/app/Unihertz8849Settings.kt
  create mode 100644 app/src/main/res/values/arrays_unihertz8849.xml
@@ -52,10 +52,10 @@ index 02832b0..27a7118 100644
      companion object {
 diff --git a/app/src/main/java/me/phh/treble/app/Unihertz8849.kt b/app/src/main/java/me/phh/treble/app/Unihertz8849.kt
 new file mode 100644
-index 0000000..422a1b8
+index 0000000..e7a756a
 --- /dev/null
 +++ b/app/src/main/java/me/phh/treble/app/Unihertz8849.kt
-@@ -0,0 +1,671 @@
+@@ -0,0 +1,670 @@
 +package me.phh.treble.app
 +
 +import android.content.ContentResolver
@@ -138,6 +138,7 @@ index 0000000..422a1b8
 +    private var accelerometer: Sensor? = null
 +    private var keystoneListener: SensorEventListener? = null
 +    private var fanControlThread: Thread? = null
++    @Volatile private var projectorActive = false
 +
 +    // SOS flashing state (app-driven: alternates red/blue)
 +    private val sosHandler = Handler(Looper.getMainLooper())
@@ -198,12 +199,10 @@ index 0000000..422a1b8
 +        }
 +    }
 +
-+    private fun sendCalibration(sp: SharedPreferences) {
-+        val calibration = sp.getString(Unihertz8849Settings.focusCalibration, DEFAULT_CALIBRATION) ?: DEFAULT_CALIBRATION
-+        // Use agold-cmd binary to send calibration. Direct Java binder calls
-+        // crash the daemon due to interface hash mismatch between the system
-+        // JAR and vendor NDK library. The C++ agold-cmd binary works because
-+        // the CPP backend handles this gracefully.
++    private fun sendCalibration() {
++        // Always read factory calibration from proinfo partition.
++        // Each device has unique per-unit values programmed at the factory.
++        val calibration = readProinfoFocusCalibration() ?: DEFAULT_CALIBRATION
 +        try {
 +            val proc = Runtime.getRuntime().exec(arrayOf("agold-cmd", "cmd", calibration))
 +            proc.waitFor()
@@ -319,24 +318,19 @@ index 0000000..422a1b8
 +        return null
 +    }
 +
-+    private fun loadFactoryCalibration(sp: SharedPreferences) {
-+        val currentCal = sp.getString(Unihertz8849Settings.focusCalibration, null)
-+        if (currentCal == null || currentCal == DEFAULT_CALIBRATION) {
-+            val factoryCal = readProinfoFocusCalibration()
-+            if (factoryCal != null) {
-+                sp.edit().putString(Unihertz8849Settings.focusCalibration, factoryCal).apply()
-+                Log.d(TAG, "Unihertz8849: loaded factory focus calibration from proinfo")
-+            }
++    private fun cleanupStalePreferences(sp: SharedPreferences) {
++        // Remove stale preference keys from previous naming schemes
++        val editor = sp.edit()
++        sp.all.keys.filter { key ->
++            (key.contains("8849") || key.contains("projector")) &&
++            !key.startsWith("unihertz8849_")
++        }.forEach { key ->
++            Log.d(TAG, "Removing stale preference: $key")
++            editor.remove(key)
 +        }
-+
-+        val currentOther = sp.getString(Unihertz8849Settings.otherCalibration, null)
-+        if (currentOther == null) {
-+            val factoryOther = readProinfoOtherCalibration()
-+            if (factoryOther != null) {
-+                sp.edit().putString(Unihertz8849Settings.otherCalibration, factoryOther).apply()
-+                Log.d(TAG, "Unihertz8849: loaded factory other calibration from proinfo")
-+            }
-+        }
++        // Remove focus calibration -- always read from proinfo now
++        editor.remove("unihertz8849_focus_calibration")
++        editor.apply()
 +    }
 +
 +    // ─── Display management ─────────────────────────────────────────────
@@ -426,8 +420,8 @@ index 0000000..422a1b8
 +            // Step 2: Disable AoD
 +            val aodWasEnabled = disableAoD()
 +
-+            // Step 3: Pre-load focus calibration
-+            sendCalibration(sp)
++            // Step 3: Pre-load focus calibration from proinfo
++            sendCalibration()
 +
 +            // Step 4: Sleep display and wait for sys_status == 0
 +            pm.goToSleep(SystemClock.uptimeMillis())
@@ -441,9 +435,8 @@ index 0000000..422a1b8
 +            // Step 5: Disable phone display
 +            sendIoctl(500, 0, 0, 4)
 +
-+            // Step 6: Hardware init (may not be supported on all firmware)
-+            val initResult = sendIoctl(500, 0, 0, 6)
-+            if (initResult == -1) Log.d(TAG, "Unihertz8849 enable: ioctl 500 0 0 6 not supported")
++            // Step 6: Hardware init
++            sendIoctl(500, 0, 0, 6)
 +
 +            // Step 7: Wake display and wait for sys_status == 1
 +            pm.wakeUp(SystemClock.uptimeMillis())
@@ -476,7 +469,7 @@ index 0000000..422a1b8
 +            }
 +
 +            // Step 12: Re-send focus calibration
-+            sendCalibration(sp)
++            sendCalibration()
 +
 +            // Step 13: Set initial pitch to 0
 +            writeToFileNofail("$SYSFS_BASE/projector_pitch_setting", "0")
@@ -491,11 +484,16 @@ index 0000000..422a1b8
 +            // Step 16: Start auto-keystone (always on)
 +            startAutoKeystone()
 +
++            projectorActive = true
 +            Log.d(TAG, "Unihertz8849 enable: done")
 +        }
 +    }
 +
 +    private fun disableProjector() {
++        if (!projectorActive) {
++            Log.d(TAG, "Unihertz8849 disable: projector not active, skipping")
++            return
++        }
 +        thread {
 +            stopAutoKeystone()
 +            stopFanControl()
@@ -519,6 +517,7 @@ index 0000000..422a1b8
 +            Thread.sleep(100)
 +
 +            restoreDisplay()
++            projectorActive = false
 +            Log.d(TAG, "Unihertz8849 disable: done")
 +        }
 +    }
@@ -691,7 +690,7 @@ index 0000000..422a1b8
 +                if (projectorOn) {
 +                    val mode = sp.getString(key, "3") ?: "3"
 +                    sendIoctl(500, 0, mode.toInt(), 0)
-+                    sendCalibration(sp)
++                    sendCalibration()
 +                }
 +            }
 +            Unihertz8849Settings.displayEnabled -> {
@@ -723,16 +722,16 @@ index 0000000..422a1b8
 +        accelerometer = sensorManager?.getDefaultSensor(Sensor.TYPE_ACCELEROMETER)
 +
 +        val sp = PreferenceManager.getDefaultSharedPreferences(ctxt)
-+        loadFactoryCalibration(sp)
++        cleanupStalePreferences(sp)
 +        sp.registerOnSharedPreferenceChangeListener(spListener)
 +    }
 +}
 diff --git a/app/src/main/java/me/phh/treble/app/Unihertz8849Settings.kt b/app/src/main/java/me/phh/treble/app/Unihertz8849Settings.kt
 new file mode 100644
-index 0000000..0023e46
+index 0000000..3da9d70
 --- /dev/null
 +++ b/app/src/main/java/me/phh/treble/app/Unihertz8849Settings.kt
-@@ -0,0 +1,101 @@
+@@ -0,0 +1,100 @@
 +package me.phh.treble.app
 +
 +import android.os.Bundle
@@ -752,7 +751,6 @@ index 0000000..0023e46
 +    val displayEnabled = "unihertz8849_display_enabled"
 +    val brightness = "unihertz8849_brightness"
 +    val otherCalibration = "unihertz8849_other_calibration"
-+    val focusCalibration = "unihertz8849_focus_calibration"
 +
 +    override fun enabled(): Boolean {
 +        try {
