@@ -1,4 +1,4 @@
-From 36e228dc8d9a9c6609011bd3c5e84844c95a1109 Mon Sep 17 00:00:00 2001
+From 98c7090f073b04991975e0684e4dcfbab879df13 Mon Sep 17 00:00:00 2001
 From: "Christopher A. Williamson" <contact@chrisaw.io>
 Date: Thu, 26 Feb 2026 11:23:00 +0000
 Subject: [PATCH] Add Unihertz 8849 hardware controls
@@ -7,11 +7,11 @@ Subject: [PATCH] Add Unihertz 8849 hardware controls
  .../java/me/phh/treble/app/EntryService.kt    |   1 +
  .../me/phh/treble/app/SettingsActivity.kt     |   3 +
  .../java/me/phh/treble/app/Unihertz8849.kt    | 669 ++++++++++++++++++
- .../me/phh/treble/app/Unihertz8849Settings.kt | 101 +++
+ .../me/phh/treble/app/Unihertz8849Settings.kt | 125 ++++
  .../main/res/values/arrays_unihertz8849.xml   |  55 ++
  app/src/main/res/xml/pref_headers.xml         |   3 +
- app/src/main/res/xml/pref_unihertz8849.xml    |  64 ++
- 7 files changed, 896 insertions(+)
+ app/src/main/res/xml/pref_unihertz8849.xml    |  69 ++
+ 7 files changed, 925 insertions(+)
  create mode 100644 app/src/main/java/me/phh/treble/app/Unihertz8849.kt
  create mode 100644 app/src/main/java/me/phh/treble/app/Unihertz8849Settings.kt
  create mode 100644 app/src/main/res/values/arrays_unihertz8849.xml
@@ -727,17 +727,20 @@ index 0000000..c3dc326
 +}
 diff --git a/app/src/main/java/me/phh/treble/app/Unihertz8849Settings.kt b/app/src/main/java/me/phh/treble/app/Unihertz8849Settings.kt
 new file mode 100644
-index 0000000..f023567
+index 0000000..37858f6
 --- /dev/null
 +++ b/app/src/main/java/me/phh/treble/app/Unihertz8849Settings.kt
-@@ -0,0 +1,101 @@
+@@ -0,0 +1,125 @@
 +package me.phh.treble.app
 +
++import android.content.SharedPreferences
 +import android.os.Bundle
 +import android.os.Handler
 +import android.os.Looper
 +import android.os.ServiceManager
 +import android.util.Log
++import androidx.preference.PreferenceManager
++import androidx.preference.SwitchPreferenceCompat
 +import vendor.mediatek.hardware.agolddaemon.IAgoldDaemon
 +import java.io.File
 +
@@ -750,6 +753,7 @@ index 0000000..f023567
 +    val displayEnabled = "unihertz8849_display_enabled"
 +    val brightness = "unihertz8849_brightness"
 +    val otherCalibration = "unihertz8849_other_calibration"
++    val laserEnabled = "unihertz8849_laser_enabled"
 +
 +    override fun enabled(): Boolean {
 +        try {
@@ -769,6 +773,11 @@ index 0000000..f023567
 +    private val handler = Handler(Looper.getMainLooper())
 +    private var laserRunnable: Runnable? = null
 +
++    private lateinit var sp: SharedPreferences
++    private val spListener = SharedPreferences.OnSharedPreferenceChangeListener { _, key ->
++        if (key == Unihertz8849Settings.laserEnabled) updateLaserState()
++    }
++
 +    private fun readSysFile(path: String): String {
 +        try {
 +            return File(path).readText().trim()
@@ -778,14 +787,28 @@ index 0000000..f023567
 +        return ""
 +    }
 +
++    private fun isLaserActive(): Boolean {
++        val projectorOn = sp.getBoolean(Unihertz8849Settings.projectorEnabled, false)
++        val laserEnabled = sp.getBoolean(Unihertz8849Settings.laserEnabled, false)
++        return projectorOn || laserEnabled
++    }
++
++    private fun updateLaserState() {
++        if (isLaserActive()) startLaserUpdates() else stopLaserUpdates()
++    }
++
 +    override fun onCreatePreferences(savedInstanceState: Bundle?, rootKey: String?) {
 +        super.onCreatePreferences(savedInstanceState, rootKey)
-+        startLaserUpdates()
++        sp = PreferenceManager.getDefaultSharedPreferences(requireContext())
++        sp.registerOnSharedPreferenceChangeListener(spListener)
++
++        findPreference<SwitchPreferenceCompat>(Unihertz8849Settings.laserEnabled)
++            ?.setOnPreferenceChangeListener { _, _ -> true }
 +    }
 +
 +    override fun onResume() {
 +        super.onResume()
-+        startLaserUpdates()
++        updateLaserState()
 +    }
 +
 +    override fun onPause() {
@@ -795,13 +818,12 @@ index 0000000..f023567
 +
 +    override fun onDestroyView() {
 +        super.onDestroyView()
++        sp.unregisterOnSharedPreferenceChangeListener(spListener)
 +        stopLaserUpdates()
 +    }
 +
 +    private fun startLaserUpdates() {
-+        val laserPref = findPreference<androidx.preference.Preference>("unihertz8849_laser_display")
-+            ?: return
-+
++        if (laserRunnable != null) return  // already running
 +        val runnable = object : Runnable {
 +            override fun run() {
 +                try {
@@ -810,10 +832,10 @@ index 0000000..f023567
 +                    pref?.summary = if (distance.isNotEmpty() && distance != "65300") {
 +                        val mm = distance.toIntOrNull()
 +                        when {
-+                            mm == null        -> "$distance mm"
-+                            mm >= 1000        -> "${"%.2f".format(mm / 1000.0)} m"
-+                            mm >= 10          -> "${"%.1f".format(mm / 10.0)} cm"
-+                            else              -> "$mm mm"
++                            mm == null -> "$distance mm"
++                            mm >= 1000 -> "${"%.2f".format(mm / 1000.0)} m"
++                            mm >= 10   -> "${"%.1f".format(mm / 10.0)} cm"
++                            else       -> "$mm mm"
 +                        }
 +                    } else
 +                        "Out of range"
@@ -830,6 +852,8 @@ index 0000000..f023567
 +    private fun stopLaserUpdates() {
 +        laserRunnable?.let { handler.removeCallbacks(it) }
 +        laserRunnable = null
++        findPreference<androidx.preference.Preference>("unihertz8849_laser_display")
++            ?.summary = "---"
 +    }
 +}
 diff --git a/app/src/main/res/values/arrays_unihertz8849.xml b/app/src/main/res/values/arrays_unihertz8849.xml
@@ -909,10 +933,10 @@ index a2e7404..5d019f4 100644
          android:title="Misc features" />
 diff --git a/app/src/main/res/xml/pref_unihertz8849.xml b/app/src/main/res/xml/pref_unihertz8849.xml
 new file mode 100644
-index 0000000..97c3980
+index 0000000..be84ee0
 --- /dev/null
 +++ b/app/src/main/res/xml/pref_unihertz8849.xml
-@@ -0,0 +1,64 @@
+@@ -0,0 +1,69 @@
 +<?xml version="1.0" encoding="utf-8"?>
 +<PreferenceScreen xmlns:app="http://schemas.android.com/apk/res-auto"
 +    xmlns:android="http://schemas.android.com/apk/res/android">
@@ -970,6 +994,11 @@ index 0000000..97c3980
 +            app:summary="Projector brightness" />
 +    </PreferenceCategory>
 +    <PreferenceCategory android:title="Laser range">
++        <SwitchPreferenceCompat
++            android:key="unihertz8849_laser_enabled"
++            android:title="Enable laser"
++            android:defaultValue="false"
++            app:summary="Measure distance with the laser rangefinder" />
 +        <Preference
 +            android:key="unihertz8849_laser_display"
 +            android:title="Distance"
