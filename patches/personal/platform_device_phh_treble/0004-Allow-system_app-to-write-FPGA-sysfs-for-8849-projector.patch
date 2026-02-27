@@ -1,6 +1,6 @@
-From 529de7ea28b1a3541cb182425a65543d79c0d820 Mon Sep 17 00:00:00 2001
+From 3751dcd1cd36b406928eeac24310441b92365687 Mon Sep 17 00:00:00 2001
 From: "Christopher A. Williamson" <contact@chrisaw.io>
-Date: Wed, 25 Feb 2026 10:17:10 +0000
+Date: Fri, 27 Feb 2026 00:04:52 +0000
 Subject: [PATCH] Allow system_app to access 8849 projector and laser sysfs
 
 Add SELinux policy to allow TrebleApp (system_app) to read and write
@@ -19,23 +19,23 @@ Without this policy, writes from system_app context are denied:
   avc: denied { read } for name="nds03_read"
   scontext=u:r:system_app:s0 tcontext=u:object_r:sysfs:s0
 ---
- sepolicy/genfs_contexts | 2 ++
- sepolicy/treble_app.te  | 9 +++++++++
- 2 files changed, 11 insertions(+)
+ sepolicy/genfs_contexts |  2 ++
+ sepolicy/treble_app.te  | 11 +++++++++++
+ 2 files changed, 13 insertions(+)
 
 diff --git a/sepolicy/genfs_contexts b/sepolicy/genfs_contexts
-index 56e8950..05ad092 100644
+index 56e8950..17ce43a 100644
 --- a/sepolicy/genfs_contexts
 +++ b/sepolicy/genfs_contexts
 @@ -1 +1,3 @@
-  genfscon sysfs /board_properties u:object_r:sysfs_board_properties:s0
- +genfscon sysfs /bus/spi/drivers/fpga_spi u:object_r:sysfs_fpga_spi:s0
- +genfscon sysfs /nds03_ctrl u:object_r:sysfs_nds03:s0
+ genfscon sysfs /board_properties u:object_r:sysfs_board_properties:s0
++genfscon sysfs /bus/spi/drivers/fpga_spi u:object_r:sysfs_fpga_spi:s0
++genfscon sysfs /nds03_ctrl u:object_r:sysfs_nds03:s0
 diff --git a/sepolicy/treble_app.te b/sepolicy/treble_app.te
-index 4bed5f1..9ea193c 100644
+index 4bed5f1..e6d8067 100644
 --- a/sepolicy/treble_app.te
 +++ b/sepolicy/treble_app.te
-@@ -39,3 +39,12 @@ binder_call(system_app, hal_gesturewake_default);
+@@ -39,3 +39,14 @@ binder_call(system_app, hal_gesturewake_default);
  
  type hal_aidl_agolddaemon_default, domain;
  binder_call(system_app, hal_aidl_agolddaemon_default);
