@@ -1,4 +1,4 @@
-From a2b862aa66a39b66ea27ad1bc64e37647e4bdd19 Mon Sep 17 00:00:00 2001
+From 3fc9d2cd9530c92de0b019e828424e942b90a176 Mon Sep 17 00:00:00 2001
 From: "Christopher A. Williamson" <contact@chrisaw.io>
 Date: Thu, 26 Feb 2026 11:23:00 +0000
 Subject: [PATCH] Add Unihertz 8849 hardware controls
@@ -488,7 +488,7 @@ index 02832b0..27a7118 100644
      companion object {
 diff --git a/app/src/main/java/me/phh/treble/app/Unihertz8849.kt b/app/src/main/java/me/phh/treble/app/Unihertz8849.kt
 new file mode 100644
-index 0000000..67e98ce
+index 0000000..f0073d8
 --- /dev/null
 +++ b/app/src/main/java/me/phh/treble/app/Unihertz8849.kt
 @@ -0,0 +1,670 @@
@@ -724,7 +724,7 @@ index 0000000..67e98ce
 +    // ─── proinfo calibration (read from system properties) ────────────
 +
 +    private fun readProinfoFocusCalibration(): String? {
-+        val raw = SystemProperties.get("persist.sys.phh.8849.focus_cal", "")
++        val raw = SystemProperties.get("sys.phh.8849.focus_cal", "")
 +        if (raw.startsWith("550,")) {
 +            Log.d(TAG, "Unihertz8849 proinfo focus calibration: $raw")
 +            return raw
@@ -733,7 +733,7 @@ index 0000000..67e98ce
 +    }
 +
 +    private fun readProinfoOtherCalibration(): String? {
-+        val raw = SystemProperties.get("persist.sys.phh.8849.other_cal", "")
++        val raw = SystemProperties.get("sys.phh.8849.other_cal", "")
 +        val parts = raw.split(",")
 +        if (parts.size >= 3 && parts.all { it.matches(Regex("\\d+")) }) {
 +            Log.d(TAG, "Unihertz8849 proinfo other calibration: $raw")
