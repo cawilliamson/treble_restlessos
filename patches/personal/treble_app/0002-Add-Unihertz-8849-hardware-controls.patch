@@ -1,4 +1,4 @@
-From 92de0bbfb178132f7a01ff8fcb956fc5d9070596 Mon Sep 17 00:00:00 2001
+From 21808d98ddf08e24e2312131215af7d700ea14da Mon Sep 17 00:00:00 2001
 From: "Christopher A. Williamson" <contact@chrisaw.io>
 Date: Thu, 26 Feb 2026 11:23:00 +0000
 Subject: [PATCH] Add Unihertz 8849 hardware controls
@@ -6,12 +6,12 @@ Subject: [PATCH] Add Unihertz 8849 hardware controls
 ---
  .../java/me/phh/treble/app/EntryService.kt    |   1 +
  .../me/phh/treble/app/SettingsActivity.kt     |   3 +
- .../java/me/phh/treble/app/Unihertz8849.kt    | 667 ++++++++++++++++++
+ .../java/me/phh/treble/app/Unihertz8849.kt    | 668 ++++++++++++++++++
  .../me/phh/treble/app/Unihertz8849Settings.kt | 124 ++++
  .../main/res/values/arrays_unihertz8849.xml   |  43 ++
  app/src/main/res/xml/pref_headers.xml         |   3 +
  app/src/main/res/xml/pref_unihertz8849.xml    |  63 ++
- 7 files changed, 904 insertions(+)
+ 7 files changed, 905 insertions(+)
  create mode 100644 app/src/main/java/me/phh/treble/app/Unihertz8849.kt
  create mode 100644 app/src/main/java/me/phh/treble/app/Unihertz8849Settings.kt
  create mode 100644 app/src/main/res/values/arrays_unihertz8849.xml
@@ -52,10 +52,10 @@ index 02832b0..27a7118 100644
      companion object {
 diff --git a/app/src/main/java/me/phh/treble/app/Unihertz8849.kt b/app/src/main/java/me/phh/treble/app/Unihertz8849.kt
 new file mode 100644
-index 0000000..7279093
+index 0000000..914727a
 --- /dev/null
 +++ b/app/src/main/java/me/phh/treble/app/Unihertz8849.kt
-@@ -0,0 +1,667 @@
+@@ -0,0 +1,668 @@
 +package me.phh.treble.app
 +
 +import android.content.ContentResolver
@@ -171,7 +171,7 @@ index 0000000..7279093
 +        // to write to the target sysfs type (sysfs_fpga_spi).
 +        // See sepolicy patch: 0004-Allow-system_app-to-write-FPGA-sysfs
 +        try {
-+            File(path).writeText(content)
++            File(path).writeText(content + "\n")
 +        } catch (t: Throwable) {
 +            Log.d(TAG, "Failed writing to $path", t)
 +        }
@@ -203,12 +203,13 @@ index 0000000..7279093
 +        // Always read factory calibration from proinfo partition.
 +        // Each device has unique per-unit values programmed at the factory.
 +        val calibration = readProinfoFocusCalibration() ?: DEFAULT_CALIBRATION
-+        // Write directly to the focus_auto_calibration sysfs node. The kernel
-+        // driver parses the same CSV format and loads it into the motor lookup
-+        // table -- identical end result to going via agold-cmd cmd, but with no
-+        // binder involvement and no root required.
-+        writeToFileNofail("$SYSFS_BASE/focus_auto_calibration", calibration)
-+        Log.d(TAG, "Unihertz8849 focus calibration written to sysfs: $calibration")
++        try {
++            val proc = Runtime.getRuntime().exec(arrayOf("agold-cmd", "cmd", calibration))
++            proc.waitFor()
++            Log.d(TAG, "Unihertz8849 focus calibration sent via agold-cmd: $calibration")
++        } catch (t: Throwable) {
++            Log.e(TAG, "Unihertz8849: failed to send focus calibration", t)
++        }
 +    }
 +
 +    // ─── Warning light (ioctl 310) ──────────────────────────────────────

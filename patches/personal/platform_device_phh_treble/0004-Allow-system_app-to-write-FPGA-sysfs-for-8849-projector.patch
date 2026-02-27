@@ -1,4 +1,4 @@
-From 3751dcd1cd36b406928eeac24310441b92365687 Mon Sep 17 00:00:00 2001
+From 303e75f82cfcbf6ed68a199a87fa892c1564b09b Mon Sep 17 00:00:00 2001
 From: "Christopher A. Williamson" <contact@chrisaw.io>
 Date: Fri, 27 Feb 2026 00:04:52 +0000
 Subject: [PATCH] Allow system_app to access 8849 projector and laser sysfs
@@ -20,8 +20,8 @@ Without this policy, writes from system_app context are denied:
   scontext=u:r:system_app:s0 tcontext=u:object_r:sysfs:s0
 ---
  sepolicy/genfs_contexts |  2 ++
- sepolicy/treble_app.te  | 11 +++++++++++
- 2 files changed, 13 insertions(+)
+ sepolicy/treble_app.te  | 15 +++++++++++++++
+ 2 files changed, 17 insertions(+)
 
 diff --git a/sepolicy/genfs_contexts b/sepolicy/genfs_contexts
 index 56e8950..17ce43a 100644
@@ -32,10 +32,10 @@ index 56e8950..17ce43a 100644
 +genfscon sysfs /bus/spi/drivers/fpga_spi u:object_r:sysfs_fpga_spi:s0
 +genfscon sysfs /nds03_ctrl u:object_r:sysfs_nds03:s0
 diff --git a/sepolicy/treble_app.te b/sepolicy/treble_app.te
-index 4bed5f1..e6d8067 100644
+index 4bed5f1..b1ecaa4 100644
 --- a/sepolicy/treble_app.te
 +++ b/sepolicy/treble_app.te
-@@ -39,3 +39,14 @@ binder_call(system_app, hal_gesturewake_default);
+@@ -39,3 +39,18 @@ binder_call(system_app, hal_gesturewake_default);
  
  type hal_aidl_agolddaemon_default, domain;
  binder_call(system_app, hal_aidl_agolddaemon_default);
@@ -49,7 +49,11 @@ index 4bed5f1..e6d8067 100644
 +
 +# Unihertz 8849 (Tank) NDS03 laser rangefinder sysfs access.
 +type sysfs_nds03, fs_type, sysfs_type;
++allow system_app sysfs_nds03:dir r_dir_perms;
 +allow system_app sysfs_nds03:file r_file_perms;
++
++# Unihertz 8849 proinfo partition (factory focus/AWB calibration).
++allow system_app nvram_device:blk_file r_file_perms;
 -- 
 2.53.0
 
