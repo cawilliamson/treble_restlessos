@@ -11,7 +11,6 @@
 #
 # Requirements:
 #   - Device connected via adb and rooted (su available)
-#   - agold-cmd binary on device (/system/bin/agold-cmd)
 #   - Agold daemon running (vendor.mediatek.hardware.agolddaemon.IAgoldDaemon)
 #
 # ─── Architecture Overview ───────────────────────────────────────────────
@@ -19,13 +18,13 @@
 # The Unihertz 8849 projector is controlled through several interfaces:
 #
 #   1. Agold Daemon (AIDL service)
-#      - agold-cmd ioctl <a> <b> <c> <d>  →  IAgoldDaemon.SendMessageToIoctl()
+#      - service call ... SendMessageToIoctl(a, b, c, d)
 #        Primary control: ioctl 500 controls projector power and mode.
 #          500 0 <mode> 0   → Enable projector in mode (1=portrait, 3=landscape, 6=landscape-inv)
 #          500 0 0 0         → Disable projector
 #          500 0 0 3         → Enable phone display while projecting
 #          500 0 0 4         → Disable phone display while projecting
-#      - agold-cmd cmd "<csv>"            →  IAgoldDaemon.cmd()
+#      - service call ... cmd("<csv>")
 #        Sends focus calibration table (17 comma-separated values) to the
 #        motor_routine_thread so auto-focus uses correct per-device positions.
 #
@@ -79,7 +78,7 @@
 #
 # Factory calibration is stored in the proinfo partition at offset 0x1000cc.
 # The stock Unihertz ROM reads this at boot; on GSI/custom ROMs we must
-# read it ourselves and send it via agold-cmd cmd before enabling the projector.
+# read it ourselves and send it to the daemon before enabling the projector.
 #
 # If the factory values aren't sent, the motor_routine_thread runs with
 # zeros and the ADC feedback loop fails → no auto-focus.
@@ -99,7 +98,7 @@
 # ─── Enable Sequence ────────────────────────────────────────────────────
 #
 # 1. Read factory focus calibration from proinfo partition
-# 2. Send calibration table via agold-cmd cmd
+# 2. Send calibration table via daemon AIDL cmd()
 # 3. Disable Always-on Display (AoD) temporarily — the FPGA needs the
 #    display fully off to initialize cleanly
 # 4. Sleep the display (input keyevent KEYCODE_SLEEP)
@@ -169,29 +168,42 @@ write_sysfs() {
     adb shell "su -c 'echo $value > $path'"
 }
 
-# Send an ioctl command via agold-cmd
-# Returns 0 on success, 1 if agold-cmd reports failure (Returned -1)
+# AIDL service name for binder calls
+AGOLD_SVC="vendor.mediatek.hardware.agolddaemon.IAgoldDaemon/default"
+
+# AIDL transaction codes (FIRST_CALL_TRANSACTION + method index)
+# Method order from IAgoldDaemon.aidl:
+#  1=CommonGetResult, 2=GetGasData, 3=SendMessageToIoctl, 4=SmartpaGetResult,
+#  5=StartGasSensor, 6=WriteIntDataToIoCtrl, 7=WriteStringDataToIoCtrl,
+#  8=checkGoogleKey, 9=checkTeeKey, 10=cmd, 11=getCameraClientPackageName,
+#  12=getNotGsi, 13=readSysFile, 14=setCameraClientPackageName, 15=setNotGsi
+TXID_IOCTL=3
+TXID_CMD=10
+
+# Send an ioctl command via the agold daemon AIDL service
 send_ioctl() {
     local a="$1" b="$2" c="$3" d="$4"
     log "ioctl $a $b $c $d"
     local result
-    result=$(adb_su "agold-cmd ioctl $a $b $c $d" | tr -d '\r')
-    echo "$result"
-    if echo "$result" | grep -q 'Returned -1'; then
+    result=$(adb_su "service call '$AGOLD_SVC' $TXID_IOCTL i32 $a i32 $b i32 $c i32 $d" | tr -d '\r')
+    echo "Returned $(echo "$result" | grep -oP '(?<=\().*?(?=\))' | head -1)"
+    if echo "$result" | grep -q 'Exception\|error'; then
         return 1
     fi
     return 0
 }
 
-# Send a cmd (calibration string) via agold-cmd
-# Returns 0 on success, 1 if agold-cmd reports failure
+# Send a cmd (calibration string) via the agold daemon AIDL service
+# Passes null for the IAgoldDaemonCallback parameter
 send_cmd() {
     local data="$1"
     log "cmd '$data'"
+    # service call with String16: s16 <string>
+    # null binder for callback: pass nothing (AIDL nullable)
     local result
-    result=$(adb_su "agold-cmd cmd '$data'" | tr -d '\r')
+    result=$(adb_su "service call '$AGOLD_SVC' $TXID_CMD s16 '$data'" | tr -d '\r')
     echo "$result"
-    if echo "$result" | grep -q 'Returned -1'; then
+    if echo "$result" | grep -q 'Exception\|error'; then
         return 1
     fi
     return 0
@@ -283,9 +295,9 @@ do_on() {
     # Matches stock ProjectorController.powerOnOffForPrejectorOn() sequence
     # for PROJECT_NEW_FIRMWARE=true, ElephantProduct device.
 
-    # Step 1: Verify device connectivity and agold-cmd
-    adb_su "which agold-cmd" >/dev/null 2>&1 || die "agold-cmd not found on device"
-    log "Device connected, agold-cmd available"
+    # Step 1: Verify device connectivity and agold daemon
+    adb_su "service check '$AGOLD_SVC'" 2>/dev/null | grep -q 'not found' && die "Agold daemon not running"
+    log "Device connected, agold daemon available"
 
     # Step 2: Shrink display to 16:9 BEFORE anything else
     # Stock: changeScreenSize(1) is the first thing in powerOnOffForPrejectorOn

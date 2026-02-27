@@ -1,4 +1,4 @@
-From 5fd87405fca920e6c61897b1252ef54a1c647829 Mon Sep 17 00:00:00 2001
+From 4732aaab279170b7337a1d1e91538f49498e195b Mon Sep 17 00:00:00 2001
 From: "Christopher A. Williamson" <contact@chrisaw.io>
 Date: Fri, 27 Feb 2026 11:59:06 +0000
 Subject: [PATCH] Add Unihertz 8849 SELinux policy and proinfo init service
@@ -13,11 +13,14 @@ system properties for TrebleApp to consume via AIDL.
  8849-proinfo.rc         |  2 ++
  8849-proinfo.sh         | 24 ++++++++++++++++++++++++
  base.mk                 |  4 +++-
+ cmds/Android.bp         | 12 ------------
+ cmds/agold-cmd.cpp      | 22 ----------------------
  sepolicy/genfs_contexts |  2 ++
  sepolicy/treble_app.te  | 10 ++++++++++
- 5 files changed, 41 insertions(+), 1 deletion(-)
+ 7 files changed, 41 insertions(+), 35 deletions(-)
  create mode 100644 8849-proinfo.rc
  create mode 100644 8849-proinfo.sh
+ delete mode 100644 cmds/agold-cmd.cpp
 
 diff --git a/8849-proinfo.rc b/8849-proinfo.rc
 new file mode 100644
@@ -72,6 +75,54 @@ index a29e402..e6ac403 100644
  
  # MTK incoming SMS fix
  PRODUCT_PACKAGES += \
+diff --git a/cmds/Android.bp b/cmds/Android.bp
+index df2625f..18788e9 100644
+--- a/cmds/Android.bp
++++ b/cmds/Android.bp
+@@ -313,15 +313,3 @@ cc_binary {
+ 		"re-libged_sys.cpp",
+ 	],
+ }
+-
+-cc_binary {
+-	name: "agold-cmd",
+-	srcs: [
+-		"agold-cmd.cpp",
+-	],
+-	shared_libs: [
+-        "vendor.mediatek.hardware.agolddaemon-V1-cpp",
+-		"libutils",
+-		"libbinder",
+-	],
+-}
+diff --git a/cmds/agold-cmd.cpp b/cmds/agold-cmd.cpp
+deleted file mode 100644
+index 9943557..0000000
+--- a/cmds/agold-cmd.cpp
++++ /dev/null
+@@ -1,22 +0,0 @@
+-#include <iostream>
+-#include <vendor/mediatek/hardware/agolddaemon/IAgoldDaemon.h>
+-#include <binder/IServiceManager.h>
+-
+-using ::vendor::mediatek::hardware::agolddaemon::IAgoldDaemon;
+-using ::android::sp;
+-
+-int main(int argc, char **argv) {
+-	auto svc = android::checkVintfService<IAgoldDaemon>();
+-    android::String16 a;
+-    svc->getNotGsi(&a);
+-    std::cout << "notgsi is " << a << std::endl;
+-    if (argc >= 2) {
+-        android::String16 b(argv[1]);
+-        svc->setNotGsi(b);
+-    }
+-    svc->getNotGsi(&a);
+-    std::cout << "notgsi is " << a << std::endl;
+-
+-    svc->setCameraClientPackageName(android::String16("com.mediatek.camera"));
+-
+-}
 diff --git a/sepolicy/genfs_contexts b/sepolicy/genfs_contexts
 index 56e8950..17ce43a 100644
 --- a/sepolicy/genfs_contexts
