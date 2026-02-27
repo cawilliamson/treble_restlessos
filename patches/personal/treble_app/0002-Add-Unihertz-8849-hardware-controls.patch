@@ -1,4 +1,4 @@
-From 72be0c763aa49226dac90841edb32231c21de56f Mon Sep 17 00:00:00 2001
+From 92de0bbfb178132f7a01ff8fcb956fc5d9070596 Mon Sep 17 00:00:00 2001
 From: "Christopher A. Williamson" <contact@chrisaw.io>
 Date: Thu, 26 Feb 2026 11:23:00 +0000
 Subject: [PATCH] Add Unihertz 8849 hardware controls
@@ -7,11 +7,11 @@ Subject: [PATCH] Add Unihertz 8849 hardware controls
  .../java/me/phh/treble/app/EntryService.kt    |   1 +
  .../me/phh/treble/app/SettingsActivity.kt     |   3 +
  .../java/me/phh/treble/app/Unihertz8849.kt    | 667 ++++++++++++++++++
- .../me/phh/treble/app/Unihertz8849Settings.kt | 123 ++++
+ .../me/phh/treble/app/Unihertz8849Settings.kt | 124 ++++
  .../main/res/values/arrays_unihertz8849.xml   |  43 ++
  app/src/main/res/xml/pref_headers.xml         |   3 +
  app/src/main/res/xml/pref_unihertz8849.xml    |  63 ++
- 7 files changed, 903 insertions(+)
+ 7 files changed, 904 insertions(+)
  create mode 100644 app/src/main/java/me/phh/treble/app/Unihertz8849.kt
  create mode 100644 app/src/main/java/me/phh/treble/app/Unihertz8849Settings.kt
  create mode 100644 app/src/main/res/values/arrays_unihertz8849.xml
@@ -725,10 +725,10 @@ index 0000000..7279093
 +}
 diff --git a/app/src/main/java/me/phh/treble/app/Unihertz8849Settings.kt b/app/src/main/java/me/phh/treble/app/Unihertz8849Settings.kt
 new file mode 100644
-index 0000000..a265976
+index 0000000..06ac7df
 --- /dev/null
 +++ b/app/src/main/java/me/phh/treble/app/Unihertz8849Settings.kt
-@@ -0,0 +1,123 @@
+@@ -0,0 +1,124 @@
 +package me.phh.treble.app
 +
 +import android.content.SharedPreferences
@@ -736,6 +736,7 @@ index 0000000..a265976
 +import android.os.Handler
 +import android.os.Looper
 +import android.os.ServiceManager
++import android.preference.PreferenceManager
 +import android.util.Log
 +import androidx.preference.SwitchPreferenceCompat
 +import vendor.mediatek.hardware.agolddaemon.IAgoldDaemon
@@ -795,7 +796,7 @@ index 0000000..a265976
 +
 +    override fun onCreatePreferences(savedInstanceState: Bundle?, rootKey: String?) {
 +        super.onCreatePreferences(savedInstanceState, rootKey)
-+        sp = PreferenceManager.getDefaultSharedPreferences(preferenceManager.context)
++        sp = PreferenceManager.getDefaultSharedPreferences(activity)
 +        sp.registerOnSharedPreferenceChangeListener(spListener)
 +
 +        findPreference<SwitchPreferenceCompat>(Unihertz8849Settings.laserEnabled)
