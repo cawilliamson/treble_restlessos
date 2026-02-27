@@ -1,4 +1,4 @@
-From af179dd2397bdb61f406393dbe4096a1f5f01d2c Mon Sep 17 00:00:00 2001
+From ddcc9c40e60b0f1f0dcf92a6e159cfffe865615f Mon Sep 17 00:00:00 2001
 From: "Christopher A. Williamson" <contact@chrisaw.io>
 Date: Thu, 26 Feb 2026 11:23:00 +0000
 Subject: [PATCH 2/6] Add Unihertz 8849 hardware controls
@@ -8,11 +8,11 @@ Subject: [PATCH 2/6] Add Unihertz 8849 hardware controls
  .../java/me/phh/treble/app/EntryService.kt    |   1 +
  .../me/phh/treble/app/SettingsActivity.kt     |   3 +
  .../java/me/phh/treble/app/Unihertz8849.kt    | 672 ++++++++++++++++++
- .../me/phh/treble/app/Unihertz8849Settings.kt | 120 ++++
+ .../me/phh/treble/app/Unihertz8849Settings.kt | 125 ++++
  .../main/res/values/arrays_unihertz8849.xml   |  43 ++
  app/src/main/res/xml/pref_headers.xml         |   3 +
  app/src/main/res/xml/pref_unihertz8849.xml    |  65 ++
- 8 files changed, 907 insertions(+)
+ 8 files changed, 912 insertions(+)
  create mode 100644 app/src/main/java/me/phh/treble/app/Unihertz8849.kt
  create mode 100644 app/src/main/java/me/phh/treble/app/Unihertz8849Settings.kt
  create mode 100644 app/src/main/res/values/arrays_unihertz8849.xml
@@ -1166,10 +1166,10 @@ index 0000000..e81f49e
 +}
 diff --git a/app/src/main/java/me/phh/treble/app/Unihertz8849Settings.kt b/app/src/main/java/me/phh/treble/app/Unihertz8849Settings.kt
 new file mode 100644
-index 0000000..7d15107
+index 0000000..131004a
 --- /dev/null
 +++ b/app/src/main/java/me/phh/treble/app/Unihertz8849Settings.kt
-@@ -0,0 +1,120 @@
+@@ -0,0 +1,125 @@
 +package me.phh.treble.app
 +
 +import android.content.SharedPreferences
@@ -1247,6 +1247,11 @@ index 0000000..7d15107
 +
 +    override fun onPause() {
 +        super.onPause()
++        // Turn off the laser sight when leaving the page — the hardware has
++        // no auto-off and the laser should not stay active in the background.
++        if (sp.getBoolean(Unihertz8849Settings.laserEnabled, false)) {
++            sp.edit().putBoolean(Unihertz8849Settings.laserEnabled, false).apply()
++        }
 +        stopLaserUpdates()
 +    }
 +
