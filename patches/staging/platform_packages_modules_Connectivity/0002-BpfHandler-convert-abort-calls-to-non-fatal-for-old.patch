@@ -1,7 +1,7 @@
 From 56e513bd17a7c9a0921e73fa1550068d7a45134c Mon Sep 17 00:00:00 2001
 From: Chris AW <chrisaw@localhost>
 Date: Mon, 16 Feb 2026 09:43:20 +0000
-Subject: [PATCH 2/3] BpfHandler: convert abort() calls to non-fatal for old kernel
+Subject: [PATCH 2/4] BpfHandler: convert abort() calls to non-fatal for old kernel
  GSI support
 
 On GSI builds targeting devices with older kernels (4.9-4.19), BPF

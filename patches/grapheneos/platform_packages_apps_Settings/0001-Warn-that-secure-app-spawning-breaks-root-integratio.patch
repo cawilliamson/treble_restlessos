@@ -1,7 +1,7 @@
 From f93c805ce3966d5ab1e0a7e2ba4371208916df98 Mon Sep 17 00:00:00 2001
 From: "Christopher A. Williamson" <contact@chrisaw.io>
 Date: Tue, 17 Feb 2026 15:05:30 +0000
-Subject: [PATCH 2/2] Warn that secure app spawning breaks root integration
+Subject: [PATCH 1/2] Warn that secure app spawning breaks root integration
 
 Add a warning to the exec spawning footer text in Exploit Protection
 settings informing users that enabling this feature will break root

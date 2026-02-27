@@ -1,7 +1,7 @@
 From 9c62d94f1e474922318b50f8db522c116236c542 Mon Sep 17 00:00:00 2001
 From: Ido Ben-Hur <idoybh2@gmail.com>
 Date: Fri, 6 Sep 2024 15:32:41 +0300
-Subject: [PATCH] Revert "init.rc: remove 4.9/4.14 support"
+Subject: [PATCH 2/3] Revert "init.rc: remove 4.9/4.14 support"
 
 This reverts commit a95be37d2cd3a126483ccd96e4162df8ff9ee1af.
 

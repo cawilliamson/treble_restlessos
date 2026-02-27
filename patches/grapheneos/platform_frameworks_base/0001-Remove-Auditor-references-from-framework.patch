@@ -1,7 +1,7 @@
 From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: Christopher A. Williamson <contact@chrisaw.io>
 Date: Sun, 15 Feb 2026 00:00:00 +0000
-Subject: [PATCH 1/5] Remove Auditor references from framework
+Subject: [PATCH 1/4] Remove Auditor references from framework
 
 Auditor relies on hardware attestation tied to specific device models
 and will never pass verification on a GSI. Remove all framework
