@@ -1,22 +1,22 @@
-From 404d3b90c2fd38c9206107dcd97aa9e1eff0cb0a Mon Sep 17 00:00:00 2001
+From 407ce81996730e85137b56b11fc095e800e00567 Mon Sep 17 00:00:00 2001
 From: "Christopher A. Williamson" <contact@chrisaw.io>
-Date: Sun, 22 Feb 2026 16:32:11 +0000
-Subject: [PATCH 3/3] Add ioctl and cmd subcommands to agold-cmd
+Date: Fri, 27 Feb 2026 11:23:55 +0000
+Subject: [PATCH] Add ioctl, cmd, and proinfo subcommands to agold-cmd
 
-Extend agold-cmd with ioctl and cmd subcommands for controlling
-Unihertz 8849 device hardware (projector, lights, sensors). Retain
-the existing setNotGsi and setCameraClientPackageName calls which
-run on every invocation to ensure the Agold daemon operates in
-non-GSI mode.
+Extend agold-cmd with ioctl, cmd, and proinfo subcommands for
+controlling Unihertz 8849 hardware and reading factory calibration
+from the proinfo partition.
 
-The cmd() AIDL method takes an IAgoldDaemonCallback, so implement
-BnAgoldDaemonCallback with an onResult() handler.
+The proinfo subcommand reads raw bytes at a given offset/length from
+/dev/block/by-name/proinfo, strips null bytes, and prints the result.
+This allows system_app to read factory calibration without needing
+direct block device access (which requires vendor SELinux types).
 
 Include agold-cmd in PRODUCT_PACKAGES so it ships in the GSI image.
 ---
  base.mk            |  3 ++-
- cmds/agold-cmd.cpp | 36 ++++++++++++++++++++++++++----------
- 2 files changed, 28 insertions(+), 11 deletions(-)
+ cmds/agold-cmd.cpp | 58 ++++++++++++++++++++++++++++++++++++++--------
+ 2 files changed, 50 insertions(+), 11 deletions(-)
 
 diff --git a/base.mk b/base.mk
 index a29e402..9314eba 100644
@@ -33,11 +33,12 @@ index a29e402..9314eba 100644
  PRODUCT_COPY_FILES += \
      device/phh/treble/files/adbd.rc:system/etc/init/adbd.rc
 diff --git a/cmds/agold-cmd.cpp b/cmds/agold-cmd.cpp
-index 9943557..3d66bae 100644
+index 9943557..40a9c48 100644
 --- a/cmds/agold-cmd.cpp
 +++ b/cmds/agold-cmd.cpp
-@@ -1,22 +1,38 @@
+@@ -1,22 +1,60 @@
  #include <iostream>
++#include <fstream>
  #include <vendor/mediatek/hardware/agolddaemon/IAgoldDaemon.h>
 +#include <vendor/mediatek/hardware/agolddaemon/BnAgoldDaemonCallback.h>
  #include <binder/IServiceManager.h>
@@ -82,6 +83,27 @@ index 9943557..3d66bae 100644
 +    } else if (std::string(argv[1]) == "cmd") {
 +        sp<AgoldDaemonCallback> cb = new AgoldDaemonCallback();
 +        svc->cmd(android::String16(argv[2]), cb);
++    } else if (std::string(argv[1]) == "proinfo" && argc >= 4) {
++        // Read raw bytes from proinfo partition.
++        // Usage: agold-cmd proinfo <offset> <length>
++        long offset = atol(argv[2]);
++        int length = atoi(argv[3]);
++        std::ifstream f("/dev/block/by-name/proinfo", std::ios::binary);
++        if (f.good()) {
++            f.seekg(offset);
++            std::string buf(length, '\0');
++            f.read(&buf[0], length);
++            // Strip null bytes and print
++            std::string out;
++            for (char c : buf) {
++                if (c != '\0') out += c;
++            }
++            printf("%s\n", out.c_str());
++            return 0;
++        } else {
++            fprintf(stderr, "Failed to open proinfo\n");
++            return 1;
++        }
 +    }
 +    printf("Returned %d\n", ret);
  }

@@ -1,4 +1,4 @@
-From a690d39d44571bff658589bdaa3721713ad3f31f Mon Sep 17 00:00:00 2001
+From 7c5f77a1ce9cd641294e301ea40b1c495a463e96 Mon Sep 17 00:00:00 2001
 From: "Christopher A. Williamson" <contact@chrisaw.io>
 Date: Thu, 26 Feb 2026 11:23:00 +0000
 Subject: [PATCH] Add Unihertz 8849 hardware controls
@@ -6,12 +6,12 @@ Subject: [PATCH] Add Unihertz 8849 hardware controls
 ---
  .../java/me/phh/treble/app/EntryService.kt    |   1 +
  .../me/phh/treble/app/SettingsActivity.kt     |   3 +
- .../java/me/phh/treble/app/Unihertz8849.kt    | 668 ++++++++++++++++++
+ .../java/me/phh/treble/app/Unihertz8849.kt    | 662 ++++++++++++++++++
  .../me/phh/treble/app/Unihertz8849Settings.kt | 120 ++++
  .../main/res/values/arrays_unihertz8849.xml   |  43 ++
  app/src/main/res/xml/pref_headers.xml         |   3 +
  app/src/main/res/xml/pref_unihertz8849.xml    |  65 ++
- 7 files changed, 903 insertions(+)
+ 7 files changed, 897 insertions(+)
  create mode 100644 app/src/main/java/me/phh/treble/app/Unihertz8849.kt
  create mode 100644 app/src/main/java/me/phh/treble/app/Unihertz8849Settings.kt
  create mode 100644 app/src/main/res/values/arrays_unihertz8849.xml
@@ -52,10 +52,10 @@ index 02832b0..27a7118 100644
      companion object {
 diff --git a/app/src/main/java/me/phh/treble/app/Unihertz8849.kt b/app/src/main/java/me/phh/treble/app/Unihertz8849.kt
 new file mode 100644
-index 0000000..914727a
+index 0000000..938c355
 --- /dev/null
 +++ b/app/src/main/java/me/phh/treble/app/Unihertz8849.kt
-@@ -0,0 +1,668 @@
+@@ -0,0 +1,662 @@
 +package me.phh.treble.app
 +
 +import android.content.ContentResolver
@@ -277,41 +277,35 @@ index 0000000..914727a
 +
 +    // ─── proinfo calibration ────────────────────────────────────────────
 +
-+    private fun readProinfoFocusCalibration(): String? {
++    private fun readProinfo(offset: Int, length: Int): String? {
 +        try {
 +            val proc = Runtime.getRuntime().exec(arrayOf(
-+                "dd", "if=/dev/block/by-name/proinfo",
-+                "bs=1", "skip=$PROINFO_FOCUS_OFFSET", "count=$PROINFO_FOCUS_LENGTH"
++                "agold-cmd", "proinfo", offset.toString(), length.toString()
 +            ))
-+            val raw = proc.inputStream.bufferedReader().readText()
-+                .replace("\u0000", "").trim()
++            val raw = proc.inputStream.bufferedReader().readText().trim()
 +            proc.waitFor()
-+            if (raw.startsWith("550,")) {
-+                Log.d(TAG, "Unihertz8849 proinfo focus calibration: $raw")
-+                return raw
-+            }
++            if (raw.isNotEmpty()) return raw
 +        } catch (t: Throwable) {
-+            Log.d(TAG, "Failed to read proinfo focus calibration", t)
++            Log.d(TAG, "Failed to read proinfo at offset $offset", t)
++        }
++        return null
++    }
++
++    private fun readProinfoFocusCalibration(): String? {
++        val raw = readProinfo(PROINFO_FOCUS_OFFSET, PROINFO_FOCUS_LENGTH) ?: return null
++        if (raw.startsWith("550,")) {
++            Log.d(TAG, "Unihertz8849 proinfo focus calibration: $raw")
++            return raw
 +        }
 +        return null
 +    }
 +
 +    private fun readProinfoOtherCalibration(): String? {
-+        try {
-+            val proc = Runtime.getRuntime().exec(arrayOf(
-+                "dd", "if=/dev/block/by-name/proinfo",
-+                "bs=1", "skip=$PROINFO_OTHER_OFFSET", "count=$PROINFO_OTHER_LENGTH"
-+            ))
-+            val raw = proc.inputStream.bufferedReader().readText()
-+                .replace("\u0000", "").trim()
-+            proc.waitFor()
-+            val parts = raw.split(",")
-+            if (parts.size >= 3 && parts.all { it.matches(Regex("\\d+")) }) {
-+                Log.d(TAG, "Unihertz8849 proinfo other calibration: $raw")
-+                return raw
-+            }
-+        } catch (t: Throwable) {
-+            Log.d(TAG, "Failed to read proinfo other calibration", t)
++        val raw = readProinfo(PROINFO_OTHER_OFFSET, PROINFO_OTHER_LENGTH) ?: return null
++        val parts = raw.split(",")
++        if (parts.size >= 3 && parts.all { it.matches(Regex("\\d+")) }) {
++            Log.d(TAG, "Unihertz8849 proinfo other calibration: $raw")
++            return raw
 +        }
 +        return null
 +    }
