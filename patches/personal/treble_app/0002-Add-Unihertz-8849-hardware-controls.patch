@@ -1,4 +1,4 @@
-From abebd9b28a4aebb13ba7f21374589bc18a7ee100 Mon Sep 17 00:00:00 2001
+From e053d6cb181b3f56f383ae14f4f88969637936ba Mon Sep 17 00:00:00 2001
 From: "Christopher A. Williamson" <contact@chrisaw.io>
 Date: Thu, 26 Feb 2026 11:23:00 +0000
 Subject: [PATCH] Add Unihertz 8849 hardware controls
@@ -725,7 +725,7 @@ index 0000000..7279093
 +}
 diff --git a/app/src/main/java/me/phh/treble/app/Unihertz8849Settings.kt b/app/src/main/java/me/phh/treble/app/Unihertz8849Settings.kt
 new file mode 100644
-index 0000000..0096442
+index 0000000..ea730da
 --- /dev/null
 +++ b/app/src/main/java/me/phh/treble/app/Unihertz8849Settings.kt
 @@ -0,0 +1,124 @@
@@ -796,7 +796,7 @@ index 0000000..0096442
 +
 +    override fun onCreatePreferences(savedInstanceState: Bundle?, rootKey: String?) {
 +        super.onCreatePreferences(savedInstanceState, rootKey)
-+        sp = PreferenceManager.getDefaultSharedPreferences(requireContext())
++        sp = PreferenceManager.getDefaultSharedPreferences(activity)
 +        sp.registerOnSharedPreferenceChangeListener(spListener)
 +
 +        findPreference<SwitchPreferenceCompat>(Unihertz8849Settings.laserEnabled)
