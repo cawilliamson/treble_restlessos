@@ -1,4 +1,4 @@
-From 3fc9d2cd9530c92de0b019e828424e942b90a176 Mon Sep 17 00:00:00 2001
+From af179dd2397bdb61f406393dbe4096a1f5f01d2c Mon Sep 17 00:00:00 2001
 From: "Christopher A. Williamson" <contact@chrisaw.io>
 Date: Thu, 26 Feb 2026 11:23:00 +0000
 Subject: [PATCH] Add Unihertz 8849 hardware controls
@@ -7,12 +7,12 @@ Subject: [PATCH] Add Unihertz 8849 hardware controls
  ....mediatek.hardware.agolddaemon-V1-java.jar | Bin 14002 -> 10882 bytes
  .../java/me/phh/treble/app/EntryService.kt    |   1 +
  .../me/phh/treble/app/SettingsActivity.kt     |   3 +
- .../java/me/phh/treble/app/Unihertz8849.kt    | 670 ++++++++++++++++++
+ .../java/me/phh/treble/app/Unihertz8849.kt    | 672 ++++++++++++++++++
  .../me/phh/treble/app/Unihertz8849Settings.kt | 120 ++++
  .../main/res/values/arrays_unihertz8849.xml   |  43 ++
  app/src/main/res/xml/pref_headers.xml         |   3 +
  app/src/main/res/xml/pref_unihertz8849.xml    |  65 ++
- 8 files changed, 905 insertions(+)
+ 8 files changed, 907 insertions(+)
  create mode 100644 app/src/main/java/me/phh/treble/app/Unihertz8849.kt
  create mode 100644 app/src/main/java/me/phh/treble/app/Unihertz8849Settings.kt
  create mode 100644 app/src/main/res/values/arrays_unihertz8849.xml
@@ -488,10 +488,10 @@ index 02832b0..27a7118 100644
      companion object {
 diff --git a/app/src/main/java/me/phh/treble/app/Unihertz8849.kt b/app/src/main/java/me/phh/treble/app/Unihertz8849.kt
 new file mode 100644
-index 0000000..f0073d8
+index 0000000..e81f49e
 --- /dev/null
 +++ b/app/src/main/java/me/phh/treble/app/Unihertz8849.kt
-@@ -0,0 +1,670 @@
+@@ -0,0 +1,672 @@
 +package me.phh.treble.app
 +
 +import android.content.ContentResolver
@@ -592,7 +592,7 @@ index 0000000..f0073d8
 +    private var mX = 0f
 +    private var mY = 0f
 +    private var mZ = 0f
-+    private var mRaiseAngle = 0f
++
 +    private var mNewGrivatyVal = 0f
 +    private var mOldGrivatyVal = 0f
 +    private var mCount = KEYSTONE_SAMPLE_COUNT
@@ -954,7 +954,7 @@ index 0000000..f0073d8
 +        val accel = accelerometer ?: return
 +
 +        mX = 0f; mY = 0f; mZ = 0f
-+        mRaiseAngle = 0f; mNewGrivatyVal = 0f; mOldGrivatyVal = 0f
++        mNewGrivatyVal = 0f; mOldGrivatyVal = 0f
 +        mCount = KEYSTONE_SAMPLE_COUNT; mCountStartTime = 0L; mKeystoneChange = 1000
 +
 +        val listener = object : SensorEventListener {
@@ -990,16 +990,18 @@ index 0000000..f0073d8
 +        if (mCount > 0) {
 +            mX += values[0]; mY += values[1]; mZ += values[2]
 +            mCount--
-+            mRaiseAngle = mY
++            return
 +        } else if (mCount == 0) {
-+            var raise = mRaiseAngle
++            val n = KEYSTONE_SAMPLE_COUNT.toFloat()
++            var raise = mY / n
++            val avgZ = mZ / n
 +            val gval: Float
 +            if (raise >= 75.0f) {
-+                gval = mZ
++                gval = avgZ
 +            } else if (raise < -75.0f) {
-+                gval = -mZ
++                gval = -avgZ
 +            } else {
-+                if (mZ > 80.0f) raise = -raise
++                if (avgZ > 80.0f) raise = -raise
 +                gval = raise
 +            }
 +
@@ -1016,7 +1018,7 @@ index 0000000..f0073d8
 +                if (pitch != mKeystoneChange) {
 +                    mKeystoneChange = pitch
 +                    writeToFileNofail("$SYSFS_BASE/projector_pitch_setting", pitch.toString())
-+                    Log.d(TAG, "Unihertz8849 keystone: pitch=$pitch (raise=$mRaiseAngle)")
++                    Log.d(TAG, "Unihertz8849 keystone: pitch=$pitch (raise=${mY / KEYSTONE_SAMPLE_COUNT})")
 +                }
 +            }
 +            mCount--
@@ -1025,7 +1027,7 @@ index 0000000..f0073d8
 +        if (SystemClock.elapsedRealtime() - mCountStartTime > KEYSTONE_CYCLE_MS) {
 +            mCountStartTime = 0L; mCount = KEYSTONE_SAMPLE_COUNT
 +            mX = 0f; mY = 0f; mZ = 0f
-+            mRaiseAngle = 0f; mNewGrivatyVal = 0f
++            mNewGrivatyVal = 0f
 +        }
 +    }
 +
