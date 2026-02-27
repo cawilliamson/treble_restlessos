@@ -1,4 +1,4 @@
-From 2ef570407ab1ada8b6174c691f5a7154bb6ce271 Mon Sep 17 00:00:00 2001
+From a2b862aa66a39b66ea27ad1bc64e37647e4bdd19 Mon Sep 17 00:00:00 2001
 From: "Christopher A. Williamson" <contact@chrisaw.io>
 Date: Thu, 26 Feb 2026 11:23:00 +0000
 Subject: [PATCH] Add Unihertz 8849 hardware controls
@@ -7,12 +7,12 @@ Subject: [PATCH] Add Unihertz 8849 hardware controls
  ....mediatek.hardware.agolddaemon-V1-java.jar | Bin 14002 -> 10882 bytes
  .../java/me/phh/treble/app/EntryService.kt    |   1 +
  .../me/phh/treble/app/SettingsActivity.kt     |   3 +
- .../java/me/phh/treble/app/Unihertz8849.kt    | 664 ++++++++++++++++++
+ .../java/me/phh/treble/app/Unihertz8849.kt    | 670 ++++++++++++++++++
  .../me/phh/treble/app/Unihertz8849Settings.kt | 120 ++++
  .../main/res/values/arrays_unihertz8849.xml   |  43 ++
  app/src/main/res/xml/pref_headers.xml         |   3 +
  app/src/main/res/xml/pref_unihertz8849.xml    |  65 ++
- 8 files changed, 899 insertions(+)
+ 8 files changed, 905 insertions(+)
  create mode 100644 app/src/main/java/me/phh/treble/app/Unihertz8849.kt
  create mode 100644 app/src/main/java/me/phh/treble/app/Unihertz8849Settings.kt
  create mode 100644 app/src/main/res/values/arrays_unihertz8849.xml
@@ -488,10 +488,10 @@ index 02832b0..27a7118 100644
      companion object {
 diff --git a/app/src/main/java/me/phh/treble/app/Unihertz8849.kt b/app/src/main/java/me/phh/treble/app/Unihertz8849.kt
 new file mode 100644
-index 0000000..d6e0348
+index 0000000..67e98ce
 --- /dev/null
 +++ b/app/src/main/java/me/phh/treble/app/Unihertz8849.kt
-@@ -0,0 +1,664 @@
+@@ -0,0 +1,670 @@
 +package me.phh.treble.app
 +
 +import android.content.ContentResolver
@@ -639,13 +639,19 @@ index 0000000..d6e0348
 +        }
 +    }
 +
++    // No-op callback for cmd() — the daemon dereferences the callback
++    // binder without a null check, so we must pass a real object.
++    private val noopCallback = object : IAgoldDaemonCallback.Stub() {
++        override fun onResult(result: String?) {}
++    }
++
 +    private fun sendCalibration() {
 +        // Read factory calibration from system property (set at boot by
 +        // 8849-proinfo.sh from the proinfo partition).
 +        val calibration = readProinfoFocusCalibration() ?: DEFAULT_CALIBRATION
 +        try {
 +            val svc = getService() ?: return
-+            svc.cmd(calibration, null)
++            svc.cmd(calibration, noopCallback)
 +            Log.d(TAG, "Unihertz8849 focus calibration sent via AIDL: $calibration")
 +        } catch (t: Throwable) {
 +            Log.e(TAG, "Unihertz8849: failed to send focus calibration", t)
