@@ -1,4 +1,4 @@
-From 98c7090f073b04991975e0684e4dcfbab879df13 Mon Sep 17 00:00:00 2001
+From abebd9b28a4aebb13ba7f21374589bc18a7ee100 Mon Sep 17 00:00:00 2001
 From: "Christopher A. Williamson" <contact@chrisaw.io>
 Date: Thu, 26 Feb 2026 11:23:00 +0000
 Subject: [PATCH] Add Unihertz 8849 hardware controls
@@ -6,12 +6,12 @@ Subject: [PATCH] Add Unihertz 8849 hardware controls
 ---
  .../java/me/phh/treble/app/EntryService.kt    |   1 +
  .../me/phh/treble/app/SettingsActivity.kt     |   3 +
- .../java/me/phh/treble/app/Unihertz8849.kt    | 669 ++++++++++++++++++
- .../me/phh/treble/app/Unihertz8849Settings.kt | 125 ++++
- .../main/res/values/arrays_unihertz8849.xml   |  55 ++
+ .../java/me/phh/treble/app/Unihertz8849.kt    | 667 ++++++++++++++++++
+ .../me/phh/treble/app/Unihertz8849Settings.kt | 124 ++++
+ .../main/res/values/arrays_unihertz8849.xml   |  43 ++
  app/src/main/res/xml/pref_headers.xml         |   3 +
- app/src/main/res/xml/pref_unihertz8849.xml    |  69 ++
- 7 files changed, 925 insertions(+)
+ app/src/main/res/xml/pref_unihertz8849.xml    |  63 ++
+ 7 files changed, 904 insertions(+)
  create mode 100644 app/src/main/java/me/phh/treble/app/Unihertz8849.kt
  create mode 100644 app/src/main/java/me/phh/treble/app/Unihertz8849Settings.kt
  create mode 100644 app/src/main/res/values/arrays_unihertz8849.xml
@@ -52,10 +52,10 @@ index 02832b0..27a7118 100644
      companion object {
 diff --git a/app/src/main/java/me/phh/treble/app/Unihertz8849.kt b/app/src/main/java/me/phh/treble/app/Unihertz8849.kt
 new file mode 100644
-index 0000000..c3dc326
+index 0000000..7279093
 --- /dev/null
 +++ b/app/src/main/java/me/phh/treble/app/Unihertz8849.kt
-@@ -0,0 +1,669 @@
+@@ -0,0 +1,667 @@
 +package me.phh.treble.app
 +
 +import android.content.ContentResolver
@@ -262,10 +262,8 @@ index 0000000..c3dc326
 +        sendIoctl(301, 0, mode, 0)
 +
 +        if (mode == CAMPING_FULL) {
-+            // Read timeout from preference (minutes), default 10
-+            val timeoutMinutes = sp.getString(Unihertz8849Settings.campingLightDuration, "10")?.toIntOrNull() ?: 10
-+            val timeoutMs = timeoutMinutes * 60 * 1000L
-+            Log.d(TAG, "Unihertz8849: camping full blast, stepping down in ${timeoutMinutes}min")
++            val timeoutMs = 10 * 60 * 1000L
++            Log.d(TAG, "Unihertz8849: camping full blast, stepping down in 10min")
 +            val runnable = Runnable {
 +                Log.d(TAG, "Unihertz8849: camping full blast timeout, stepping down to medium")
 +                sendIoctl(301, 0, CAMPING_MEDIUM, 0)
@@ -727,10 +725,10 @@ index 0000000..c3dc326
 +}
 diff --git a/app/src/main/java/me/phh/treble/app/Unihertz8849Settings.kt b/app/src/main/java/me/phh/treble/app/Unihertz8849Settings.kt
 new file mode 100644
-index 0000000..37858f6
+index 0000000..0096442
 --- /dev/null
 +++ b/app/src/main/java/me/phh/treble/app/Unihertz8849Settings.kt
-@@ -0,0 +1,125 @@
+@@ -0,0 +1,124 @@
 +package me.phh.treble.app
 +
 +import android.content.SharedPreferences
@@ -747,7 +745,6 @@ index 0000000..37858f6
 +object Unihertz8849Settings : Settings {
 +    val warningLight = "unihertz8849_warning_light"
 +    val campingLight = "unihertz8849_camping_light"
-+    val campingLightDuration = "unihertz8849_camping_light_duration"
 +    val projectorEnabled = "unihertz8849_projector_enabled"
 +    val projectorMode = "unihertz8849_projector_mode"
 +    val displayEnabled = "unihertz8849_display_enabled"
@@ -858,10 +855,10 @@ index 0000000..37858f6
 +}
 diff --git a/app/src/main/res/values/arrays_unihertz8849.xml b/app/src/main/res/values/arrays_unihertz8849.xml
 new file mode 100644
-index 0000000..9306ce4
+index 0000000..5f4e785
 --- /dev/null
 +++ b/app/src/main/res/values/arrays_unihertz8849.xml
-@@ -0,0 +1,55 @@
+@@ -0,0 +1,43 @@
 +<?xml version="1.0" encoding="utf-8"?>
 +<resources>
 +    <string-array name="pref_unihertz8849_mode">
@@ -904,18 +901,6 @@ index 0000000..9306ce4
 +        <item>4</item>
 +        <item>5</item>
 +    </string-array>
-+    <string-array name="pref_unihertz8849_camping_duration">
-+        <item>5 minutes</item>
-+        <item>10 minutes</item>
-+        <item>15 minutes</item>
-+        <item>30 minutes</item>
-+    </string-array>
-+    <string-array name="pref_unihertz8849_camping_duration_values">
-+        <item>5</item>
-+        <item>10</item>
-+        <item>15</item>
-+        <item>30</item>
-+    </string-array>
 +</resources>
 diff --git a/app/src/main/res/xml/pref_headers.xml b/app/src/main/res/xml/pref_headers.xml
 index a2e7404..5d019f4 100644
@@ -933,10 +918,10 @@ index a2e7404..5d019f4 100644
          android:title="Misc features" />
 diff --git a/app/src/main/res/xml/pref_unihertz8849.xml b/app/src/main/res/xml/pref_unihertz8849.xml
 new file mode 100644
-index 0000000..be84ee0
+index 0000000..746bdf3
 --- /dev/null
 +++ b/app/src/main/res/xml/pref_unihertz8849.xml
-@@ -0,0 +1,69 @@
+@@ -0,0 +1,63 @@
 +<?xml version="1.0" encoding="utf-8"?>
 +<PreferenceScreen xmlns:app="http://schemas.android.com/apk/res-auto"
 +    xmlns:android="http://schemas.android.com/apk/res/android">
@@ -955,13 +940,7 @@ index 0000000..be84ee0
 +            android:key="unihertz8849_camping_light"
 +            android:title="Camping light"
 +            app:summary="Camping light mode" />
-+        <ListPreference
-+            android:defaultValue="10"
-+            android:entries="@array/pref_unihertz8849_camping_duration"
-+            android:entryValues="@array/pref_unihertz8849_camping_duration_values"
-+            android:key="unihertz8849_camping_light_duration"
-+            android:title="Full brightness duration"
-+            app:summary="How long to run at full blast before stepping down to medium" />
++
 +    </PreferenceCategory>
 +    <PreferenceCategory android:title="Projector">
 +        <CheckBoxPreference
