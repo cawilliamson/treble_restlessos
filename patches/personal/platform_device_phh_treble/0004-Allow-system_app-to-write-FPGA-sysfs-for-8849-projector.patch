@@ -1,26 +1,24 @@
-From c8bdaa932de7d00d766d5d0938e92f6beb18e396 Mon Sep 17 00:00:00 2001
+From a3cac627ae1308993da860857353df78b4aaccbc Mon Sep 17 00:00:00 2001
 From: "Christopher A. Williamson" <contact@chrisaw.io>
-Date: Fri, 27 Feb 2026 11:59:06 +0000
+Date: Fri, 27 Feb 2026 14:47:00 +0000
 Subject: [PATCH] Add Unihertz 8849 SELinux policy and proinfo init service
 
-SELinux: allow system_app to access FPGA SPI sysfs (projector controls)
-and NDS03 laser rangefinder sysfs nodes.
-
-Init: read factory calibration from proinfo partition at boot and set
-persist.sys.phh.8849.focus_cal and persist.sys.phh.8849.other_cal
-system properties for TrebleApp to consume via AIDL.
+- SELinux: label FPGA SPI and NDS03 sysfs nodes, allow system_app
+  read/write access for projector controls and laser rangefinder
+- SELinux: allow bidirectional binder calls between system_app and
+  hal_aidl_agolddaemon_default (needed for AIDL callback)
+- Init: read factory calibration from proinfo at boot and set
+  sys.phh.8849.focus_cal and sys.phh.8849.other_cal properties
+  (guarded by FPGA sysfs check so it's a no-op on other devices)
 ---
  8849-proinfo.rc         |  2 ++
  8849-proinfo.sh         | 24 ++++++++++++++++++++++++
  base.mk                 |  4 +++-
- cmds/Android.bp         | 12 ------------
- cmds/agold-cmd.cpp      | 22 ----------------------
  sepolicy/genfs_contexts |  2 ++
  sepolicy/treble_app.te  | 11 +++++++++++
- 7 files changed, 42 insertions(+), 35 deletions(-)
+ 5 files changed, 42 insertions(+), 1 deletion(-)
  create mode 100644 8849-proinfo.rc
  create mode 100644 8849-proinfo.sh
- delete mode 100644 cmds/agold-cmd.cpp
 
 diff --git a/8849-proinfo.rc b/8849-proinfo.rc
 new file mode 100644
@@ -75,54 +73,6 @@ index a29e402..e6ac403 100644
  
  # MTK incoming SMS fix
  PRODUCT_PACKAGES += \
-diff --git a/cmds/Android.bp b/cmds/Android.bp
-index df2625f..18788e9 100644
---- a/cmds/Android.bp
-+++ b/cmds/Android.bp
-@@ -313,15 +313,3 @@ cc_binary {
- 		"re-libged_sys.cpp",
- 	],
- }
--
--cc_binary {
--	name: "agold-cmd",
--	srcs: [
--		"agold-cmd.cpp",
--	],
--	shared_libs: [
--        "vendor.mediatek.hardware.agolddaemon-V1-cpp",
--		"libutils",
--		"libbinder",
--	],
--}
-diff --git a/cmds/agold-cmd.cpp b/cmds/agold-cmd.cpp
-deleted file mode 100644
-index 9943557..0000000
---- a/cmds/agold-cmd.cpp
-+++ /dev/null
-@@ -1,22 +0,0 @@
--#include <iostream>
--#include <vendor/mediatek/hardware/agolddaemon/IAgoldDaemon.h>
--#include <binder/IServiceManager.h>
--
--using ::vendor::mediatek::hardware::agolddaemon::IAgoldDaemon;
--using ::android::sp;
--
--int main(int argc, char **argv) {
--	auto svc = android::checkVintfService<IAgoldDaemon>();
--    android::String16 a;
--    svc->getNotGsi(&a);
--    std::cout << "notgsi is " << a << std::endl;
--    if (argc >= 2) {
--        android::String16 b(argv[1]);
--        svc->setNotGsi(b);
--    }
--    svc->getNotGsi(&a);
--    std::cout << "notgsi is " << a << std::endl;
--
--    svc->setCameraClientPackageName(android::String16("com.mediatek.camera"));
--
--}
 diff --git a/sepolicy/genfs_contexts b/sepolicy/genfs_contexts
 index 56e8950..17ce43a 100644
 --- a/sepolicy/genfs_contexts
