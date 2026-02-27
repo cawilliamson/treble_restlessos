@@ -1,4 +1,4 @@
-From 21808d98ddf08e24e2312131215af7d700ea14da Mon Sep 17 00:00:00 2001
+From a690d39d44571bff658589bdaa3721713ad3f31f Mon Sep 17 00:00:00 2001
 From: "Christopher A. Williamson" <contact@chrisaw.io>
 Date: Thu, 26 Feb 2026 11:23:00 +0000
 Subject: [PATCH] Add Unihertz 8849 hardware controls
@@ -7,11 +7,11 @@ Subject: [PATCH] Add Unihertz 8849 hardware controls
  .../java/me/phh/treble/app/EntryService.kt    |   1 +
  .../me/phh/treble/app/SettingsActivity.kt     |   3 +
  .../java/me/phh/treble/app/Unihertz8849.kt    | 668 ++++++++++++++++++
- .../me/phh/treble/app/Unihertz8849Settings.kt | 124 ++++
+ .../me/phh/treble/app/Unihertz8849Settings.kt | 120 ++++
  .../main/res/values/arrays_unihertz8849.xml   |  43 ++
  app/src/main/res/xml/pref_headers.xml         |   3 +
- app/src/main/res/xml/pref_unihertz8849.xml    |  63 ++
- 7 files changed, 905 insertions(+)
+ app/src/main/res/xml/pref_unihertz8849.xml    |  65 ++
+ 7 files changed, 903 insertions(+)
  create mode 100644 app/src/main/java/me/phh/treble/app/Unihertz8849.kt
  create mode 100644 app/src/main/java/me/phh/treble/app/Unihertz8849Settings.kt
  create mode 100644 app/src/main/res/values/arrays_unihertz8849.xml
@@ -726,10 +726,10 @@ index 0000000..914727a
 +}
 diff --git a/app/src/main/java/me/phh/treble/app/Unihertz8849Settings.kt b/app/src/main/java/me/phh/treble/app/Unihertz8849Settings.kt
 new file mode 100644
-index 0000000..06ac7df
+index 0000000..7d15107
 --- /dev/null
 +++ b/app/src/main/java/me/phh/treble/app/Unihertz8849Settings.kt
-@@ -0,0 +1,124 @@
+@@ -0,0 +1,120 @@
 +package me.phh.treble.app
 +
 +import android.content.SharedPreferences
@@ -739,7 +739,6 @@ index 0000000..06ac7df
 +import android.os.ServiceManager
 +import android.preference.PreferenceManager
 +import android.util.Log
-+import androidx.preference.SwitchPreferenceCompat
 +import vendor.mediatek.hardware.agolddaemon.IAgoldDaemon
 +import java.io.File
 +
@@ -799,9 +798,6 @@ index 0000000..06ac7df
 +        super.onCreatePreferences(savedInstanceState, rootKey)
 +        sp = PreferenceManager.getDefaultSharedPreferences(activity)
 +        sp.registerOnSharedPreferenceChangeListener(spListener)
-+
-+        findPreference<SwitchPreferenceCompat>(Unihertz8849Settings.laserEnabled)
-+            ?.setOnPreferenceChangeListener { _, _ -> true }
 +    }
 +
 +    override fun onResume() {
@@ -919,10 +915,10 @@ index a2e7404..5d019f4 100644
          android:title="Misc features" />
 diff --git a/app/src/main/res/xml/pref_unihertz8849.xml b/app/src/main/res/xml/pref_unihertz8849.xml
 new file mode 100644
-index 0000000..746bdf3
+index 0000000..09f24d0
 --- /dev/null
 +++ b/app/src/main/res/xml/pref_unihertz8849.xml
-@@ -0,0 +1,63 @@
+@@ -0,0 +1,65 @@
 +<?xml version="1.0" encoding="utf-8"?>
 +<PreferenceScreen xmlns:app="http://schemas.android.com/apk/res-auto"
 +    xmlns:android="http://schemas.android.com/apk/res/android">
@@ -974,10 +970,12 @@ index 0000000..746bdf3
 +            app:summary="Projector brightness" />
 +    </PreferenceCategory>
 +    <PreferenceCategory android:title="Laser range">
-+        <SwitchPreferenceCompat
++        <CheckBoxPreference
++            android:layout_width="wrap_content"
++            android:layout_height="wrap_content"
++            android:defaultValue="false"
 +            android:key="unihertz8849_laser_enabled"
 +            android:title="Enable laser"
-+            android:defaultValue="false"
 +            app:summary="Measure distance with the laser rangefinder" />
 +        <Preference
 +            android:key="unihertz8849_laser_display"
