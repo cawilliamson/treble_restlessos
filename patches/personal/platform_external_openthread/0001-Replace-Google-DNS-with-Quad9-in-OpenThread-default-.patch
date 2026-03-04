@@ -1,0 +1,35 @@
+From 75b4229d9a8deaf4bcbd465c59c411f21d1910d8 Mon Sep 17 00:00:00 2001
+From: "Christopher A. Williamson" <contact@chrisaw.io>
+Date: Wed, 4 Mar 2026 23:42:07 +0000
+Subject: [PATCH] Replace Google DNS with Quad9 in OpenThread default config
+
+The OpenThread DNS client default server was set to Google Public DNS
+(2001:4860:4860::8888). Replace with Quad9 (2620:fe::fe) which is a
+privacy-focused non-profit DNS resolver, removing the dependency on
+Google DNS infrastructure for Thread mesh networking.
+
+Change-Id: If9f5ff1f710822f8bad1ff88cbd8b04969fa90d9
+---
+ src/core/config/dns_client.h | 4 ++--
+ 1 file changed, 2 insertions(+), 2 deletions(-)
+
+diff --git a/src/core/config/dns_client.h b/src/core/config/dns_client.h
+index f11173c..11bf680 100644
+--- a/src/core/config/dns_client.h
++++ b/src/core/config/dns_client.h
+@@ -115,10 +115,10 @@
+  *
+  * It MUST be a C string representation of the server IPv6 address.
+  *
+- * Default value is set to "2001:4860:4860::8888" which is the Google Public DNS IPv6 address.
++ * Default value is set to "2620:fe::fe" which is the Quad9 DNS IPv6 address.
+  */
+ #ifndef OPENTHREAD_CONFIG_DNS_CLIENT_DEFAULT_SERVER_IP6_ADDRESS
+-#define OPENTHREAD_CONFIG_DNS_CLIENT_DEFAULT_SERVER_IP6_ADDRESS "2001:4860:4860::8888"
++#define OPENTHREAD_CONFIG_DNS_CLIENT_DEFAULT_SERVER_IP6_ADDRESS "2620:fe::fe"
+ #endif
+ 
+ /**
+-- 
+2.53.0
+

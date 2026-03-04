@@ -1,7 +1,7 @@
 From f87349366e715580bb9daf2ba082c32ffd264741 Mon Sep 17 00:00:00 2001
 From: "Christopher A. Williamson" <contact@chrisaw.io>
 Date: Mon, 16 Feb 2026 10:30:26 +0000
-Subject: [PATCH] Remove MusicFX references from framework
+Subject: [PATCH 1/2] Remove MusicFX references from framework
 
 MusicFX is excluded from the build. Remove stale framework references
 to prevent dead configuration entries from lingering.

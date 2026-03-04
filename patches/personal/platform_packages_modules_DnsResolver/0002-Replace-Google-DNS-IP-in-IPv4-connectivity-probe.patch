@@ -1,0 +1,29 @@
+From 033f995cc942038dddf48ca4b7f7c7e80286b4db Mon Sep 17 00:00:00 2001
+From: "Christopher A. Williamson" <contact@chrisaw.io>
+Date: Wed, 4 Mar 2026 23:40:29 +0000
+Subject: [PATCH 2/2] Replace Google DNS IP in IPv4 connectivity probe
+
+The IPv4 connectivity check in getaddrinfo uses 8.8.8.8 (Google DNS)
+as a routable destination to determine the local source address. No
+actual connection or data is sent to this address, but replace it with
+9.9.9.9 (Quad9) to avoid any reference to Google-owned IP space.
+---
+ getaddrinfo.cpp | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/getaddrinfo.cpp b/getaddrinfo.cpp
+index ce97c85..640693a 100644
+--- a/getaddrinfo.cpp
++++ b/getaddrinfo.cpp
+@@ -251,7 +251,7 @@ static bool have_local_ipv6_connectivity(unsigned mark, uid_t uid, int netid) {
+ static bool have_ipv4_connectivity(unsigned mark, uid_t uid) {
+     static const struct sockaddr_in sin_test = {
+             .sin_family = AF_INET,
+-            .sin_addr.s_addr = __constant_htonl(0x08080808L)  // 8.8.8.8
++            .sin_addr.s_addr = __constant_htonl(0x09090909L)  // 9.9.9.9
+     };
+     sockaddr_union addr = {.sin = sin_test};
+     sockaddr_storage sa;
+-- 
+2.53.0
+

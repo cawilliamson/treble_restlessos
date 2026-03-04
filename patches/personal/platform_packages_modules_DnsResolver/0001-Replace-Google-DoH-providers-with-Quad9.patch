@@ -1,0 +1,62 @@
+From ab2f98a5d784cf34147e9461d25f02603bd46a46 Mon Sep 17 00:00:00 2001
+From: "Christopher A. Williamson" <contact@chrisaw.io>
+Date: Wed, 4 Mar 2026 23:40:13 +0000
+Subject: [PATCH 1/2] Replace Google DoH providers with Quad9
+
+Remove the Google and Google DNS64 DoH provider entries, which cause
+automatic DNS-over-HTTPS connections to Google servers. Replace them
+with Quad9 (dns.quad9.net) which is a privacy-focused non-profit DNS
+provider. Also replace the Google-controlled dns.androidtesting.org
+entry with a second test-only provider stub.
+---
+ PrivateDnsConfiguration.h | 26 +++++++++++++-------------
+ 1 file changed, 13 insertions(+), 13 deletions(-)
+
+diff --git a/PrivateDnsConfiguration.h b/PrivateDnsConfiguration.h
+index 4cae0c2..69b22f7 100644
+--- a/PrivateDnsConfiguration.h
++++ b/PrivateDnsConfiguration.h
+@@ -274,15 +274,15 @@ class PrivateDnsConfiguration {
+     // TODO: Move below DoH relevant stuff into Rust implementation.
+     std::map<unsigned, DohIdentity> mDohTracker GUARDED_BY(mPrivateDnsLock);
+     std::array<DohProviderEntry, 5> mAvailableDoHProviders = {{
+-            {"Google",
+-             {"2001:4860:4860::8888", "2001:4860:4860::8844", "8.8.8.8", "8.8.4.4"},
+-             "dns.google",
+-             "https://dns.google/dns-query",
++            {"Quad9",
++             {"2620:fe::fe", "2620:fe::9", "9.9.9.9", "149.112.112.112"},
++             "dns.quad9.net",
++             "https://dns.quad9.net/dns-query",
+              false},
+-            {"Google DNS64",
+-             {"2001:4860:4860::64", "2001:4860:4860::6464"},
+-             "dns64.dns.google",
+-             "https://dns64.dns.google/dns-query",
++            {"Quad9 ECS",
++             {"2620:fe::10", "2620:fe::fe:10", "9.9.9.10", "149.112.112.10"},
++             "dns10.quad9.net",
++             "https://dns10.quad9.net/dns-query",
+              false},
+             {"Cloudflare",
+              {"2606:4700::6810:f8f9", "2606:4700::6810:f9f9", "104.16.248.249", "104.16.249.249"},
+@@ -298,11 +298,11 @@ class PrivateDnsConfiguration {
+              "example.com",
+              "https://example.com/dns-query",
+              true},
+-            {"AndroidTesting",
+-             {"192.0.2.100"},
+-             "dns.androidtesting.org",
+-             "https://dns.androidtesting.org/dns-query",
+-             false},
++            {"ResolverTestProvider2",
++             {"127.0.0.4", "::1"},
++             "example.org",
++             "https://example.org/dns-query",
++             true},
+     }};
+ 
+     // Makes a DohIdentity if
+-- 
+2.53.0
+

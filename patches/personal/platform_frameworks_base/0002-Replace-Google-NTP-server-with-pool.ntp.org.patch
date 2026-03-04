@@ -1,0 +1,28 @@
+From 1bf0f662ff513ff27f5d428992bf8c232293ec7c Mon Sep 17 00:00:00 2001
+From: "Christopher A. Williamson" <contact@chrisaw.io>
+Date: Wed, 4 Mar 2026 23:38:52 +0000
+Subject: [PATCH 2/2] Replace Google NTP server with pool.ntp.org
+
+The default NTP server time.android.com is a Google-operated endpoint.
+Replace it with pool.ntp.org which is the community-maintained NTP Pool
+Project, removing an unnecessary Google network dependency.
+---
+ core/res/res/values/config.xml | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/core/res/res/values/config.xml b/core/res/res/values/config.xml
+index ad4ab3c90..483a34613 100644
+--- a/core/res/res/values/config.xml
++++ b/core/res/res/values/config.xml
+@@ -2780,7 +2780,7 @@
+          Items must be in the form: "ntp://<host>[:port]"
+          This is not a registered IANA URI scheme. -->
+     <string-array translatable="false" name="config_ntpServers">
+-        <item>ntp://time.android.com</item>
++        <item>ntp://pool.ntp.org</item>
+     </string-array>
+     <!-- SNTP client config: Timeout to wait for an NTP server response in milliseconds. -->
+     <integer name="config_ntpTimeout">5000</integer>
+-- 
+2.53.0
+
