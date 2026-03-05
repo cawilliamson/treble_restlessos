@@ -9,7 +9,7 @@ REPO_PATH := env_var_or_default("REPO_PATH", "cawilliamson/treble_grapheneos")
 WEB_DIR := env_var_or_default("WEB_DIR", "/var/www/build.chrisaw.io")
 
 # common container parameters
-CONTAINER_RUN := "podman run --rm --privileged" + \
+CONTAINER_RUN := "podman run --rm" + \
     " --pids-limit=0" + \
     " -v \"$(pwd):/repo:Z\"" + \
     " -v \"" + WEB_DIR + ":/web:Z\"" + \
