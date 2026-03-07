@@ -1,0 +1,58 @@
+From 7d8706b6a36fc3b06c311e8e9145e52b130dc90f Mon Sep 17 00:00:00 2001
+From: Aryan Sinha <techyminati@outlook.com>
+Date: Sat, 21 Feb 2026 10:25:40 +0100
+Subject: [PATCH 5/7] Connectivity: Skip CLAT perm check on pre-5.10 kernels
+
+Some legacy device kernels (4.14/4.19) lack full bpffs selinux
+genfscon support required by the Connectivity APEX CLAT
+permission verification logic. This causes verifyClatPerms()
+to trigger a fatal abort during JNI_OnLoad, leading to a
+system_server crash at boot.
+
+Previous Trebledroid patch relaxes this requirement for GSI builds, but
+device builds on legacy kernels are also intentionally
+supported in custom ROMs.
+
+Relax the kernel version check unconditionally and return
+early on kernels < 5.10 to avoid the abort while keeping
+CLAT disabled on unsupported systems.
+
+This allows devices with older vendor kernels to boot
+successfully without full BPF/CLAT support.
+---
+ ...m_android_server_connectivity_ClatCoordinator.cpp | 12 +++---------
+ 1 file changed, 3 insertions(+), 9 deletions(-)
+
+diff --git a/service/jni/com_android_server_connectivity_ClatCoordinator.cpp b/service/jni/com_android_server_connectivity_ClatCoordinator.cpp
+index 86ba534..01a0c2f 100644
+--- a/service/jni/com_android_server_connectivity_ClatCoordinator.cpp
++++ b/service/jni/com_android_server_connectivity_ClatCoordinator.cpp
+@@ -91,11 +91,6 @@ static void verifyPerms(const char * const path,
+ 
+ #undef ALOGF
+ 
+-bool isGsiImage() {
+-    // this implementation matches 2 other places in the codebase (same function name too)
+-    return !access("/system/system_ext/etc/init/init.gsi.rc", F_OK);
+-}
+-
+ static const char* kClatdDir = "/apex/com.android.tethering/bin/for-system";
+ static const char* kClatdBin = "/apex/com.android.tethering/bin/for-system/clatd";
+ 
+@@ -138,10 +133,9 @@ static void verifyClatPerms() {
+ #undef V2
+ 
+     // HACK: Some old vendor kernels lack ~5.10 backport of 'bpffs selinux genfscon' support.
+-    // This is *NOT* supported, but let's allow, at least for now, U+ GSI to boot on them.
+-    // (without this hack pixel5 R vendor + U gsi breaks)
+-    if (isGsiImage() && !bpf::isAtLeastKernelVersion(5, 10, 0)) {
+-        ALOGE("GSI with *BAD* pre-5.10 kernel lacking bpffs selinux genfscon support.");
++    // This is *NOT* supported, but let's allow, at least for now, to make 16 QPR2 boot on them.
++    if (!bpf::isAtLeastKernelVersion(5, 10, 0)) {
++        ALOGW("Kernel < 5.10 detected, skipping CLAT perms for legacy kernel.");
+         return;
+     }
+ }
+-- 
+2.53.0
+
