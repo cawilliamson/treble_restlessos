@@ -1,4 +1,4 @@
-From 945315e73c110ee815a356e8c4baf6ad9e70a620 Mon Sep 17 00:00:00 2001
+From 77d3ac67e5e7d6950f8fec47d21d9e0c7192a748 Mon Sep 17 00:00:00 2001
 From: "Christopher A. Williamson" <contact@chrisaw.io>
 Date: Sat, 7 Mar 2026 19:53:41 +0000
 Subject: [PATCH] Enable unauthenticated ADB on first boot for debugging
@@ -9,23 +9,24 @@ install or GSI upgrade so that boot issues can be diagnosed over USB.
 A sentinel file (/metadata/phh/adb_secured) tracks whether the device
 has completed at least one successful boot.  When absent, rw-system.sh
 sets ro.adb.secure=0 before adbd starts, giving an open debug window.
-Once sys.boot_completed fires, phh-on-boot.sh creates the sentinel,
-sets ro.adb.secure=1 and restarts adbd -- locking authentication down
-for the remainder of that session and all subsequent boots.
+Once sys.boot_completed fires, phh-on-boot.sh creates the sentinel and
+restarts adbd -- which re-reads the (now absent) property and defaults
+to requiring authentication for the remainder of that session and all
+subsequent boots.
 
 The sentinel is automatically cleared whenever rw-system.sh detects a
 new GSI system fingerprint (i.e. an upgrade or re-flash), giving each
 new build one unauthenticated first boot.
 ---
- phh-on-boot.sh |  9 +++++++++
- rw-system.sh   | 14 ++++++++++++++
- 2 files changed, 23 insertions(+)
+ phh-on-boot.sh | 11 +++++++++++
+ rw-system.sh   | 13 +++++++++++++
+ 2 files changed, 24 insertions(+)
 
 diff --git a/phh-on-boot.sh b/phh-on-boot.sh
-index 6f2fd68..9050d36 100644
+index 6f2fd68..1f3bb09 100644
 --- a/phh-on-boot.sh
 +++ b/phh-on-boot.sh
-@@ -27,6 +27,15 @@ if [ ! -f /metadata/securize_disable ]; then
+@@ -27,6 +27,17 @@ if [ ! -f /metadata/securize_disable ]; then
    resetprop_phh -n init.svc.flash_recovery stopped
  fi
  
@@ -33,19 +34,21 @@ index 6f2fd68..9050d36 100644
 +# require authentication.  This runs after the first successful boot
 +# following a fresh install or upgrade.  The sentinel is cleared by
 +# rw-system.sh whenever a new GSI fingerprint is detected.
++# adbd defaults to auth_required=true when ro.adb.secure is absent, so
++# we only need to create the sentinel and restart adbd to end the
++# first-boot debug window.
 +mkdir -p /metadata/phh
 +touch /metadata/phh/adb_secured
-+resetprop_phh ro.adb.secure 1
 +setprop ctl.restart adbd
 +
  vndk="$(getprop persist.sys.vndk)"
  [ -z "$vndk" ] && vndk="$(getprop ro.vndk.version |grep -oE '^[0-9]+')"
  
 diff --git a/rw-system.sh b/rw-system.sh
-index 570d7f4..187622a 100644
+index 570d7f4..76213c3 100644
 --- a/rw-system.sh
 +++ b/rw-system.sh
-@@ -818,11 +818,25 @@ if [ -n "$gsi_fp" ] && [ "$gsi_fp" != "$prev_gsi_fp" ]; then
+@@ -818,11 +818,24 @@ if [ -n "$gsi_fp" ] && [ "$gsi_fp" != "$prev_gsi_fp" ]; then
      echo "$gsi_fp" > "$gsi_fp_file"
      # Signal PMS that this is a new build so it runs post-upgrade steps.
      resetprop_phh -n persist.pm.mock-upgrade true
@@ -60,12 +63,11 @@ index 570d7f4..187622a 100644
  
 +# First-boot ADB debugging: when no sentinel exists (fresh install or upgrade),
 +# allow unauthenticated ADB access so boot issues can be diagnosed.  Once boot
-+# completes successfully, phh-on-boot.sh creates the sentinel and locks ADB
-+# down for all subsequent boots.
++# completes successfully, phh-on-boot.sh creates the sentinel and restarts
++# adbd.  On subsequent boots the property is absent and adbd defaults to
++# requiring authentication.
 +if [ ! -f /metadata/phh/adb_secured ]; then
 +    resetprop_phh ro.adb.secure 0
-+else
-+    resetprop_phh ro.adb.secure 1
 +fi
 +
  if [ ! -f /metadata/securize_disable ]; then
