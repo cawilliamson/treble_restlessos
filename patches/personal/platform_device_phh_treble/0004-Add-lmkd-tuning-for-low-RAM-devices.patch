@@ -1,0 +1,55 @@
+From 9f754b5a7d08dc73826e2906884812d689f400fa Mon Sep 17 00:00:00 2001
+From: "Christopher A. Williamson" <contact@chrisaw.io>
+Date: Sat, 7 Mar 2026 20:21:04 +0000
+Subject: [PATCH] Add lmkd tuning for low-RAM devices
+
+On some Android 16 builds, lmkd fails to initialise properly on devices
+with older vendor kernels due to cgroup/PSI/BPF issues, resulting in
+blank screens and system app crashes (observed on Samsung A13 and
+Lunaris 3.5).
+
+Add safe global lmkd defaults (disable critical_upgrade, enable
+kill_heaviest_task) for all devices, and conditionally set
+ro.config.low_ram=true on devices with <=4GB RAM to force lmkd into
+the PSI-based strategy that avoids the problematic cgroup v1 path.
+---
+ rw-system.sh | 10 ++++++++++
+ system.prop  |  7 +++++++
+ 2 files changed, 17 insertions(+)
+
+diff --git a/rw-system.sh b/rw-system.sh
+index 570d7f4..68df619 100644
+--- a/rw-system.sh
++++ b/rw-system.sh
+@@ -1270,3 +1270,13 @@ fi
+ 
+ # Enable pen mode on Lenovo/goodix
+ echo 1 > /sys/devices/platform/goodix_ts.0/support_pen
++
++# lmkd fix for low-RAM devices (e.g., Samsung A13)
++# On devices with <4GB RAM, lmkd can fail to initialise properly due to
++# cgroup/PSI/BPF issues with older vendor kernels, causing blank screens
++# and system app crashes. Setting ro.config.low_ram forces lmkd to use
++# the PSI-based "new strategy" which avoids the problematic cgroup v1 path.
++totalram_kb=$(awk '/^MemTotal:/{print $2}' /proc/meminfo)
++if [ -n "$totalram_kb" ] && [ "$totalram_kb" -lt 4608000 ]; then
++    resetprop_phh ro.config.low_ram true
++fi
+diff --git a/system.prop b/system.prop
+index b2bcf63..dd28057 100644
+--- a/system.prop
++++ b/system.prop
+@@ -48,3 +48,10 @@ bluetooth.profile.sap.server.enabled?=true
+ 
+ # Samsung vendors default to a Samsung-specific gadget for MTP. Set this to use AOSP's functionfs MTP
+ vendor.usb.use_ffs_mtp=1
++
++# lmkd tuning: safe defaults for GSI across diverse hardware
++# Disable critical_upgrade to prevent overly aggressive kills on devices
++# where memory pressure detection may not work correctly (e.g., older kernels)
++ro.lmk.critical_upgrade=false
++# Kill heaviest task first for more predictable memory management
++ro.lmk.kill_heaviest_task=true
+-- 
+2.53.0
+
