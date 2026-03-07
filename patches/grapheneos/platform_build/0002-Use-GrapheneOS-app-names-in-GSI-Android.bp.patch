@@ -8,25 +8,28 @@ GrapheneOS uses different module names for some apps:
 - Messaging (instead of messaging)
 - TrichromeChrome (instead of Browser2) - Vanadium browser
 
-Also removes QuickSearchBox which is not included in GrapheneOS.
+Also removes QuickSearchBox which is not included in GrapheneOS,
+and adds Calendar which is expected in the GSI but was missing
+from the gsi_product deps list.
 
 This patch updates the GSI build configuration to use the
 GrapheneOS-provided equivalents.
 
 Change-Id: I0000000000000000000000000000000000000001
 ---
- target/product/gsi/Android.bp | 7 +++----
- 1 file changed, 3 insertions(+), 4 deletions(-)
+ target/product/gsi/Android.bp | 8 ++++----
+ 1 file changed, 4 insertions(+), 4 deletions(-)
 
 diff --git a/target/product/gsi/Android.bp b/target/product/gsi/Android.bp
 --- a/target/product/gsi/Android.bp
 +++ b/target/product/gsi/Android.bp
-@@ -120,11 +120,11 @@ android_filesystem_defaults {
+@@ -120,11 +120,12 @@ android_filesystem_defaults {
          ///////////////////////////////////////////
          // gsi_product
          ///////////////////////////////////////////
 -        "Browser2",
 -        "Camera2",
++        "Calendar",
 +        "TrichromeChrome",
 +        "Camera",
          "Dialer",
