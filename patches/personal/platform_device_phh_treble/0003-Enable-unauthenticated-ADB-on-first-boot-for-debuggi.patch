@@ -1,27 +1,24 @@
-From 5e6e61eb5aa7b94462331da4117021df8761c7ea Mon Sep 17 00:00:00 2001
+From 3309ea328f963e68c9a8cd114d6edf8a922e90b7 Mon Sep 17 00:00:00 2001
 From: "Christopher A. Williamson" <contact@chrisaw.io>
-Date: Sat, 7 Mar 2026 19:53:41 +0000
+Date: Sun, 8 Mar 2026 11:48:24 +0000
 Subject: [PATCH] Enable unauthenticated ADB on first boot for debugging
 
-Allow unauthenticated ADB access on the first boot after a fresh
-install or GSI upgrade so that boot issues can be diagnosed over USB.
+On first boot after a fresh install or GSI upgrade, enable ADB with
+no authentication so boot issues can be diagnosed.  Uses the normal
+init USB path (property-based) to avoid tearing down configfs which
+breaks vendor USB HALs.
 
-At the top of rw-system.sh, before anything else, compare the current
-GSI fingerprint against the value persisted on /metadata.  When they
-differ (new build), fall into the existing /cache/phh-adb USB gadget
-setup with ro.adb.secure=0 to start adbd as early as possible.
-
-Once sys.boot_completed fires, phh-on-boot.sh detects ro.adb.secure=0,
-deletes the property and kills the debug adbd.
+rw-system.sh compares the system fingerprint against a cached value
+on /cache.  On mismatch it sets ro.adb.secure=0 and persist.sys.usb.config=adb.
+phh-on-boot.sh cleans up at boot_completed.
 
 Remove persist.sys.usb.config=adb from base.mk so ADB is off by
-default.  The user can re-enable USB debugging via Developer Options,
-at which point normal RSA key authentication applies.
+default on subsequent boots.
 ---
  base.mk        |  1 -
- phh-on-boot.sh |  9 +++++++++
- rw-system.sh   | 11 ++++++++++-
- 3 files changed, 19 insertions(+), 2 deletions(-)
+ phh-on-boot.sh |  7 +++++++
+ rw-system.sh   | 10 ++++++++++
+ 3 files changed, 17 insertions(+), 1 deletion(-)
 
 diff --git a/base.mk b/base.mk
 index 79a3fd3..54328fe 100644
@@ -36,59 +33,44 @@ index 79a3fd3..54328fe 100644
  
  # VNDK config files
 diff --git a/phh-on-boot.sh b/phh-on-boot.sh
-index 6f2fd68..b83d401 100644
+index 6f2fd68..ed7e496 100644
 --- a/phh-on-boot.sh
 +++ b/phh-on-boot.sh
-@@ -27,6 +27,15 @@ if [ ! -f /metadata/securize_disable ]; then
+@@ -27,6 +27,13 @@ if [ ! -f /metadata/securize_disable ]; then
    resetprop_phh -n init.svc.flash_recovery stopped
  fi
  
-+# End the first-boot debug window: if ro.adb.secure was set to 0 by
-+# rw-system.sh for first-boot debugging, clear it and kill the
-+# manually-launched adbd.  The user can re-enable USB debugging via
-+# Developer Options, at which point normal RSA authentication applies.
++# End first-boot debug ADB window.
 +if [ "$(getprop ro.adb.secure)" = "0" ]; then
 +    resetprop_phh --delete ro.adb.secure
-+    pkill -f adbd
++    resetprop_phh --delete persist.sys.usb.config
++    stop adbd
 +fi
 +
  vndk="$(getprop persist.sys.vndk)"
  [ -z "$vndk" ] && vndk="$(getprop ro.vndk.version |grep -oE '^[0-9]+')"
  
 diff --git a/rw-system.sh b/rw-system.sh
-index 68df619..96fe33d 100644
+index 68df619..772956a 100644
 --- a/rw-system.sh
 +++ b/rw-system.sh
-@@ -10,7 +10,14 @@ else
+@@ -10,6 +10,16 @@ else
      chmod 0644 /cache/phh/logs
  fi
  
--if [ -f /cache/phh-adb ];then
-+# Detect new GSI build early so we can start debug ADB before anything else.
++# First-boot debug ADB: detect new GSI build and enable unauthenticated
++# ADB via the normal init USB path (no configfs teardown).
 +gsi_fp_cache="/cache/phh-gsi-fingerprint"
-+phh_new_build=false
-+[ "$(getprop ro.system.build.fingerprint)" != "$(cat "$gsi_fp_cache" 2>/dev/null)" ] && phh_new_build=true
-+
-+if [ -f /cache/phh-adb ] || [ "$phh_new_build" = true ];then
-+    getprop ro.system.build.fingerprint > "$gsi_fp_cache"
++gsi_fp="$(getprop ro.system.build.fingerprint)"
++if [ -n "$gsi_fp" ] && [ "$gsi_fp" != "$(cat "$gsi_fp_cache" 2>/dev/null)" ]; then
++    echo "$gsi_fp" > "$gsi_fp_cache"
 +    resetprop_phh ro.adb.secure 0
++    resetprop_phh -n persist.sys.usb.config adb
++fi
++
+ if [ -f /cache/phh-adb ];then
      setprop ctl.stop adbd
      setprop ctl.stop adbd_apex
-     mount -t configfs none /config
-@@ -818,11 +825,13 @@ if [ -n "$gsi_fp" ] && [ "$gsi_fp" != "$prev_gsi_fp" ]; then
-     echo "$gsi_fp" > "$gsi_fp_file"
-     # Signal PMS that this is a new build so it runs post-upgrade steps.
-     resetprop_phh -n persist.pm.mock-upgrade true
-+
- else
-     # Same build as last boot; clear the flag so normal boots are not affected.
-     resetprop_phh -n persist.pm.mock-upgrade false
- fi
- 
-+
- if [ ! -f /metadata/securize_disable ]; then
-     copyprop ro.build.device ro.vendor.build.device
-     copyprop ro.system.build.fingerprint ro.vendor.build.fingerprint
 -- 
 2.53.0
 
