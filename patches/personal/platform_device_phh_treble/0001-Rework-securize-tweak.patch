@@ -1,7 +1,7 @@
-From 8cb841d74a0dcb544564a4d12850294ee21110c7 Mon Sep 17 00:00:00 2001
+From b106bc8749af587c51f1bf9133e1a76d728eb241 Mon Sep 17 00:00:00 2001
 From: Alberto Ponces <ponces26@gmail.com>
 Date: Sun, 22 Feb 2026 16:53:31 +0000
-Subject: [PATCH 1/2] Rework securize tweak
+Subject: [PATCH] Rework securize tweak
 
 Major rework of the securize (device identity spoofing) mechanism.
 
@@ -21,13 +21,13 @@ Co-authored-by: Christopher A. Williamson <contact@chrisaw.io>
  base.mk             |   2 -
  phh-on-boot.sh      |  27 +++++++++++
  phh-prop-handler.sh |  11 +++++
- rw-system.sh        | 112 ++++++++++++++++++++++++++------------------
+ rw-system.sh        | 114 +++++++++++++++++++++++++++-----------------
  system.prop         |   1 -
  vndk.rc             |  14 ++++--
- 6 files changed, 121 insertions(+), 46 deletions(-)
+ 6 files changed, 118 insertions(+), 51 deletions(-)
 
 diff --git a/base.mk b/base.mk
-index 9314eba..37f6d38 100644
+index d689501..93f0b1a 100644
 --- a/base.mk
 +++ b/base.mk
 @@ -37,7 +37,6 @@ PRODUCT_SYSTEM_DEFAULT_PROPERTIES += \
@@ -38,7 +38,7 @@ index 9314eba..37f6d38 100644
      ro.logd.auditd=true \
      ro.logd.kernel=true \
  
-@@ -169,7 +168,6 @@ PRODUCT_PACKAGES += \
+@@ -172,7 +171,6 @@ PRODUCT_PACKAGES += \
      resetprop_phh
  
  PRODUCT_COPY_FILES += \
@@ -106,10 +106,10 @@ index cae90d6..199f054 100644
      if [[ "$prop_value" != "0" && "$prop_value" != "1" ]]; then
          exit 1
 diff --git a/rw-system.sh b/rw-system.sh
-index 3ac9aa5..570d7f4 100644
+index 3ac9aa5..84bb87f 100644
 --- a/rw-system.sh
 +++ b/rw-system.sh
-@@ -800,74 +800,96 @@ copyprop() {
+@@ -800,74 +800,98 @@ copyprop() {
          resetprop_phh "$1" "$(getprop "$2")"
      fi
  }
@@ -128,12 +128,14 @@ index 3ac9aa5..570d7f4 100644
 +mkdir -p /metadata/phh
 +prev_gsi_fp=""
 +[ -f "$gsi_fp_file" ] && prev_gsi_fp="$(cat "$gsi_fp_file")"
-+if [ -n "$gsi_fp" ] && [ "$gsi_fp" != "$prev_gsi_fp" ]; then
++if [ -n "$gsi_fp" ] && [ -n "$prev_gsi_fp" ] && [ "$gsi_fp" != "$prev_gsi_fp" ]; then
 +    echo "$gsi_fp" > "$gsi_fp_file"
 +    # Signal PMS that this is a new build so it runs post-upgrade steps.
 +    resetprop_phh -n persist.pm.mock-upgrade true
 +else
-+    # Same build as last boot; clear the flag so normal boots are not affected.
++    # First boot (no previous fingerprint) or same build as last boot;
++    # persist the current fingerprint and clear the flag.
++    [ -n "$gsi_fp" ] && echo "$gsi_fp" > "$gsi_fp_file"
 +    resetprop_phh -n persist.pm.mock-upgrade false
 +fi
 +
@@ -290,5 +292,5 @@ index 960e47f..6a9ce16 100644
 +on property:init.svc.adbd=*
 +    exec u:r:magisk:s0 root root -- /system/bin/resetprop_phh -n init.svc.adbd stopped
 -- 
-2.52.0
+2.53.0
 

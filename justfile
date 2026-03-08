@@ -25,7 +25,7 @@ clean:
     rm -rfv out/ src/ tmp/
 
 # full build process - simple linear chain
-build-all: build-container resolve-grapheneos-tag sync-grapheneos-sources apply-patches build-treble-app build-arm64
+build-all: build-container resolve-grapheneos-tag sync-grapheneos-sources apply-patches build-treble-app build-rom sign-rom compress-rom
 
 # resolve which grapheneos tag to build from
 # priority: GRAPHENEOS_TAG env var > auto-detect from releases API > GRAPHENEOS_BRANCH env var
@@ -33,8 +33,13 @@ resolve-grapheneos-tag:
     #!/usr/bin/env bash
     set -euo pipefail
     mkdir -p tmp/
-    # clean stale state from previous runs
+    # clean stale state from previous runs so incremental builds
+    # never accidentally reuse metadata from an earlier build
     rm -f tmp/.grapheneos_tag tmp/.grapheneos_branch
+    rm -f tmp/.android_version tmp/.android_version_tag tmp/.build_number
+    # persist fresh build identifiers for this run
+    echo "{{BUILD_DATETIME}}" > tmp/.build_datetime
+    echo "{{BUILD_NUMBER}}" > tmp/.build_number
     if [[ -n "{{GRAPHENEOS_TAG}}" ]]; then
         echo "Using manually specified tag: {{GRAPHENEOS_TAG}}"
         echo "{{GRAPHENEOS_TAG}}" > tmp/.grapheneos_tag
@@ -119,8 +124,8 @@ build-treble-app: build-container
             bash build.sh release \
         '
 
-# build rom image for specific architecture
-build-rom-image arch:
+# build arm64 rom image
+build-rom: build-container
     {{CONTAINER_RUN}} -w /repo/src gsi-builder \
         /bin/bash -e -c ' \
             echo "Building ROM image..." && \
@@ -129,54 +134,42 @@ build-rom-image arch:
                 cp -fv "/repo/configs/rom/grapheneos.mk" . && \
                 bash generate.sh grapheneos && \
             popd && \
-            rm -rfv out/.lock out/soong/.intermediates/prebuilts/ out/target/product/tdgsi_{{arch}}_ab/ && \
+            rm -rfv out/.lock out/soong/.intermediates/prebuilts/ out/target/product/tdgsi_arm64_ab/ && \
             rm -fv /repo/tmp/*.img* /repo/out/*.img* && \
             . build/envsetup.sh && \
-            lunch treble_{{arch}}_bvN-${ANDROID_VERSION_TAG_VAL}-userdebug && \
+            lunch treble_arm64_bvN-${ANDROID_VERSION_TAG_VAL}-userdebug && \
             make systemimage -j$(nproc --all) && \
             make target-files-package otatools -j$(nproc --all)'
 
-# sign rom image for specific architecture
-sign-rom-image arch:
+# sign arm64 rom image
+sign-rom: build-container
     {{CONTAINER_RUN}} -w /repo/src gsi-builder \
         /bin/bash -e -c ' \
             echo "Signing ROM image..." && \
             ANDROID_VERSION_TAG_VAL=$(cat /repo/tmp/.android_version_tag) && \
             . build/envsetup.sh && \
-            lunch treble_{{arch}}_bvN-${ANDROID_VERSION_TAG_VAL}-userdebug && \
+            lunch treble_arm64_bvN-${ANDROID_VERSION_TAG_VAL}-userdebug && \
             bash vendor/cawilliamson-priv/keys/sign.sh && \
             rm -fv ${OUT}/system.img && \
             unzip -joq ${OUT}/signed-target_files.zip IMAGES/system.img -d ${OUT}/ && \
             rm -fv ${OUT}/signed-target_files.zip && \
-            mv -v ${OUT}/system.img /repo/tmp/system_{{arch}}.img'
+            mv -v ${OUT}/system.img /repo/tmp/system.img'
 
-# compress rom image for specific architecture
-compress-rom-image arch:
+# compress arm64 rom image
+compress-rom: build-container
     {{CONTAINER_RUN}} -w /repo/tmp gsi-builder \
         /bin/bash -e -c ' \
             echo "Compressing ROM image..." && \
-            echo "{{BUILD_NUMBER}}" > /repo/tmp/.build_number && \
             ANDROID_VERSION=$(cat /repo/tmp/.android_version) && \
-            VERSION_TAG="${ANDROID_VERSION}-{{BUILD_NUMBER}}" && \
-            src="system_{{arch}}.img" && \
-            dest="GrapheneOS-{{arch}}-ab-${VERSION_TAG}.img" && \
+            BUILD_NUM=$(cat /repo/tmp/.build_number) && \
+            VERSION_TAG="${ANDROID_VERSION}-${BUILD_NUM}" && \
+            src="system.img" && \
+            dest="GrapheneOS-arm64-ab-${VERSION_TAG}.img" && \
             mv -v "${src}" "${dest}" && \
             xz -9 -T0 -v -z "${dest}" && \
             cp -fv "${dest}.xz" /repo/out/'
 
-# build arm64 architecture
-build-arm64:
-    @just build-rom-image "arm64"
-    @just sign-rom-image "arm64"
-    @just compress-rom-image "arm64"
-
-# build arm32_binder64 architecture
-build-arm32:
-    @just build-rom-image "a64"
-    @just sign-rom-image "a64"
-    @just compress-rom-image "a64"
-
-# step 6: copy images to web directory
+# copy images to web directory
 copy-to-webdir: build-container
     {{CONTAINER_RUN}} -w /repo/tmp gsi-builder \
         /bin/bash -e -c ' \
@@ -189,7 +182,7 @@ copy-to-webdir: build-container
             cp -fv /repo/out/*.img.xz "/web/${RELEASE_NAME}/" && \
             echo "Images copied to /web/${RELEASE_NAME}/"'
 
-# step 7: upload images to github
+# upload images to github
 upload-to-github:
     /usr/bin/env bash -c 'cd "$(pwd)/out/" && \
         echo "Uploading to GitHub..." && \
