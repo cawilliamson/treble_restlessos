@@ -129,9 +129,8 @@ build-rom-image arch:
                 cp -fv "/repo/configs/rom/grapheneos.mk" . && \
                 bash generate.sh grapheneos && \
             popd && \
-            rm -rfv out/target/product/tdgsi_{{arch}}_ab/ && \
-            rm -fv /repo/tmp/*.img /repo/tmp/*.img.xz /repo/out/*.img.xz && \
-            rm -rf out/soong/.intermediates/prebuilts/ && \
+            rm -rfv out/.lock out/soong/.intermediates/prebuilts/ out/target/product/tdgsi_{{arch}}_ab/ && \
+            rm -fv /repo/tmp/*.img* /repo/out/*.img* && \
             . build/envsetup.sh && \
             lunch treble_{{arch}}_bvN-${ANDROID_VERSION_TAG_VAL}-userdebug && \
             make systemimage -j$(nproc --all) && \
