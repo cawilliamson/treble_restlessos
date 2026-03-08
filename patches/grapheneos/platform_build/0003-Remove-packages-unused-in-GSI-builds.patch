@@ -6,6 +6,8 @@ Subject: [PATCH 3/3] Remove packages unused in GSI builds
 Remove packages that are not useful or not desired in GrapheneOS
 GSI builds:
 
+- Calendar: deprecated AOSP Calendar app with no launcher activity;
+  CalendarProvider (backend storage) is kept so calendar sync works
 - MusicFX: not included in GrapheneOS
 - Auditor: relies on hardware attestation, won't work on GSI
 - PdfViewerGOS: can be installed from the app store
@@ -20,9 +22,10 @@ GSI builds:
 ---
  target/product/base_system.mk      |  4 ----
  target/product/generic/Android.bp  |  1 -
- target/product/handheld_product.mk |  3 ---
+ target/product/gsi/Android.bp      |  1 -
+ target/product/handheld_product.mk |  4 ----
  target/product/handheld_system.mk  |  3 ---
- 4 files changed, 11 deletions(-)
+ 5 files changed, 13 deletions(-)
 
 diff --git a/target/product/generic/Android.bp b/target/product/generic/Android.bp
 --- a/target/product/generic/Android.bp
@@ -63,15 +66,26 @@ diff --git a/target/product/base_system.mk b/target/product/base_system.mk
  
  # The set of packages whose code can be loaded by the system server.
  PRODUCT_SYSTEM_SERVER_APPS += \
+diff --git a/target/product/gsi/Android.bp b/target/product/gsi/Android.bp
+--- a/target/product/gsi/Android.bp
++++ b/target/product/gsi/Android.bp
+@@ -181,7 +181,6 @@ android_system_image {
+ 
+         // handheld_product
+         "AvatarPicker",
+-        "Calendar",
+         "Contacts",
+         "DeskClock",
+         "Gallery2",
 diff --git a/target/product/handheld_product.mk b/target/product/handheld_product.mk
 --- a/target/product/handheld_product.mk
 +++ b/target/product/handheld_product.mk
-@@ -23,17 +23,14 @@ $(call inherit-product, $(SRC_TARGET_DIR)/product/media_product.mk)
+@@ -23,17 +23,13 @@ $(call inherit-product, $(SRC_TARGET_DIR)/product/media_product.mk)
  # /product packages
  PRODUCT_PACKAGES += \
      AppStore \
 -    Auditor \
-     Calendar \
+-    Calendar \
      Camera \
      Contacts \
      DeskClock \
@@ -109,4 +123,3 @@ diff --git a/target/product/handheld_system.mk b/target/product/handheld_system.
      preinstalled-packages-platform-handheld-system.xml \
 -- 
 2.52.0
-
