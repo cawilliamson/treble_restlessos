@@ -1,0 +1,49 @@
+From d99415110a39edee365e289b929fa87298b31930 Mon Sep 17 00:00:00 2001
+From: "Christopher A. Williamson" <contact@chrisaw.io>
+Date: Sun, 8 Mar 2026 11:22:02 +0000
+Subject: [PATCH] Skip selinux_flags when proc attribute is unavailable
+
+GrapheneOS adds a custom /proc/thread-self/attr/selinux_flags kernel
+interface for per-app SELinux flag hardening.  On Treble GSI devices
+the vendor kernel (typically Android 12-14, kernel 5.10-5.15) lacks
+this patch, so the proc attribute does not exist.
+
+When the framework passes non-zero selinux_flags to
+selinux_android_setcontext2(), the setselinux_flags() call opens the
+missing proc file and fails with ENOENT, which propagates as a fatal
+error that aborts the Zygote child -- crashing every app at fork time
+and leaving the device with a black screen.
+
+Gracefully skip the selinux_flags write when the proc attribute is
+absent (ENOENT) rather than treating it as a fatal error.  The
+security hardening simply becomes a no-op on kernels without support,
+which matches the intended behaviour documented in SELinuxFlags.java.
+---
+ libselinux/src/android/android_device.c | 12 ++++++++++--
+ 1 file changed, 10 insertions(+), 2 deletions(-)
+
+diff --git a/libselinux/src/android/android_device.c b/libselinux/src/android/android_device.c
+index e18d15a..b3c3769 100644
+--- a/libselinux/src/android/android_device.c
++++ b/libselinux/src/android/android_device.c
+@@ -134,8 +134,16 @@ int selinux_android_setcontext2(uid_t uid,
+ 	if (selinux_flags != 0) {
+ 		snprintf(buf_for_hex_uint64, sizeof buf_for_hex_uint64, "%" PRIx64 , selinux_flags);
+ 
+-		 rc = setselinux_flags(buf_for_hex_uint64);
+-		if (rc < 0)
++		rc = setselinux_flags(buf_for_hex_uint64);
++		if (rc < 0 && errno == ENOENT) {
++			/* Kernel does not support the selinux_flags proc
++			 * attribute (requires GrapheneOS kernel patches).
++			 * Silently skip -- the hardening features backed by
++			 * these flags simply won't be enforced. */
++			selinux_log(SELINUX_WARNING,
++				"%s: kernel lacks selinux_flags support, skipping\n",
++				__FUNCTION__);
++		} else if (rc < 0)
+ 			goto err;
+ 	}
+ 
+-- 
+2.53.0
