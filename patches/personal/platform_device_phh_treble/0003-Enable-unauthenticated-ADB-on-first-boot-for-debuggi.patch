@@ -1,4 +1,4 @@
-From 77d3ac67e5e7d6950f8fec47d21d9e0c7192a748 Mon Sep 17 00:00:00 2001
+From 5e6e61eb5aa7b94462331da4117021df8761c7ea Mon Sep 17 00:00:00 2001
 From: "Christopher A. Williamson" <contact@chrisaw.io>
 Date: Sat, 7 Mar 2026 19:53:41 +0000
 Subject: [PATCH] Enable unauthenticated ADB on first boot for debugging
@@ -6,69 +6,85 @@ Subject: [PATCH] Enable unauthenticated ADB on first boot for debugging
 Allow unauthenticated ADB access on the first boot after a fresh
 install or GSI upgrade so that boot issues can be diagnosed over USB.
 
-A sentinel file (/metadata/phh/adb_secured) tracks whether the device
-has completed at least one successful boot.  When absent, rw-system.sh
-sets ro.adb.secure=0 before adbd starts, giving an open debug window.
-Once sys.boot_completed fires, phh-on-boot.sh creates the sentinel and
-restarts adbd -- which re-reads the (now absent) property and defaults
-to requiring authentication for the remainder of that session and all
-subsequent boots.
+At the top of rw-system.sh, before anything else, compare the current
+GSI fingerprint against the value persisted on /metadata.  When they
+differ (new build), fall into the existing /cache/phh-adb USB gadget
+setup with ro.adb.secure=0 to start adbd as early as possible.
 
-The sentinel is automatically cleared whenever rw-system.sh detects a
-new GSI system fingerprint (i.e. an upgrade or re-flash), giving each
-new build one unauthenticated first boot.
+Once sys.boot_completed fires, phh-on-boot.sh detects ro.adb.secure=0,
+deletes the property and kills the debug adbd.
+
+Remove persist.sys.usb.config=adb from base.mk so ADB is off by
+default.  The user can re-enable USB debugging via Developer Options,
+at which point normal RSA key authentication applies.
 ---
- phh-on-boot.sh | 11 +++++++++++
- rw-system.sh   | 13 +++++++++++++
- 2 files changed, 24 insertions(+)
+ base.mk        |  1 -
+ phh-on-boot.sh |  9 +++++++++
+ rw-system.sh   | 11 ++++++++++-
+ 3 files changed, 19 insertions(+), 2 deletions(-)
 
+diff --git a/base.mk b/base.mk
+index 79a3fd3..54328fe 100644
+--- a/base.mk
++++ b/base.mk
+@@ -42,7 +42,6 @@ PRODUCT_SYSTEM_DEFAULT_PROPERTIES += \
+ 
+ # Huawei HiSuite (also other OEM custom programs I guess) it's of no use in AOSP builds
+ PRODUCT_SYSTEM_DEFAULT_PROPERTIES += \
+-    persist.sys.usb.config=adb \
+     ro.cust.cdrom=/dev/null
+ 
+ # VNDK config files
 diff --git a/phh-on-boot.sh b/phh-on-boot.sh
-index 6f2fd68..1f3bb09 100644
+index 6f2fd68..b83d401 100644
 --- a/phh-on-boot.sh
 +++ b/phh-on-boot.sh
-@@ -27,6 +27,17 @@ if [ ! -f /metadata/securize_disable ]; then
+@@ -27,6 +27,15 @@ if [ ! -f /metadata/securize_disable ]; then
    resetprop_phh -n init.svc.flash_recovery stopped
  fi
  
-+# Boot completed successfully: mark ADB as secured so subsequent boots
-+# require authentication.  This runs after the first successful boot
-+# following a fresh install or upgrade.  The sentinel is cleared by
-+# rw-system.sh whenever a new GSI fingerprint is detected.
-+# adbd defaults to auth_required=true when ro.adb.secure is absent, so
-+# we only need to create the sentinel and restart adbd to end the
-+# first-boot debug window.
-+mkdir -p /metadata/phh
-+touch /metadata/phh/adb_secured
-+setprop ctl.restart adbd
++# End the first-boot debug window: if ro.adb.secure was set to 0 by
++# rw-system.sh for first-boot debugging, clear it and kill the
++# manually-launched adbd.  The user can re-enable USB debugging via
++# Developer Options, at which point normal RSA authentication applies.
++if [ "$(getprop ro.adb.secure)" = "0" ]; then
++    resetprop_phh --delete ro.adb.secure
++    pkill -f adbd
++fi
 +
  vndk="$(getprop persist.sys.vndk)"
  [ -z "$vndk" ] && vndk="$(getprop ro.vndk.version |grep -oE '^[0-9]+')"
  
 diff --git a/rw-system.sh b/rw-system.sh
-index 570d7f4..76213c3 100644
+index 68df619..96fe33d 100644
 --- a/rw-system.sh
 +++ b/rw-system.sh
-@@ -818,11 +818,24 @@ if [ -n "$gsi_fp" ] && [ "$gsi_fp" != "$prev_gsi_fp" ]; then
+@@ -10,7 +10,14 @@ else
+     chmod 0644 /cache/phh/logs
+ fi
+ 
+-if [ -f /cache/phh-adb ];then
++# Detect new GSI build early so we can start debug ADB before anything else.
++gsi_fp_cache="/cache/phh-gsi-fingerprint"
++phh_new_build=false
++[ "$(getprop ro.system.build.fingerprint)" != "$(cat "$gsi_fp_cache" 2>/dev/null)" ] && phh_new_build=true
++
++if [ -f /cache/phh-adb ] || [ "$phh_new_build" = true ];then
++    getprop ro.system.build.fingerprint > "$gsi_fp_cache"
++    resetprop_phh ro.adb.secure 0
+     setprop ctl.stop adbd
+     setprop ctl.stop adbd_apex
+     mount -t configfs none /config
+@@ -818,11 +825,13 @@ if [ -n "$gsi_fp" ] && [ "$gsi_fp" != "$prev_gsi_fp" ]; then
      echo "$gsi_fp" > "$gsi_fp_file"
      # Signal PMS that this is a new build so it runs post-upgrade steps.
      resetprop_phh -n persist.pm.mock-upgrade true
-+    # New build detected: clear the ADB-secured sentinel so the first boot
-+    # after a fresh install or upgrade allows unauthenticated ADB access for
-+    # debugging.  phh-on-boot.sh will recreate the sentinel once boot completes.
-+    rm -f /metadata/phh/adb_secured
++
  else
      # Same build as last boot; clear the flag so normal boots are not affected.
      resetprop_phh -n persist.pm.mock-upgrade false
  fi
  
-+# First-boot ADB debugging: when no sentinel exists (fresh install or upgrade),
-+# allow unauthenticated ADB access so boot issues can be diagnosed.  Once boot
-+# completes successfully, phh-on-boot.sh creates the sentinel and restarts
-+# adbd.  On subsequent boots the property is absent and adbd defaults to
-+# requiring authentication.
-+if [ ! -f /metadata/phh/adb_secured ]; then
-+    resetprop_phh ro.adb.secure 0
-+fi
 +
  if [ ! -f /metadata/securize_disable ]; then
      copyprop ro.build.device ro.vendor.build.device
