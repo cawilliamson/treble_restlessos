@@ -14,50 +14,37 @@ manifests default to false while compiled framework code has them
 baked as true, causing fatal mismatches (e.g. AppOpService crashing
 on the missing android.permission.RANGING permission).
 
-At early-init, check whether /metadata is already a mount point
-(i.e. a real partition was mounted by first-stage init). If not,
-overlay it with tmpfs so aconfigd and other consumers can function.
+At early-init, mount tmpfs on /metadata using init builtins so no
+SELinux domain transition is needed.  If a real partition is already
+mounted there by first-stage init, the mount will harmlessly fail.
 ---
- 00-fix-metadata.rc | 2 ++
- 00-fix-metadata.sh | 7 +++++++
- base.mk            | 4 +++-
- 3 files changed, 12 insertions(+), 1 deletion(-)
+ 00-fix-metadata.rc | 5 +++++
+ base.mk            | 3 ++-
+ 2 files changed, 7 insertions(+), 1 deletion(-)
  create mode 100644 00-fix-metadata.rc
- create mode 100644 00-fix-metadata.sh
 
 diff --git a/00-fix-metadata.rc b/00-fix-metadata.rc
 new file mode 100644
-index 0000000..50400eb
+index 0000000..a1b2c3d
 --- /dev/null
 +++ b/00-fix-metadata.rc
-@@ -0,0 +1,2 @@
-+on early-init
-+    exec - root -- /system/bin/sh /system/etc/00-fix-metadata.sh
-diff --git a/00-fix-metadata.sh b/00-fix-metadata.sh
-new file mode 100644
-index 0000000..40e4616
---- /dev/null
-+++ b/00-fix-metadata.sh
-@@ -0,0 +1,7 @@
-+#!/system/bin/sh
+@@ -0,0 +1,5 @@
 +# If no real metadata partition was mounted by first-stage init,
 +# overlay the empty rootfs stub with tmpfs so aconfigd and other
 +# services that write to /metadata can function.
-+
-+mountpoint -q /metadata || \
-+    mount -t tmpfs tmpfs /metadata -o mode=0775,uid=0,gid=1000
++on early-init
++    mount tmpfs tmpfs /metadata nodev noexec nosuid mode=0775,uid=0,gid=1000
 diff --git a/base.mk b/base.mk
-index 2d467e6..622501c 100644
+index 2d467e6..8f3c4a1 100644
 --- a/base.mk
 +++ b/base.mk
-@@ -154,7 +154,9 @@ PRODUCT_PACKAGES += \
+@@ -154,7 +154,8 @@ PRODUCT_PACKAGES += \
      uevent
  
  PRODUCT_COPY_FILES += \
 -    device/phh/treble/files/adbd.rc:system/etc/init/adbd.rc
 +    device/phh/treble/files/adbd.rc:system/etc/init/adbd.rc \
-+    device/phh/treble/00-fix-metadata.rc:system/etc/init/00-fix-metadata.rc \
-+    device/phh/treble/00-fix-metadata.sh:system/etc/00-fix-metadata.sh
++    device/phh/treble/00-fix-metadata.rc:system/etc/init/00-fix-metadata.rc
  
  # MTK incoming SMS fix
  PRODUCT_PACKAGES += \
