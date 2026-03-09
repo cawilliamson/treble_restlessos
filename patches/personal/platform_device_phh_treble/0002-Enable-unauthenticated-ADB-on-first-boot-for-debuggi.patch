@@ -1,7 +1,7 @@
-From 3309ea328f963e68c9a8cd114d6edf8a922e90b7 Mon Sep 17 00:00:00 2001
+From 7e2cd2cda160b0f4388b5986c3abb6499f527206 Mon Sep 17 00:00:00 2001
 From: "Christopher A. Williamson" <contact@chrisaw.io>
 Date: Sun, 8 Mar 2026 11:48:24 +0000
-Subject: [PATCH] Enable unauthenticated ADB on first boot for debugging
+Subject: [PATCH 2/3] Enable unauthenticated ADB on first boot for debugging
 
 On first boot after a fresh install or GSI upgrade, enable ADB with
 no authentication so boot issues can be diagnosed.  Uses the normal
@@ -21,7 +21,7 @@ default on subsequent boots.
  3 files changed, 17 insertions(+), 1 deletion(-)
 
 diff --git a/base.mk b/base.mk
-index 79a3fd3..54328fe 100644
+index a88edfc..76b1c4d 100644
 --- a/base.mk
 +++ b/base.mk
 @@ -42,7 +42,6 @@ PRODUCT_SYSTEM_DEFAULT_PROPERTIES += \
@@ -51,7 +51,7 @@ index 6f2fd68..ed7e496 100644
  [ -z "$vndk" ] && vndk="$(getprop ro.vndk.version |grep -oE '^[0-9]+')"
  
 diff --git a/rw-system.sh b/rw-system.sh
-index 68df619..772956a 100644
+index 8bb41dc..bdff3de 100644
 --- a/rw-system.sh
 +++ b/rw-system.sh
 @@ -10,6 +10,16 @@ else

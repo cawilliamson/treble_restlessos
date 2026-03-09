@@ -1,7 +1,7 @@
-From 9f754b5a7d08dc73826e2906884812d689f400fa Mon Sep 17 00:00:00 2001
+From 68aac599fc9e801dbad242ac39e6d2b1b190f984 Mon Sep 17 00:00:00 2001
 From: "Christopher A. Williamson" <contact@chrisaw.io>
 Date: Sat, 7 Mar 2026 20:21:04 +0000
-Subject: [PATCH] Add lmkd tuning for low-RAM devices
+Subject: [PATCH 5/5] Add lmkd tuning for low-RAM devices
 
 On some Android 16 builds, lmkd fails to initialise properly on devices
 with older vendor kernels due to cgroup/PSI/BPF issues, resulting in
@@ -18,10 +18,10 @@ the PSI-based strategy that avoids the problematic cgroup v1 path.
  2 files changed, 17 insertions(+)
 
 diff --git a/rw-system.sh b/rw-system.sh
-index 570d7f4..68df619 100644
+index 3ac9aa5..a4c5bec 100644
 --- a/rw-system.sh
 +++ b/rw-system.sh
-@@ -1270,3 +1270,13 @@ fi
+@@ -1248,3 +1248,13 @@ fi
  
  # Enable pen mode on Lenovo/goodix
  echo 1 > /sys/devices/platform/goodix_ts.0/support_pen
@@ -36,10 +36,10 @@ index 570d7f4..68df619 100644
 +    resetprop_phh ro.config.low_ram true
 +fi
 diff --git a/system.prop b/system.prop
-index b2bcf63..dd28057 100644
+index f3c0c45..4649f0d 100644
 --- a/system.prop
 +++ b/system.prop
-@@ -48,3 +48,10 @@ bluetooth.profile.sap.server.enabled?=true
+@@ -49,3 +49,10 @@ bluetooth.profile.sap.server.enabled?=true
  
  # Samsung vendors default to a Samsung-specific gadget for MTP. Set this to use AOSP's functionfs MTP
  vendor.usb.use_ffs_mtp=1

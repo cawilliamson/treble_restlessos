@@ -1,0 +1,66 @@
+From 2a1d14cdc21bb031cd86dfbec933c4af32c633c3 Mon Sep 17 00:00:00 2001
+From: "Christopher A. Williamson" <contact@chrisaw.io>
+Date: Mon, 9 Mar 2026 16:03:16 +0000
+Subject: [PATCH 4/5] Mount tmpfs on /metadata for devices without a metadata
+ partition
+
+Older devices (pre-Android Q) have no metadata partition. The
+/metadata directory exists as an empty stub on the read-only rootfs,
+which breaks aconfigd and every other service that expects to write
+there.
+
+Without working aconfig storage, android:featureFlag attributes in
+manifests default to false while compiled framework code has them
+baked as true, causing fatal mismatches (e.g. AppOpService crashing
+on the missing android.permission.RANGING permission).
+
+At early-init, check whether /metadata is already a mount point
+(i.e. a real partition was mounted by first-stage init). If not,
+overlay it with tmpfs so aconfigd and other consumers can function.
+---
+ 00-fix-metadata.rc | 2 ++
+ 00-fix-metadata.sh | 7 +++++++
+ base.mk            | 4 +++-
+ 3 files changed, 12 insertions(+), 1 deletion(-)
+ create mode 100644 00-fix-metadata.rc
+ create mode 100644 00-fix-metadata.sh
+
+diff --git a/00-fix-metadata.rc b/00-fix-metadata.rc
+new file mode 100644
+index 0000000..50400eb
+--- /dev/null
++++ b/00-fix-metadata.rc
+@@ -0,0 +1,2 @@
++on early-init
++    exec - root -- /system/bin/sh /system/etc/00-fix-metadata.sh
+diff --git a/00-fix-metadata.sh b/00-fix-metadata.sh
+new file mode 100644
+index 0000000..40e4616
+--- /dev/null
++++ b/00-fix-metadata.sh
+@@ -0,0 +1,7 @@
++#!/system/bin/sh
++# If no real metadata partition was mounted by first-stage init,
++# overlay the empty rootfs stub with tmpfs so aconfigd and other
++# services that write to /metadata can function.
++
++mountpoint -q /metadata || \
++    mount -t tmpfs tmpfs /metadata -o mode=0775,uid=0,gid=1000
+diff --git a/base.mk b/base.mk
+index 2d467e6..622501c 100644
+--- a/base.mk
++++ b/base.mk
+@@ -154,7 +154,9 @@ PRODUCT_PACKAGES += \
+     uevent
+ 
+ PRODUCT_COPY_FILES += \
+-    device/phh/treble/files/adbd.rc:system/etc/init/adbd.rc
++    device/phh/treble/files/adbd.rc:system/etc/init/adbd.rc \
++    device/phh/treble/00-fix-metadata.rc:system/etc/init/00-fix-metadata.rc \
++    device/phh/treble/00-fix-metadata.sh:system/etc/00-fix-metadata.sh
+ 
+ # MTK incoming SMS fix
+ PRODUCT_PACKAGES += \
+-- 
+2.53.0
+

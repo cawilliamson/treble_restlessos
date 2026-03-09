@@ -1,7 +1,7 @@
-From 62dd2a08e2bf3550221d2885f1f35adc60ab2e24 Mon Sep 17 00:00:00 2001
+From 3ea7432d9f5813122c626e95c8a04f256555fc46 Mon Sep 17 00:00:00 2001
 From: "Christopher A. Williamson" <contact@chrisaw.io>
 Date: Fri, 20 Feb 2026 14:08:15 +0000
-Subject: [PATCH 4/4] Add VNDK v30 to extra VNDK versions
+Subject: [PATCH] Add VNDK v30 to extra VNDK versions
 
 Include VNDK v30 prebuilts in the GSI image so devices shipping with
 VNDK 30 vendor images can find the matching libraries at runtime.
@@ -10,15 +10,15 @@ VNDK 30 vendor images can find the matching libraries at runtime.
  1 file changed, 1 insertion(+), 1 deletion(-)
 
 diff --git a/base.mk b/base.mk
-index 37f6d38..457d03b 100644
+index 622501c..2be5c51 100644
 --- a/base.mk
 +++ b/base.mk
-@@ -262,4 +262,4 @@ $(call inherit-product, $(SRC_TARGET_DIR)/product/window_extensions.mk)
+@@ -265,4 +265,4 @@ $(call inherit-product, $(SRC_TARGET_DIR)/product/window_extensions.mk)
  PRODUCT_PRODUCT_PROPERTIES += \
      persist.settings.large_screen_opt.enabled=true
  
 -PRODUCT_EXTRA_VNDK_VERSIONS += 28 29
 +PRODUCT_EXTRA_VNDK_VERSIONS += 28 29 30
 -- 
-2.52.0
+2.53.0
 

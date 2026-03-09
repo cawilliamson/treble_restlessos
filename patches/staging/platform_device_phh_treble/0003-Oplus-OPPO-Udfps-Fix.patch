@@ -1,7 +1,7 @@
 From 5db7944b05e4e3ef5d0dcfffa50197bd96a7524a Mon Sep 17 00:00:00 2001
 From: Nazar Bilinskyi <nbilinskyi@gmail.com>
 Date: Fri, 6 Feb 2026 14:13:24 +0200
-Subject: [PATCH 3/4] Oplus/OPPO Udfps Fix
+Subject: [PATCH 3/5] Oplus/OPPO Udfps Fix
 
 ---
  phh-prop-handler.sh | 16 ++++++++++++++++

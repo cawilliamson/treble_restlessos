@@ -1,7 +1,7 @@
-From a3cac627ae1308993da860857353df78b4aaccbc Mon Sep 17 00:00:00 2001
+From 62fddb05a5258f6fc054f258974ea4d2a5902f12 Mon Sep 17 00:00:00 2001
 From: "Christopher A. Williamson" <contact@chrisaw.io>
 Date: Fri, 27 Feb 2026 14:47:00 +0000
-Subject: [PATCH 2/2] Add Unihertz 8849 SELinux policy and proinfo init service
+Subject: [PATCH 3/3] Add Unihertz 8849 SELinux policy and proinfo init service
 
 - SELinux: label FPGA SPI and NDS03 sysfs nodes, allow system_app
   read/write access for projector controls and laser rangefinder
@@ -59,15 +59,15 @@ index 0000000..364ae14
 +    setprop sys.phh.8849.other_cal "$other"
 +fi
 diff --git a/base.mk b/base.mk
-index a29e402..e6ac403 100644
+index 76b1c4d..2462c9b 100644
 --- a/base.mk
 +++ b/base.mk
-@@ -150,7 +150,9 @@ PRODUCT_PACKAGES += \
-     uevent
- 
+@@ -154,7 +154,9 @@ PRODUCT_PACKAGES += \
  PRODUCT_COPY_FILES += \
--    device/phh/treble/files/adbd.rc:system/etc/init/adbd.rc
-+    device/phh/treble/files/adbd.rc:system/etc/init/adbd.rc \
+     device/phh/treble/files/adbd.rc:system/etc/init/adbd.rc \
+     device/phh/treble/00-fix-metadata.rc:system/etc/init/00-fix-metadata.rc \
+-    device/phh/treble/00-fix-metadata.sh:system/etc/00-fix-metadata.sh
++    device/phh/treble/00-fix-metadata.sh:system/etc/00-fix-metadata.sh \
 +    device/phh/treble/8849-proinfo.rc:system/etc/init/8849-proinfo.rc \
 +    device/phh/treble/8849-proinfo.sh:system/etc/8849-proinfo.sh
  
