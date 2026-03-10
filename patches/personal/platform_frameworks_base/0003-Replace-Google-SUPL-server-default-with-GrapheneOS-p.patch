@@ -1,0 +1,33 @@
+From 3e25aaf9cdb2a3701329a6f20d24df2b1824e4a1 Mon Sep 17 00:00:00 2001
+From: "Christopher A. Williamson" <contact@chrisaw.io>
+Date: Tue, 10 Mar 2026 08:42:57 +0000
+Subject: [PATCH 3/3] Replace Google SUPL server default with GrapheneOS proxy
+
+The CarrierConfigManager hardcodes supl.google.com as the default SUPL
+server for all carriers. While GnssConfiguration.applyConfigOverrides()
+should override this at runtime via the GnssSettings SUPL setting,
+the carrier config default is loaded first and may be briefly visible
+to the GNSS HAL before the override takes effect. Replace the default
+with supl.grapheneos.org (the GrapheneOS SUPL proxy) to ensure no
+window exists where the Google server could be contacted, and to
+align the fallback default with the intended privacy configuration.
+---
+ telephony/java/android/telephony/CarrierConfigManager.java | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/telephony/java/android/telephony/CarrierConfigManager.java b/telephony/java/android/telephony/CarrierConfigManager.java
+index a33e5ba34..1606b0ac5 100644
+--- a/telephony/java/android/telephony/CarrierConfigManager.java
++++ b/telephony/java/android/telephony/CarrierConfigManager.java
+@@ -5203,7 +5203,7 @@ public class CarrierConfigManager {
+         private static PersistableBundle getDefaults() {
+             PersistableBundle defaults = new PersistableBundle();
+             defaults.putBoolean(KEY_PERSIST_LPP_MODE_BOOL, true);
+-            defaults.putString(KEY_SUPL_HOST_STRING, "supl.google.com");
++            defaults.putString(KEY_SUPL_HOST_STRING, "supl.grapheneos.org");
+             defaults.putString(KEY_SUPL_PORT_STRING, "7275");
+             defaults.putString(KEY_SUPL_VER_STRING, "0x20000");
+             defaults.putString(KEY_SUPL_MODE_STRING, "1");
+-- 
+2.53.0
+
