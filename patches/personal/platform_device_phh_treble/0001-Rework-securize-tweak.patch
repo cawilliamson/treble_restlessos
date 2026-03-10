@@ -47,11 +47,11 @@ index d689501..93f0b1a 100644
  
  PRODUCT_COPY_FILES += \
 diff --git a/phh-on-boot.sh b/phh-on-boot.sh
-index d2d5b0a..6f2fd68 100644
 --- a/phh-on-boot.sh
 +++ b/phh-on-boot.sh
-@@ -1,5 +1,32 @@
- #!/system/bin/sh
+@@ -10,6 +10,33 @@ if [ ! -e /sys/fs/bpf/netd_shared/map_netd_uid_owner_map ]; then
+     log -t phh-on-boot "Disabled restricted_networking_mode (BPF uid_owner_map absent)"
+ fi
  
 +# spoof post-boot props
 +# should be applied after boot complete to prevent breaking device features

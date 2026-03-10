@@ -33,10 +33,9 @@ index a88edfc..76b1c4d 100644
  
  # VNDK config files
 diff --git a/phh-on-boot.sh b/phh-on-boot.sh
-index 6f2fd68..ed7e496 100644
 --- a/phh-on-boot.sh
 +++ b/phh-on-boot.sh
-@@ -27,6 +27,13 @@ if [ ! -f /metadata/securize_disable ]; then
+@@ -38,6 +38,13 @@ if [ ! -f /metadata/securize_disable ]; then
    resetprop_phh -n init.svc.flash_recovery stopped
  fi
  
