@@ -20,7 +20,6 @@ enforce a chain that cannot function.
  1 file changed, 11 insertions(+)
 
 diff --git a/phh-on-boot.sh b/phh-on-boot.sh
-index ed7e496..a1b2c3d 100644
 --- a/phh-on-boot.sh
 +++ b/phh-on-boot.sh
 @@ -1,5 +1,16 @@
@@ -37,8 +36,8 @@ index ed7e496..a1b2c3d 100644
 +    log -t phh-on-boot "Disabled restricted_networking_mode (BPF uid_owner_map absent)"
 +fi
 +
- # spoof post-boot props
- # should be applied after boot complete to prevent breaking device features
- if [ ! -f /metadata/securize_disable ]; then
+ vndk="$(getprop persist.sys.vndk)"
+ [ -z "$vndk" ] && vndk="$(getprop ro.vndk.version |grep -oE '^[0-9]+')"
+ 
 -- 
 2.53.0
