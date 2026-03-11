@@ -1,53 +1,92 @@
-From 2a1d14cdc21bb031cd86dfbec933c4af32c633c3 Mon Sep 17 00:00:00 2001
+From 1aefb4c89787b377066eed8a9728fbbd013e2323 Mon Sep 17 00:00:00 2001
 From: "Christopher A. Williamson" <contact@chrisaw.io>
-Date: Mon, 9 Mar 2026 16:03:16 +0000
-Subject: [PATCH 4/5] Mount tmpfs on /metadata for devices without a metadata
+Date: Wed, 11 Mar 2026 17:59:16 +0000
+Subject: [PATCH 4/6] Mount tmpfs on /metadata for devices without a metadata
  partition
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
 
 Older devices (pre-Android Q) have no metadata partition. The
 /metadata directory exists as an empty stub on the read-only rootfs,
 which breaks aconfigd and every other service that expects to write
 there.
 
-Without working aconfig storage, android:featureFlag attributes in
-manifests default to false while compiled framework code has them
-baked as true, causing fatal mismatches (e.g. AppOpService crashing
-on the missing android.permission.RANGING permission).
-
-At early-init, mount tmpfs on /metadata using init builtins so no
-SELinux domain transition is needed.  If a real partition is already
-mounted there by first-stage init, the mount will harmlessly fail.
+Run a shell script at early-init under the phhsu_daemon SELinux
+domain (which is permissive and has mount capabilities). The script
+checks whether /metadata is already a mount point — if a real
+partition was mounted by first-stage init, it is left alone. Only
+if /metadata is an unmounted stub is tmpfs overlaid on top.
 ---
- 00-fix-metadata.rc | 5 +++++
- base.mk            | 3 ++-
- 2 files changed, 7 insertions(+), 1 deletion(-)
+ 00-fix-metadata.rc     | 2 ++
+ 00-fix-metadata.sh     | 7 +++++++
+ base.mk                | 4 +++-
+ sepolicy/file_contexts | 1 +
+ sepolicy/su.te         | 1 +
+ 5 files changed, 14 insertions(+), 1 deletion(-)
  create mode 100644 00-fix-metadata.rc
+ create mode 100644 00-fix-metadata.sh
 
 diff --git a/00-fix-metadata.rc b/00-fix-metadata.rc
 new file mode 100644
-index 0000000..a1b2c3d
+index 0000000..65a3160
 --- /dev/null
 +++ b/00-fix-metadata.rc
-@@ -0,0 +1,5 @@
+@@ -0,0 +1,2 @@
++on early-init
++    exec u:r:phhsu_daemon:s0 root -- /system/bin/sh /system/etc/00-fix-metadata.sh
+diff --git a/00-fix-metadata.sh b/00-fix-metadata.sh
+new file mode 100644
+index 0000000..40e4616
+--- /dev/null
++++ b/00-fix-metadata.sh
+@@ -0,0 +1,7 @@
++#!/system/bin/sh
 +# If no real metadata partition was mounted by first-stage init,
 +# overlay the empty rootfs stub with tmpfs so aconfigd and other
 +# services that write to /metadata can function.
-+on early-init
-+    mount tmpfs tmpfs /metadata nodev noexec nosuid mode=0775,uid=0,gid=1000
++
++mountpoint -q /metadata || \
++    mount -t tmpfs tmpfs /metadata -o mode=0775,uid=0,gid=1000
 diff --git a/base.mk b/base.mk
-index 2d467e6..8f3c4a1 100644
+index 2d467e6..622501c 100644
 --- a/base.mk
 +++ b/base.mk
-@@ -154,7 +154,8 @@ PRODUCT_PACKAGES += \
+@@ -154,7 +154,9 @@ PRODUCT_PACKAGES += \
      uevent
  
  PRODUCT_COPY_FILES += \
 -    device/phh/treble/files/adbd.rc:system/etc/init/adbd.rc
 +    device/phh/treble/files/adbd.rc:system/etc/init/adbd.rc \
-+    device/phh/treble/00-fix-metadata.rc:system/etc/init/00-fix-metadata.rc
++    device/phh/treble/00-fix-metadata.rc:system/etc/init/00-fix-metadata.rc \
++    device/phh/treble/00-fix-metadata.sh:system/etc/00-fix-metadata.sh
  
  # MTK incoming SMS fix
  PRODUCT_PACKAGES += \
+diff --git a/sepolicy/file_contexts b/sepolicy/file_contexts
+index beb639a..bd5b48d 100644
+--- a/sepolicy/file_contexts
++++ b/sepolicy/file_contexts
+@@ -4,6 +4,7 @@
+ /system/bin/rw-system.sh u:object_r:phhsu_exec:s0
+ /system/bin/phh-on-boot.sh u:object_r:phhsu_exec:s0
+ /system/bin/phh-on-data.sh u:object_r:phhsu_exec:s0
++/system/etc/00-fix-metadata.sh u:object_r:phhsu_exec:s0
+ /system/bin/asus-motor u:object_r:phhsu_exec:s0
+ /system/bin/xiaomi-touch u:object_r:phhsu_exec:s0
+ 
+diff --git a/sepolicy/su.te b/sepolicy/su.te
+index f8829cd..03208fc 100644
+--- a/sepolicy/su.te
++++ b/sepolicy/su.te
+@@ -7,6 +7,7 @@ permissive phhsu_daemon;
+ 
+ tmpfs_domain(phhsu_daemon);
+ domain_auto_trans(init, phhsu_exec, phhsu_daemon);
++domain_trans(init, shell_exec, phhsu_daemon);
+ file_type_auto_trans(phhsu_daemon, device, phhsu_daemon);
+ 
+ allow { appdomain shell } phhsu_daemon:unix_stream_socket { connectto write read };
 -- 
 2.53.0
 

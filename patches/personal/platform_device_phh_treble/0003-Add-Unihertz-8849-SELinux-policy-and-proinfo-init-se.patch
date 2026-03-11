@@ -1,4 +1,4 @@
-From 631734746fb8cf69e7f720e493d31a575e350fcb Mon Sep 17 00:00:00 2001
+From b7340168247d7bb38f0c8f18a41bdd11dc762b66 Mon Sep 17 00:00:00 2001
 From: "Christopher A. Williamson" <contact@chrisaw.io>
 Date: Fri, 27 Feb 2026 14:47:00 +0000
 Subject: [PATCH 3/3] Add Unihertz 8849 SELinux policy and proinfo init service
@@ -59,15 +59,15 @@ index 0000000..364ae14
 +    setprop sys.phh.8849.other_cal "$other"
 +fi
 diff --git a/base.mk b/base.mk
-index 18703ef..f29fd10 100644
+index 76b1c4d..2462c9b 100644
 --- a/base.mk
 +++ b/base.mk
-@@ -153,7 +153,9 @@ PRODUCT_PACKAGES += \
- 
+@@ -154,7 +154,9 @@ PRODUCT_PACKAGES += \
  PRODUCT_COPY_FILES += \
      device/phh/treble/files/adbd.rc:system/etc/init/adbd.rc \
--    device/phh/treble/00-fix-metadata.rc:system/etc/init/00-fix-metadata.rc
-+    device/phh/treble/00-fix-metadata.rc:system/etc/init/00-fix-metadata.rc \
+     device/phh/treble/00-fix-metadata.rc:system/etc/init/00-fix-metadata.rc \
+-    device/phh/treble/00-fix-metadata.sh:system/etc/00-fix-metadata.sh
++    device/phh/treble/00-fix-metadata.sh:system/etc/00-fix-metadata.sh \
 +    device/phh/treble/8849-proinfo.rc:system/etc/init/8849-proinfo.rc \
 +    device/phh/treble/8849-proinfo.sh:system/etc/8849-proinfo.sh
  
