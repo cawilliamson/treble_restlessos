@@ -1,0 +1,57 @@
+From 9aae8bc4f7f93ed15d3c84dac9d7c075f50f64dd Mon Sep 17 00:00:00 2001
+From: Ido Ben-Hur <idoybh2@gmail.com>
+Date: Sat, 4 May 2024 18:09:41 +0300
+Subject: [PATCH 8/8] Tethering: Fix allow clients to use VPN toggle post QPR2
+
+Observe VPN connections for this - needed after QPR2:
+Some intent that was fired when a VPN connection was established is no more
+Before this change the user had to re-toggle after VPN connection for it to work
+
+Signed-off-by: Dmitrii <bankersenator@gmail.com>
+Signed-off-by: Pranav Vashi <neobuddy89@gmail.com>
+---
+ .../networkstack/tethering/Tethering.java     | 20 +++++++++++++++++++
+ 1 file changed, 20 insertions(+)
+
+diff --git a/Tethering/src/com/android/networkstack/tethering/Tethering.java b/Tethering/src/com/android/networkstack/tethering/Tethering.java
+index ed4752262a3..722e81c2c45 100644
+--- a/Tethering/src/com/android/networkstack/tethering/Tethering.java
++++ b/Tethering/src/com/android/networkstack/tethering/Tethering.java
+@@ -104,7 +104,9 @@ import android.net.IpPrefix;
+ import android.net.LinkAddress;
+ import android.net.LinkProperties;
+ import android.net.Network;
++import android.net.NetworkCapabilities;
+ import android.net.NetworkInfo;
++import android.net.NetworkRequest;
+ import android.net.TetherStatesParcel;
+ import android.net.TetheredClient;
+ import android.net.TetheringCallbackStartedParcel;
+@@ -522,6 +524,24 @@ public class Tethering {
+         };
+         mContext.getContentResolver().registerContentObserver(Settings.Secure.getUriFor(
+                 TETHERING_ALLOW_VPN_UPSTREAMS), false, vpnSettingObserver);
++
++        NetworkRequest networkRequest = new NetworkRequest.Builder()
++                .addTransportType(NetworkCapabilities.TRANSPORT_VPN)
++                .removeCapability(NetworkCapabilities.NET_CAPABILITY_NOT_VPN)
++                .build();
++        ConnectivityManager.NetworkCallback vpnConnectionObserver =
++                new ConnectivityManager.NetworkCallback() {
++            @Override
++            public void onCapabilitiesChanged(Network network,
++                    NetworkCapabilities networkCapabilities) {
++                super.onCapabilitiesChanged(network, networkCapabilities);
++                // Reconsider tethering upstream
++                mTetherMainSM.sendMessage(TetherMainSM.CMD_UPSTREAM_CHANGED);
++            }
++        };
++        final ConnectivityManager connMgr = (ConnectivityManager) mContext.getSystemService(
++                    Context.CONNECTIVITY_SERVICE);
++        connMgr.registerNetworkCallback(networkRequest, vpnConnectionObserver);
+     }
+ 
+     private class TetheringThreadExecutor implements Executor {
+-- 
+2.34.1
+

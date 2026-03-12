@@ -1,7 +1,7 @@
 From 397fe82975c4fdf2c32f8719a08b930d78d96815 Mon Sep 17 00:00:00 2001
 From: Aryan Sinha <techyminati@outlook.com>
 Date: Fri, 21 Feb 2025 15:37:03 +0530
-Subject: [PATCH 6/7] Connectivity: Relax kernel version requirement
+Subject: [PATCH 6/8] Connectivity: Relax kernel version requirement
 
 ---
  bpf/loader/NetBpfLoad.cpp | 12 ++++--------

@@ -1,0 +1,85 @@
+From 6f0534d680a4d459ae1bece435c221e24210990e Mon Sep 17 00:00:00 2001
+From: rio004 <riyon336@gmail.com>
+Date: Tue, 3 Mar 2026 10:22:08 +0000
+Subject: [PATCH 2/7] kernel_configs: Relax 4.14 base kver requirement
+
+* Our boys need 4.14.186 too
+
+Change-Id: Ibdd6a074cc804079b824650b75b315cb3d6a0e3e
+Signed-off-by: rio004 <riyon336@gmail.com>
+---
+ s/android-4.14/android-base-conditional.xml | 26 +--------------------
+ s/android-4.14/android-base.config          |  2 --
+ 2 files changed, 1 insertion(+), 27 deletions(-)
+
+diff --git a/s/android-4.14/android-base-conditional.xml b/s/android-4.14/android-base-conditional.xml
+index f3fceb5..5812269 100644
+--- a/s/android-4.14/android-base-conditional.xml
++++ b/s/android-4.14/android-base-conditional.xml
+@@ -1,4 +1,4 @@
+-<kernel minlts="4.14.336" />
++<kernel minlts="4.14.186" />
+ 
+ <!-- KEEP ALPHABETICALLY SORTED -->
+ <!-- ARM base requirements -->
+@@ -67,18 +67,6 @@
+ 		<key>CONFIG_BPF_JIT_ALWAYS_ON</key>
+ 		<value type="bool">y</value>
+ 	</config>
+-	<config>
+-		<key>CONFIG_HAVE_MOVE_PMD</key>
+-		<value type="bool">y</value>
+-	</config>
+-	<config>
+-		<key>CONFIG_HAVE_MOVE_PUD</key>
+-		<value type="bool">y</value>
+-	</config>
+-	<config>
+-		<key>CONFIG_USERFAULTFD</key>
+-		<value type="bool">y</value>
+-	</config>
+ </group>
+ 
+ <!-- x86 base requirements -->
+@@ -101,18 +89,6 @@
+ 		<key>CONFIG_RETPOLINE</key>
+ 		<value type="bool">y</value>
+ 	</config>
+-	<config>
+-		<key>CONFIG_HAVE_MOVE_PMD</key>
+-		<value type="bool">y</value>
+-	</config>
+-	<config>
+-		<key>CONFIG_HAVE_MOVE_PUD</key>
+-		<value type="bool">y</value>
+-	</config>
+-	<config>
+-		<key>CONFIG_USERFAULTFD</key>
+-		<value type="bool">y</value>
+-	</config>
+ 	<config>
+ 		<key>CONFIG_BPF_JIT_ALWAYS_ON</key>
+ 		<value type="bool">y</value>
+diff --git a/s/android-4.14/android-base.config b/s/android-4.14/android-base.config
+index 8087261..dbb6e9d 100644
+--- a/s/android-4.14/android-base.config
++++ b/s/android-4.14/android-base.config
+@@ -67,7 +67,6 @@ CONFIG_FUTEX=y
+ CONFIG_HARDENED_USERCOPY=y
+ CONFIG_HID_GENERIC=y
+ CONFIG_HID_SONY=y
+-CONFIG_SONY_FF=y
+ CONFIG_HIGH_RES_TIMERS=y
+ CONFIG_IKCONFIG=y
+ CONFIG_IKCONFIG_PROC=y
+@@ -237,7 +236,6 @@ CONFIG_TASKSTATS=y
+ CONFIG_TASK_IO_ACCOUNTING=y
+ CONFIG_TASK_XACCT=y
+ CONFIG_TIMERFD=y
+-CONFIG_TRACE_GPU_MEM=y
+ CONFIG_TTY=y
+ CONFIG_TUN=y
+ CONFIG_UHID=y
+-- 
+2.46.0
+

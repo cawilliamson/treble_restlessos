@@ -1,7 +1,7 @@
 From 7d8706b6a36fc3b06c311e8e9145e52b130dc90f Mon Sep 17 00:00:00 2001
 From: Aryan Sinha <techyminati@outlook.com>
 Date: Sat, 21 Feb 2026 10:25:40 +0100
-Subject: [PATCH 5/7] Connectivity: Skip CLAT perm check on pre-5.10 kernels
+Subject: [PATCH 5/8] Connectivity: Skip CLAT perm check on pre-5.10 kernels
 
 Some legacy device kernels (4.14/4.19) lack full bpffs selinux
 genfscon support required by the Connectivity APEX CLAT
