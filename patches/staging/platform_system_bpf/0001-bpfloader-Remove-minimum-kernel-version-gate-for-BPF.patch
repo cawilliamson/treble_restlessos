@@ -1,6 +1,6 @@
-From c69fb8163dcc1f0a91913abcf9e29c0c3535378c Mon Sep 17 00:00:00 2001
+From bbdf446cc47ecc05c544846cb4d3f2ca27e2717f Mon Sep 17 00:00:00 2001
 From: "Christopher A. Williamson" <contact@chrisaw.io>
-Date: Thu, 12 Mar 2026 10:37:30 +0000
+Date: Thu, 12 Mar 2026 11:06:55 +0000
 Subject: [PATCH] bpfloader: Remove minimum kernel version gate for BPF loading
 
 Remove the min_kver check in set_skip_loading() so that all BPF
@@ -18,27 +18,16 @@ would otherwise be skipped due to AOSP raising the minimum in
 QPR2, while still correctly skipping programs with max_kver
 ceilings.
 
-Change-Id: Id99e58f5a2c43fee9abd3b321c913f8e6e0ebbd5
+Change-Id: I5f655bd008a2103a5d82fa2dcdb2e63ab9aee741
 ---
- loader/bpfloader.rs | 22 ++++++++++++----------
- 1 file changed, 12 insertions(+), 10 deletions(-)
+ loader/bpfloader.rs | 18 ++++++++++++------
+ 1 file changed, 12 insertions(+), 6 deletions(-)
 
 diff --git a/loader/bpfloader.rs b/loader/bpfloader.rs
-index a1ea554..a75a7c7 100644
+index 512683f..a75a7c7 100644
 --- a/loader/bpfloader.rs
 +++ b/loader/bpfloader.rs
-@@ -426,10 +426,6 @@ fn parse_release(release: &str) -> (u32, u32, u32) {
- }
- 
- fn kernel_version() -> Result<u32, anyhow::Error> {
--    if let Some(kver_override) = system_properties::read("ro.bpf.kver_override")? {
--        let (major, minor, sub) = parse_release(&kver_override);
--        return Ok(kver(major, minor, sub));
--    }
-     let mut buf: MaybeUninit<utsname> = MaybeUninit::zeroed();
-     // SAFETY: If uname returns 0, the buf should be properly initialized.
-     if unsafe { uname(buf.as_mut_ptr()) } != 0 {
-@@ -453,15 +449,21 @@ fn set_skip_loading(
+@@ -449,15 +449,21 @@ fn set_skip_loading(
  ) -> Result<(), anyhow::Error> {
      let kvers = kernel_version()?;
  
@@ -63,7 +52,7 @@ index a1ea554..a75a7c7 100644
                      );
                      map.set_autocreate(false)?;
                  }
-@@ -475,10 +477,10 @@ fn set_skip_loading(
+@@ -471,10 +477,10 @@ fn set_skip_loading(
              prog.name().to_str().ok_or_else(|| anyhow!("Failed to parse prog name into UTF-8"))?;
          for prog_desc in file_desc.progs {
              if prog_desc.name == name {
