@@ -1,8 +1,8 @@
-From 56e513bd17a7c9a0921e73fa1550068d7a45134c Mon Sep 17 00:00:00 2001
-From: Chris AW <chrisaw@localhost>
+From d99625bc4552f43f2d728bd7523737627f11e3a9 Mon Sep 17 00:00:00 2001
+From: "Christopher A. Williamson" <contact@chrisaw.io>
 Date: Mon, 16 Feb 2026 09:43:20 +0000
-Subject: [PATCH 2/7] BpfHandler: convert abort() calls to non-fatal for old kernel
- GSI support
+Subject: [PATCH 3/7] BpfHandler: convert abort() calls to non-fatal for old
+ kernel GSI support
 
 On GSI builds targeting devices with older kernels (4.9-4.19), BPF
 programs may fail to load or attach. When this happens on 4.19+ kernels,
@@ -124,5 +124,5 @@ index 09d6159..9ca6486 100644
      unique_fd fd1(bpf::mapRetrieveExclusiveRW(m2)); if (!fd1.ok()) abort();  // no conflict with fd0
      unique_fd fd2(bpf::mapRetrieveExclusiveRW(m2)); if ( fd2.ok()) abort();  // busy due to fd1
 -- 
-2.52.0
+2.53.0
 

@@ -1,15 +1,15 @@
-From 3277233c1fe4f548edf341f36ceef39107f9eba1 Mon Sep 17 00:00:00 2001
+From 8d59af5a2e9a843b83b726eaa8a70635f6e90fd5 Mon Sep 17 00:00:00 2001
 From: J0SH1X <aljoshua.hell@gmail.com>
 Date: Thu, 20 Mar 2025 10:18:52 +0000
-Subject: [PATCH 1/7] service: ClatCoordinator: make clat permission check failure
- non fatal
+Subject: [PATCH 2/7] service: ClatCoordinator: make clat permission check
+ failure non fatal
 
 ---
  .../jni/com_android_server_connectivity_ClatCoordinator.cpp   | 4 +---
  1 file changed, 1 insertion(+), 3 deletions(-)
 
 diff --git a/service/jni/com_android_server_connectivity_ClatCoordinator.cpp b/service/jni/com_android_server_connectivity_ClatCoordinator.cpp
-index 619f4a3..0889bce 100644
+index 437e78f..86ba534 100644
 --- a/service/jni/com_android_server_connectivity_ClatCoordinator.cpp
 +++ b/service/jni/com_android_server_connectivity_ClatCoordinator.cpp
 @@ -84,7 +84,7 @@ static void verifyPerms(const char * const path,
@@ -31,4 +31,5 @@ index 619f4a3..0889bce 100644
  
  #undef V
 -- 
-2.47.2
+2.53.0
+

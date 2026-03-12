@@ -1,4 +1,4 @@
-From 7bb0127e9f09e7203c2671a6e0ad672b7941ed9d Mon Sep 17 00:00:00 2001
+From a36e012062ee59dce5572d6f79659822290c7e59 Mon Sep 17 00:00:00 2001
 From: Yumi Yukimura <me.cafebabe@gmail.com>
 Date: Wed, 24 Sep 2025 22:07:03 +0800
 Subject: [PATCH 7/7] BpfNetMaps: Allow pre-25Q2

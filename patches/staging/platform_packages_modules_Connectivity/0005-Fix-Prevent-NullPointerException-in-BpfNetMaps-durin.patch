@@ -1,8 +1,8 @@
-From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From 18cfe35ecd58869949f8bac9c6950bf140dbd3b5 Mon Sep 17 00:00:00 2001
 From: Doze-off <Doze@off.com>
 Date: Wed, 16 Jul 2025 05:50:01 -0300
-Subject: [PATCH 4/7] Fix: Prevent NullPointerException in BpfNetMaps during UID
- removal
+Subject: [PATCH 5/7] Fix: Prevent NullPointerException in BpfNetMaps during
+ UID removal
 
 This patch adds null checks and exception handling when removing UIDs
 from sLocalNetBlockedUidMap in BpfNetMaps and PermissionMonitor.
@@ -60,5 +60,5 @@ index 519d998..6da1da2 100755
          // Get the appId permission from all users then send the latest permission to netd.
          final int appId = UserHandle.getAppId(uid);
 -- 
-2.34.1
+2.53.0
 

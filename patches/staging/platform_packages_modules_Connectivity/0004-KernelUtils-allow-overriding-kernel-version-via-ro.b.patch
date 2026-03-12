@@ -1,7 +1,7 @@
-From c9426d4b1a4980771654f961cb87c72d62432643 Mon Sep 17 00:00:00 2001
-From: Chris AW <chrisaw@localhost>
+From 130d9a9c0035b49a85428ed036b836ea5ea40f91 Mon Sep 17 00:00:00 2001
+From: "Christopher A. Williamson" <contact@chrisaw.io>
 Date: Mon, 16 Feb 2026 09:43:48 +0000
-Subject: [PATCH 3/7] KernelUtils: allow overriding kernel version via
+Subject: [PATCH 4/7] KernelUtils: allow overriding kernel version via
  ro.bpf.kver_override
 
 Add support for the ro.bpf.kver_override system property to fake the
@@ -41,5 +41,5 @@ index 1f2b251..83d07cc 100644
      return KVER(kver_major, kver_minor, kver_sub);
  }
 -- 
-2.52.0
+2.53.0
 
