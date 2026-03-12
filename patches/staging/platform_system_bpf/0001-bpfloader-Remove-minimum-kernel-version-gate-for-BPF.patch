@@ -1,4 +1,4 @@
-From bbdf446cc47ecc05c544846cb4d3f2ca27e2717f Mon Sep 17 00:00:00 2001
+From ed930b9e286ce212cb1cd8ffdc16f39e7c4cf7c1 Mon Sep 17 00:00:00 2001
 From: "Christopher A. Williamson" <contact@chrisaw.io>
 Date: Thu, 12 Mar 2026 11:06:55 +0000
 Subject: [PATCH] bpfloader: Remove minimum kernel version gate for BPF loading
@@ -20,14 +20,30 @@ ceilings.
 
 Change-Id: I5f655bd008a2103a5d82fa2dcdb2e63ab9aee741
 ---
- loader/bpfloader.rs | 18 ++++++++++++------
- 1 file changed, 12 insertions(+), 6 deletions(-)
+ loader/bpfloader.rs | 20 ++++++++++++++------
+ 1 file changed, 14 insertions(+), 6 deletions(-)
 
 diff --git a/loader/bpfloader.rs b/loader/bpfloader.rs
-index 512683f..a75a7c7 100644
+index 512683f..50be931 100644
 --- a/loader/bpfloader.rs
 +++ b/loader/bpfloader.rs
-@@ -449,15 +449,21 @@ fn set_skip_loading(
+@@ -149,6 +149,7 @@ fn libbpf_print(level: PrintLevel, mut msg: String) {
+     }
+ }
+ 
++#[allow(dead_code)]
+ struct MapDesc {
+     name: &'static str,
+     perms: mode_t,
+@@ -169,6 +170,7 @@ impl MapDesc {
+     }
+ }
+ 
++#[allow(dead_code)]
+ struct ProgDesc {
+     name: &'static str,
+     owner: u32,
+@@ -449,15 +451,21 @@ fn set_skip_loading(
  ) -> Result<(), anyhow::Error> {
      let kvers = kernel_version()?;
  
@@ -52,7 +68,7 @@ index 512683f..a75a7c7 100644
                      );
                      map.set_autocreate(false)?;
                  }
-@@ -471,10 +477,10 @@ fn set_skip_loading(
+@@ -471,10 +479,10 @@ fn set_skip_loading(
              prog.name().to_str().ok_or_else(|| anyhow!("Failed to parse prog name into UTF-8"))?;
          for prog_desc in file_desc.progs {
              if prog_desc.name == name {
