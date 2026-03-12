@@ -1,7 +1,8 @@
-From d3dc6f1cb27c2ab0f2933e6ccb112a19de731951 Mon Sep 17 00:00:00 2001
+From 0b04612ab8fc3a14a9c521aa2ce53a72a13308b1 Mon Sep 17 00:00:00 2001
 From: Chris AW <chrisaw@localhost>
 Date: Thu, 12 Mar 2026 09:57:59 +0000
-Subject: [PATCH] Stall GpuWork on kernels without gpu_work_period tracepoint
+Subject: [PATCH 2/3] Stall GpuWork on kernels without gpu_work_period
+ tracepoint
 
 On devices like the TCL 40SE (MT6765), the kernel does not expose the
 power/gpu_work_period tracepoint needed by GpuWork. This causes
