@@ -1,7 +1,7 @@
 From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: Doze-off <Doze@off.com>
 Date: Wed, 16 Jul 2025 05:50:01 -0300
-Subject: [PATCH 4/8] Fix: Prevent NullPointerException in BpfNetMaps during UID
+Subject: [PATCH 4/7] Fix: Prevent NullPointerException in BpfNetMaps during UID
  removal
 
 This patch adds null checks and exception handling when removing UIDs

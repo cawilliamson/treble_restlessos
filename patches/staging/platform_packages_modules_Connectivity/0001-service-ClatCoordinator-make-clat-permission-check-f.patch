@@ -1,7 +1,7 @@
 From 3277233c1fe4f548edf341f36ceef39107f9eba1 Mon Sep 17 00:00:00 2001
 From: J0SH1X <aljoshua.hell@gmail.com>
 Date: Thu, 20 Mar 2025 10:18:52 +0000
-Subject: [PATCH 1/8] service: ClatCoordinator: make clat permission check failure
+Subject: [PATCH 1/7] service: ClatCoordinator: make clat permission check failure
  non fatal
 
 ---
