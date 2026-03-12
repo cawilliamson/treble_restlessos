@@ -1,0 +1,36 @@
+From 849e00e3c28cf0c33617962dd177f92f9d31a899 Mon Sep 17 00:00:00 2001
+From: "Christopher A. Williamson" <contact@chrisaw.io>
+Date: Thu, 12 Mar 2026 21:02:19 +0000
+Subject: [PATCH 7/7] Force PSI-based lmkd strategy on cgroup v2
+
+Vendors with older Android 12 bases set ro.lmk.use_minfree_levels=true
+which selects the legacy kill strategy requiring cgroup v1. On cgroup v2
+(standard since Android 12), lmkd exits immediately with 'Old kill
+strategy can only be used with v1 cgroup hierarchy'. Without lmkd,
+ActivityManager cannot manage process lifecycle, causing cascading ANRs,
+SystemUI failure, and boot timeouts exceeding 90 seconds.
+
+Setting ro.lmk.use_new_strategy=true in system.prop forces PSI-based
+monitoring regardless of vendor minfree_levels setting. This takes
+effect before lmkd starts, unlike the rw-system.sh ro.config.low_ram
+workaround which runs too late.
+---
+ system.prop | 5 +++++
+ 1 file changed, 5 insertions(+)
+
+diff --git a/system.prop b/system.prop
+index dd28057..b3e2224 100644
+--- a/system.prop
++++ b/system.prop
+@@ -55,3 +55,8 @@ vendor.usb.use_ffs_mtp=1
+ ro.lmk.critical_upgrade=false
+ # Kill heaviest task first for more predictable memory management
+ ro.lmk.kill_heaviest_task=true
++# Force PSI-based kill strategy on all devices. Vendors with older kernels
++# may set ro.lmk.use_minfree_levels=true which selects the legacy cgroup v1
++# kill strategy. On cgroup v2 (standard since Android 12), this causes lmkd
++# to exit immediately, breaking process lifecycle management entirely.
++ro.lmk.use_new_strategy=true
+-- 
+2.53.0
+

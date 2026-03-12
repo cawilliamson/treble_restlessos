@@ -1,7 +1,7 @@
-From 9fb6ad7aedc66839f4027bfb6f913d3457478577 Mon Sep 17 00:00:00 2001
+From c9585bf6ab7ad346c719123968ff3f7256dfcad1 Mon Sep 17 00:00:00 2001
 From: "Christopher A. Williamson" <contact@chrisaw.io>
 Date: Tue, 17 Feb 2026 16:19:21 +0000
-Subject: [PATCH 2/5] Include APN configuration database in build
+Subject: [PATCH 2/7] Include APN configuration database in build
 
 The treble build inherits aosp_base_telephony but does not include the
 AOSP APN database. The apns-full-conf.xml module has no_full_install
@@ -20,7 +20,7 @@ Change-Id: I0000000000000000000000000000000000000016
  1 file changed, 4 insertions(+)
 
 diff --git a/base.mk b/base.mk
-index 2f9a77a..f59cae3 100644
+index a29e402..2d467e6 100644
 --- a/base.mk
 +++ b/base.mk
 @@ -24,6 +24,10 @@ $(call inherit-product, vendor/hardware_overlay/overlay.mk)
@@ -35,5 +35,5 @@ index 2f9a77a..f59cae3 100644
  # from /system/etc/prop.default, then /vendor/build.prop, then /system/build.prop
  # So we need to set our props in prop.default
 -- 
-2.52.0
+2.53.0
 

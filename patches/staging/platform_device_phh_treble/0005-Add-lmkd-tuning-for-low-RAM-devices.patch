@@ -1,7 +1,7 @@
-From 68aac599fc9e801dbad242ac39e6d2b1b190f984 Mon Sep 17 00:00:00 2001
+From c441caaa305b9f87342e6d0e484c4c866f8b4867 Mon Sep 17 00:00:00 2001
 From: "Christopher A. Williamson" <contact@chrisaw.io>
 Date: Sat, 7 Mar 2026 20:21:04 +0000
-Subject: [PATCH 5/5] Add lmkd tuning for low-RAM devices
+Subject: [PATCH 5/7] Add lmkd tuning for low-RAM devices
 
 On some Android 16 builds, lmkd fails to initialise properly on devices
 with older vendor kernels due to cgroup/PSI/BPF issues, resulting in
