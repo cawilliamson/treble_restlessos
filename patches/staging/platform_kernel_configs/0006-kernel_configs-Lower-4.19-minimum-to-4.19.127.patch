@@ -1,12 +1,13 @@
-From 13aaf3bbb3d38a719917b3679054fa02a5ee18bb Mon Sep 17 00:00:00 2001
-From: techyminati <techyminati@outlook.com>
-Date: Sun, 8 Mar 2026 12:16:02 +0530
-Subject: [PATCH 5/7] kernel_configs: Lower 4.19 requirements to 4.19.127 *
- Alot of mtk devices use 4.19-r kernels, which were shipped with 4.19.127,
- since r/4.19 does not exist on 16qpr2, lets lower min req for 4.19-s
+From 8cf2f1e6bffefd13177a66d0565e99c3d57e3fa1 Mon Sep 17 00:00:00 2001
+From: "Christopher A. Williamson" <contact@chrisaw.io>
+Date: Thu, 12 Mar 2026 10:59:00 +0000
+Subject: [PATCH 6/6] kernel_configs: Lower 4.19 minimum to 4.19.127
 
-Change-Id: I0fb9bc1de56297b49b6fa6cbd5ec97e2e5e5431b
-Signed-off-by: techyminati <techyminati@outlook.com>
+Many MediaTek devices use 4.19-r kernels shipped with 4.19.127.
+Since r/android-4.19 does not exist on 16 QPR2, lower the minimum
+LTS requirement for s/android-4.19 to support these devices.
+
+Change-Id: I44e4127ad2ec25f2272c38215615dc936cb40b4a
 ---
  s/android-4.19/android-base-conditional.xml | 2 +-
  1 file changed, 1 insertion(+), 1 deletion(-)
@@ -22,5 +23,5 @@ index 8aab2a0..24e2b47 100644
  <!-- KEEP ALPHABETICALLY SORTED -->
  <!-- ARM base requirements -->
 -- 
-2.46.0
+2.53.0
 

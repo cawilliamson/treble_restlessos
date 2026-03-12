@@ -1,7 +1,7 @@
-From 2c483dcf7ab9dd9437e9c80e955563e0db2b3303 Mon Sep 17 00:00:00 2001
+From ca954ff842a92b7636c73a9e022dbf479b108dae Mon Sep 17 00:00:00 2001
 From: Bruno Martins <bgcngm@gmail.com>
 Date: Wed, 1 Nov 2023 23:47:30 +0000
-Subject: [PATCH 6/7] Revert "Delete p/android-4.4."
+Subject: [PATCH 3/6] Revert "Delete p/android-4.4."
 
 This reverts commit 9f52312263bf8f14c256df317755478d08a09989.
 
@@ -422,5 +422,5 @@ index 0000000..b407d6c
 +CONFIG_USB_USBNET=y
 +CONFIG_VFAT_FS=y
 -- 
-2.46.0
+2.53.0
 
