@@ -1,7 +1,7 @@
 From ed930b9e286ce212cb1cd8ffdc16f39e7c4cf7c1 Mon Sep 17 00:00:00 2001
 From: "Christopher A. Williamson" <contact@chrisaw.io>
 Date: Thu, 12 Mar 2026 11:06:55 +0000
-Subject: [PATCH] bpfloader: Remove minimum kernel version gate for BPF loading
+Subject: [PATCH 1/2] bpfloader: Remove minimum kernel version gate for BPF loading
 
 Remove the min_kver check in set_skip_loading() so that all BPF
 programs and maps are attempted regardless of the actual kernel
