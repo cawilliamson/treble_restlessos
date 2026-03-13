@@ -1,7 +1,7 @@
 From 93197e7352f31d7531b426f11a59b0081e565a45 Mon Sep 17 00:00:00 2001
 From: ChonDoit <thphantomblog@gmail.com>
 Date: Wed, 4 Feb 2026 00:41:12 +0000
-Subject: [PATCH 5/9] Make status bar paddings overridables
+Subject: [PATCH 5/11] Make status bar paddings overridables
 
 ---
  .../phone/KeyguardStatusBarView.java          |  9 ++++--

@@ -1,7 +1,7 @@
 From 170a1cfb14da2557d463e223d1a7e399192ec6ae Mon Sep 17 00:00:00 2001
 From: Pierre-Hugues Husson <phh@phh.me>
 Date: Wed, 4 Feb 2026 00:39:02 +0000
-Subject: [PATCH 4/9] Make rounded corner padding adjustable
+Subject: [PATCH 4/11] Make rounded corner padding adjustable
 
 ---
  .../systemui/shade/ShadeHeaderController.kt   |  5 ++-
