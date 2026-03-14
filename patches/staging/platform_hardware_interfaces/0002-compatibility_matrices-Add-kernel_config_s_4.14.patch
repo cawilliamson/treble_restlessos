@@ -1,7 +1,7 @@
 From 2ac433bbcf5bbf3bc32e2f8c72df60468b0a6b9b Mon Sep 17 00:00:00 2001
 From: Michael Bestas <mkbestas@lineageos.org>
 Date: Sat, 31 May 2025 16:26:42 +0300
-Subject: [PATCH 1/2] compatibility_matrices: Add kernel_config_s_4.14
+Subject: [PATCH 2/3] compatibility_matrices: Add kernel_config_s_4.14
 
 Change-Id: Ia52e5cbdce916ef6cfc6c921904c9dbe2549e44e
 ---
