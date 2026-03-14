@@ -1,0 +1,56 @@
+From c4795b1f049ae9139218cc236cb9b9d89de8a382 Mon Sep 17 00:00:00 2001
+From: "Christopher A. Williamson" <contact@chrisaw.io>
+Date: Sat, 14 Mar 2026 08:21:49 +0000
+Subject: [PATCH 4/4] SurfaceFlinger: Skip mode-change fence check during boot
+
+On devices with multi-rate displays (e.g. 60Hz+120Hz) and HWC
+implementations that don't signal present fences before the first
+composed frame, the modeset_state_machine code path creates a
+deadlock during boot:
+
+1. SF requests 120Hz mode change, setting isModeSetPending=true
+2. HWC says refreshRequired=true, so a composite is scheduled
+3. In commit(), the isFramePending+isModeSetPending check at line
+   2874 returns false, blocking composite() from ever running
+4. No frame is ever presented, so the present fence never signals
+5. isFramePending stays true, isModeSetPending stays true
+6. Result: permanent black screen
+
+This affects devices like the Blackview Shark 8 (MT6789) where HWC's
+blankDisplay atomic commit fails with EINVAL and present fences are
+never signaled before the first successful composite.
+
+VoltageOS avoids this because it lacks the modeset_state_machine
+feature flag (a newer AOSP addition present in GrapheneOS).
+
+Fix by skipping the fence-gated mode-change check during boot
+(mBootStage != FINISHED). This is safe because:
+- No content is on screen yet, so tearing is impossible
+- The mode change will finalize normally once the first frame lands
+- After boot finishes, the check resumes protecting against mid-use
+  mode change glitches
+---
+ services/surfaceflinger/SurfaceFlinger.cpp | 7 ++++++-
+ 1 file changed, 6 insertions(+), 1 deletion(-)
+
+diff --git a/services/surfaceflinger/SurfaceFlinger.cpp b/services/surfaceflinger/SurfaceFlinger.cpp
+index 549d2a4..bb30422 100644
+--- a/services/surfaceflinger/SurfaceFlinger.cpp
++++ b/services/surfaceflinger/SurfaceFlinger.cpp
+@@ -2871,7 +2871,12 @@ bool SurfaceFlinger::commit(PhysicalDisplayId pacesetterId,
+     }
+ 
+     // If a mode set is pending and the fence hasn't fired yet, wait for the next commit.
+-    if (std::any_of(frameTargets.begin(), frameTargets.end(),
++    // Skip this check during boot to avoid a deadlock on devices with multi-rate displays
++    // (e.g. 60Hz+120Hz) and broken HWC fence signaling: the mode change can't finalize
++    // until a frame is presented, but this check blocks frame presentation until the mode
++    // change finalizes.
++    if (mBootStage == BootStage::FINISHED &&
++            std::any_of(frameTargets.begin(), frameTargets.end(),
+                     [this](const auto& pair) FTL_FAKE_GUARD(kMainThreadContext) {
+                         const auto [displayId, target] = pair;
+                         return target->isFramePending() &&
+-- 
+2.53.0
+
