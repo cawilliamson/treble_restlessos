@@ -1,0 +1,85 @@
+From 385ebb2df1460dfda0a87811c33d09ff7554c490 Mon Sep 17 00:00:00 2001
+From: "Christopher A. Williamson" <contact@chrisaw.io>
+Date: Sun, 15 Mar 2026 07:56:44 +0000
+Subject: [PATCH 4/6] SurfaceFlinger: Disable r4 HWC-path aconfig flags for GSI
+
+AOSP android-16.0.0_r4 introduced new aconfig flags that alter the
+HWC command path and pacesetter/follower multi-display scheduling.
+These assume modern vendor HWC implementations and cause init() hangs
+or display failures on GSI targets with older HWCs.
+
+Disable only the flags that touch the HWC command path or depend on
+multi-display pacesetter logic:
+  - display_command_modeset: changes how mode changes are sent to HWC
+    (command vs. validate+present); unsafe on old HWC implementations
+  - pacesetter_selection: triggers applyRefreshRateSelectorPolicy
+    during init(), which requests a mode change that crashes old HWCs
+  - follower_*: three flags that only function when pacesetter_selection
+    is active; keeping them enabled with pacesetter off is a no-op but
+    disabling makes intent explicit
+
+All other r4 flags (modeset_state_machine, synced_resolution_switch,
+filter_refresh_rates_within_config_group, supported_refresh_rate_update)
+are left at their aconfig-evaluated defaults. The boot-time safety for
+mode changes is handled in SurfaceFlinger.cpp (see sibling patches).
+
+Property overrides (debug.sf.*) are preserved for per-device tuning.
+---
+ .../surfaceflinger/common/FlagManager.cpp     | 23 +++++++++++++------
+ 1 file changed, 16 insertions(+), 7 deletions(-)
+
+diff --git a/services/surfaceflinger/common/FlagManager.cpp b/services/surfaceflinger/common/FlagManager.cpp
+index 4bb4d5b..d1e3f7a 100644
+--- a/services/surfaceflinger/common/FlagManager.cpp
++++ b/services/surfaceflinger/common/FlagManager.cpp
+@@ -269,15 +269,19 @@ FLAG_MANAGER_ACONFIG_FLAG(correct_dpi_with_display_size, "");
+ FLAG_MANAGER_ACONFIG_FLAG(deprecate_frame_tracker, "");
+ FLAG_MANAGER_ACONFIG_FLAG(deprecate_vsync_sf, "");
+ FLAG_MANAGER_ACONFIG_FLAG(disable_synthetic_vsync_for_performance, "");
+-FLAG_MANAGER_ACONFIG_FLAG(display_command_modeset, "debug.sf.display_command_modeset")
++// [GSI] Changes the HWC mode-change command path; unsafe on older vendor HWCs.
++// Re-enable per-device via debug.sf.display_command_modeset.
++bool FlagManager::display_command_modeset() const {
++    return getBoolProperty("debug.sf.display_command_modeset").value_or(false);
++}
+ FLAG_MANAGER_ACONFIG_FLAG(enable_layer_command_batching, "debug.sf.enable_layer_command_batching")
+ FLAG_MANAGER_ACONFIG_FLAG(enable_small_area_detection, "")
+ FLAG_MANAGER_ACONFIG_FLAG(flush_buffer_slots_to_uncache, "");
+-FLAG_MANAGER_ACONFIG_FLAG(follower_arbitrary_refresh_rate_selection,
+-                          "debug.sf.follower_arbitrary_refresh_rate_selection");
+-FLAG_MANAGER_ACONFIG_FLAG(follower_display_backpressure, "debug.sf.follower_display_backpressure");
+-FLAG_MANAGER_ACONFIG_FLAG(force_slower_follower_gpu_composition,
+-                          "debug.sf.force_slower_follower_gpu_composition");
++// [GSI] Follower flags are only meaningful when pacesetter_selection is active.
++bool FlagManager::follower_arbitrary_refresh_rate_selection() const {
++    return getBoolProperty("debug.sf.follower_arbitrary_refresh_rate_selection").value_or(false);
++}
++bool FlagManager::follower_display_backpressure() const {
++    return getBoolProperty("debug.sf.follower_display_backpressure").value_or(false);
++}
++bool FlagManager::force_slower_follower_gpu_composition() const {
++    return getBoolProperty("debug.sf.force_slower_follower_gpu_composition").value_or(false);
++}
+ FLAG_MANAGER_ACONFIG_FLAG(fp16_client_target, "debug.sf.fp16_client_target")
+ FLAG_MANAGER_ACONFIG_FLAG(frame_rate_category_mrr, "debug.sf.frame_rate_category_mrr")
+ FLAG_MANAGER_ACONFIG_FLAG(game_default_frame_rate, "")
+@@ -285,9 +289,14 @@ FLAG_MANAGER_ACONFIG_FLAG(graphite_renderengine, "debug.renderengine.graphite")
+ FLAG_MANAGER_ACONFIG_FLAG(hdcp_level_hal, "")
+ FLAG_MANAGER_ACONFIG_FLAG(hdcp_negotiation, "debug.sf.hdcp_negotiation");
+ FLAG_MANAGER_ACONFIG_FLAG(local_tonemap_screenshots, "debug.sf.local_tonemap_screenshots");
+-FLAG_MANAGER_ACONFIG_FLAG(modeset_state_machine, "");
++FLAG_MANAGER_ACONFIG_FLAG(modeset_state_machine, "")
+ FLAG_MANAGER_ACONFIG_FLAG(no_vsyncs_on_screen_off, "debug.sf.no_vsyncs_on_screen_off")
+-FLAG_MANAGER_ACONFIG_FLAG(pacesetter_selection, "debug.sf.pacesetter_selection")
++// [GSI] Triggers applyRefreshRateSelectorPolicy during init(), requesting a
++// mode change before the display pipeline is ready. The initial reselection is
++// already suppressed in onNewFrontInternalDisplay (see patch 5/6), but
++// disabling pacesetter avoids the request at the source entirely.
++bool FlagManager::pacesetter_selection() const {
++    return getBoolProperty("debug.sf.pacesetter_selection").value_or(false);
++}
+ FLAG_MANAGER_ACONFIG_FLAG(parse_edid_version_and_input_type,
+                           "debug.sf.parse_edid_version_and_input_type");
+ FLAG_MANAGER_ACONFIG_FLAG(protected_if_client, "")
+-- 
+2.53.0
