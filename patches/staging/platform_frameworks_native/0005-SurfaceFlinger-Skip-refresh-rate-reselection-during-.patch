@@ -1,0 +1,48 @@
+From a1b2c3d4e5f6a7b8c9d0e1f2a3b4c5d6e7f8a9b0 Mon Sep 17 00:00:00 2001
+From: "Christopher A. Williamson" <contact@chrisaw.io>
+Date: Sat, 15 Mar 2026 12:00:00 +0000
+Subject: [PATCH 5/6] SurfaceFlinger: Skip refresh rate reselection during
+ initial display bring-up
+
+On GSI targets with multi-rate displays (e.g. 60Hz+120Hz),
+onNewFrontInternalDisplay calls applyRefreshRateSelectorPolicy during
+init. With no content layers, getRankedFrameRates uses Descending
+order, selecting the highest refresh rate (120Hz). The resulting
+setDesiredMode defers the mode switch to the first presentDisplay
+commit, which can cause vendor HWC implementations to destroy the
+composer client or fail the atomic commit, killing SurfaceFlinger.
+
+Skip applyRefreshRateSelectorPolicy on the initial display bring-up
+(oldFrontInternalDisplayPtr == nullptr), preserving the HWC boot
+default (typically 60Hz). DisplayManager will set the appropriate
+policy once the system is fully running. Subsequent display changes
+(hotplug, foldable switches) still re-evaluate as before.
+---
+ services/surfaceflinger/SurfaceFlinger.cpp | 11 ++++++++---
+ 1 file changed, 8 insertions(+), 3 deletions(-)
+
+diff --git a/services/surfaceflinger/SurfaceFlinger.cpp b/services/surfaceflinger/SurfaceFlinger.cpp
+index 549d2a4..f3a9b1c 100644
+--- a/services/surfaceflinger/SurfaceFlinger.cpp
++++ b/services/surfaceflinger/SurfaceFlinger.cpp
+@@ -8986,9 +8986,14 @@ void SurfaceFlinger::onNewFrontInternalDisplay(const DisplayDevice* oldFrontInte
+ 
+         mScheduler->designatePacesetterDisplay(mFrontInternalDisplayId);
+ 
+-        // Whether or not the policy of the new front internal display changed while it was powered
+-        // off (in which case its preferred mode has already been propagated to HWC via
+-        // setDesiredMode), the Scheduler's emittedModeOpt must be initialized to the newly
++        // [GSI] During initial display bring-up (no previous display), skip
++        // applyRefreshRateSelectorPolicy to avoid re-ranking modes with no
++        // layers, which selects the highest refresh rate and triggers a mode
++        // change that can crash vendor HWC implementations. DisplayManager
++        // will apply the appropriate policy once the system is fully running.
++        if (!oldFrontInternalDisplayPtr) return;
++
++        // For subsequent display changes (hotplug, fold/unfold), the Scheduler's emittedModeOpt must be initialized to the newly
+         // active mode, and the kernel idle timer of the front internal display must be toggled.
+         applyRefreshRateSelectorPolicy(mFrontInternalDisplayId,
+                                        newFrontInternalDisplay.refreshRateSelector());
+-- 
+2.53.0
+

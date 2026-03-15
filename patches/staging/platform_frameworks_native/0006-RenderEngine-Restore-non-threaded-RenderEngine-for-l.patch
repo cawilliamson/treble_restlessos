@@ -1,0 +1,47 @@
+From b2c3d4e5f6a7b8c9d0e1f2a3b4c5d6e7f8a9b0c1 Mon Sep 17 00:00:00 2001
+From: "Christopher A. Williamson" <contact@chrisaw.io>
+Date: Sat, 15 Mar 2026 12:30:00 +0000
+Subject: [PATCH 6/6] RenderEngine: Restore non-threaded RenderEngine for legacy vendor GPU drivers
+
+AOSP r4 removed support for non-threaded RenderEngine, forcing all
+backends through RenderEngineThreaded regardless of the
+debug.renderengine.backend property value. Some vendor GPU drivers
+(e.g. MediaTek MT6789 Mali-G57) set debug.renderengine.backend to
+"skiagl" and their EGL implementations hang during initialization
+when called from the RenderEngineThreaded worker thread instead of
+the main SF thread. This causes SF to be killed by init's service
+timeout and restarted, leaving the DRM/KMS state dirty and the
+display non-functional until a manual power cycle via the power
+button.
+
+Restore the r3 behavior: honor Threaded::No when the vendor
+explicitly requests it via the deprecated property, falling back
+to direct (non-threaded) RenderEngine creation.
+---
+ libs/renderengine/RenderEngine.cpp | 9 ++++++---
+ 1 file changed, 6 insertions(+), 3 deletions(-)
+
+diff --git a/libs/renderengine/RenderEngine.cpp b/libs/renderengine/RenderEngine.cpp
+index d3dc2feeb3..a1b2c3d4e5 100644
+--- a/libs/renderengine/RenderEngine.cpp
++++ b/libs/renderengine/RenderEngine.cpp
+@@ -58,10 +58,13 @@ std::unique_ptr<RenderEngine> RenderEngine::create(const RenderEngineCreationArg
+     }
+ 
+     if (args.threaded != Threaded::Yes) {
+-        ALOGE("Non-threaded RenderEngine not supported, please update or "
+-              "remove " PROPERTY_DEBUG_RENDERENGINE_BACKEND " to use a supported backend");
++        // [GSI] Some vendor GPU drivers (e.g. Mali-G57 on MT6789) hang during
++        // EGL init when called from the RenderEngineThreaded worker thread.
++        // Honor the vendor's explicit request for non-threaded operation.
++        ALOGW("Using non-threaded RenderEngine as requested by "
++              PROPERTY_DEBUG_RENDERENGINE_BACKEND " (legacy vendor compatibility)");
++        return createInstanceFactory();
+     }
+-
+     return renderengine::threaded::RenderEngineThreaded::create(createInstanceFactory);
+ }
+ 
+-- 
+2.53.0
+

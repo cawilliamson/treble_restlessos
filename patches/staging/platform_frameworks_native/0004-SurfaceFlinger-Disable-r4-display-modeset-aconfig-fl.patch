@@ -1,7 +1,7 @@
 From 385ebb2df1460dfda0a87811c33d09ff7554c490 Mon Sep 17 00:00:00 2001
 From: "Christopher A. Williamson" <contact@chrisaw.io>
 Date: Sun, 15 Mar 2026 07:56:44 +0000
-Subject: [PATCH 4/4] SurfaceFlinger: Disable r4 display/modeset aconfig flags for
+Subject: [PATCH 4/6] SurfaceFlinger: Disable r4 display/modeset aconfig flags for
  GSI
 
 AOSP android-16.0.0_r4 added display/modeset aconfig flags not
