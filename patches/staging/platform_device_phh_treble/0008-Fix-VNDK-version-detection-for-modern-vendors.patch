@@ -1,0 +1,42 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: "Christopher A. Williamson" <contact@chrisaw.io>
+Date: Sun, 16 Mar 2026 18:00:00 +0000
+Subject: [PATCH 8/8] Fix VNDK version detection for modern vendors
+
+vndk-detect only checks /vendor/etc/selinux/nonplat_sepolicy.cil which
+does not exist on Android 10+ vendor partitions. Add fallback detection
+via ro.vndk.version and ro.vendor.build.version.sdk from vendor
+build.prop so that persist.sys.vndk is set correctly on modern devices.
+
+Without this, ro.vndk.version remains empty, linkerconfig skips VNDK-SP
+search paths in vendor namespaces, and 32-bit vendor processes cannot
+resolve libraries from VNDK apexes (e.g. MTK OMX codecs fail to load
+android.hardware.graphics.common-V2-ndk_platform.so from the v32 apex).
+---
+ vndk-detect | 11 +++++++++++
+ 1 file changed, 11 insertions(+)
+
+diff --git a/vndk-detect b/vndk-detect
+index db19f19..db19f19 100755
+--- a/vndk-detect
++++ b/vndk-detect
+@@ -8,6 +8,17 @@ grep -oE 'init_[0-9_]+' /vendor/etc/selinux/nonplat_sepolicy.cil | \
+ while read version;do
+ 	setprop persist.sys.vndk $version
+ done
++
++# fallback for Android 10+ vendors without nonplat_sepolicy.cil
++if [ -z "$(getprop persist.sys.vndk)" ]; then
++	vndk_version=$(grep -m1 '^ro\.vndk\.version=' /vendor/build.prop 2>/dev/null | cut -d= -f2)
++	if [ -z "$vndk_version" ]; then
++		vndk_version=$(grep -m1 '^ro\.vendor\.build\.version\.sdk=' /vendor/build.prop 2>/dev/null | cut -d= -f2)
++	fi
++	if [ -n "$vndk_version" ]; then
++		setprop persist.sys.vndk "$vndk_version"
++	fi
++fi
+ 
+ if [ -d /sys/module/five ];then
+ 	if mount -o bind /mnt/phh/empty /sbin/adbd;then
+-- 
+2.53.0

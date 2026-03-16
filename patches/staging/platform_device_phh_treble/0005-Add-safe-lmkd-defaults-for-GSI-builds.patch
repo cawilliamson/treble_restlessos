@@ -1,0 +1,29 @@
+From c441caaa305b9f87342e6d0e484c4c866f8b4867 Mon Sep 17 00:00:00 2001
+From: "Christopher A. Williamson" <contact@chrisaw.io>
+Date: Sat, 7 Mar 2026 20:21:04 +0000
+Subject: [PATCH 5/8] Add safe lmkd defaults for GSI builds
+
+Disable critical_upgrade and enable kill_heaviest_task for more
+predictable memory management across diverse hardware.
+---
+ system.prop | 7 +++++++
+ 1 file changed, 7 insertions(+)
+
+diff --git a/system.prop b/system.prop
+index f3c0c45..4649f0d 100644
+--- a/system.prop
++++ b/system.prop
+@@ -49,3 +49,10 @@ bluetooth.profile.sap.server.enabled?=true
+ 
+ # Samsung vendors default to a Samsung-specific gadget for MTP. Set this to use AOSP's functionfs MTP
+ vendor.usb.use_ffs_mtp=1
++
++# lmkd tuning: safe defaults for GSI across diverse hardware
++# Disable critical_upgrade to prevent overly aggressive kills on devices
++# where memory pressure detection may not work correctly (e.g., older kernels)
++ro.lmk.critical_upgrade=false
++# Kill heaviest task first for more predictable memory management
++ro.lmk.kill_heaviest_task=true
+-- 
+2.53.0
+
