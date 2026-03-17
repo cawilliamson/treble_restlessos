@@ -13,14 +13,14 @@ initialise; without this override rw-system.sh crashes early (empty vndk
 var arithmetic) and the vendor value is never corrected, causing
 system_server to OOM-loop and the device to be stuck on bootsplash.
 ---
- system.prop | 12 ++++++++++++
- 1 file changed, 12 insertions(+)
+ system.prop | 13 +++++++++++++
+ 1 file changed, 13 insertions(+)
 
 diff --git a/system.prop b/system.prop
-index f3c0c45..4649f0d 100644
+index f3c0c45..8a2c5f4 100644
 --- a/system.prop
 +++ b/system.prop
-@@ -49,3 +49,15 @@ bluetooth.profile.sap.server.enabled?=true
+@@ -49,3 +49,16 @@ bluetooth.profile.sap.server.enabled?=true
  
  # Samsung vendors default to a Samsung-specific gadget for MTP. Set this to use AOSP's functionfs MTP
  vendor.usb.use_ffs_mtp=1
@@ -39,4 +39,3 @@ index f3c0c45..4649f0d 100644
 +dalvik.vm.heapsize?=512m
 -- 
 2.53.0
-

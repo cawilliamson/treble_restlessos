@@ -19,13 +19,13 @@ workaround which runs too late.
  1 file changed, 5 insertions(+)
 
 diff --git a/system.prop b/system.prop
-index dd28057..b3e2224 100644
+index 8a2c5f4..1b4e40a 100644
 --- a/system.prop
 +++ b/system.prop
-@@ -55,3 +55,8 @@ vendor.usb.use_ffs_mtp=1
- ro.lmk.critical_upgrade=false
- # Kill heaviest task first for more predictable memory management
- ro.lmk.kill_heaviest_task=true
+@@ -62,3 +62,8 @@ ro.lmk.kill_heaviest_task=true
+ # minimum while preserving larger vendor values via the ? default operator.
+ dalvik.vm.heapgrowthlimit?=256m
+ dalvik.vm.heapsize?=512m
 +# Force PSI-based kill strategy on all devices. Vendors with older kernels
 +# may set ro.lmk.use_minfree_levels=true which selects the legacy cgroup v1
 +# kill strategy. On cgroup v2 (standard since Android 12), this causes lmkd
@@ -33,4 +33,3 @@ index dd28057..b3e2224 100644
 +ro.lmk.use_new_strategy=true
 -- 
 2.53.0
-
