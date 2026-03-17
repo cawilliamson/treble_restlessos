@@ -1,6 +1,6 @@
-From bc8e93bef89faf0d699e9bbc5579232b20e5d0a7 Mon Sep 17 00:00:00 2001
+From c764223d658b36e30a8cb890777f937356947143 Mon Sep 17 00:00:00 2001
 From: "Christopher A. Williamson" <contact@chrisaw.io>
-Date: Tue, 17 Mar 2026 07:47:36 +0000
+Date: Tue, 17 Mar 2026 09:06:03 +0000
 Subject: [PATCH 2/2] rw-system.sh: drop ro.control_privapp_permissions downgrade
 
 GrapheneOS ships ro.control_privapp_permissions=enforce for security.
@@ -12,17 +12,18 @@ the unconditional override entirely.
  1 file changed, 2 deletions(-)
 
 diff --git a/rw-system.sh b/rw-system.sh
-index bdff3de..6a9f17a 100644
+index 83775d9..a1d5ea5 100644
 --- a/rw-system.sh
 +++ b/rw-system.sh
-@@ -1130,8 +1130,6 @@ if getprop ro.bionic.cpu_variant |grep -q kryo300;then
+@@ -1096,8 +1096,6 @@ if getprop ro.bionic.cpu_variant |grep -q kryo300;then
      setprop dalvik.vm.isa.arm64.features runtime
  fi
  
 -resetprop_phh ro.control_privapp_permissions log
 -
  if [ -f /vendor/etc/init/vendor.ozoaudio.media.c2@1.0-service.rc ];then
-     if [ "$vndk" -le 29 ]; then
+     if [ -n "$vndk" ] && [ "$vndk" -le 29 ]; then
          mount /system/etc/seccomp_policy/mediacodec.policy /vendor/etc/seccomp_policy/codec2.vendor.base.policy
 -- 
 2.53.0
+

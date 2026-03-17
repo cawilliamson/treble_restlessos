@@ -1,15 +1,14 @@
-From a812cafe08b31ee1235297ad0b626a422185f0e8 Mon Sep 17 00:00:00 2001
+From a70d561f003700c980d5367bf6b1e7ba9d23b8c0 Mon Sep 17 00:00:00 2001
 From: "Christopher A. Williamson" <contact@chrisaw.io>
-Date: Tue, 17 Mar 2026 08:26:19 +0000
-Subject: [PATCH 9/9] rw-system.sh: make defensive and fix several correctness
- issues
+Date: Tue, 17 Mar 2026 09:04:53 +0000
+Subject: [PATCH 9/9] rw-system.sh: make defensive and fix several correctness issues
 
 Guard all vndk numeric comparisons with [ -n "$vndk" ] so the
 script doesn't crash with a shell arithmetic error when vndk-detect
 fails to set persist.sys.vndk (e.g. on Android 10+ vendors without
 nonplat_sepolicy.cil). Without this guard the first [ "$vndk" -le 29 ]
-at line 395 exits the entire script with status 1, leaving dalvik heap
-limits and other per-device fixes unapplied.
+exits the entire script with status 1, leaving dalvik heap limits and
+other per-device fixes unapplied.
 
 Additional fixes:
 - Guard ro.product.first_api_level assignment to prevent setting it
@@ -17,22 +16,20 @@ Additional fixes:
 - Skip fixSPL() on Google vendor fingerprints -- Pixels don't need SPL
   spoofing and the keymaster bind-mounts are wasteful and potentially
   disruptive on verified-boot devices
-- Skip resize2fs on Google vendor fingerprints -- Pixel system partitions
-  are already at maximum size; the read-write remount and blockdev --setrw
-  are unsafe on dm-verity/overlayfs setups
-- Change ro.surface_flinger.use_color_management setprop to resetprop_phh -n
-  so it only acts as a fallback and doesn't override a vendor value that is
-  already set correctly
-- Guard find /sys fts_gesture_mode with a driver presence check to avoid
-  traversing the entire sysfs tree on every device every boot
-- Remove ro.config.low_ram block -- handled defensively via system.prop
-  dalvik.vm.heapgrowthlimit floor (see sibling patch)
+- Skip resize2fs on Google vendor fingerprints -- Pixel system
+  partitions are already at maximum size; the read-write remount and
+  blockdev --setrw are unsafe on dm-verity/overlayfs setups
+- Change ro.surface_flinger.use_color_management setprop to
+  resetprop_phh -n so it only acts as a fallback and never overrides
+  a vendor value that is already set correctly
+- Guard find /sys fts_gesture_mode with a driver presence check to
+  avoid traversing the entire sysfs tree on every device every boot
 ---
  rw-system.sh | 50 ++++++++++++++++++++++++++------------------------
  1 file changed, 26 insertions(+), 24 deletions(-)
 
 diff --git a/rw-system.sh b/rw-system.sh
-index 417211d..a1d5ea5 100644
+index 3ac9aa5..83775d9 100644
 --- a/rw-system.sh
 +++ b/rw-system.sh
 @@ -350,7 +350,7 @@ if [ "$(getprop ro.product.vendor.manufacturer)" = motorola ] && getprop ro.vend
@@ -143,8 +140,8 @@ index 417211d..a1d5ea5 100644
      setprop debug.stagefright.ccodec 0
  fi
  
-@@ -1097,29 +1097,31 @@ if getprop ro.bionic.cpu_variant |grep -q kryo300;then
- fi
+@@ -1099,29 +1099,31 @@ fi
+ resetprop_phh ro.control_privapp_permissions log
  
  if [ -f /vendor/etc/init/vendor.ozoaudio.media.c2@1.0-service.rc ];then
 -    if [ "$vndk" -le 29 ]; then
