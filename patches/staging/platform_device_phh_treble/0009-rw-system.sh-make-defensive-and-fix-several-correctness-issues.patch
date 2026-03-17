@@ -1,7 +1,8 @@
-From db93daf91463a168dee11275aecd588a8399e3b8 Mon Sep 17 00:00:00 2001
+From a812cafe08b31ee1235297ad0b626a422185f0e8 Mon Sep 17 00:00:00 2001
 From: "Christopher A. Williamson" <contact@chrisaw.io>
-Date: Tue, 17 Mar 2026 07:53:21 +0000
-Subject: [PATCH 9/9] rw-system.sh: make defensive and fix several correctness issues
+Date: Tue, 17 Mar 2026 08:26:19 +0000
+Subject: [PATCH 9/9] rw-system.sh: make defensive and fix several correctness
+ issues
 
 Guard all vndk numeric comparisons with [ -n "$vndk" ] so the
 script doesn't crash with a shell arithmetic error when vndk-detect
@@ -27,14 +28,14 @@ Additional fixes:
 - Remove ro.config.low_ram block -- handled defensively via system.prop
   dalvik.vm.heapgrowthlimit floor (see sibling patch)
 ---
- rw-system.sh | 60 +++++++++++++++++++++++-----------------------------
- 1 file changed, 27 insertions(+), 33 deletions(-)
+ rw-system.sh | 50 ++++++++++++++++++++++++++------------------------
+ 1 file changed, 26 insertions(+), 24 deletions(-)
 
 diff --git a/rw-system.sh b/rw-system.sh
-index 6a9f17a..defd81a 100644
+index 417211d..a1d5ea5 100644
 --- a/rw-system.sh
 +++ b/rw-system.sh
-@@ -360,7 +360,7 @@ if [ "$(getprop ro.product.vendor.manufacturer)" = motorola ] && getprop ro.vend
+@@ -350,7 +350,7 @@ if [ "$(getprop ro.product.vendor.manufacturer)" = motorola ] && getprop ro.vend
      setprop persist.sys.overlay.devinputjack true
  fi
  
@@ -43,7 +44,7 @@ index 6a9f17a..defd81a 100644
      if mount -o remount,rw /system; then
          resize2fs "$(grep ' /system ' /proc/mounts | cut -d ' ' -f 1)" || true
      else
-@@ -392,10 +392,11 @@ mkdir /mnt/phh/empty_dir
+@@ -382,10 +382,11 @@ mkdir /mnt/phh/empty_dir
  touch /mnt/phh/empty
  touch /mnt/phh/unreadable
  chmod 0 /mnt/phh/unreadable
@@ -57,7 +58,7 @@ index 6a9f17a..defd81a 100644
      fixSPL
  fi
  
-@@ -538,7 +539,7 @@ fi
+@@ -528,7 +529,7 @@ fi
  if [ "$(getprop ro.vendor.product.manufacturer)" = "motorola" ] || [ "$(getprop ro.product.vendor.manufacturer)" = "motorola" ]; then
      if getprop ro.vendor.product.device | grep -q -e nora -e ali -e hannah -e evert -e jeter -e deen -e james -e pettyl -e jater; then
          setprop  ro.audio.ignore_effects true
@@ -66,7 +67,7 @@ index 6a9f17a..defd81a 100644
              f="/vendor/lib/libeffects.so"
              # shellcheck disable=SC2010
              ctxt="$(ls -lZ $f | grep -oE 'u:object_r:[^:]*:s0')"
-@@ -599,18 +600,17 @@ if grep -qF 'PowerVR Rogue GE8100' /vendor/lib/egl/GLESv1_CM_mtk.so ||
+@@ -589,18 +590,17 @@ if grep -qF 'PowerVR Rogue GE8100' /vendor/lib/egl/GLESv1_CM_mtk.so ||
  
      setprop debug.hwui.renderer opengl
      setprop ro.skia.ignore_swizzle true
@@ -88,7 +89,7 @@ index 6a9f17a..defd81a 100644
      mount -o bind /system/phh/libnfc-nci-oreo.conf /system/etc/libnfc-nci.conf
  fi
  
-@@ -678,7 +678,7 @@ if getprop ro.vendor.build.fingerprint | grep -iq -E -e 'huawei|honor' || getpro
+@@ -668,7 +668,7 @@ if getprop ro.vendor.build.fingerprint | grep -iq -E -e 'huawei|honor' || getpro
      mount -o bind /system/phh/libnfc-nci-huawei.conf /system/etc/libnfc-nci.conf
  fi
  
@@ -97,7 +98,7 @@ index 6a9f17a..defd81a 100644
      for f in /vendor/lib/libfloatingfeature.so /vendor/lib64/libfloatingfeature.so; do
          [ ! -f "$f" ] && continue
          # shellcheck disable=SC2010
-@@ -709,7 +709,7 @@ if getprop ro.vendor.build.fingerprint | grep -qiE '^samsung'; then
+@@ -699,7 +699,7 @@ if getprop ro.vendor.build.fingerprint | grep -qiE '^samsung'; then
      fi
  
      if getprop ro.hardware | grep -q -e samsungexynos7870 -e qcom; then
@@ -106,7 +107,7 @@ index 6a9f17a..defd81a 100644
              setprop persist.sys.phh.sdk_override /vendor/bin/hw/rild=27
          fi
      fi
-@@ -752,7 +752,7 @@ if [ -n "$(getprop ro.boot.product.hardware.sku)" ] && [ -z "$(getprop ro.hw.oem
+@@ -742,7 +742,7 @@ if [ -n "$(getprop ro.boot.product.hardware.sku)" ] && [ -z "$(getprop ro.hw.oem
  	setprop ro.hw.oemName "$(getprop ro.boot.product.hardware.sku)"
  fi
  
@@ -115,7 +116,7 @@ index 6a9f17a..defd81a 100644
  	setprop persist.sys.phh.samsung_fingerprint 0
  	#obviously broken perms
  	if [ "$(stat -c '%U' /sys/class/sec/tsp/cmd)" == "root" ] &&
-@@ -913,7 +913,7 @@ for abi in "" 64;do
+@@ -879,7 +879,7 @@ for abi in "" 64;do
      fi
  done
  
@@ -124,7 +125,7 @@ index 6a9f17a..defd81a 100644
  
  if getprop ro.boot.boot_devices |grep -v , |grep -qE .;then
      ln -s /dev/block/platform/$(getprop ro.boot.boot_devices) /dev/block/bootdevice
-@@ -972,7 +972,7 @@ if [ -e /dev/sprd-adf-dev ];then
+@@ -938,7 +938,7 @@ if [ -e /dev/sprd-adf-dev ];then
  fi
  
  # Fix sensor services crashing on SPRD devices with Pie vendor
@@ -133,7 +134,7 @@ index 6a9f17a..defd81a 100644
      setprop persist.sys.phh.disable_sensor_direct_report true
  fi
  
-@@ -1015,7 +1015,7 @@ if getprop ro.build.overlay.deviceid |grep -qE '^RMX';then
+@@ -981,7 +981,7 @@ if getprop ro.build.overlay.deviceid |grep -qE '^RMX';then
      fi
  fi
  
@@ -142,7 +143,7 @@ index 6a9f17a..defd81a 100644
      setprop debug.stagefright.ccodec 0
  fi
  
-@@ -1131,29 +1131,31 @@ if getprop ro.bionic.cpu_variant |grep -q kryo300;then
+@@ -1097,29 +1097,31 @@ if getprop ro.bionic.cpu_variant |grep -q kryo300;then
  fi
  
  if [ -f /vendor/etc/init/vendor.ozoaudio.media.c2@1.0-service.rc ];then
@@ -184,19 +185,6 @@ index 6a9f17a..defd81a 100644
  fi
  
  if [ "$(stat -c '%U'  /dev/nxp_smartpa_dev)" == "root" ] &&
-@@ -1281,12 +1283,4 @@ fi
- # Enable pen mode on Lenovo/goodix
- echo 1 > /sys/devices/platform/goodix_ts.0/support_pen
- 
--# lmkd fix for low-RAM devices (e.g., Samsung A13)
--# On devices with <4GB RAM, lmkd can fail to initialise properly due to
--# cgroup/PSI/BPF issues with older vendor kernels, causing blank screens
--# and system app crashes. Setting ro.config.low_ram forces lmkd to use
--# the PSI-based "new strategy" which avoids the problematic cgroup v1 path.
--totalram_kb=$(awk '/^MemTotal:/{print $2}' /proc/meminfo)
--if [ -n "$totalram_kb" ] && [ "$totalram_kb" -lt 4608000 ]; then
--    resetprop_phh ro.config.low_ram true
--fi
-+
 -- 
 2.53.0
+
