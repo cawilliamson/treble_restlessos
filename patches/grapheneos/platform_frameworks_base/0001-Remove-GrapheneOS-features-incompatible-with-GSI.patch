@@ -1,0 +1,85 @@
+From 7baec436f0074c98145f7daeb61cabcac0fdb324 Mon Sep 17 00:00:00 2001
+From: "Christopher A. Williamson" <contact@chrisaw.io>
+Date: Tue, 17 Mar 2026 23:25:46 +0000
+Subject: [PATCH 1/3] Remove GrapheneOS features incompatible with GSI
+
+Remove Auditor references from framework:
+- Remove app.attestation.auditor from GmcPackageManager HIDDEN_PACKAGES
+- Remove bundled Auditor app certificate digest from
+  read_additional_security_state_known_signers
+- Remove app.attestation.auditor from notification permission grants
+Auditor relies on hardware attestation tied to specific device models
+and will never pass verification on a GSI.
+
+Disable SELinux flags kernel support notification:
+The GSI does not ship a GrapheneOS-patched kernel so the custom
+SELinux flags proc attribute will never be present. The framework
+already gracefully disables the affected hardening features when the
+kernel lacks support, but still posts a persistent notification on
+every boot for debuggable builds. Remove the notification since it is
+expected and not actionable on a GSI.
+---
+ .../internal/gmscompat/sysservice/GmcPackageManager.java  | 1 -
+ core/res/res/values/config_ext.xml                        | 2 --
+ .../core/java/com/android/server/ext/SystemServerExt.java | 8 --------
+ .../pm/permission/DefaultPermissionGrantPolicy.java       | 1 -
+ 4 files changed, 12 deletions(-)
+
+diff --git a/core/java/com/android/internal/gmscompat/sysservice/GmcPackageManager.java b/core/java/com/android/internal/gmscompat/sysservice/GmcPackageManager.java
+index 3fe16a1a2..6476ed372 100644
+--- a/core/java/com/android/internal/gmscompat/sysservice/GmcPackageManager.java
++++ b/core/java/com/android/internal/gmscompat/sysservice/GmcPackageManager.java
+@@ -234,7 +234,6 @@ public class GmcPackageManager extends ApplicationPackageManager {
+     }
+ 
+     private static final ArraySet<String> HIDDEN_PACKAGES = new ArraySet<>(new String[] {
+-            "app.attestation.auditor",
+     });
+ 
+     private static void throwIfHidden(String pkgName) throws NameNotFoundException {
+diff --git a/core/res/res/values/config_ext.xml b/core/res/res/values/config_ext.xml
+index 9f66d22bc..8264085d1 100644
+--- a/core/res/res/values/config_ext.xml
++++ b/core/res/res/values/config_ext.xml
+@@ -46,8 +46,6 @@
+          The digest should be computed over the DER encoding of the trusted certificate
+          using the SHA-256 digest algorithm. -->
+     <string-array name="read_additional_security_state_known_signers">
+-        <!-- bundled Auditor app certdigest -->
+-        <item>990e04f0864b19f14f84e0e432f7a393f297ab105a22c1e1b10b442a4a62c42c</item>
+     </string-array>
+     <java-symbol type="array" name="read_additional_security_state_known_signers" />
+ 
+diff --git a/services/core/java/com/android/server/ext/SystemServerExt.java b/services/core/java/com/android/server/ext/SystemServerExt.java
+index ace1e6fd1..c80bdcde1 100644
+--- a/services/core/java/com/android/server/ext/SystemServerExt.java
++++ b/services/core/java/com/android/server/ext/SystemServerExt.java
+@@ -38,13 +38,5 @@ public final class SystemServerExt {
+     void initBgThread() {
+         WifiAutoOff.maybeInit(this);
+         BluetoothAutoOff.maybeInit(this);
+-
+-        if (Build.IS_DEBUGGABLE) {
+-            if (!SELinuxFlags.kernelSupportsSELinuxFlags()) {
+-                String title = "Kernel doesn't support SELinux flags";
+-                String msg = "App hardening features that use SELinux flags, such as DCL and ptrace restrictions, do not work.";
+-                new SystemErrorNotification("missing hardening", title, msg).show(context);
+-            }
+-        }
+     }
+ }
+diff --git a/services/core/java/com/android/server/pm/permission/DefaultPermissionGrantPolicy.java b/services/core/java/com/android/server/pm/permission/DefaultPermissionGrantPolicy.java
+index 053a6bd73..4ca754e99 100644
+--- a/services/core/java/com/android/server/pm/permission/DefaultPermissionGrantPolicy.java
++++ b/services/core/java/com/android/server/pm/permission/DefaultPermissionGrantPolicy.java
+@@ -961,7 +961,6 @@ final class DefaultPermissionGrantPolicy {
+             "com.android.contacts",
+             android.util.PackageUtils.getFirstPartyAppSourcePackageName(mContext),
+             "app.grapheneos.camera",
+-            "app.attestation.auditor",
+             "com.stevesoltys.seedvault",
+         };
+         for (String pkg : notifPackages) {
+-- 
+2.53.0
+

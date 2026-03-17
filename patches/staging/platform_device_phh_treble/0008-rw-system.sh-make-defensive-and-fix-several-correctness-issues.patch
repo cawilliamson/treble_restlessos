@@ -1,7 +1,7 @@
 From a70d561f003700c980d5367bf6b1e7ba9d23b8c0 Mon Sep 17 00:00:00 2001
 From: "Christopher A. Williamson" <contact@chrisaw.io>
 Date: Tue, 17 Mar 2026 09:04:53 +0000
-Subject: [PATCH 9/9] rw-system.sh: make defensive and fix several correctness issues
+Subject: [PATCH 8/8] rw-system.sh: make defensive and fix several correctness issues
 
 Guard all vndk numeric comparisons with [ -n "$vndk" ] so the
 script doesn't crash with a shell arithmetic error when vndk-detect

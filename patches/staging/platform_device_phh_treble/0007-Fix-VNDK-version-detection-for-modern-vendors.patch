@@ -1,7 +1,7 @@
 From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: "Christopher A. Williamson" <contact@chrisaw.io>
 Date: Sun, 16 Mar 2026 18:00:00 +0000
-Subject: [PATCH 8/9] Fix VNDK version detection for modern vendors
+Subject: [PATCH 7/8] Fix VNDK version detection for modern vendors
 
 vndk-detect only checks /vendor/etc/selinux/nonplat_sepolicy.cil which
 does not exist on Android 10+ vendor partitions. Add fallback detection

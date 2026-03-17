@@ -1,22 +1,28 @@
-From d99625bc4552f43f2d728bd7523737627f11e3a9 Mon Sep 17 00:00:00 2001
+From e55929edb4581cacc5a93e0c6928a9aae3116f2d Mon Sep 17 00:00:00 2001
 From: "Christopher A. Williamson" <contact@chrisaw.io>
-Date: Mon, 16 Feb 2026 09:43:20 +0000
-Subject: [PATCH 3/7] BpfHandler: convert abort() calls to non-fatal for old
- kernel GSI support
+Date: Tue, 17 Mar 2026 23:18:57 +0000
+Subject: [PATCH 3/4] BpfHandler and BpfNetMaps: convert fatal errors to non-fatal
+ for GSI
 
-On GSI builds targeting devices with older kernels (4.9-4.19), BPF
-programs may fail to load or attach. When this happens on 4.19+ kernels,
-the queryProgram() verification calls in initPrograms() abort(), causing
-a bootloop. Similarly, waitForBpf() aborts if it can't start
-mdnsd_netbpfload, waitForNetProgsLoaded() enters an infinite loop if
-BPF loading fails, and mapLockTest() aborts if test maps are missing.
+Convert abort() calls in BpfHandler.initPrograms(), the infinite loop
+in waitForNetProgsLoaded(), the abort() in waitForBpf(), and the
+first abort() in mapLockTest() to non-fatal warnings. This prevents
+the connectivity service from crashing on devices with older kernels
+where BPF programs may not have loaded correctly.
 
-Convert all of these fatal paths to non-fatal ALOGW/ALOGE logging so
-the system can continue booting with degraded BPF functionality rather
-than bootlooping.
+Add null checks for sLocalNetBlockedUidMap in BpfNetMaps and wrap
+removeUidFromLocalNetBlockMap calls in try/catch for NPE, preventing
+crashes during UID removal when BPF maps are unavailable.
+
+Make isAtLeast25Q2() always return false, disabling 25Q2-specific BPF
+features that require newer kernel support. This allows the
+connectivity stack to function on pre-5.10 kernels with degraded but
+operational BPF support.
 ---
- bpf/netd/BpfHandler.cpp | 61 +++++++++++++++++++++++++++--------------
- 1 file changed, 41 insertions(+), 20 deletions(-)
+ bpf/netd/BpfHandler.cpp                       | 61 +++++++++++++------
+ .../src/com/android/server/BpfNetMaps.java    |  7 ++-
+ .../connectivity/PermissionMonitor.java       | 17 +++++-
+ 3 files changed, 60 insertions(+), 25 deletions(-)
 
 diff --git a/bpf/netd/BpfHandler.cpp b/bpf/netd/BpfHandler.cpp
 index 09d6159..9ca6486 100644
@@ -123,6 +129,59 @@ index 09d6159..9ca6486 100644
  
      unique_fd fd1(bpf::mapRetrieveExclusiveRW(m2)); if (!fd1.ok()) abort();  // no conflict with fd0
      unique_fd fd2(bpf::mapRetrieveExclusiveRW(m2)); if ( fd2.ok()) abort();  // busy due to fd1
+diff --git a/service/src/com/android/server/BpfNetMaps.java b/service/src/com/android/server/BpfNetMaps.java
+index 44a4c29..fc609f8 100644
+--- a/service/src/com/android/server/BpfNetMaps.java
++++ b/service/src/com/android/server/BpfNetMaps.java
+@@ -483,8 +483,7 @@ public class BpfNetMaps {
+      NetworkStackUtils.isAtLeast25Q2 when it is moved to a static lib.
+      */
+     public static boolean isAtLeast25Q2() {
+-        return SdkLevel.isAtLeastB()  || (SdkLevel.isAtLeastV()
+-                && "Baklava".equals(Build.VERSION.CODENAME));
++        return false;
+     }
+ 
+     private void removeRule(final int uid, final long match, final String caller) {
+@@ -1079,6 +1078,10 @@ public class BpfNetMaps {
+     @RequiresApi(Build.VERSION_CODES.CUR_DEVELOPMENT)
+     public void removeUidFromLocalNetBlockMap(final int uid) {
+         throwIfPre25Q2("removeUidFromLocalNetBlockMap is not available on pre-B devices");
++        if (sLocalNetBlockedUidMap == null) {
++            Log.w(TAG, "sLocalNetBlockedUidMap is null, skipping delete for uid: " + uid);
++            return;
++        }
+         try {
+             sLocalNetBlockedUidMap.deleteEntry(new U32(uid));
+         } catch (ErrnoException e) {
+diff --git a/service/src/com/android/server/connectivity/PermissionMonitor.java b/service/src/com/android/server/connectivity/PermissionMonitor.java
+index 519d998..6da1da2 100755
+--- a/service/src/com/android/server/connectivity/PermissionMonitor.java
++++ b/service/src/com/android/server/connectivity/PermissionMonitor.java
+@@ -987,9 +987,20 @@ public class PermissionMonitor {
+         // Update uid permission.
+         updateAppIdTrafficPermission(uid);
+         if (BpfNetMaps.isAtLeast25Q2()) {
+-            mBpfNetMaps.removeUidFromLocalNetBlockMap(uid);
+-            if (hasSdkSandbox(uid)) mBpfNetMaps.removeUidFromLocalNetBlockMap(
+-                    sProcessShim.toSdkSandboxUid(uid));
++            try {
++                mBpfNetMaps.removeUidFromLocalNetBlockMap(uid);
++            } catch (NullPointerException e) {
++                Log.w(TAG, "BpfNetMaps.removeUidFromLocalNetBlockMap failed for UID " + uid + ": map is null");
++            }
++
++            try {
++                if (hasSdkSandbox(uid)) {
++                    mBpfNetMaps.removeUidFromLocalNetBlockMap(
++                            sProcessShim.toSdkSandboxUid(uid));
++                }
++            } catch (NullPointerException e) {
++                Log.w(TAG, "BpfNetMaps.removeUidFromLocalNetBlockMap failed for sandbox UID: map is null");
++            }
+         }
+         // Get the appId permission from all users then send the latest permission to netd.
+         final int appId = UserHandle.getAppId(uid);
 -- 
 2.53.0
 
