@@ -17,6 +17,22 @@ domain (which is permissive and has mount capabilities). The script
 checks whether /metadata is already a mount point — if a real
 partition was mounted by first-stage init, it is left alone. Only
 if /metadata is an unmounted stub is tmpfs overlaid on top.
+
+Safety analysis: tmpfs on /metadata is non-persistent (data lost on
+reboot), but this is safe here because:
+
+1. Metadata encryption (vold writing keys to /metadata/vold/
+   metadata_encryption/) requires a real metadata partition to exist.
+   Any device using metadata encryption MUST have that partition
+   mounted by first-stage init, so the mountpoint check will always
+   find it already mounted and skip the tmpfs. The encryption-key-loss
+   risk that would otherwise be catastrophic cannot occur.
+
+2. Devices that genuinely lack a metadata partition are pre-Q and do
+   not use metadata encryption, OTA virtual A/B snapshots, or APEX
+   updates -- all the consumers of /metadata that require persistence.
+   For these devices the tmpfs provides a writable stub so aconfigd
+   and similar services start cleanly without affecting correctness.
 ---
  00-fix-metadata.rc     | 2 ++
  00-fix-metadata.sh     | 7 +++++++
