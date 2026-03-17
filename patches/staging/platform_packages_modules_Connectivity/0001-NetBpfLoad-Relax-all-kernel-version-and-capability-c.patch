@@ -1,8 +1,8 @@
-From 4933fc7719cf6afa000324f80f307ed62b021d9b Mon Sep 17 00:00:00 2001
+From 456db3b506004f736f6017ce25a0ea65b9b7bec6 Mon Sep 17 00:00:00 2001
 From: "Christopher A. Williamson" <contact@chrisaw.io>
 Date: Thu, 12 Mar 2026 22:57:31 +0000
-Subject: [PATCH 1/7] NetBpfLoad: Relax all kernel version and capability
- checks for GSI
+Subject: [PATCH] NetBpfLoad: Relax all kernel version and capability checks
+ for GSI
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
 Content-Transfer-Encoding: 8bit
@@ -30,11 +30,11 @@ Affected checks:
 - Proc writes: unprivileged_bpf_disabled, bpf_jit_enable, bpf_jit_kallsyms
   (all documented as potentially failing on older kernels)
 ---
- bpf/loader/NetBpfLoad.cpp | 37 ++++++++++++++++---------------------
- 1 file changed, 16 insertions(+), 21 deletions(-)
+ bpf/loader/NetBpfLoad.cpp | 51 +++++++++++++++++++--------------------
+ 1 file changed, 25 insertions(+), 26 deletions(-)
 
 diff --git a/bpf/loader/NetBpfLoad.cpp b/bpf/loader/NetBpfLoad.cpp
-index 59b1f07..9055aa6 100644
+index 59b1f07..25e8519 100644
 --- a/bpf/loader/NetBpfLoad.cpp
 +++ b/bpf/loader/NetBpfLoad.cpp
 @@ -1605,62 +1605,57 @@ static int doLoad(char** argv, char * const envp[]) {
@@ -139,6 +139,46 @@ index 59b1f07..9055aa6 100644
          }
      }
  
+@@ -1844,13 +1839,15 @@ static int doLoad(char** argv, char * const envp[]) {
+         uint32_t progId = bpfGetNextProgId(0);  // expect 0 with errno == ENOENT
+         if (progId || errno != ENOENT) {
+             ALOGE("bpfGetNextProgId(zero) returned %u (errno %d)", progId, errno);
+-            return 32;
++            // [GSI] non-fatal: old vendor kernels may not satisfy this
++            failed = true;
+         }
+         errno = 0;
+         uint32_t mapId = bpfGetNextMapId(0);  // expect 0 with errno == ENOENT
+         if (mapId || errno != ENOENT) {
+             ALOGE("bpfGetNextMapId(zero) returned %u (errno %d)", mapId, errno);
+-            return 33;
++            // [GSI] non-fatal: old vendor kernels may not satisfy this
++            failed = true;
+         }
+     } else if (isAtLeastKernelVersion(4, 14)) {  // implies S through U QPR2
+         // bpfGetNext{Prog,Map}Id require 4.14+
+@@ -1863,7 +1860,8 @@ static int doLoad(char** argv, char * const envp[]) {
+             if (!next && errno == ENOENT) break;
+             if (next <= mapId) {
+                 ALOGE("bpfGetNextMapId(%u) returned %u errno %d", mapId, next, errno);
+-                return 34;
++                // [GSI] non-fatal: old vendor kernels may not satisfy this
++                failed = true;
+             }
+             mapId = next;
+         }
+@@ -1876,8 +1874,9 @@ static int doLoad(char** argv, char * const envp[]) {
+             // which causes bpfGetNextMapId to behave as bpfGetNextProgId,
+             // and thus it should return 0 with errno == ENOENT.
+             ALOGE("bpfGetNextMapId(final %d) returned %d errno %d", mapId, next, errno);
+-            if (next || errno != ENOENT) return 35;
+-            if (isAtLeastT || isAtLeastKernelVersion(4, 20)) return 36;
++            // [GSI] non-fatal: old vendor kernels may not satisfy this
++            if (next || errno != ENOENT) failed = true;
++            if (isAtLeastT || isAtLeastKernelVersion(4, 20)) failed = true;
+             // implies Android S with 4.14 or 4.19 kernel
+             ALOGW("Detected kernel with invalid BPF UAPI - disabling mainline use of eBPF.");
+             // leave a flag that we're 'done'
 -- 
 2.53.0
 
