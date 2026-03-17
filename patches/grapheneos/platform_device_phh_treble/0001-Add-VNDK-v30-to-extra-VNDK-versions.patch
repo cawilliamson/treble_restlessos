@@ -1,7 +1,7 @@
 From 3ea7432d9f5813122c626e95c8a04f256555fc46 Mon Sep 17 00:00:00 2001
 From: "Christopher A. Williamson" <contact@chrisaw.io>
 Date: Fri, 20 Feb 2026 14:08:15 +0000
-Subject: [PATCH] Add VNDK v30 to extra VNDK versions
+Subject: [PATCH 1/2] Add VNDK v30 to extra VNDK versions
 
 Include VNDK v30 prebuilts in the GSI image so devices shipping with
 VNDK 30 vendor images can find the matching libraries at runtime.

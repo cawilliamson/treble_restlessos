@@ -1,7 +1,7 @@
 From 849e00e3c28cf0c33617962dd177f92f9d31a899 Mon Sep 17 00:00:00 2001
 From: "Christopher A. Williamson" <contact@chrisaw.io>
 Date: Thu, 12 Mar 2026 21:02:19 +0000
-Subject: [PATCH 7/8] Force PSI-based lmkd strategy on cgroup v2
+Subject: [PATCH 7/9] Force PSI-based lmkd strategy on cgroup v2
 
 Vendors with older Android 12 bases set ro.lmk.use_minfree_levels=true
 which selects the legacy kill strategy requiring cgroup v1. On cgroup v2
