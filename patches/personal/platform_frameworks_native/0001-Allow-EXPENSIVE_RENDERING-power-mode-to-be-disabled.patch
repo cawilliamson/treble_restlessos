@@ -1,7 +1,7 @@
 From 2d1c76870fabeac576c6786f6d268493ebf3a95a Mon Sep 17 00:00:00 2001
 From: "Christopher A. Williamson" <contact@chrisaw.io>
 Date: Sun, 1 Jun 2025 21:05:59 +0100
-Subject: [PATCH 1/4] Allow EXPENSIVE_RENDERING power mode to be disabled
+Subject: [PATCH 1/5] Allow EXPENSIVE_RENDERING power mode to be disabled
 
 Disable the EXPENSIVE_RENDERING power mode in SurfaceFlinger's
 PowerAdvisor when persist.sys.phh.disable_expensive_rendering_mode is

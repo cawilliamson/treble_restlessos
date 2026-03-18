@@ -1,7 +1,7 @@
 From e1a2b08c9d74c2869a2e2752c647ed78bad22ca1 Mon Sep 17 00:00:00 2001
 From: "Christopher A. Williamson" <contact@chrisaw.io>
 Date: Sun, 15 Mar 2026 12:00:00 +0000
-Subject: [PATCH 4/4] SurfaceFlinger: Skip refresh rate reselection during initial
+Subject: [PATCH 4/5] SurfaceFlinger: Skip refresh rate reselection during initial
  display bring-up
 
 On GSI targets with multi-rate displays (e.g. 60Hz+120Hz),
