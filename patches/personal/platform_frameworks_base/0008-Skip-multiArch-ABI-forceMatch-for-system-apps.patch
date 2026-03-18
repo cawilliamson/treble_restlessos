@@ -1,0 +1,36 @@
+From 8bcca206718706cbbe553613501d8437c2bb65f2 Mon Sep 17 00:00:00 2001
+From: "Christopher A. Williamson" <contact@chrisaw.io>
+Date: Wed, 11 Mar 2026 00:00:00 +0000
+Subject: [PATCH 8/14] Skip multiArch ABI forceMatch for system apps
+
+Android 15+ (VANILLA_ICE_CREAM) introduced a forceMatch check in
+derivePackageAbi that rejects multiArch apps targeting SDK 35+ if
+they lack native libs for every ABI the device supports. This
+causes system apps like Vanadium (which ships 64-bit only) to be
+silently rejected during boot scan on multilib devices that
+advertise 32-bit ABI support via the vendor partition.
+
+Skip the forceMatch check for system apps since their ABI
+configuration is intentional and controlled by the ROM builder.
+Third-party app installs still get the full check.
+---
+ .../core/java/com/android/server/pm/PackageAbiHelperImpl.java  | 3 ++-
+ 1 file changed, 2 insertions(+), 1 deletion(-)
+
+diff --git a/services/core/java/com/android/server/pm/PackageAbiHelperImpl.java b/services/core/java/com/android/server/pm/PackageAbiHelperImpl.java
+index 639d02ca4..ccc234655 100644
+--- a/services/core/java/com/android/server/pm/PackageAbiHelperImpl.java
++++ b/services/core/java/com/android/server/pm/PackageAbiHelperImpl.java
+@@ -386,7 +386,8 @@ final class PackageAbiHelperImpl implements PackageAbiHelper {
+                 // Force the match for these cases
+                 // 1. pkg.getTargetSdkVersion >= Build.VERSION_CODES.VANILLA_ICE_CREAM
+                 // 2. cpuAbiOverride is null. If it is non-null, it is set via shell for testing
+-                final boolean forceMatch =
++                // 3. Not a system app (system apps are controlled by the ROM builder)
++                final boolean forceMatch = !isSystemApp &&
+                         pkg.getTargetSdkVersion() >= Build.VERSION_CODES.VANILLA_ICE_CREAM
+                         && cpuAbiOverride == null;
+ 
+-- 
+2.53.0
+

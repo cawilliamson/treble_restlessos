@@ -1,0 +1,61 @@
+From d8fb70be5ebdf0fc84a2dce777cd3842653490c7 Mon Sep 17 00:00:00 2001
+From: "Christopher A. Williamson" <contact@chrisaw.io>
+Date: Tue, 17 Mar 2026 23:12:58 +0000
+Subject: [PATCH 5/10] Add safe lmkd defaults, heap floor, and PSI strategy
+ for GSI builds
+
+Disable critical_upgrade and enable kill_heaviest_task for more
+predictable memory management across diverse hardware.
+
+Set a minimum dalvik.vm.heapgrowthlimit of 256m. Some vendor
+build.prop files ship an aggressive 16m limit tuned for their stock ROM.
+Android 16's system_server requires significantly more than 16m to
+initialise; without this override rw-system.sh crashes early (empty vndk
+var arithmetic) and the vendor value is never corrected, causing
+system_server to OOM-loop and the device to be stuck on bootsplash.
+
+Force PSI-based kill strategy on all devices. Vendors with older
+Android 12 bases set ro.lmk.use_minfree_levels=true which selects the
+legacy kill strategy requiring cgroup v1. On cgroup v2 (standard since
+Android 12), lmkd exits immediately with 'Old kill strategy can only be
+used with v1 cgroup hierarchy'. Without lmkd, ActivityManager cannot
+manage process lifecycle, causing cascading ANRs, SystemUI failure, and
+boot timeouts exceeding 90 seconds.
+
+Setting ro.lmk.use_new_strategy=true in system.prop forces PSI-based
+monitoring regardless of vendor minfree_levels setting. This takes
+effect before lmkd starts, unlike the rw-system.sh ro.config.low_ram
+workaround which runs too late.
+---
+ system.prop | 18 ++++++++++++++++++
+ 1 file changed, 18 insertions(+)
+
+diff --git a/system.prop b/system.prop
+index f3c0c45..1b4e40a 100644
+--- a/system.prop
++++ b/system.prop
+@@ -49,3 +49,21 @@ bluetooth.profile.sap.server.enabled?=true
+ 
+ # Samsung vendors default to a Samsung-specific gadget for MTP. Set this to use AOSP's functionfs MTP
+ vendor.usb.use_ffs_mtp=1
++
++# lmkd tuning: safe defaults for GSI across diverse hardware
++# Disable critical_upgrade to prevent overly aggressive kills on devices
++# where memory pressure detection may not work correctly (e.g., older kernels)
++ro.lmk.critical_upgrade=false
++# Kill heaviest task first for more predictable memory management
++ro.lmk.kill_heaviest_task=true
++
++# Heap floor: vendor build.prop values as low as 16m are seen in the wild.
++# Android 16 system_server needs ~200m+ to initialise; override with a safe
++# minimum while preserving larger vendor values via the ? default operator.
++dalvik.vm.heapgrowthlimit?=256m
++dalvik.vm.heapsize?=512m
++# Force PSI-based kill strategy on all devices. Vendors with older kernels
++# may set ro.lmk.use_minfree_levels=true which selects the legacy cgroup v1
++# kill strategy. On cgroup v2 (standard since Android 12), this causes lmkd
++# to exit immediately, breaking process lifecycle management entirely.
++ro.lmk.use_new_strategy=true
+-- 
+2.53.0
+

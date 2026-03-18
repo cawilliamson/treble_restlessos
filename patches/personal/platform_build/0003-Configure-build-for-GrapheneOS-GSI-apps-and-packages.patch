@@ -1,0 +1,156 @@
+From cc108facb50da003177adf7ec694810755d1b8d2 Mon Sep 17 00:00:00 2001
+From: "Christopher A. Williamson" <contact@chrisaw.io>
+Date: Tue, 17 Mar 2026 23:24:50 +0000
+Subject: [PATCH 3/4] Configure build for GrapheneOS GSI apps and packages
+
+Adapt the AOSP build configuration for GrapheneOS GSI:
+
+- Replace generic webview module with TrichromeWebView (Vanadium)
+- Use GrapheneOS app module names: TrichromeChrome (browser),
+  Camera (camera), Messaging (messaging)
+- Remove QuickSearchBox (not in GrapheneOS)
+- Remove packages that are not useful or not desired in GSI builds:
+  Calendar (deprecated, CalendarProvider kept), MusicFX, Auditor
+  (requires hardware attestation), PdfViewerGOS, InfoApp,
+  DeviceDiagnostics, EasterEgg, HardeningTestApp, su (managed via
+  Magisk), mtectrl/misctrl (Pixel-specific, can interfere with
+  vendor TEE)
+---
+ target/product/base_system.mk      | 4 ----
+ target/product/generic/Android.bp  | 3 +--
+ target/product/gsi/Android.bp      | 8 +++-----
+ target/product/handheld_product.mk | 4 ----
+ target/product/handheld_system.mk  | 3 ---
+ 5 files changed, 4 insertions(+), 18 deletions(-)
+
+diff --git a/target/product/base_system.mk b/target/product/base_system.mk
+index 35a3c2f..755e8ec 100644
+--- a/target/product/base_system.mk
++++ b/target/product/base_system.mk
+@@ -229,8 +229,6 @@ PRODUCT_PACKAGES += \
+     mke2fs \
+     mkfs.erofs \
+     monkey \
+-    misctrl \
+-    mtectrl \
+     ndc \
+     netd \
+     NetworkStack \
+@@ -564,7 +562,6 @@ PRODUCT_PACKAGES_DEBUG := \
+     ss \
+     start_with_lockagent \
+     strace \
+-    su \
+     sanitizer-status \
+     tracepath \
+     tracepath6 \
+@@ -572,7 +569,6 @@ PRODUCT_PACKAGES_DEBUG := \
+     unwind_info \
+     unwind_reg_info \
+     unwind_symbols \
+-    HardeningTestApp \
+ 
+ # The set of packages whose code can be loaded by the system server.
+ PRODUCT_SYSTEM_SERVER_APPS += \
+diff --git a/target/product/generic/Android.bp b/target/product/generic/Android.bp
+index 5a609aa..aeb06aa 100644
+--- a/target/product/generic/Android.bp
++++ b/target/product/generic/Android.bp
+@@ -419,7 +419,7 @@ android_filesystem_defaults {
+         ///////////////////////////////////////////
+         // media_product
+         ///////////////////////////////////////////
+-        "webview",
++        "TrichromeWebView",
+ 
+         ///////////////////////////////////////////
+         // base_product
+@@ -817,7 +817,6 @@ system_image_defaults {
+                 "MediaProviderLegacy", // base_system
+                 "MmsService", // handheld_system
+                 "MtpService", // handheld_system
+-                "MusicFX", // handheld_system
+                 "NetworkStack", // base_system
+                 "ONS", // telephony_system
+                 "PacProcessor", // handheld_system
+diff --git a/target/product/gsi/Android.bp b/target/product/gsi/Android.bp
+index 2fee93e..6cf5334 100644
+--- a/target/product/gsi/Android.bp
++++ b/target/product/gsi/Android.bp
+@@ -121,11 +121,11 @@ android_filesystem_defaults {
+         ///////////////////////////////////////////
+         // gsi_product
+         ///////////////////////////////////////////
+-        "Browser2",
+-        "Camera2",
++        "TrichromeChrome",
++        "Camera",
+         "Dialer",
+         "LatinIME",
+-        "messaging",
++        "Messaging",
+         "apns-full-conf.xml",
+         "frameworks-base-overlays",
+     ],
+@@ -179,13 +179,11 @@ android_system_image {
+ 
+         // handheld_product
+         "AvatarPicker",
+-        "Calendar",
+         "Contacts",
+         "DeskClock",
+         "Gallery2",
+         "Music",
+         "preinstalled-packages-platform-handheld-product.xml",
+-        "QuickSearchBox",
+         "SettingsIntelligence",
+         "frameworks-base-overlays",
+ 
+diff --git a/target/product/handheld_product.mk b/target/product/handheld_product.mk
+index dde952e..6686eee 100644
+--- a/target/product/handheld_product.mk
++++ b/target/product/handheld_product.mk
+@@ -23,17 +23,13 @@ $(call inherit-product, $(SRC_TARGET_DIR)/product/media_product.mk)
+ # /product packages
+ PRODUCT_PACKAGES += \
+     AppStore \
+-    Auditor \
+-    Calendar \
+     Camera \
+     Contacts \
+     DeskClock \
+     ExactCalculator \
+     Gallery2 \
+-    InfoApp \
+     LatinIME \
+     Music \
+-    PdfViewerGOS \
+     preinstalled-packages-platform-handheld-product.xml \
+     SettingsIntelligence \
+     ThemePicker \
+diff --git a/target/product/handheld_system.mk b/target/product/handheld_system.mk
+index dbd5feb..1cbcfea 100644
+--- a/target/product/handheld_system.mk
++++ b/target/product/handheld_system.mk
+@@ -47,10 +47,8 @@ PRODUCT_PACKAGES += \
+     CertInstaller \
+     CredentialManager \
+     DeviceAsWebcam \
+-    DeviceDiagnostics \
+     DocumentsUI \
+     DownloadProviderUi \
+-    EasterEgg \
+     ExternalStorageProvider \
+     FusedLocation \
+     GmsCompat \
+@@ -61,7 +59,6 @@ PRODUCT_PACKAGES += \
+     ManagedProvisioning \
+     MmsService \
+     MtpService \
+-    MusicFX \
+     NetworkLocation \
+     PacProcessor \
+     preinstalled-packages-platform-handheld-system.xml \
+-- 
+2.53.0
+

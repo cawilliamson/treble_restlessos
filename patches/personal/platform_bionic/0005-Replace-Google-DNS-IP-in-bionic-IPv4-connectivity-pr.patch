@@ -1,0 +1,29 @@
+From b5d315130f60ab3b9cf78a5de9a4cc35ee2fce39 Mon Sep 17 00:00:00 2001
+From: "Christopher A. Williamson" <contact@chrisaw.io>
+Date: Wed, 4 Mar 2026 23:41:03 +0000
+Subject: [PATCH 5/5] Replace Google DNS IP in bionic IPv4 connectivity probe
+
+The bionic libc IPv4 connectivity check uses 8.8.8.8 (Google DNS) as a
+routable destination address when determining the local source address.
+No connection or data is actually sent. Replace with 9.9.9.9 (Quad9)
+to remove the reference to Google-owned IP space.
+---
+ libc/dns/net/getaddrinfo.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/libc/dns/net/getaddrinfo.c b/libc/dns/net/getaddrinfo.c
+index ec09ba2..f31b927 100644
+--- a/libc/dns/net/getaddrinfo.c
++++ b/libc/dns/net/getaddrinfo.c
+@@ -385,7 +385,7 @@ static int
+ _have_ipv4(unsigned mark, uid_t uid) {
+ 	static const struct sockaddr_in sin_test = {
+ 		.sin_family = AF_INET,
+-		.sin_addr.s_addr = __constant_htonl(0x08080808L)  // 8.8.8.8 (routable public IP, not used to make a connection or send any data)
++		.sin_addr.s_addr = __constant_htonl(0x09090909L)  // 9.9.9.9 (routable public IP, not used to make a connection or send any data)
+ 	};
+ 	sockaddr_union addr = { .in = sin_test };
+ 	return _find_src_addr(&addr.generic, NULL, mark, uid) == 1;
+-- 
+2.53.0
+

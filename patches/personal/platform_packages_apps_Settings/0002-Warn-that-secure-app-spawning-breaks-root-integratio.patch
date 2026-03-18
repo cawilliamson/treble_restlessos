@@ -1,0 +1,30 @@
+From f93c805ce3966d5ab1e0a7e2ba4371208916df98 Mon Sep 17 00:00:00 2001
+From: "Christopher A. Williamson" <contact@chrisaw.io>
+Date: Tue, 17 Feb 2026 15:05:30 +0000
+Subject: [PATCH 2/4] Warn that secure app spawning breaks root integration
+
+Add a warning to the exec spawning footer text in Exploit Protection
+settings informing users that enabling this feature will break root
+solutions like Magisk and KernelSU.
+
+Change-Id: I0000000000000000000000000000000000000015
+---
+ res/values/strings_ext.xml | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/res/values/strings_ext.xml b/res/values/strings_ext.xml
+index 5ae66d4..5875cf1 100644
+--- a/res/values/strings_ext.xml
++++ b/res/values/strings_ext.xml
+@@ -113,7 +113,7 @@ There are HTTP, HTTPS, DNS, DNS-over-TLS and DNS-over-HTTPS connectivity checks.
+     <string name="exec_spawning_title_inner">Use secure app spawning</string>
+     <string name="exec_spawning_reboot_dialog">A device restart is required to change this setting.</string>
+     <string name="exec_spawning_reboot_dialog_btn_restart">Restart</string>
+-    <string name="exec_spawning_footer">Launch apps in a more secure way than Android which takes slightly longer and increases memory usage by app processes.</string>
++    <string name="exec_spawning_footer">Launch apps in a more secure way than Android which takes slightly longer and increases memory usage by app processes.\n\nWarning: Enabling this will break root (Magisk/KernelSU) integration, as root hooks injected into the Zygote process are lost when apps are re-exec\'d.</string>
+ 
+     <string name="widevine_provisioning_title">Widevine provisioning</string>
+     <string name="widevine_provisioning_enabled_grapheneos_proxy">GrapheneOS proxy</string>
+-- 
+2.52.0
+

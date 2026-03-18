@@ -1,0 +1,59 @@
+From 07b7cf46c4831b8423cb41b57ac29a9fb96455ca Mon Sep 17 00:00:00 2001
+From: "Christopher A. Williamson" <contact@chrisaw.io>
+Date: Sun, 8 Mar 2026 11:48:24 +0000
+Subject: [PATCH 9/10] Enable unauthenticated ADB on first boot for debugging
+
+On first boot after a fresh install or GSI upgrade, enable ADB with
+no authentication so boot issues can be diagnosed. Uses the normal
+init USB path (property-based) to avoid tearing down configfs which
+breaks vendor USB HALs.
+
+The ADB enable is handled by the fingerprint change detection block
+in rw-system.sh (patch 0008), which now sets ro.adb.secure=0 and
+persist.sys.usb.config=adb whenever the GSI fingerprint changes or
+is seen for the first time. Both checks use /cache/phh/gsi_fingerprint
+so there is a single source of truth for fingerprint state.
+
+phh-on-boot.sh cleans up at boot_completed by deleting the transient
+ro.adb.secure and persist.sys.usb.config properties and stopping adbd.
+
+Remove persist.sys.usb.config=adb from base.mk so ADB is off by
+default on subsequent boots.
+---
+ base.mk        | 1 -
+ phh-on-boot.sh | 7 +++++++
+ 2 files changed, 7 insertions(+), 1 deletion(-)
+
+diff --git a/base.mk b/base.mk
+index a88edfc..76b1c4d 100644
+--- a/base.mk
++++ b/base.mk
+@@ -42,7 +42,6 @@ PRODUCT_SYSTEM_DEFAULT_PROPERTIES += \
+ 
+ # Huawei HiSuite (also other OEM custom programs I guess) it's of no use in AOSP builds
+ PRODUCT_SYSTEM_DEFAULT_PROPERTIES += \
+-    persist.sys.usb.config=adb \
+     ro.cust.cdrom=/dev/null
+ 
+ # VNDK config files
+diff --git a/phh-on-boot.sh b/phh-on-boot.sh
+index 92a4740..5ebb2c1 100644
+--- a/phh-on-boot.sh
++++ b/phh-on-boot.sh
+@@ -38,6 +38,13 @@ if [ ! -f /metadata/securize_disable ]; then
+   resetprop_phh -n init.svc.flash_recovery stopped
+ fi
+ 
++# End first-boot debug ADB window.
++if [ "$(getprop ro.adb.secure)" = "0" ]; then
++    resetprop_phh --delete ro.adb.secure
++    resetprop_phh --delete persist.sys.usb.config
++    stop adbd
++fi
++
+ vndk="$(getprop persist.sys.vndk)"
+ [ -z "$vndk" ] && vndk="$(getprop ro.vndk.version |grep -oE '^[0-9]+')"
+ 
+-- 
+2.53.0
+

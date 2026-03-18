@@ -1,0 +1,48 @@
+From b41d56297ca0f9a7bc5e0c117aa9cf5145f82496 Mon Sep 17 00:00:00 2001
+From: "Christopher A. Williamson" <contact@chrisaw.io>
+Date: Mon, 23 Feb 2026 12:06:01 +0000
+Subject: [PATCH 3/4] Hide hardened malloc settings when using Scudo allocator
+
+The GSI build replaces GrapheneOS hardened_malloc with AOSP Scudo
+because hardened_malloc's 3 TiB virtual address space reservation
+exceeds the 512 GiB userspace limit on devices with 39-bit VA kernels.
+
+Since libhardened_malloc is not compiled into bionic, the per-app
+"Hardened memory allocator" toggle in Exploit Protection settings is a
+no-op: the DISABLE_HARDENED_MALLOC flag is set in the framework but
+never consumed by bionic, and every process unconditionally uses Scudo.
+
+Hide the preference from both the Exploit Protection settings list and
+the per-app info page to avoid presenting a non-functional switch.
+---
+ src/com/android/settings/applications/AppHardenedMalloc.kt  | 3 ++-
+ src/com/android/settings/spa/app/appinfo/AppInfoSettings.kt | 1 -
+ 2 files changed, 2 insertions(+), 2 deletions(-)
+
+diff --git a/src/com/android/settings/applications/AppHardenedMalloc.kt b/src/com/android/settings/applications/AppHardenedMalloc.kt
+index aac4953..c4718b2 100644
+--- a/src/com/android/settings/applications/AppHardenedMalloc.kt
++++ b/src/com/android/settings/applications/AppHardenedMalloc.kt
+@@ -50,5 +50,6 @@ class AppHardenedMallocFragment : AswExploitProtectionFragment<AswUseHardenedMal
+ class HardenedMallocAppListPrefController(context: Context, preferenceKey: String) :
+     AswAppListPrefController(context, preferenceKey, AswAdapterUseHardenedMalloc) {
+ 
+-    override fun getAvailabilityStatus() = AVAILABLE
++    // GSI uses Scudo instead of hardened_malloc; this toggle has no effect
++    override fun getAvailabilityStatus() = UNSUPPORTED_ON_DEVICE
+ }
+diff --git a/src/com/android/settings/spa/app/appinfo/AppInfoSettings.kt b/src/com/android/settings/spa/app/appinfo/AppInfoSettings.kt
+index e1fcc52..0e1fadb 100644
+--- a/src/com/android/settings/spa/app/appinfo/AppInfoSettings.kt
++++ b/src/com/android/settings/spa/app/appinfo/AppInfoSettings.kt
+@@ -185,7 +185,6 @@ private fun AppInfoSettings(packageInfoPresenter: PackageInfoPresenter) {
+ 
+         Category(title = stringResource(R.string.exploit_protection_category_title)) {
+             AppExploitProtectionCompatModeSwitchPreference(app, packageInfoPresenter)
+-            com.android.settings.applications.AppHardenedMallocPreference(app)
+             com.android.settings.applications.AppMemtagPreference(app)
+             com.android.settings.applications.AppExtendedVaSpacePreference(app)
+             com.android.settings.applications.AppNativeDebuggingPreference(app)
+-- 
+2.52.0
+
