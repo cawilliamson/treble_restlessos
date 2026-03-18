@@ -1,7 +1,7 @@
 From d858131039d38c0324f418ac750b30924ed6b8b7 Mon Sep 17 00:00:00 2001
 From: "Christopher A. Williamson" <contact@chrisaw.io>
 Date: Tue, 17 Mar 2026 17:12:08 +0000
-Subject: [PATCH 3/3] init: make auto_reboot timer failures non-fatal for GSI
+Subject: [PATCH 3/4] init: make auto_reboot timer failures non-fatal for GSI
 
 GrapheneOS's auto-reboot feature uses CLOCK_BOOTTIME_ALARM which requires
 CAP_WAKE_ALARM. On some vendor kernels shipped with GKI devices, timer_create
