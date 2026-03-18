@@ -25,7 +25,7 @@ clean:
     rm -rfv out/ src/ tmp/
 
 # full build process - simple linear chain
-build-all: build-container resolve-grapheneos-tag sync-grapheneos-sources apply-patches build-treble-app build-rom sign-rom compress-rom
+build-all: build-container resolve-grapheneos-tag sync-grapheneos-sources apply-patches build-treble-app build-rom sign-rom compress-rom tag-build
 
 # resolve which grapheneos tag to build from
 # priority: GRAPHENEOS_TAG env var > auto-detect from releases API > GRAPHENEOS_BRANCH env var
@@ -166,6 +166,18 @@ compress-rom: build-container
             mv -v "${src}" "${dest}" && \
             xz -9 -T0 -v -z "${dest}" && \
             cp -fv "${dest}.xz" /repo/out/'
+
+# tag the repo commit with the build version and push to origin
+tag-build:
+    #!/usr/bin/env bash
+    set -euo pipefail
+    ANDROID_VERSION=$(cat tmp/.android_version)
+    BUILD_NUM=$(cat tmp/.build_number)
+    RELEASE_TAG="${ANDROID_VERSION}-${BUILD_NUM}"
+    echo "Tagging build as ${RELEASE_TAG}..."
+    git tag -f "${RELEASE_TAG}"
+    git push origin -f "${RELEASE_TAG}"
+    echo "Tagged and pushed ${RELEASE_TAG}"
 
 # copy images to web directory
 copy-to-webdir: build-container
