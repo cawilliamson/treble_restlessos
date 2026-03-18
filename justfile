@@ -164,6 +164,7 @@ compress-rom: build-container
             src="system.img" && \
             dest="GrapheneOS-arm64-ab-${VERSION_TAG}.img" && \
             mv -v "${src}" "${dest}" && \
+            zsyncmake -v -o "/repo/out/${dest}.zsync" "${dest}" && \
             xz -9 -T0 -v -z "${dest}" && \
             cp -fv "${dest}.xz" /repo/out/'
 
@@ -190,6 +191,7 @@ copy-to-webdir: build-container
             RELEASE_NAME="GrapheneOS-ab-${VERSION_TAG}" && \
             mkdir -p "/web/${RELEASE_NAME}" && \
             cp -fv /repo/out/*.img.xz "/web/${RELEASE_NAME}/" && \
+            cp -fv /repo/out/*.img.zsync "/web/${RELEASE_NAME}/" && \
             echo "Images copied to /web/${RELEASE_NAME}/"'
 
 # upload images to github
@@ -205,5 +207,5 @@ upload-to-github:
         RELEASE_NAME="GrapheneOS-ab-${RELEASE_TAG}" && \
         RELEASE_DESCRIPTION="Download mirror: https://build.chrisaw.io/${RELEASE_NAME}/" && \
         gh release create -d -n "${RELEASE_DESCRIPTION}" -t "GrapheneOS ${RELEASE_TAG}" "${RELEASE_TAG}" && \
-        gh release upload "${RELEASE_TAG}" --clobber -- *.img.xz && \
+        gh release upload "${RELEASE_TAG}" --clobber -- *.img.xz *.img.zsync && \
         rm -rf .git/'
