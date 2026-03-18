@@ -1,8 +1,8 @@
-From a1b2c3d4e5f6a7b8c9d0e1f2a3b4c5d6e7f8a9b0 Mon Sep 17 00:00:00 2001
+From e1a2b08c9d74c2869a2e2752c647ed78bad22ca1 Mon Sep 17 00:00:00 2001
 From: "Christopher A. Williamson" <contact@chrisaw.io>
-Date: Sat, 15 Mar 2026 12:00:00 +0000
-Subject: [PATCH 4/4] SurfaceFlinger: Skip refresh rate reselection during
- initial display bring-up
+Date: Sun, 15 Mar 2026 12:00:00 +0000
+Subject: [PATCH 4/4] SurfaceFlinger: Skip refresh rate reselection during initial
+ display bring-up
 
 On GSI targets with multi-rate displays (e.g. 60Hz+120Hz),
 onNewFrontInternalDisplay calls applyRefreshRateSelectorPolicy during
@@ -18,14 +18,15 @@ default (typically 60Hz). DisplayManager will set the appropriate
 policy once the system is fully running. Subsequent display changes
 (hotplug, foldable switches) still re-evaluate as before.
 ---
- services/surfaceflinger/SurfaceFlinger.cpp | 11 ++++++++---
- 1 file changed, 8 insertions(+), 3 deletions(-)
+ services/surfaceflinger/SurfaceFlinger.cpp | 28 ++++++++++++++++------
+ services/surfaceflinger/SurfaceFlinger.h   |  2 +-
+ 2 files changed, 22 insertions(+), 8 deletions(-)
 
 diff --git a/services/surfaceflinger/SurfaceFlinger.cpp b/services/surfaceflinger/SurfaceFlinger.cpp
-index 549d2a4..f3a9b1c 100644
+index 549d2a4f01..0235bc295a 100644
 --- a/services/surfaceflinger/SurfaceFlinger.cpp
 +++ b/services/surfaceflinger/SurfaceFlinger.cpp
-@@ -8986,9 +8986,14 @@ void SurfaceFlinger::onNewFrontInternalDisplay(const DisplayDevice* oldFrontInte
+@@ -8985,16 +8985,21 @@ void SurfaceFlinger::onNewFrontInternalDisplay(const DisplayDevice* oldFrontInte
  
          mScheduler->designatePacesetterDisplay(mFrontInternalDisplayId);
  
@@ -43,6 +44,56 @@ index 549d2a4..f3a9b1c 100644
          // active mode, and the kernel idle timer of the front internal display must be toggled.
          applyRefreshRateSelectorPolicy(mFrontInternalDisplayId,
                                         newFrontInternalDisplay.refreshRateSelector());
+     }
+ }
+ 
+-void SurfaceFlinger::onNewPacesetterDisplay() {
++void SurfaceFlinger::onNewPacesetterDisplay(bool isInitialBoot) {
+     SFTRACE_CALL();
+ 
+     // Whether or not the policy of the new pacesetter display changed while it was powered off in
+@@ -9002,6 +9007,15 @@ void SurfaceFlinger::onNewPacesetterDisplay() {
+     // Scheduler's emittedModeOpt must be initialized to the newly active mode, and the kernel idle
+     // timer of the pacesetter display must be toggled.
+     getRenderEngine().onActiveDisplaySizeChanged(findLargestFramebufferSizeLocked());
++
++    // [GSI] During initial display bring-up, skip applyRefreshRateSelectorPolicy.
++    // With no content layers, getRankedFrameRates selects the highest refresh rate
++    // (120Hz), triggering setDesiredMode. On MTK HWC this results in a DRM atomic
++    // commit that fails with EINVAL before the display pipeline is ready, leaving
++    // the CRTC non-functional and producing a black screen. DisplayManager will
++    // apply the correct policy once the system is fully running.
++    if (isInitialBoot) return;
++
+     const auto pacesetter = getPacesetterDisplayLocked();
+     applyRefreshRateSelectorPolicy(pacesetter->getPhysicalId(), pacesetter->refreshRateSelector());
+ }
+@@ -9412,9 +9426,9 @@ status_t SurfaceFlinger::sfdo_forcePacesetter(PhysicalDisplayId displayId) {
+                                    if (!mPhysicalDisplays.contains(displayId)) {
+                                        return NAME_NOT_FOUND;
+                                    }
+-                                   if (mScheduler->forcePacesetterDisplay(displayId)) {
+-                                       onNewPacesetterDisplay();
+-                                   }
++                                    if (mScheduler->forcePacesetterDisplay(displayId)) {
++                                        onNewPacesetterDisplay();
++                                    }
+                                    return OK;
+                                })
+             .get();
+diff --git a/services/surfaceflinger/SurfaceFlinger.h b/services/surfaceflinger/SurfaceFlinger.h
+index fb72754f60..a3f8fe1dab 100644
+--- a/services/surfaceflinger/SurfaceFlinger.h
++++ b/services/surfaceflinger/SurfaceFlinger.h
+@@ -1280,7 +1280,7 @@ private:
+                                    const DisplayDevice& newFrontInternalDisplay)
+             REQUIRES(mStateLock, kMainThreadContext);
+ 
+-    void onNewPacesetterDisplay() REQUIRES(mStateLock, kMainThreadContext);
++    void onNewPacesetterDisplay(bool isInitialBoot = false) REQUIRES(mStateLock, kMainThreadContext);
+ 
+     /*
+      * Debugging & dumpsys
 -- 
 2.53.0
 
