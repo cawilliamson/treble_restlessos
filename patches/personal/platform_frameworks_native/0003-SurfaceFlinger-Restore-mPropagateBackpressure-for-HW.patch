@@ -1,7 +1,7 @@
 From 7d1cdca9bb2559de2604f884f1511dd0223132da Mon Sep 17 00:00:00 2001
 From: "Christopher A. Williamson" <contact@chrisaw.io>
 Date: Thu, 12 Mar 2026 19:43:42 +0000
-Subject: [PATCH 3/5] SurfaceFlinger: Restore mPropagateBackpressure for HWC
+Subject: [PATCH 3/4] SurfaceFlinger: Restore mPropagateBackpressure for HWC
  backpressure control
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8

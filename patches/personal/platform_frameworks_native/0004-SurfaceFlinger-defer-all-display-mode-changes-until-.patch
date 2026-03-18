@@ -1,7 +1,7 @@
 From b0f1ffd3944a95d863fb6cd6f030a6d713def1c8 Mon Sep 17 00:00:00 2001
 From: "Christopher A. Williamson" <contact@chrisaw.io>
 Date: Wed, 18 Mar 2026 23:54:42 +0000
-Subject: [PATCH 5/5] SurfaceFlinger: defer all display mode changes until boot is
+Subject: [PATCH 4/4] SurfaceFlinger: defer all display mode changes until boot is
  finished
 
 On GSI targets with multi-rate displays (e.g. 60Hz+120Hz), the upstream
