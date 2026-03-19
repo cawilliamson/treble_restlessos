@@ -1,0 +1,64 @@
+From 811c019ee916014b4b651c1d6e052d2cee97ea1e Mon Sep 17 00:00:00 2001
+From: "Christopher A. Williamson" <contact@chrisaw.io>
+Date: Thu, 19 Mar 2026 07:25:03 +0000
+Subject: [PATCH 11/11] rw-system.sh: enable MTK ovl bring-up mode when DRM fbdev
+ emulation absent
+
+On some MTK devices, hwcomposer.mtk_common.so fails to initialise all
+DRM planes with EINVAL on the alpha and pixel blend mode KMS atomic
+properties.  The vendor kernel DRM driver does not expose these standard
+properties (seen on MT6789/Helio G99, likely other SoCs), causing:
+
+  [DRMDEV] failed to initialize all plane: -19 (ENODEV)
+  [DRMDEV] blankDisplay: failed to do atomic commit ret=-22
+
+With no valid plane configuration the display panel never receives a
+power-on command and the screen stays black, despite the OS fully
+booting and the HWC reporting internal fps activity.
+
+The condition is detectable at runtime: kernels compiled without
+CONFIG_DRM_FBDEV_EMULATION create /dev/dri/card0 but not /dev/fb0, and
+this correlates precisely with the kernels that also lack the atomic
+plane properties (both were dropped together in the same MTK kernel
+config lineage).
+
+Setting ro.vendor.mtk_ovl_bringup=1 switches the HWC from full-hwc
+mode to its bring-up fallback path, bypassing the plane property checks
+and allowing the display to come up via GPU composition.
+
+Condition: /dev/dri/card0 present, /dev/fb0 absent,
+           /vendor/lib64/hw/hwcomposer.mtk_common.so present.
+---
+ rw-system.sh | 16 ++++++++++++++++
+ 1 file changed, 16 insertions(+)
+
+diff --git a/rw-system.sh b/rw-system.sh
+index 7e740ce..239a55a 100644
+--- a/rw-system.sh
++++ b/rw-system.sh
+@@ -1121,6 +1121,22 @@ if [ "$board" = mt6768 ]; then
+ 	setprop ro.netflix.bsp_rev MTK6768-19055-1
+ fi
+ 
++# Some MTK devices use hwcomposer.mtk_common.so which requires either
++# working DRM plane properties (alpha, pixel blend mode) or ovl bring-up
++# mode.  When the vendor kernel DRM driver does not expose those standard
++# KMS atomic properties, all plane initialisation fails and the display
++# panel never powers on (black screen).  The reliable runtime signal for
++# this condition is DRM present (/dev/dri/card0) but no fbdev emulation
++# (/dev/fb0 absent) -- the latter is only missing when
++# CONFIG_DRM_FBDEV_EMULATION=n, which correlates exactly with the kernels
++# that also lack the atomic plane properties.
++# Setting ro.vendor.mtk_ovl_bringup=1 switches the HWC to its bring-up
++# fallback path, bypassing the plane property checks and allowing display
++# to function via GPU composition.
++if [ -e /dev/dri/card0 ] && [ ! -e /dev/fb0 ] && [ -e /vendor/lib64/hw/hwcomposer.mtk_common.so ]; then
++	resetprop_phh ro.vendor.mtk_ovl_bringup 1
++fi
++
+ if [ "$board" = lahaina ]; then
+ 	setprop ro.netflix.bsp_rev Q875-32774-1
+ fi
+-- 
+2.53.0
+

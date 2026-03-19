@@ -1,7 +1,7 @@
 From 4415969c239e0fc8705f6ae699ea373c3ef4a899 Mon Sep 17 00:00:00 2001
 From: "Christopher A. Williamson" <contact@chrisaw.io>
 Date: Wed, 18 Mar 2026 04:27:28 +0000
-Subject: [PATCH 8/10] rw-system.sh: defensive guards, securize rework, and
+Subject: [PATCH 8/11] rw-system.sh: defensive guards, securize rework, and
  build fixes
 
 Combine several rw-system.sh and base.mk changes into a single patch:

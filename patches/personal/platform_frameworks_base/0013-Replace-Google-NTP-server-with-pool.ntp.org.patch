@@ -1,7 +1,7 @@
 From d6ddc890bb9c5ec52f4e4564c8e0573b02e6d89b Mon Sep 17 00:00:00 2001
 From: "Christopher A. Williamson" <contact@chrisaw.io>
 Date: Wed, 4 Mar 2026 23:38:52 +0000
-Subject: [PATCH 13/14] Replace Google NTP server with pool.ntp.org
+Subject: [PATCH 13/15] Replace Google NTP server with pool.ntp.org
 
 The default NTP server time.android.com is a Google-operated endpoint.
 Replace it with pool.ntp.org which is the community-maintained NTP Pool

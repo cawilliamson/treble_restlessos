@@ -1,4 +1,4 @@
-From cc108facb50da003177adf7ec694810755d1b8d2 Mon Sep 17 00:00:00 2001
+From 4177730421e2864fd72e7184060173eecb885c5b Mon Sep 17 00:00:00 2001
 From: "Christopher A. Williamson" <contact@chrisaw.io>
 Date: Tue, 17 Mar 2026 23:24:50 +0000
 Subject: [PATCH 3/4] Configure build for GrapheneOS GSI apps and packages
@@ -15,13 +15,15 @@ Adapt the AOSP build configuration for GrapheneOS GSI:
   DeviceDiagnostics, EasterEgg, HardeningTestApp, su (managed via
   Magisk), mtectrl/misctrl (Pixel-specific, can interfere with
   vendor TEE)
+- Add LiveWallpapersPicker to enable live wallpaper support for
+  third-party live wallpapers (e.g. from F-Droid or sideloaded)
 ---
  target/product/base_system.mk      | 4 ----
  target/product/generic/Android.bp  | 3 +--
- target/product/gsi/Android.bp      | 8 +++-----
+ target/product/gsi/Android.bp      | 9 ++++-----
  target/product/handheld_product.mk | 4 ----
  target/product/handheld_system.mk  | 3 ---
- 5 files changed, 4 insertions(+), 18 deletions(-)
+ 5 files changed, 5 insertions(+), 18 deletions(-)
 
 diff --git a/target/product/base_system.mk b/target/product/base_system.mk
 index 35a3c2f..755e8ec 100644
@@ -74,7 +76,7 @@ index 5a609aa..aeb06aa 100644
                  "ONS", // telephony_system
                  "PacProcessor", // handheld_system
 diff --git a/target/product/gsi/Android.bp b/target/product/gsi/Android.bp
-index 2fee93e..6cf5334 100644
+index 2fee93e..a61d544 100644
 --- a/target/product/gsi/Android.bp
 +++ b/target/product/gsi/Android.bp
 @@ -121,11 +121,11 @@ android_filesystem_defaults {
@@ -92,7 +94,7 @@ index 2fee93e..6cf5334 100644
          "apns-full-conf.xml",
          "frameworks-base-overlays",
      ],
-@@ -179,13 +179,11 @@ android_system_image {
+@@ -179,13 +179,12 @@ android_system_image {
  
          // handheld_product
          "AvatarPicker",
@@ -100,6 +102,7 @@ index 2fee93e..6cf5334 100644
          "Contacts",
          "DeskClock",
          "Gallery2",
++        "LiveWallpapersPicker",
          "Music",
          "preinstalled-packages-platform-handheld-product.xml",
 -        "QuickSearchBox",
