@@ -134,6 +134,7 @@ build-rom: build-container
             popd && \
             rm -rfv out/.lock out/soong/.intermediates/prebuilts/ out/target/product/tdgsi_arm64_ab/ && \
             rm -fv /repo/tmp/*.img* /repo/out/*.img* && \
+            rm -rfv /repo/out/zsync/ && \
             . build/envsetup.sh && \
             lunch treble_arm64_bvN-${ANDROID_VERSION_TAG_VAL}-userdebug && \
             make systemimage -j$(nproc --all) && \
