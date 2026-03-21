@@ -1,17 +1,17 @@
-From 4415969c239e0fc8705f6ae699ea373c3ef4a899 Mon Sep 17 00:00:00 2001
+From d48a2f2712283ec3d2ccfcf88445b170f95dbd83 Mon Sep 17 00:00:00 2001
 From: "Christopher A. Williamson" <contact@chrisaw.io>
 Date: Wed, 18 Mar 2026 04:27:28 +0000
-Subject: [PATCH 8/11] rw-system.sh: defensive guards, securize rework, and
- build fixes
+Subject: [PATCH 8/11] rw-system.sh: defensive guards, securize rework, and build
+ fixes
 
 Combine several rw-system.sh and base.mk changes into a single patch:
 
 Defensive guards for vndk detection failures:
 Guard all vndk numeric comparisons with [ -n "$vndk" ] to prevent
 shell arithmetic errors when vndk-detect fails. Guard first_api_level
-assignment. Skip fixSPL() and resize2fs on Google vendor fingerprints.
-Change color management setprop to resetprop_phh -n for fallback-only
-behaviour. Guard focaltech sysfs search with driver presence check.
+assignment. Change color management setprop to resetprop_phh -n for
+fallback-only behaviour. Guard focaltech sysfs search with driver
+presence check.
 
 Drop ro.control_privapp_permissions downgrade:
 GrapheneOS ships ro.control_privapp_permissions=enforce for security.
@@ -33,12 +33,12 @@ Remove stale ro.adb.secure=0 entries from base.mk and system.prop.
 Co-authored-by: Alberto Ponces <ponces26@gmail.com>
 ---
  base.mk             |   4 +-
- phh-on-boot.sh      |  27 ++++++
+ phh-on-boot.sh      |  27 +++++++
  phh-prop-handler.sh |  11 +++
- rw-system.sh        | 196 ++++++++++++++++++++++++++++----------------
+ rw-system.sh        | 193 ++++++++++++++++++++++++++++----------------
  system.prop         |   1 -
  vndk.rc             |  14 +++-
- 6 files changed, 175 insertions(+), 78 deletions(-)
+ 6 files changed, 173 insertions(+), 77 deletions(-)
 
 diff --git a/base.mk b/base.mk
 index 622501c..a88edfc 100644
@@ -127,7 +127,7 @@ index cae90d6..199f054 100644
      if [[ "$prop_value" != "0" && "$prop_value" != "1" ]]; then
          exit 1
 diff --git a/rw-system.sh b/rw-system.sh
-index 3ac9aa5..7e740ce 100644
+index 3ac9aa5..f74604e 100644
 --- a/rw-system.sh
 +++ b/rw-system.sh
 @@ -350,7 +350,7 @@ if [ "$(getprop ro.product.vendor.manufacturer)" = motorola ] && getprop ro.vend
@@ -135,11 +135,11 @@ index 3ac9aa5..7e740ce 100644
  fi
  
 -if ! getprop ro.vendor.build.fingerprint |grep samsung/;then
-+if ! getprop ro.vendor.build.fingerprint | grep -q -e samsung/ -e google/;then
++if ! getprop ro.vendor.build.fingerprint | grep -q -e samsung/;then
      if mount -o remount,rw /system; then
          resize2fs "$(grep ' /system ' /proc/mounts | cut -d ' ' -f 1)" || true
      else
-@@ -382,10 +382,11 @@ mkdir /mnt/phh/empty_dir
+@@ -382,7 +382,7 @@ mkdir /mnt/phh/empty_dir
  touch /mnt/phh/empty
  touch /mnt/phh/unreadable
  chmod 0 /mnt/phh/unreadable
@@ -147,13 +147,8 @@ index 3ac9aa5..7e740ce 100644
 +if [ -n "$vndk" ] && [ "$vndk" -le 29 ]; then
      mount /mnt/phh/unreadable /vendor/etc/seccomp_policy/configstore@1.1.policy
  fi
--if ! getprop ro.product.vendor.model | grep -q -e oppo6771; then
-+if ! getprop ro.product.vendor.model | grep -q -e oppo6771 && \
-+   ! getprop ro.vendor.build.fingerprint | grep -q -e google/; then
-     fixSPL
- fi
- 
-@@ -528,7 +529,7 @@ fi
+ if ! getprop ro.product.vendor.model | grep -q -e oppo6771; then
+@@ -528,7 +528,7 @@ fi
  if [ "$(getprop ro.vendor.product.manufacturer)" = "motorola" ] || [ "$(getprop ro.product.vendor.manufacturer)" = "motorola" ]; then
      if getprop ro.vendor.product.device | grep -q -e nora -e ali -e hannah -e evert -e jeter -e deen -e james -e pettyl -e jater; then
          setprop  ro.audio.ignore_effects true
@@ -162,7 +157,7 @@ index 3ac9aa5..7e740ce 100644
              f="/vendor/lib/libeffects.so"
              # shellcheck disable=SC2010
              ctxt="$(ls -lZ $f | grep -oE 'u:object_r:[^:]*:s0')"
-@@ -589,18 +590,17 @@ if grep -qF 'PowerVR Rogue GE8100' /vendor/lib/egl/GLESv1_CM_mtk.so ||
+@@ -589,18 +589,17 @@ if grep -qF 'PowerVR Rogue GE8100' /vendor/lib/egl/GLESv1_CM_mtk.so ||
  
      setprop debug.hwui.renderer opengl
      setprop ro.skia.ignore_swizzle true
@@ -184,7 +179,7 @@ index 3ac9aa5..7e740ce 100644
      mount -o bind /system/phh/libnfc-nci-oreo.conf /system/etc/libnfc-nci.conf
  fi
  
-@@ -668,7 +668,7 @@ if getprop ro.vendor.build.fingerprint | grep -iq -E -e 'huawei|honor' || getpro
+@@ -668,7 +667,7 @@ if getprop ro.vendor.build.fingerprint | grep -iq -E -e 'huawei|honor' || getpro
      mount -o bind /system/phh/libnfc-nci-huawei.conf /system/etc/libnfc-nci.conf
  fi
  
@@ -193,7 +188,7 @@ index 3ac9aa5..7e740ce 100644
      for f in /vendor/lib/libfloatingfeature.so /vendor/lib64/libfloatingfeature.so; do
          [ ! -f "$f" ] && continue
          # shellcheck disable=SC2010
-@@ -699,7 +699,7 @@ if getprop ro.vendor.build.fingerprint | grep -qiE '^samsung'; then
+@@ -699,7 +698,7 @@ if getprop ro.vendor.build.fingerprint | grep -qiE '^samsung'; then
      fi
  
      if getprop ro.hardware | grep -q -e samsungexynos7870 -e qcom; then
@@ -202,7 +197,7 @@ index 3ac9aa5..7e740ce 100644
              setprop persist.sys.phh.sdk_override /vendor/bin/hw/rild=27
          fi
      fi
-@@ -742,7 +742,7 @@ if [ -n "$(getprop ro.boot.product.hardware.sku)" ] && [ -z "$(getprop ro.hw.oem
+@@ -742,7 +741,7 @@ if [ -n "$(getprop ro.boot.product.hardware.sku)" ] && [ -z "$(getprop ro.hw.oem
  	setprop ro.hw.oemName "$(getprop ro.boot.product.hardware.sku)"
  fi
  
@@ -211,7 +206,7 @@ index 3ac9aa5..7e740ce 100644
  	setprop persist.sys.phh.samsung_fingerprint 0
  	#obviously broken perms
  	if [ "$(stat -c '%U' /sys/class/sec/tsp/cmd)" == "root" ] &&
-@@ -800,74 +800,128 @@ copyprop() {
+@@ -800,74 +799,128 @@ copyprop() {
          resetprop_phh "$1" "$(getprop "$2")"
      fi
  }
@@ -385,7 +380,7 @@ index 3ac9aa5..7e740ce 100644
  fi
  
  for abi in "" 64;do
-@@ -879,7 +933,7 @@ for abi in "" 64;do
+@@ -879,7 +932,7 @@ for abi in "" 64;do
      fi
  done
  
@@ -394,7 +389,7 @@ index 3ac9aa5..7e740ce 100644
  
  if getprop ro.boot.boot_devices |grep -v , |grep -qE .;then
      ln -s /dev/block/platform/$(getprop ro.boot.boot_devices) /dev/block/bootdevice
-@@ -938,7 +992,7 @@ if [ -e /dev/sprd-adf-dev ];then
+@@ -938,7 +991,7 @@ if [ -e /dev/sprd-adf-dev ];then
  fi
  
  # Fix sensor services crashing on SPRD devices with Pie vendor
@@ -403,7 +398,7 @@ index 3ac9aa5..7e740ce 100644
      setprop persist.sys.phh.disable_sensor_direct_report true
  fi
  
-@@ -981,7 +1035,7 @@ if getprop ro.build.overlay.deviceid |grep -qE '^RMX';then
+@@ -981,7 +1034,7 @@ if getprop ro.build.overlay.deviceid |grep -qE '^RMX';then
      fi
  fi
  
@@ -412,7 +407,7 @@ index 3ac9aa5..7e740ce 100644
      setprop debug.stagefright.ccodec 0
  fi
  
-@@ -1096,32 +1150,32 @@ if getprop ro.bionic.cpu_variant |grep -q kryo300;then
+@@ -1096,32 +1149,32 @@ if getprop ro.bionic.cpu_variant |grep -q kryo300;then
      setprop dalvik.vm.isa.arm64.features runtime
  fi
  
@@ -458,7 +453,7 @@ index 3ac9aa5..7e740ce 100644
  
  if [ "$(stat -c '%U'  /dev/nxp_smartpa_dev)" == "root" ] &&
 diff --git a/system.prop b/system.prop
-index 1b4e40a..6d56e8a 100644
+index 8a2c5f4..3208f40 100644
 --- a/system.prop
 +++ b/system.prop
 @@ -1,4 +1,3 @@
