@@ -1,23 +1,21 @@
-From fe37f397e858311b6175fdc12b0d70d02b8d132c Mon Sep 17 00:00:00 2001
+From d1e1430164f619cca6729c0b0d433642c82507f8 Mon Sep 17 00:00:00 2001
 From: "Christopher A. Williamson" <contact@chrisaw.io>
 Date: Wed, 18 Mar 2026 12:18:21 +0000
 Subject: [PATCH 4/5] libprocessgroup: fall back to v1 memcg for lmkd compatibility
  on GSI
 
 lmkd requires the memory cgroup controller in the v1 hierarchy when
-using its vmpressure-based kill strategy. This is triggered in two
+using its vmpressure-based kill strategy.  This is triggered in two
 distinct cases seen on GSI builds with vendor kernels:
 
 1. Kernel lacks CONFIG_PSI: lmkd cannot open /proc/pressure/memory,
    its PSI monitoring path fails, and the vmpressure fallback then also
    fails because it hard-requires a v1 memcg hierarchy.
 
-2. Vendor sets ro.lmk.use_minfree_levels=true: lmkd defaults
-   use_new_strategy=false and gates itself to the old kill strategy,
-   which requires v1 memcg regardless of whether PSI is available.
-   Vendor build.prop loads after system build.prop in PropertyLoadBoot
-   Defaults(), so a ro.lmk.use_new_strategy=true override in system.prop
-   is silently clobbered if the vendor also sets this property.
+2. Vendor sets ro.lmk.use_minfree_levels=true or
+   ro.lmk.use_new_strategy=false: lmkd gates itself to the old kill
+   strategy, which requires v1 memcg regardless of whether PSI is
+   available.
 
 In both cases the result is the same: lmkd exits immediately, Activity
 Manager spins in a connect-retry loop, cascading ANRs fire in SystemUI
@@ -25,30 +23,38 @@ and com.android.phone, and the device is stuck behind FallbackHome with
 'Settings has stopped'.
 
 Fix this at the CgroupSetup() layer, which runs as PID 1 before early-
-init and before lmkd starts, and crucially after PropertyLoadBootDefaults
-has committed all vendor properties. When the memory controller is
-declared as v2 and either PSI is absent or use_minfree_levels=true, fall
-back to mounting memory as a v1 cgroup at /dev/memcg. lmkd's
-memcg_version() then returns kV1 and init_mp_common() succeeds.
+init and before lmkd starts.
+
+Because CgroupSetup() runs before PropertyLoadBootDefaults() has
+committed vendor properties, GetBoolProperty() cannot see vendor-side
+lmk properties at this point.  Read /vendor/build.prop directly to
+detect use_minfree_levels=true or use_new_strategy=false.
+
+When the memory controller is declared as v2 and either PSI is absent or
+the vendor forces the old kill strategy, fall back to mounting memory as
+a v1 cgroup at /dev/memcg.  lmkd's memcg_version() then returns kV1 and
+init_mp_common() succeeds.
 
 Devices with PSI and without use_minfree_levels are unaffected.
 ---
- libprocessgroup/setup/cgroup_map_write.cpp | 34 ++++++++++++++++++++++
- 1 file changed, 34 insertions(+)
+ libprocessgroup/setup/cgroup_map_write.cpp | 49 ++++++++++++++++++++++
+ 1 file changed, 49 insertions(+)
 
 diff --git a/libprocessgroup/setup/cgroup_map_write.cpp b/libprocessgroup/setup/cgroup_map_write.cpp
-index 458e4cd..e0a5093 100644
+index 458e4cd..e47da4e 100644
 --- a/libprocessgroup/setup/cgroup_map_write.cpp
 +++ b/libprocessgroup/setup/cgroup_map_write.cpp
-@@ -28,6 +28,7 @@
+@@ -27,7 +27,9 @@
+ #include <sys/types.h>
  #include <unistd.h>
  
++#include <android-base/file.h>
  #include <android-base/logging.h>
 +#include <android-base/properties.h>
  #include <processgroup/cgroup_descriptor.h>
  #include <processgroup/processgroup.h>
  #include <processgroup/setup.h>
-@@ -290,6 +291,39 @@ bool CgroupSetup() {
+@@ -290,6 +292,53 @@ bool CgroupSetup() {
              return true;
          }
  
@@ -61,9 +67,11 @@ index 458e4cd..e0a5093 100644
 +        //   2. The vendor has set ro.lmk.use_minfree_levels=true: lmkd then
 +        //      defaults use_new_strategy=false and gates itself to the old kill
 +        //      strategy, which hard-requires v1 memcg regardless of PSI support.
-+        //      Vendor build.prop is loaded after system build.prop, so a
-+        //      ro.lmk.use_new_strategy=true override in system.prop is silently
-+        //      clobbered by any vendor value.
++        //
++        // CgroupSetup() runs as PID 1 before PropertyLoadBootDefaults() has
++        // loaded vendor properties.  GetBoolProperty() returns false for any
++        // vendor-side property at this point, so we must read /vendor/build.prop
++        // directly to detect case 2.
 +        //
 +        // In either case, if the memory controller is currently declared as v2 we
 +        // fall back to mounting it as a v1 cgroup at /dev/memcg. Devices where
@@ -71,13 +79,25 @@ index 458e4cd..e0a5093 100644
 +        // unaffected: the condition below evaluates false and the v2 path is taken.
 +        if (name == "memory" && descriptor.controller()->version() == 2) {
 +            const bool psi_available = access("/proc/pressure/memory", F_OK) == 0;
-+            const bool minfree_levels =
-+                    android::base::GetBoolProperty("ro.lmk.use_minfree_levels", false);
++
++            // read ro.lmk.use_minfree_levels directly from /vendor/build.prop
++            // because the property service has not loaded vendor properties yet.
++            bool minfree_levels = false;
++            std::string vendor_props;
++            if (android::base::ReadFileToString("/vendor/build.prop", &vendor_props)) {
++                // also check use_new_strategy=false which forces the old kill path
++                minfree_levels =
++                        vendor_props.find("ro.lmk.use_minfree_levels=true") != std::string::npos ||
++                        vendor_props.find("ro.lmk.use_new_strategy=false") != std::string::npos;
++            }
++
 +            if (!psi_available || minfree_levels) {
 +                LOG(WARNING) << "Mounting memory cgroup as v1 at /dev/memcg: "
-+                             << (psi_available ? "vendor ro.lmk.use_minfree_levels=true forces "
-+                                                 "old kill strategy"
-+                                               : "kernel lacks PSI support");
++                             << (!psi_available ? "kernel lacks PSI support"
++                                                : "vendor forces old lmkd kill strategy "
++                                                  "(use_minfree_levels=true or "
++                                                  "use_new_strategy=false in "
++                                                  "/vendor/build.prop)");
 +                descriptor = CgroupDescriptor(
 +                        1, name, "/dev/memcg", descriptor.mode(), descriptor.uid(),
 +                        descriptor.gid(), descriptor.controller()->flags() &
