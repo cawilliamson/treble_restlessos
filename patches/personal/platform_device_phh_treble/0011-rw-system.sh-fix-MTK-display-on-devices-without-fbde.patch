@@ -1,4 +1,4 @@
-From a9a980860dbb48c9f18507b4ae39f435e61858fe Mon Sep 17 00:00:00 2001
+From cb013c91de2f3a4cce3e26527b13937ebb44266c Mon Sep 17 00:00:00 2001
 From: "Christopher A. Williamson" <contact@chrisaw.io>
 Date: Sat, 21 Mar 2026 01:11:29 +0000
 Subject: [PATCH 11/12] rw-system.sh: fix MTK display on devices without fbdev or
@@ -14,7 +14,9 @@ CONFIG_DRM_FBDEV_EMULATION.
 Promote non-threaded RenderEngine backends to their threaded
 equivalents.  Android 16 removed non-threaded backend support; vendor
 partitions that set debug.renderengine.backend to skiagl or skiavk
-cause SurfaceFlinger to crash and restart on every boot.  Only the
+cause SurfaceFlinger to crash and restart on every boot.  Use
+resetprop_phh rather than setprop to bypass potential SELinux
+property_service denials from the default exec context.  Only the
 affected values are changed; devices that use the default auto-detect
 or already set a threaded backend are left untouched.
 
@@ -26,7 +28,7 @@ touchscreen.
  1 file changed, 30 insertions(+), 1 deletion(-)
 
 diff --git a/rw-system.sh b/rw-system.sh
-index f74604e..83883cc 100644
+index f74604e..09bea47 100644
 --- a/rw-system.sh
 +++ b/rw-system.sh
 @@ -1120,6 +1120,33 @@ if [ "$board" = mt6768 ]; then
@@ -56,8 +58,8 @@ index f74604e..83883cc 100644
 +# crash on every boot.  Promote to the threaded equivalent if needed.
 +re_backend="$(getprop debug.renderengine.backend)"
 +case "$re_backend" in
-+	skiagl)   setprop debug.renderengine.backend skiaglthreaded ;;
-+	skiavk)   setprop debug.renderengine.backend skiavkthreaded ;;
++	skiagl)   resetprop_phh debug.renderengine.backend skiaglthreaded ;;
++	skiavk)   resetprop_phh debug.renderengine.backend skiavkthreaded ;;
 +esac
 +
  if [ "$board" = lahaina ]; then
