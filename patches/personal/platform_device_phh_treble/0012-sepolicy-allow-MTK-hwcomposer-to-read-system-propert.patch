@@ -1,0 +1,31 @@
+From 87d52e2ec705413d343729b30fbf545bd49c6c56 Mon Sep 17 00:00:00 2001
+From: "Christopher A. Williamson" <contact@chrisaw.io>
+Date: Sat, 21 Mar 2026 01:05:31 +0000
+Subject: [PATCH 12/12] sepolicy: allow MTK hwcomposer to read system properties
+
+The MTK HWComposer HAL (hal_graphics_composer_default) needs to read
+system properties such as debug.sf.* and debug.renderengine.backend.
+Without this rule the reads are denied by SELinux (permissive=0),
+preventing the HAL from picking up display configuration overrides
+set by rw-system.sh.
+---
+ sepolicy/mediatek.te | 3 +++
+ 1 file changed, 3 insertions(+)
+
+diff --git a/sepolicy/mediatek.te b/sepolicy/mediatek.te
+index 2b24965..9dd47af 100644
+--- a/sepolicy/mediatek.te
++++ b/sepolicy/mediatek.te
+@@ -2,6 +2,9 @@ type hal_graphics_allocator_default, domain;
+ type proc_ged, file_type;
+ allowxperm domain proc_ged:file ioctl { 0x6700-0x67ff };
+ 
++# allow MTK hwcomposer to read system properties (debug.sf.*, etc.)
++allow hal_graphics_composer_default system_prop:file { getattr map open read };
++
+ allow init mnt_product_file:dir mounton;
+ 
+ type mtk_hal_audio, domain;
+-- 
+2.53.0
+

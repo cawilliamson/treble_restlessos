@@ -1,0 +1,76 @@
+From a9a980860dbb48c9f18507b4ae39f435e61858fe Mon Sep 17 00:00:00 2001
+From: "Christopher A. Williamson" <contact@chrisaw.io>
+Date: Sat, 21 Mar 2026 01:11:29 +0000
+Subject: [PATCH 11/12] rw-system.sh: fix MTK display on devices without fbdev or
+ mtk_common HWC
+
+Widen the MTK HWComposer bring-up mode detection to cover all MTK
+platforms (ro.board.platform matching mt*) rather than only devices
+with hwcomposer.mtk_common.so present.  Many MTK devices (e.g. TCL
+on MT6765) use a different HWC module name but suffer from the same
+DRM plane initialisation failure when the kernel lacks
+CONFIG_DRM_FBDEV_EMULATION.
+
+Promote non-threaded RenderEngine backends to their threaded
+equivalents.  Android 16 removed non-threaded backend support; vendor
+partitions that set debug.renderengine.backend to skiagl or skiavk
+cause SurfaceFlinger to crash and restart on every boot.  Only the
+affected values are changed; devices that use the default auto-detect
+or already set a threaded backend are left untouched.
+
+Also guard the trailing goodix sysfs write behind an existence check
+so it cannot fail the script's exit status on devices without a goodix
+touchscreen.
+---
+ rw-system.sh | 31 ++++++++++++++++++++++++++++++-
+ 1 file changed, 30 insertions(+), 1 deletion(-)
+
+diff --git a/rw-system.sh b/rw-system.sh
+index f74604e..83883cc 100644
+--- a/rw-system.sh
++++ b/rw-system.sh
+@@ -1120,6 +1120,33 @@ if [ "$board" = mt6768 ]; then
+ 	setprop ro.netflix.bsp_rev MTK6768-19055-1
+ fi
+ 
++# MTK HWComposer DRM plane and RenderEngine fixes.
++# On many MTK devices the vendor kernel DRM driver does not expose the
++# standard KMS atomic plane properties (alpha, pixel blend mode).  The
++# HWC then fails to initialise any overlay plane, atomic commits fail,
++# and the display stays black.  Setting ro.vendor.mtk_ovl_bringup=1
++# switches the HWC to its bring-up fallback path (GPU composition only),
++# bypassing the plane property checks.
++# The reliable runtime signal is the absence of /dev/fb0: kernels built
++# with CONFIG_DRM_FBDEV_EMULATION=n create no fb node, and those same
++# kernels also lack the standard KMS atomic plane properties.  On
++# devices where plane init succeeds, /dev/fb0 is present.
++if echo "$board" | grep -qiE '^mt[0-9]'; then
++	if [ ! -e /dev/fb0 ]; then
++		resetprop_phh ro.vendor.mtk_ovl_bringup 1
++	fi
++fi
++
++# Android 16 removed support for non-threaded RenderEngine backends.
++# Some vendor partitions set debug.renderengine.backend to "skiagl" or
++# "skiavk" (the non-threaded variants), which causes SurfaceFlinger to
++# crash on every boot.  Promote to the threaded equivalent if needed.
++re_backend="$(getprop debug.renderengine.backend)"
++case "$re_backend" in
++	skiagl)   setprop debug.renderengine.backend skiaglthreaded ;;
++	skiavk)   setprop debug.renderengine.backend skiavkthreaded ;;
++esac
++
+ if [ "$board" = lahaina ]; then
+ 	setprop ro.netflix.bsp_rev Q875-32774-1
+ fi
+@@ -1300,4 +1327,6 @@ if getprop ro.vendor.build.fingerprint | grep -iq -e Rebecco/K70_ROW; then
+ fi
+ 
+ # Enable pen mode on Lenovo/goodix
+-echo 1 > /sys/devices/platform/goodix_ts.0/support_pen
++if [ -e /sys/devices/platform/goodix_ts.0/support_pen ]; then
++    echo 1 > /sys/devices/platform/goodix_ts.0/support_pen
++fi
+-- 
+2.53.0
+
