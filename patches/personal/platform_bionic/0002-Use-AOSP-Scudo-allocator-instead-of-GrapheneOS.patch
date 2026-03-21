@@ -22,10 +22,10 @@ This removes:
 ---
  libc/Android.bp                   | 17 +------
  libc/bionic/heap_tagging.cpp      | 14 +-----
- libc/bionic/libc_init_dynamic.cpp | 82 -------------------------------
+ libc/bionic/libc_init_dynamic.cpp | 83 -------------------------------
  libc/bionic/malloc_common.h       | 20 --------
  libc/libc.map.txt                 |  1 -
- 5 files changed, 2 insertions(+), 132 deletions(-)
+ 5 files changed, 2 insertions(+), 133 deletions(-)
 
 diff --git a/libc/Android.bp b/libc/Android.bp
 index 95a7485..df8bec4 100644
@@ -114,7 +114,7 @@ index 6b29f8e..c7b6d22 100644
        break;
      case M_HEAP_TAGGING_LEVEL_TBI:
 diff --git a/libc/bionic/libc_init_dynamic.cpp b/libc/bionic/libc_init_dynamic.cpp
-index d6ee870..a3f960c 100644
+index d337585..a3f960c 100644
 --- a/libc/bionic/libc_init_dynamic.cpp
 +++ b/libc/bionic/libc_init_dynamic.cpp
 @@ -55,20 +55,6 @@
@@ -138,7 +138,7 @@ index d6ee870..a3f960c 100644
  extern "C" {
    extern void netdClientInit(void);
    extern int __cxa_atexit(void (*)(void *), void *, void *);
-@@ -93,73 +79,6 @@ extern "C" __attribute__((weak)) void __hwasan_library_unloaded(ElfW(Addr) base,
+@@ -93,74 +79,6 @@ extern "C" __attribute__((weak)) void __hwasan_library_unloaded(ElfW(Addr) base,
                                                                  const ElfW(Phdr)* phdr,
                                                                  ElfW(Half) phnum);
  
@@ -171,6 +171,7 @@ index d6ee870..a3f960c 100644
 -        || strcmp(device_name, "caiman") == 0
 -        || strcmp(device_name, "komodo") == 0
 -        || strcmp(device_name, "comet") == 0
+-        || strcmp(device_name, "stallion") == 0
 -        || strcmp(device_name, "frankel") == 0
 -        || strcmp(device_name, "blazer") == 0
 -        || strcmp(device_name, "mustang") == 0
@@ -212,7 +213,7 @@ index d6ee870..a3f960c 100644
  // We need a helper function for __libc_preinit because compiling with LTO may
  // inline functions requiring a stack protector check, but __stack_chk_guard is
  // not initialized at the start of __libc_preinit. __libc_preinit_impl will run
-@@ -192,7 +111,6 @@ static void __libc_preinit_impl() {
+@@ -193,7 +111,6 @@ static void __libc_preinit_impl() {
  
    // Hooks for various libraries to let them know that we're starting up.
    __libc_globals.mutate([](libc_globals* globals) {
@@ -266,5 +267,5 @@ index 7002ee7..950fc4f 100644
      getauxval;
      getc;
 -- 
-2.52.0
+2.53.0
 

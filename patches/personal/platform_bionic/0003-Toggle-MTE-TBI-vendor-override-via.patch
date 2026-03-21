@@ -15,14 +15,14 @@ Gate the vendor override on persist.sys.phh.gos.mte_vendor:
 Also add "none" as a recognized memtag property value that fully
 disables pointer tagging including TBI.
 ---
- libc/bionic/libc_init_mte.cpp | 46 +++++++++++++++++------------------
- 1 file changed, 22 insertions(+), 24 deletions(-)
+ libc/bionic/libc_init_mte.cpp | 47 ++++++++++++++++-------------------
+ 1 file changed, 22 insertions(+), 25 deletions(-)
 
 diff --git a/libc/bionic/libc_init_mte.cpp b/libc/bionic/libc_init_mte.cpp
-index 98d3c3b..14208cc 100644
+index a8dfa27..14208cc 100644
 --- a/libc/bionic/libc_init_mte.cpp
 +++ b/libc/bionic/libc_init_mte.cpp
-@@ -131,29 +131,16 @@ static bool get_environment_memtag_setting(HeapTaggingLevel* level) {
+@@ -131,30 +131,16 @@ static bool get_environment_memtag_setting(HeapTaggingLevel* level) {
  
    const bool is_vendor_prog = starts_with(progname, "/vendor/") || starts_with(progname, "/apex/com.google.");
    const bool is_debug_build = is_debuggable_build();
@@ -40,6 +40,7 @@ index 98d3c3b..14208cc 100644
 -                 && strcmp(device_name, "caiman") != 0
 -                 && strcmp(device_name, "komodo") != 0
 -                 && strcmp(device_name, "comet") != 0
+-                 && strcmp(device_name, "stallion") != 0
 -                 && strcmp(device_name, "frankel") != 0
 -                 && strcmp(device_name, "blazer") != 0
 -                 && strcmp(device_name, "mustang") != 0
@@ -61,7 +62,7 @@ index 98d3c3b..14208cc 100644
    }
  
    if (!is_debug_build) {
-@@ -174,7 +161,7 @@ static bool get_environment_memtag_setting(HeapTaggingLevel* level) {
+@@ -175,7 +161,7 @@ static bool get_environment_memtag_setting(HeapTaggingLevel* level) {
  
    if (!get_config_from_env_or_sysprops("MEMTAG_OPTIONS", sys_prop_names, arraysize(sys_prop_names),
                                         options_str, sizeof(options_str))) {
@@ -70,7 +71,7 @@ index 98d3c3b..14208cc 100644
    }
  
    if (strcmp("sync", options_str) == 0) {
-@@ -183,10 +170,12 @@ static bool get_environment_memtag_setting(HeapTaggingLevel* level) {
+@@ -184,10 +170,12 @@ static bool get_environment_memtag_setting(HeapTaggingLevel* level) {
      *level = M_HEAP_TAGGING_LEVEL_ASYNC;
    } else if (strcmp("off", options_str) == 0) {
      *level = M_HEAP_TAGGING_LEVEL_TBI;
@@ -84,7 +85,7 @@ index 98d3c3b..14208cc 100644
          options_str);
      return false;
    }
-@@ -293,6 +282,15 @@ __attribute__((no_sanitize("hwaddress", "memtag"))) void __libc_init_mte(
+@@ -294,6 +282,15 @@ __attribute__((no_sanitize("hwaddress", "memtag"))) void __libc_init_mte(
        __get_tagging_level(memtag_dynamic_entries, phdr_start, phdr_ct, load_bias, &memtag_stack);
    if (memtag_stack) __libc_shared_globals()->initial_memtag_stack_abi = true;
  
@@ -101,5 +102,5 @@ index 98d3c3b..14208cc 100644
      if (level == M_HEAP_TAGGING_LEVEL_ASYNC) {
        async_safe_format_log(ANDROID_LOG_INFO, "libc",
 -- 
-2.52.0
+2.53.0
 
