@@ -167,7 +167,7 @@ compress-rom: build-container
             zsync_dest="GrapheneOS-arm64-ab-${ANDROID_VERSION}.img" && \
             mv -v "${src}" "${dest}" && \
             mkdir -p /repo/out/zsync && \
-            zsyncmake -v -u "zsync/${zsync_dest}" -o "/repo/out/zsync/${zsync_dest}.zsync" "${dest}" && \
+            zsyncmake -v -u "${zsync_dest}" -o "/repo/out/zsync/${zsync_dest}.zsync" "${dest}" && \
             cp -v "${dest}" "/repo/out/zsync/${zsync_dest}" && \
             xz -9 -T0 -v -z "${dest}" && \
             cp -fv "${dest}.xz" /repo/out/'
