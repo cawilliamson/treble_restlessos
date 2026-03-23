@@ -1,54 +1,75 @@
-From cb013c91de2f3a4cce3e26527b13937ebb44266c Mon Sep 17 00:00:00 2001
+From 80a7517654fdbef43b879996e03970551a6324d3 Mon Sep 17 00:00:00 2001
 From: "Christopher A. Williamson" <contact@chrisaw.io>
-Date: Sat, 21 Mar 2026 01:11:29 +0000
-Subject: [PATCH 11/12] rw-system.sh: fix MTK display on devices without fbdev or
- mtk_common HWC
+Date: Mon, 23 Mar 2026 23:16:20 +0000
+Subject: [PATCH 11/11] rw-system.sh: fix MTK display on devices without fbdev
 
-Widen the MTK HWComposer bring-up mode detection to cover all MTK
-platforms (ro.board.platform matching mt*) rather than only devices
-with hwcomposer.mtk_common.so present.  Many MTK devices (e.g. TCL
-on MT6765) use a different HWC module name but suffer from the same
-DRM plane initialisation failure when the kernel lacks
-CONFIG_DRM_FBDEV_EMULATION.
+On many MTK devices the vendor kernel DRM driver does not expose the
+standard KMS atomic plane properties (alpha, pixel blend mode).  The
+HWC then fails to initialise any overlay plane; atomic commits for
+display power management also fail, leaving the display black or
+causing it to turn off after boot.  Integrated touch/display drivers
+(e.g. Chipone TDDI) use DRM notifier callbacks to track display
+state -- when display power transitions fail the touch driver thinks
+the panel is off and disables itself.
 
-Promote non-threaded RenderEngine backends to their threaded
-equivalents.  Android 16 removed non-threaded backend support; vendor
-partitions that set debug.renderengine.backend to skiagl or skiavk
-cause SurfaceFlinger to crash and restart on every boot.  Use
-resetprop_phh rather than setprop to bypass potential SELinux
-property_service denials from the default exec context.  Only the
-affected values are changed; devices that use the default auto-detect
-or already set a threaded backend are left untouched.
+The reliable runtime signal is the absence of /dev/fb0: kernels built
+with CONFIG_DRM_FBDEV_EMULATION=n create no fb node, and those same
+kernels also lack the standard KMS atomic plane properties.
 
-Also guard the trailing goodix sysfs write behind an existence check
-so it cannot fail the script's exit status on devices without a goodix
-touchscreen.
+Fix strategy (applied only when /dev/fb0 is absent on MTK):
+- persist.sys.phh.no_present_or_validate=true to force pure client
+  (GPU) composition, bypassing broken DRM atomic commit paths
+- debug.sf.latch_unsignaled=1 to prevent missed frames when the HWC
+  cannot signal fences properly
+
+Also promote non-threaded RenderEngine backends (skiagl/skiavk) to
+their threaded equivalents since Android 16 removed non-threaded
+backend support.  Guard the trailing goodix sysfs write behind an
+existence check.
+
+Add SELinux rules allowing the MTK HWComposer HAL to read debug_prop
+and system_prop so it can pick up the renderengine backend override
+and other display configuration properties set by rw-system.sh.
 ---
- rw-system.sh | 31 ++++++++++++++++++++++++++++++-
- 1 file changed, 30 insertions(+), 1 deletion(-)
+ rw-system.sh         | 44 +++++++++++++++++++++++++++++++++++++++++++-
+ sepolicy/mediatek.te |  5 +++++
+ 2 files changed, 48 insertions(+), 1 deletion(-)
 
 diff --git a/rw-system.sh b/rw-system.sh
-index f74604e..09bea47 100644
+index e2ec08e..9a7b6ce 100644
 --- a/rw-system.sh
 +++ b/rw-system.sh
-@@ -1120,6 +1120,33 @@ if [ "$board" = mt6768 ]; then
+@@ -1125,6 +1125,46 @@ if [ "$board" = mt6768 ]; then
  	setprop ro.netflix.bsp_rev MTK6768-19055-1
  fi
  
-+# MTK HWComposer DRM plane and RenderEngine fixes.
-+# On many MTK devices the vendor kernel DRM driver does not expose the
-+# standard KMS atomic plane properties (alpha, pixel blend mode).  The
-+# HWC then fails to initialise any overlay plane, atomic commits fail,
-+# and the display stays black.  Setting ro.vendor.mtk_ovl_bringup=1
-+# switches the HWC to its bring-up fallback path (GPU composition only),
-+# bypassing the plane property checks.
-+# The reliable runtime signal is the absence of /dev/fb0: kernels built
++# MTK HWComposer DRM plane and display power fixes.
++#
++# on many MTK devices the vendor kernel DRM driver does not expose the
++# standard KMS atomic plane properties (alpha, pixel blend mode).  the
++# HWC then fails to initialise any overlay plane; atomic commits for
++# display power management also fail, leaving the display black or
++# causing it to turn off after boot.  integrated touch/display drivers
++# (e.g. chipone TDDI) use DRM notifier callbacks to track display
++# state -- when display power transitions fail the touch driver thinks
++# the panel is off and disables itself.
++#
++# the reliable runtime signal is the absence of /dev/fb0: kernels built
 +# with CONFIG_DRM_FBDEV_EMULATION=n create no fb node, and those same
-+# kernels also lack the standard KMS atomic plane properties.  On
-+# devices where plane init succeeds, /dev/fb0 is present.
++# kernels also lack the standard KMS atomic plane properties.
++#
++# fix strategy (applied only when /dev/fb0 is absent on MTK):
++#  - persist.sys.phh.no_present_or_validate=true -- tells the
++#    trebledroid surfaceflinger shim to skip presentOrValidateDisplay,
++#    forcing pure client (GPU) composition and avoiding the atomic
++#    commit paths that fail without working DRM planes.
++#  - debug.sf.latch_unsignaled=1 -- allows SF to latch buffers that
++#    have not yet been signalled by the HWC fence, preventing missed
++#    frames when the HWC cannot signal properly.
 +if echo "$board" | grep -qiE '^mt[0-9]'; then
 +	if [ ! -e /dev/fb0 ]; then
-+		resetprop_phh ro.vendor.mtk_ovl_bringup 1
++		setprop persist.sys.phh.no_present_or_validate true
++		setprop debug.sf.latch_unsignaled 1
 +	fi
 +fi
 +
@@ -65,7 +86,7 @@ index f74604e..09bea47 100644
  if [ "$board" = lahaina ]; then
  	setprop ro.netflix.bsp_rev Q875-32774-1
  fi
-@@ -1300,4 +1327,6 @@ if getprop ro.vendor.build.fingerprint | grep -iq -e Rebecco/K70_ROW; then
+@@ -1305,4 +1345,6 @@ if getprop ro.vendor.build.fingerprint | grep -iq -e Rebecco/K70_ROW; then
  fi
  
  # Enable pen mode on Lenovo/goodix
@@ -73,6 +94,22 @@ index f74604e..09bea47 100644
 +if [ -e /sys/devices/platform/goodix_ts.0/support_pen ]; then
 +    echo 1 > /sys/devices/platform/goodix_ts.0/support_pen
 +fi
+diff --git a/sepolicy/mediatek.te b/sepolicy/mediatek.te
+index 2b24965..f3e3d61 100644
+--- a/sepolicy/mediatek.te
++++ b/sepolicy/mediatek.te
+@@ -2,6 +2,11 @@ type hal_graphics_allocator_default, domain;
+ type proc_ged, file_type;
+ allowxperm domain proc_ged:file ioctl { 0x6700-0x67ff };
+ 
++# allow MTK hwcomposer to read system and debug properties
++# (debug.renderengine.backend, debug.sf.*, etc.)
++allow hal_graphics_composer_default debug_prop:file { getattr map open read };
++allow hal_graphics_composer_default system_prop:file { getattr map open read };
++
+ allow init mnt_product_file:dir mounton;
+ 
+ type mtk_hal_audio, domain;
 -- 
 2.53.0
 
