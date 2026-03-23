@@ -1,0 +1,38 @@
+From c1de6cd218177aa6d435bfa70b2b79f49f3df6f0 Mon Sep 17 00:00:00 2001
+From: "Christopher A. Williamson" <contact@chrisaw.io>
+Date: Mon, 23 Mar 2026 21:50:16 +0000
+Subject: [PATCH 2/2] Hard-code ro.debuggable=0 for GSI builds
+
+Always write ro.debuggable=0 into system properties regardless of the
+build variant. Root detection apps flag ro.debuggable=1 as a sign of a
+development build. The actual userdebug behaviour (SELinux policy, adb,
+compile-time flags) is unaffected since those are derived from
+TARGET_BUILD_VARIANT, not from the property value.
+---
+ scripts/gen_build_prop.py | 10 ++++------
+ 1 file changed, 4 insertions(+), 6 deletions(-)
+
+diff --git a/scripts/gen_build_prop.py b/scripts/gen_build_prop.py
+index c72f31c..9cee36d 100644
+--- a/scripts/gen_build_prop.py
++++ b/scripts/gen_build_prop.py
+@@ -345,12 +345,10 @@ def append_additional_system_props(args):
+     # Enable Dalvik lock contention logging.
+     props.append("dalvik.vm.lockprof.threshold=500")
+ 
+-  if enable_target_debugging:
+-    # Target is more debuggable and adbd is on by default
+-    props.append("ro.debuggable=1")
+-  else:
+-    # Target is less debuggable and adbd is off by default
+-    props.append("ro.debuggable=0")
++  # always report ro.debuggable=0 regardless of build variant so root
++  # detection apps don't flag the build. the userdebug selinux policy and
++  # compile-time behaviour are unaffected.
++  props.append("ro.debuggable=0")
+ 
+   if config["BuildVariant"] == "eng":
+     if "ro.setupwizard.mode=ENABLED" in props:
+-- 
+2.53.0
+

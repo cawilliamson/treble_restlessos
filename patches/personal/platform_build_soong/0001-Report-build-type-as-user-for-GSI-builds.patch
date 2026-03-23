@@ -1,7 +1,7 @@
 From 0f7df92d10944329fc999afeb0f8525d14ac1610 Mon Sep 17 00:00:00 2001
 From: "Christopher A. Williamson" <contact@chrisaw.io>
 Date: Fri, 20 Feb 2026 13:43:03 +0000
-Subject: [PATCH] Report build type as user for GSI builds
+Subject: [PATCH 1/2] Report build type as user for GSI builds
 
 Write ro.build.type and ro.{partition}.build.type as "user" into the
 system image properties regardless of the actual build variant. This
