@@ -1,4 +1,4 @@
-From 3d26ee979d0188feac3be7576a49a56009400f5b Mon Sep 17 00:00:00 2001
+From f66f3d0509499386e28e4abfeacce58d9d3ec78b Mon Sep 17 00:00:00 2001
 From: "Christopher A. Williamson" <contact@chrisaw.io>
 Date: Wed, 18 Mar 2026 04:27:28 +0000
 Subject: [PATCH 8/11] rw-system.sh: defensive guards, securize rework, and build
@@ -35,10 +35,10 @@ Co-authored-by: Alberto Ponces <ponces26@gmail.com>
  base.mk             |   4 +-
  phh-on-boot.sh      |  25 ++++++
  phh-prop-handler.sh |  11 +++
- rw-system.sh        | 190 +++++++++++++++++++++++++++++---------------
+ rw-system.sh        | 196 ++++++++++++++++++++++++++++----------------
  system.prop         |   1 -
  vndk.rc             |  14 +++-
- 6 files changed, 172 insertions(+), 73 deletions(-)
+ 6 files changed, 172 insertions(+), 79 deletions(-)
 
 diff --git a/base.mk b/base.mk
 index 622501c..a88edfc 100644
@@ -125,7 +125,7 @@ index cae90d6..199f054 100644
      if [[ "$prop_value" != "0" && "$prop_value" != "1" ]]; then
          exit 1
 diff --git a/rw-system.sh b/rw-system.sh
-index 3ac9aa5..e2ec08e 100644
+index 3ac9aa5..9c95307 100644
 --- a/rw-system.sh
 +++ b/rw-system.sh
 @@ -350,7 +350,7 @@ if [ "$(getprop ro.product.vendor.manufacturer)" = motorola ] && getprop ro.vend
@@ -358,11 +358,11 @@ index 3ac9aa5..e2ec08e 100644
 -    mkdir /mnt/phh/xbin
 -    chmod 0755 /mnt/phh/xbin
 -    chcon u:object_r:system_file:s0 /mnt/phh/xbin
- 
+-
 -    #phh-su will bind over this empty file to make a real su
 -    touch /mnt/phh/xbin/su
 -    chcon u:object_r:system_file:s0 /mnt/phh/xbin/su
--
+ 
 -    mount -o bind /mnt/phh/xbin /system/xbin
 +    # update usb gadget strings so the device appears correctly when connected
 +    model="$(getprop ro.product.model)"
@@ -406,7 +406,16 @@ index 3ac9aa5..e2ec08e 100644
      setprop debug.stagefright.ccodec 0
  fi
  
-@@ -1096,32 +1154,32 @@ if getprop ro.bionic.cpu_variant |grep -q kryo300;then
+@@ -1047,8 +1105,6 @@ if getprop ro.build.overlay.deviceid |grep -iq -e RMX2185 -e RMX1941 -e RMX1945
+     setprop persist.sys.overlay.devinputjack true
+ fi
+ 
+-resetprop_phh ro.bluetooth.library_name libbluetooth.so
+-
+ board="$(getprop ro.board.platform)"
+ 
+ if [ "$board" = atoll ] || [ "$board" = sm6250 ]; then
+@@ -1096,32 +1152,32 @@ if getprop ro.bionic.cpu_variant |grep -q kryo300;then
      setprop dalvik.vm.isa.arm64.features runtime
  fi
  
@@ -451,6 +460,17 @@ index 3ac9aa5..e2ec08e 100644
  fi
  
  if [ "$(stat -c '%U'  /dev/nxp_smartpa_dev)" == "root" ] &&
+@@ -1222,10 +1278,6 @@ if getprop ro.product.vendor.device | grep -q -e TECNO-LG8n; then
+     chown -R system:system /sys/class/leds/vibrator_single/
+ fi
+ 
+-# Override media volume steps
+-resetprop_phh ro.config.media_vol_steps 25
+-resetprop_phh ro.config.media_vol_default 8
+-
+ # Force disable Sunlight Reading Mode to prevent weird color issues
+ if getprop ro.vendor.build.fingerprint | grep -iq -e xiaomi/renoir; then
+     resetprop_phh ro.vendor.sre.enable false
 diff --git a/system.prop b/system.prop
 index 8a2c5f4..3208f40 100644
 --- a/system.prop

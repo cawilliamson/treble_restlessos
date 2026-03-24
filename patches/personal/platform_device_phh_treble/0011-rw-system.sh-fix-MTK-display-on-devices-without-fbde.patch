@@ -1,4 +1,4 @@
-From 80a7517654fdbef43b879996e03970551a6324d3 Mon Sep 17 00:00:00 2001
+From af7a5282de5e8b4dc2515c0df36acc0827711c4f Mon Sep 17 00:00:00 2001
 From: "Christopher A. Williamson" <contact@chrisaw.io>
 Date: Mon, 23 Mar 2026 23:16:20 +0000
 Subject: [PATCH 11/11] rw-system.sh: fix MTK display on devices without fbdev
@@ -31,15 +31,15 @@ Add SELinux rules allowing the MTK HWComposer HAL to read debug_prop
 and system_prop so it can pick up the renderengine backend override
 and other display configuration properties set by rw-system.sh.
 ---
- rw-system.sh         | 44 +++++++++++++++++++++++++++++++++++++++++++-
+ rw-system.sh         | 34 +++++++++++++++++++++++++++++++++-
  sepolicy/mediatek.te |  5 +++++
- 2 files changed, 48 insertions(+), 1 deletion(-)
+ 2 files changed, 38 insertions(+), 1 deletion(-)
 
 diff --git a/rw-system.sh b/rw-system.sh
-index e2ec08e..9a7b6ce 100644
+index 9c95307..c314aa1 100644
 --- a/rw-system.sh
 +++ b/rw-system.sh
-@@ -1125,6 +1125,46 @@ if [ "$board" = mt6768 ]; then
+@@ -1123,6 +1123,36 @@ if [ "$board" = mt6768 ]; then
  	setprop ro.netflix.bsp_rev MTK6768-19055-1
  fi
  
@@ -73,20 +73,10 @@ index e2ec08e..9a7b6ce 100644
 +	fi
 +fi
 +
-+# Android 16 removed support for non-threaded RenderEngine backends.
-+# Some vendor partitions set debug.renderengine.backend to "skiagl" or
-+# "skiavk" (the non-threaded variants), which causes SurfaceFlinger to
-+# crash on every boot.  Promote to the threaded equivalent if needed.
-+re_backend="$(getprop debug.renderengine.backend)"
-+case "$re_backend" in
-+	skiagl)   resetprop_phh debug.renderengine.backend skiaglthreaded ;;
-+	skiavk)   resetprop_phh debug.renderengine.backend skiavkthreaded ;;
-+esac
-+
  if [ "$board" = lahaina ]; then
  	setprop ro.netflix.bsp_rev Q875-32774-1
  fi
-@@ -1305,4 +1345,6 @@ if getprop ro.vendor.build.fingerprint | grep -iq -e Rebecco/K70_ROW; then
+@@ -1299,4 +1329,6 @@ if getprop ro.vendor.build.fingerprint | grep -iq -e Rebecco/K70_ROW; then
  fi
  
  # Enable pen mode on Lenovo/goodix
