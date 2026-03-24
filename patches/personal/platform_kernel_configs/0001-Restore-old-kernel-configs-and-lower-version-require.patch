@@ -1,4 +1,4 @@
-From ba20a79743e468fa28b1bdca0648ea55c4169d5d Mon Sep 17 00:00:00 2001
+From b45328dfb29f26b97aec45bb8f766d61c0434435 Mon Sep 17 00:00:00 2001
 From: "Christopher A. Williamson" <contact@chrisaw.io>
 Date: Tue, 24 Mar 2026 12:24:19 +0000
 Subject: [PATCH] Restore old kernel configs and lower version requirements for
@@ -26,7 +26,7 @@ Change-Id: Id8e1df272b30ff60d02a650eb2b644fff4668688
  p/android-4.4/android-base.config             | 185 +++++++++++++
  p/android-4.4/android-recommended.config      | 144 ++++++++++
  q/android-4.9/Android.bp                      |  26 ++
- q/android-4.9/android-base-conditional.xml    | 145 ++++++++++
+ q/android-4.9/android-base-conditional.xml    | 144 ++++++++++
  q/android-4.9/android-base.config             | 222 +++++++++++++++
  q/android-4.9/android-recommended-arm.config  |   7 +
  .../android-recommended-arm64.config          |   6 +
@@ -57,7 +57,7 @@ Change-Id: Id8e1df272b30ff60d02a650eb2b644fff4668688
  s/android-4.14/android-recommended.config     | 130 +++++++++
  s/android-4.14/non_debuggable.config          |   2 +
  s/android-4.19/android-base-conditional.xml   |   2 +-
- 38 files changed, 2667 insertions(+), 1 deletion(-)
+ 38 files changed, 2666 insertions(+), 1 deletion(-)
  create mode 100644 p/android-4.4/Android.bp
  create mode 100644 p/android-4.4/android-base-arm.config
  create mode 100644 p/android-4.4/android-base-arm64.config
@@ -530,10 +530,10 @@ index 0000000..1b0cf2a
 +}
 diff --git a/q/android-4.9/android-base-conditional.xml b/q/android-4.9/android-base-conditional.xml
 new file mode 100644
-index 0000000..ba664a7
+index 0000000..703a512
 --- /dev/null
 +++ b/q/android-4.9/android-base-conditional.xml
-@@ -0,0 +1,145 @@
+@@ -0,0 +1,144 @@
 +<kernel minlts="4.9.141" />
 +
 +<!-- KEEP ALPHABETICALLY SORTED -->
@@ -678,7 +678,6 @@ index 0000000..ba664a7
 +		<value type="bool">y</value>
 +	</config>
 +</group>
-+
 diff --git a/q/android-4.9/android-base.config b/q/android-4.9/android-base.config
 new file mode 100644
 index 0000000..136c2c2
