@@ -1,21 +1,23 @@
-From 6961e2e8f242f7be66904c20cd9894e7743372f0 Mon Sep 17 00:00:00 2001
+From ba20a79743e468fa28b1bdca0648ea55c4169d5d Mon Sep 17 00:00:00 2001
 From: "Christopher A. Williamson" <contact@chrisaw.io>
-Date: Tue, 17 Mar 2026 23:22:47 +0000
-Subject: [PATCH 1/2] Restore old kernel configs for GSI compatibility
+Date: Tue, 24 Mar 2026 12:24:19 +0000
+Subject: [PATCH] Restore old kernel configs and lower version requirements for
+ GSI
 
-Re-add kernel configuration sets that were removed from AOSP but are
-still needed for GSI compatibility with older devices:
+Restore kernel config definitions for older Android releases (P/4.4,
+Q/4.9, R/4.14, R/4.19, S/4.14, S/4.19) that were removed from the
+GrapheneOS kernel/configs tree. These are required for GSI
+compatibility with vendor partitions that shipped with these older
+kernel versions.
 
-- p/android-4.4: for devices with 4.4 kernels (minlts 4.4.107)
-- q/android-4.9: for devices with 4.9 kernels (minlts 4.9.165)
-- r/android-4.14 and r/android-4.19: for devices with R-era kernels
-- s/android-4.14: based on s/android-4.19 for MediaTek devices with
-  4.14 kernels (minlts 4.14.186)
+Lower q/android-4.9 minlts from 4.9.165 to 4.9.141 and remove
+CONFIG_XFRM_INTERFACE and USB/RTL8152 dependencies that are not
+available on older kernel point releases.
 
-These configs are required by the compatibility matrices to validate
-that the GSI can run on devices with these older kernel versions.
+Lower s/android-4.19 minlts from 4.19.191 to 4.19.127 for MediaTek
+devices that ship 4.19 kernels at earlier point releases.
 
-Change-Id: I3e7c4f67e61c69e265d6d632ae158aaf426621e9
+Change-Id: Id8e1df272b30ff60d02a650eb2b644fff4668688
 ---
  p/android-4.4/Android.bp                      |  28 ++
  p/android-4.4/android-base-arm.config         |   1 +
@@ -24,8 +26,8 @@ Change-Id: I3e7c4f67e61c69e265d6d632ae158aaf426621e9
  p/android-4.4/android-base.config             | 185 +++++++++++++
  p/android-4.4/android-recommended.config      | 144 ++++++++++
  q/android-4.9/Android.bp                      |  26 ++
- q/android-4.9/android-base-conditional.xml    | 159 +++++++++++
- q/android-4.9/android-base.config             | 223 +++++++++++++++
+ q/android-4.9/android-base-conditional.xml    | 145 ++++++++++
+ q/android-4.9/android-base.config             | 222 +++++++++++++++
  q/android-4.9/android-recommended-arm.config  |   7 +
  .../android-recommended-arm64.config          |   6 +
  q/android-4.9/android-recommended-x86.config  |   6 +
@@ -54,7 +56,8 @@ Change-Id: I3e7c4f67e61c69e265d6d632ae158aaf426621e9
  s/android-4.14/android-recommended-x86.config |   5 +
  s/android-4.14/android-recommended.config     | 130 +++++++++
  s/android-4.14/non_debuggable.config          |   2 +
- 37 files changed, 2681 insertions(+)
+ s/android-4.19/android-base-conditional.xml   |   2 +-
+ 38 files changed, 2667 insertions(+), 1 deletion(-)
  create mode 100644 p/android-4.4/Android.bp
  create mode 100644 p/android-4.4/android-base-arm.config
  create mode 100644 p/android-4.4/android-base-arm64.config
@@ -527,11 +530,11 @@ index 0000000..1b0cf2a
 +}
 diff --git a/q/android-4.9/android-base-conditional.xml b/q/android-4.9/android-base-conditional.xml
 new file mode 100644
-index 0000000..0ba7e5b
+index 0000000..ba664a7
 --- /dev/null
 +++ b/q/android-4.9/android-base-conditional.xml
-@@ -0,0 +1,159 @@
-+<kernel minlts="4.9.165" />
+@@ -0,0 +1,145 @@
++<kernel minlts="4.9.141" />
 +
 +<!-- KEEP ALPHABETICALLY SORTED -->
 +<!-- ARM base requirements -->
@@ -676,26 +679,12 @@ index 0000000..0ba7e5b
 +	</config>
 +</group>
 +
-+<!-- CONFIG_USB implies CONFIG_USB_RTL8152 -->
-+<group>
-+	<conditions>
-+		<config>
-+			<key>CONFIG_USB_RTL8152</key>
-+			<value type="bool">n</value>
-+		</config>
-+	</conditions>
-+	<config>
-+		<key>CONFIG_USB</key>
-+		<value type="bool">n</value>
-+	</config>
-+</group>
-+
 diff --git a/q/android-4.9/android-base.config b/q/android-4.9/android-base.config
 new file mode 100644
-index 0000000..795cde5
+index 0000000..136c2c2
 --- /dev/null
 +++ b/q/android-4.9/android-base.config
-@@ -0,0 +1,223 @@
+@@ -0,0 +1,222 @@
 +#  KEEP ALPHABETICALLY SORTED
 +# CONFIG_DEVKMEM is not set
 +# CONFIG_DEVMEM is not set
@@ -916,7 +905,6 @@ index 0000000..795cde5
 +CONFIG_USB_CONFIGFS_UEVENT=y
 +CONFIG_USB_GADGET=y
 +CONFIG_USB_SUPPORT=y
-+CONFIG_XFRM_INTERFACE=y
 +CONFIG_XFRM_STATISTICS=y
 +CONFIG_XFRM_USER=y
 diff --git a/q/android-4.9/android-recommended-arm.config b/q/android-4.9/android-recommended-arm.config
@@ -2996,6 +2984,16 @@ index 0000000..71b51bf
 @@ -0,0 +1,2 @@
 +#  KEEP ALPHABETICALLY SORTED
 +# CONFIG_DEBUG_FS is not set
+diff --git a/s/android-4.19/android-base-conditional.xml b/s/android-4.19/android-base-conditional.xml
+index 8aab2a0..24e2b47 100644
+--- a/s/android-4.19/android-base-conditional.xml
++++ b/s/android-4.19/android-base-conditional.xml
+@@ -1,4 +1,4 @@
+-<kernel minlts="4.19.191" />
++<kernel minlts="4.19.127" />
+ 
+ <!-- KEEP ALPHABETICALLY SORTED -->
+ <!-- ARM base requirements -->
 -- 
 2.53.0
 

@@ -1,4 +1,4 @@
-From 8709f54c2c5cb3b8ee20f075f40cf80182216b4c Mon Sep 17 00:00:00 2001
+From 62948d34b27f284d2db00922d7da2b0a5a46d690 Mon Sep 17 00:00:00 2001
 From: "Christopher A. Williamson" <contact@chrisaw.io>
 Date: Thu, 12 Mar 2026 22:57:31 +0000
 Subject: [PATCH] NetBpfLoad: Relax all kernel version and capability checks
@@ -30,11 +30,11 @@ Affected checks:
 - Proc writes: unprivileged_bpf_disabled, bpf_jit_enable, bpf_jit_kallsyms
   (all documented as potentially failing on older kernels)
 ---
- bpf/loader/NetBpfLoad.cpp | 94 ++++++++++++++++++++-------------------
- 1 file changed, 49 insertions(+), 45 deletions(-)
+ bpf/loader/NetBpfLoad.cpp | 93 +++++++++++++++++++++------------------
+ 1 file changed, 51 insertions(+), 42 deletions(-)
 
 diff --git a/bpf/loader/NetBpfLoad.cpp b/bpf/loader/NetBpfLoad.cpp
-index 59b1f07..3c1e838 100644
+index 59b1f07..e79fb07 100644
 --- a/bpf/loader/NetBpfLoad.cpp
 +++ b/bpf/loader/NetBpfLoad.cpp
 @@ -1605,62 +1605,57 @@ static int doLoad(char** argv, char * const envp[]) {
@@ -167,29 +167,30 @@ index 59b1f07..3c1e838 100644
              }
              mapId = next;
          }
-@@ -1876,13 +1874,15 @@ static int doLoad(char** argv, char * const envp[]) {
+@@ -1876,12 +1874,19 @@ static int doLoad(char** argv, char * const envp[]) {
              // which causes bpfGetNextMapId to behave as bpfGetNextProgId,
              // and thus it should return 0 with errno == ENOENT.
              ALOGE("bpfGetNextMapId(final %d) returned %d errno %d", mapId, next, errno);
 -            if (next || errno != ENOENT) return 35;
 -            if (isAtLeastT || isAtLeastKernelVersion(4, 20)) return 36;
 +            // [GSI] non-fatal: old vendor kernels may not satisfy this
-+            if (next || errno != ENOENT) failed = true;
-+            if (isAtLeastT || isAtLeastKernelVersion(4, 20)) failed = true;
++            if (next || errno != ENOENT) {
++                ALOGW("[GSI] bpfGetNextMapId(final) unexpected: next=%d errno=%d", next, errno);
++            }
++            if (isAtLeastT || isAtLeastKernelVersion(4, 20)) {
++                ALOGW("[GSI] kernel should not have BPF UAPI bug on T+ or 4.20+");
++            }
              // implies Android S with 4.14 or 4.19 kernel
--            ALOGW("Detected kernel with invalid BPF UAPI - disabling mainline use of eBPF.");
--            // leave a flag that we're 'done'
+             ALOGW("Detected kernel with invalid BPF UAPI - disabling mainline use of eBPF.");
+             // leave a flag that we're 'done'
 -            if (!createDir("/sys/fs/bpf/netd_shared/mainline_done")) return 37;
--            return 0;
-+             ALOGW("Detected kernel with invalid BPF UAPI - disabling mainline use of eBPF.");
-+             // leave a flag that we're 'done'
-+             // [GSI] non-fatal: createDir may fail on old kernels without bpffs
-+             if (!createDir("/sys/fs/bpf/netd_shared/mainline_done")) failed = true;
-+             return 0;
++            if (!createDir("/sys/fs/bpf/netd_shared/mainline_done")) {
++                ALOGW("[GSI] failed to create mainline_done dir");
++            }
+             return 0;
          }
      } else {  // implies S/T with 4.9 kernel
-         // nothing we can do.
-@@ -1901,28 +1901,32 @@ static int doLoad(char** argv, char * const envp[]) {
+@@ -1901,28 +1906,32 @@ static int doLoad(char** argv, char * const envp[]) {
          int value = 123;
          if (writeToMapEntry(map, &one, &value, BPF_ANY)) {
              ALOGE("Critical kernel bug - failure to write into index 1 of 2 element bpf map array.");

@@ -1,23 +1,27 @@
-From 0f7df92d10944329fc999afeb0f8525d14ac1610 Mon Sep 17 00:00:00 2001
+From abeb40d544569333faa53142c62a8e41fefc4c53 Mon Sep 17 00:00:00 2001
 From: "Christopher A. Williamson" <contact@chrisaw.io>
-Date: Fri, 20 Feb 2026 13:43:03 +0000
-Subject: [PATCH 1/2] Report build type as user for GSI builds
+Date: Tue, 24 Mar 2026 12:23:28 +0000
+Subject: [PATCH] Mask userdebug build signals in GSI system properties
 
 Write ro.build.type and ro.{partition}.build.type as "user" into the
 system image properties regardless of the actual build variant. This
 prevents root/integrity detection apps from flagging the build as
 development software based on the "userdebug" type string.
 
-The actual build variant remains userdebug: ro.debuggable, SELinux
-policy, adb behaviour and all other compile-time decisions are
-unaffected since they are derived from TARGET_BUILD_VARIANT and the
-Debuggable flag, not from the ro.build.type property value.
+Always write ro.debuggable=0 into system properties regardless of the
+build variant. Root detection apps flag ro.debuggable=1 as a sign of a
+development build.
+
+The actual build variant remains userdebug: SELinux policy, adb
+behaviour and all other compile-time decisions are unaffected since
+they are derived from TARGET_BUILD_VARIANT and the Debuggable flag,
+not from property values.
 ---
- scripts/gen_build_prop.py | 4 ++--
- 1 file changed, 2 insertions(+), 2 deletions(-)
+ scripts/gen_build_prop.py | 14 ++++++--------
+ 1 file changed, 6 insertions(+), 8 deletions(-)
 
 diff --git a/scripts/gen_build_prop.py b/scripts/gen_build_prop.py
-index 6328710..c72f31c 100644
+index 6328710..9cee36d 100644
 --- a/scripts/gen_build_prop.py
 +++ b/scripts/gen_build_prop.py
 @@ -160,7 +160,7 @@ def generate_common_build_props(args):
@@ -38,6 +42,23 @@ index 6328710..c72f31c 100644
    print(f"ro.build.user={config['BuildUsername']}")
    print(f"ro.build.host={config['BuildHostname']}")
    # TODO: Remove any tag-related optional property declarations once the goals
+@@ -345,12 +345,10 @@ def append_additional_system_props(args):
+     # Enable Dalvik lock contention logging.
+     props.append("dalvik.vm.lockprof.threshold=500")
+ 
+-  if enable_target_debugging:
+-    # Target is more debuggable and adbd is on by default
+-    props.append("ro.debuggable=1")
+-  else:
+-    # Target is less debuggable and adbd is off by default
+-    props.append("ro.debuggable=0")
++  # always report ro.debuggable=0 regardless of build variant so root
++  # detection apps don't flag the build. the userdebug selinux policy and
++  # compile-time behaviour are unaffected.
++  props.append("ro.debuggable=0")
+ 
+   if config["BuildVariant"] == "eng":
+     if "ro.setupwizard.mode=ENABLED" in props:
 -- 
-2.52.0
+2.53.0
 

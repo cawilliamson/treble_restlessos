@@ -1,4 +1,4 @@
-From 2d1c76870fabeac576c6786f6d268493ebf3a95a Mon Sep 17 00:00:00 2001
+From 3053fde487bf17be8d80a5fae7beb80e0de1566b Mon Sep 17 00:00:00 2001
 From: "Christopher A. Williamson" <contact@chrisaw.io>
 Date: Sun, 1 Jun 2025 21:05:59 +0100
 Subject: [PATCH 1/4] Allow EXPENSIVE_RENDERING power mode to be disabled
@@ -10,11 +10,11 @@ set. Prevents SurfaceFlinger from sending this hint to the power HAL.
 Companion patch: staging/platform_frameworks_base/0003
 (PowerManagerService JNI side of the same feature).
 ---
- services/surfaceflinger/PowerAdvisor/PowerAdvisor.cpp | 10 ++++++++++
- 1 file changed, 10 insertions(+)
+ services/surfaceflinger/PowerAdvisor/PowerAdvisor.cpp | 7 +++++++
+ 1 file changed, 7 insertions(+)
 
 diff --git a/services/surfaceflinger/PowerAdvisor/PowerAdvisor.cpp b/services/surfaceflinger/PowerAdvisor/PowerAdvisor.cpp
-index a3da24b..ac0a85a 100644
+index a3da24b99a..dcb6147123 100644
 --- a/services/surfaceflinger/PowerAdvisor/PowerAdvisor.cpp
 +++ b/services/surfaceflinger/PowerAdvisor/PowerAdvisor.cpp
 @@ -69,6 +69,13 @@ static constexpr ftl::Flags<Workload> TRIGGER_LOAD_CHANGE_HINTS = Workload::EFFE
@@ -31,16 +31,6 @@ index a3da24b..ac0a85a 100644
      if (timeout > 0ms) {
          mScreenUpdateTimer.emplace("UpdateImminentTimer", timeout,
                                     /* resetCallback */ nullptr,
-@@ -109,6 +116,9 @@ void PowerAdvisor::setExpensiveRenderingExpected(DisplayId displayId, bool expec
-     if (!mHasExpensiveRendering) {
-         ALOGV("Skipped sending EXPENSIVE_RENDERING because HAL doesn't support it");
-         return;
-+    } else if (android::base::GetBoolProperty("persist.sys.phh.disable_expensive_rendering_mode", false)) {
-+        ALOGV("Skipped sending EXPENSIVE_RENDERING because property disables it");
-+        return;
-     }
-     if (expected) {
-         mExpensiveDisplays.insert(displayId);
 -- 
 2.53.0
 
