@@ -1,7 +1,7 @@
-From 07b7cf46c4831b8423cb41b57ac29a9fb96455ca Mon Sep 17 00:00:00 2001
+From def8f040e89fd2ee31309a1315597ff8b18a80c7 Mon Sep 17 00:00:00 2001
 From: "Christopher A. Williamson" <contact@chrisaw.io>
-Date: Sun, 8 Mar 2026 11:48:24 +0000
-Subject: [PATCH 9/11] Enable unauthenticated ADB on first boot for debugging
+Date: Tue, 24 Mar 2026 12:44:06 +0000
+Subject: [PATCH 12/14] Enable unauthenticated ADB on first boot for debugging
 
 On first boot after a fresh install or GSI upgrade, enable ADB with
 no authentication so boot issues can be diagnosed. Uses the normal
@@ -9,10 +9,9 @@ init USB path (property-based) to avoid tearing down configfs which
 breaks vendor USB HALs.
 
 The ADB enable is handled by the fingerprint change detection block
-in rw-system.sh (patch 0008), which now sets ro.adb.secure=0 and
+in rw-system.sh, which sets ro.adb.secure=0 and
 persist.sys.usb.config=adb whenever the GSI fingerprint changes or
-is seen for the first time. Both checks use /cache/phh/gsi_fingerprint
-so there is a single source of truth for fingerprint state.
+is seen for the first time.
 
 phh-on-boot.sh cleans up at boot_completed by deleting the transient
 ro.adb.secure and persist.sys.usb.config properties and stopping adbd.
@@ -37,10 +36,10 @@ index a88edfc..76b1c4d 100644
  
  # VNDK config files
 diff --git a/phh-on-boot.sh b/phh-on-boot.sh
-index 92a4740..5ebb2c1 100644
+index 13b7cc9..9e084a0 100644
 --- a/phh-on-boot.sh
 +++ b/phh-on-boot.sh
-@@ -38,6 +38,13 @@ if [ ! -f /metadata/securize_disable ]; then
+@@ -36,6 +36,13 @@ if [ ! -f /metadata/securize_disable ]; then
    resetprop_phh -n init.svc.flash_recovery stopped
  fi
  

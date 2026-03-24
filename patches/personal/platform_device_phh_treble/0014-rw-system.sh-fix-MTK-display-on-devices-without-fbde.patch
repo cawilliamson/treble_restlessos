@@ -1,16 +1,13 @@
-From af7a5282de5e8b4dc2515c0df36acc0827711c4f Mon Sep 17 00:00:00 2001
+From 590034ab0711e1c19c364adc951991513d0d4e27 Mon Sep 17 00:00:00 2001
 From: "Christopher A. Williamson" <contact@chrisaw.io>
-Date: Mon, 23 Mar 2026 23:16:20 +0000
-Subject: [PATCH 11/11] rw-system.sh: fix MTK display on devices without fbdev
+Date: Tue, 24 Mar 2026 12:44:06 +0000
+Subject: [PATCH 14/14] rw-system.sh: fix MTK display on devices without fbdev
 
 On many MTK devices the vendor kernel DRM driver does not expose the
 standard KMS atomic plane properties (alpha, pixel blend mode).  The
 HWC then fails to initialise any overlay plane; atomic commits for
 display power management also fail, leaving the display black or
-causing it to turn off after boot.  Integrated touch/display drivers
-(e.g. Chipone TDDI) use DRM notifier callbacks to track display
-state -- when display power transitions fail the touch driver thinks
-the panel is off and disables itself.
+causing it to turn off after boot.
 
 The reliable runtime signal is the absence of /dev/fb0: kernels built
 with CONFIG_DRM_FBDEV_EMULATION=n create no fb node, and those same
@@ -22,21 +19,16 @@ Fix strategy (applied only when /dev/fb0 is absent on MTK):
 - debug.sf.latch_unsignaled=1 to prevent missed frames when the HWC
   cannot signal fences properly
 
-Also promote non-threaded RenderEngine backends (skiagl/skiavk) to
-their threaded equivalents since Android 16 removed non-threaded
-backend support.  Guard the trailing goodix sysfs write behind an
-existence check.
-
 Add SELinux rules allowing the MTK HWComposer HAL to read debug_prop
 and system_prop so it can pick up the renderengine backend override
 and other display configuration properties set by rw-system.sh.
 ---
- rw-system.sh         | 34 +++++++++++++++++++++++++++++++++-
+ rw-system.sh         | 30 ++++++++++++++++++++++++++++++
  sepolicy/mediatek.te |  5 +++++
- 2 files changed, 38 insertions(+), 1 deletion(-)
+ 2 files changed, 35 insertions(+)
 
 diff --git a/rw-system.sh b/rw-system.sh
-index 9c95307..c314aa1 100644
+index 332af00..c314aa1 100644
 --- a/rw-system.sh
 +++ b/rw-system.sh
 @@ -1123,6 +1123,36 @@ if [ "$board" = mt6768 ]; then
@@ -76,14 +68,6 @@ index 9c95307..c314aa1 100644
  if [ "$board" = lahaina ]; then
  	setprop ro.netflix.bsp_rev Q875-32774-1
  fi
-@@ -1299,4 +1329,6 @@ if getprop ro.vendor.build.fingerprint | grep -iq -e Rebecco/K70_ROW; then
- fi
- 
- # Enable pen mode on Lenovo/goodix
--echo 1 > /sys/devices/platform/goodix_ts.0/support_pen
-+if [ -e /sys/devices/platform/goodix_ts.0/support_pen ]; then
-+    echo 1 > /sys/devices/platform/goodix_ts.0/support_pen
-+fi
 diff --git a/sepolicy/mediatek.te b/sepolicy/mediatek.te
 index 2b24965..f3e3d61 100644
 --- a/sepolicy/mediatek.te

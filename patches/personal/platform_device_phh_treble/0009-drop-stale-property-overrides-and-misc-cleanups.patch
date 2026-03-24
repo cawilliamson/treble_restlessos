@@ -1,0 +1,88 @@
+From 3a0fa728c7530bc9489cc60d3fb992a9a99094e7 Mon Sep 17 00:00:00 2001
+From: "Christopher A. Williamson" <contact@chrisaw.io>
+Date: Tue, 24 Mar 2026 12:42:34 +0000
+Subject: [PATCH 9/14] drop stale property overrides and misc cleanups
+
+remove ro.adb.secure=0 from base.mk and system.prop: adb authentication
+is now controlled per-boot by the fingerprint change detection block.
+
+drop ro.control_privapp_permissions downgrade: grapheneos ships
+ro.control_privapp_permissions=enforce for security. the unconditional
+override to 'log' silently downgrades enforcement.
+
+remove ro.bluetooth.library_name override: no longer needed since the
+framework defaults to libbluetooth.so.
+
+remove media volume step overrides: let the device defaults apply
+rather than forcing a specific step count and default volume.
+
+guard goodix sysfs write behind existence check to avoid errors on
+devices without the goodix_ts driver.
+---
+ base.mk      | 1 -
+ rw-system.sh | 9 +++------
+ system.prop  | 1 -
+ 3 files changed, 3 insertions(+), 8 deletions(-)
+
+diff --git a/base.mk b/base.mk
+index 622501c..7f97389 100644
+--- a/base.mk
++++ b/base.mk
+@@ -37,7 +37,6 @@ PRODUCT_SYSTEM_DEFAULT_PROPERTIES += \
+     ro.build.version.all_codenames=$(PLATFORM_VERSION_ALL_CODENAMES) \
+     ro.build.version.release=$(PLATFORM_VERSION) \
+     ro.build.version.security_patch=$(PLATFORM_SECURITY_PATCH) \
+-    ro.adb.secure=0 \
+     ro.logd.auditd=true \
+     ro.logd.kernel=true \
+ 
+diff --git a/rw-system.sh b/rw-system.sh
+index 227913f..8ab75fc 100644
+--- a/rw-system.sh
++++ b/rw-system.sh
+@@ -1047,7 +1047,6 @@ if getprop ro.build.overlay.deviceid |grep -iq -e RMX2185 -e RMX1941 -e RMX1945
+     setprop persist.sys.overlay.devinputjack true
+ fi
+ 
+-resetprop_phh ro.bluetooth.library_name libbluetooth.so
+ 
+ board="$(getprop ro.board.platform)"
+ 
+@@ -1096,7 +1095,6 @@ if getprop ro.bionic.cpu_variant |grep -q kryo300;then
+     setprop dalvik.vm.isa.arm64.features runtime
+ fi
+ 
+-resetprop_phh ro.control_privapp_permissions log
+ 
+ if [ -f /vendor/etc/init/vendor.ozoaudio.media.c2@1.0-service.rc ];then
+     if [ -n "$vndk" ] && [ "$vndk" -le 29 ]; then
+@@ -1224,9 +1222,6 @@ if getprop ro.product.vendor.device | grep -q -e TECNO-LG8n; then
+     chown -R system:system /sys/class/leds/vibrator_single/
+ fi
+ 
+-# Override media volume steps
+-resetprop_phh ro.config.media_vol_steps 25
+-resetprop_phh ro.config.media_vol_default 8
+ 
+ # Force disable Sunlight Reading Mode to prevent weird color issues
+ if getprop ro.vendor.build.fingerprint | grep -iq -e xiaomi/renoir; then
+@@ -1249,4 +1244,6 @@ if getprop ro.vendor.build.fingerprint | grep -iq -e Rebecco/K70_ROW; then
+ fi
+ 
+ # Enable pen mode on Lenovo/goodix
+-echo 1 > /sys/devices/platform/goodix_ts.0/support_pen
++if [ -e /sys/devices/platform/goodix_ts.0/support_pen ]; then
++    echo 1 > /sys/devices/platform/goodix_ts.0/support_pen
++fi
+diff --git a/system.prop b/system.prop
+index 8a2c5f4..3208f40 100644
+--- a/system.prop
++++ b/system.prop
+@@ -1,4 +1,3 @@
+-ro.adb.secure=0
+ #Some devices have sdcardfs kernel panicing on 8.0
+ #Disable for everyone for the moment
+ ro.sys.sdcardfs=0
+-- 
+2.53.0
+

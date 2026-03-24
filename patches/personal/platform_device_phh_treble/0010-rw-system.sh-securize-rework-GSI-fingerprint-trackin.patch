@@ -1,58 +1,52 @@
-From f66f3d0509499386e28e4abfeacce58d9d3ec78b Mon Sep 17 00:00:00 2001
+From 436d931e8aad8f784bd75c4cf69555c4a6dc0ba6 Mon Sep 17 00:00:00 2001
 From: "Christopher A. Williamson" <contact@chrisaw.io>
-Date: Wed, 18 Mar 2026 04:27:28 +0000
-Subject: [PATCH 8/11] rw-system.sh: defensive guards, securize rework, and build
- fixes
+Date: Tue, 24 Mar 2026 12:43:38 +0000
+Subject: [PATCH 10/14] rw-system.sh: securize rework, GSI fingerprint
+ tracking, and prop spoofing
 
-Combine several rw-system.sh and base.mk changes into a single patch:
+rework securize to use persist.sys.phh.securize property toggle instead
+of checking for /system/phh/secure file. remove phh-securize.sh from
+PRODUCT_COPY_FILES since securize is now handled via the property and
+phh-prop-handler.sh. add phh-prop-handler.sh entry to create/remove
+/metadata/securize_disable sentinel. move security-sensitive prop
+spoofing (build tags, verified boot state, warranty bits) to post-boot
+in phh-on-boot.sh so they are reinforced after all services have
+started.
 
-Defensive guards for vndk detection failures:
-Guard all vndk numeric comparisons with [ -n "$vndk" ] to prevent
-shell arithmetic errors when vndk-detect fails. Guard first_api_level
-assignment. Change color management setprop to resetprop_phh -n for
-fallback-only behaviour. Guard focaltech sysfs search with driver
-presence check.
+add GSI fingerprint change detection: compare ro.system.build.fingerprint
+against a persisted value on /metadata or /cache. when it changes,
+signal PMS via persist.pm.mock-upgrade and enable a first-boot debug ADB
+window. on subsequent boots with the same fingerprint, clear the flag.
 
-Drop ro.control_privapp_permissions downgrade:
-GrapheneOS ships ro.control_privapp_permissions=enforce for security.
-Remove the unconditional override to 'log' that silently downgrades
-enforcement.
+expand device/brand/model/manufacturer property copying from vendor to
+system, system_ext, and product partitions for more thorough identity
+spoofing.
 
-VNDK v30 support:
-Add VNDK v30 to PRODUCT_EXTRA_VNDK_VERSIONS in base.mk so devices
-shipping with VNDK 30 vendor images find matching libraries at runtime.
+add USB gadget string updates so the device appears correctly when
+connected via USB (product and manufacturer strings).
 
-Securize rework:
-Move security-sensitive prop spoofing to post-boot in phh-on-boot.sh.
-Add GSI fingerprint change detection (persisted to /metadata) to
-signal PMS for post-upgrade steps via persist.pm.mock-upgrade. Expand
-device/brand/model/manufacturer property copying from vendor to system.
-Add USB gadget string updates. Add persist.sys.phh.securize toggle.
-Remove stale ro.adb.secure=0 entries from base.mk and system.prop.
+fix two copyprop targets that were copying name to device instead of
+name to name (ro.product.system.name -> ro.product.vendor.device was
+wrong, should be ro.product.vendor.name).
+
+update vndk.rc: replace adb_secure property handler with oem_unlock and
+adbd hiding triggers using magisk SELinux context. add securize property
+handler trigger.
 
 Co-authored-by: Alberto Ponces <ponces26@gmail.com>
 ---
- base.mk             |   4 +-
- phh-on-boot.sh      |  25 ++++++
- phh-prop-handler.sh |  11 +++
- rw-system.sh        | 196 ++++++++++++++++++++++++++++----------------
- system.prop         |   1 -
- vndk.rc             |  14 +++-
- 6 files changed, 172 insertions(+), 79 deletions(-)
+ base.mk             |   1 -
+ phh-on-boot.sh      |  25 ++++++++
+ phh-prop-handler.sh |  11 ++++
+ rw-system.sh        | 147 ++++++++++++++++++++++++++++++--------------
+ vndk.rc             |  14 ++++-
+ 5 files changed, 148 insertions(+), 50 deletions(-)
 
 diff --git a/base.mk b/base.mk
-index 622501c..a88edfc 100644
+index 7f97389..84cdfac 100644
 --- a/base.mk
 +++ b/base.mk
-@@ -37,7 +37,6 @@ PRODUCT_SYSTEM_DEFAULT_PROPERTIES += \
-     ro.build.version.all_codenames=$(PLATFORM_VERSION_ALL_CODENAMES) \
-     ro.build.version.release=$(PLATFORM_VERSION) \
-     ro.build.version.security_patch=$(PLATFORM_SECURITY_PATCH) \
--    ro.adb.secure=0 \
-     ro.logd.auditd=true \
-     ro.logd.kernel=true \
- 
-@@ -174,7 +173,6 @@ PRODUCT_PACKAGES += \
+@@ -173,7 +173,6 @@ PRODUCT_PACKAGES += \
      resetprop_phh
  
  PRODUCT_COPY_FILES += \
@@ -60,12 +54,6 @@ index 622501c..a88edfc 100644
      device/phh/treble/files/ota.sh:system/bin/ota.sh \
  
  PRODUCT_COPY_FILES += \
-@@ -265,4 +263,4 @@ $(call inherit-product, $(SRC_TARGET_DIR)/product/window_extensions.mk)
- PRODUCT_PRODUCT_PROPERTIES += \
-     persist.settings.large_screen_opt.enabled=true
- 
--PRODUCT_EXTRA_VNDK_VERSIONS += 28 29
-+PRODUCT_EXTRA_VNDK_VERSIONS += 28 29 30
 diff --git a/phh-on-boot.sh b/phh-on-boot.sh
 index 678fef1..13b7cc9 100644
 --- a/phh-on-boot.sh
@@ -125,85 +113,17 @@ index cae90d6..199f054 100644
      if [[ "$prop_value" != "0" && "$prop_value" != "1" ]]; then
          exit 1
 diff --git a/rw-system.sh b/rw-system.sh
-index 3ac9aa5..9c95307 100644
+index 8ab75fc..332af00 100644
 --- a/rw-system.sh
 +++ b/rw-system.sh
-@@ -350,7 +350,7 @@ if [ "$(getprop ro.product.vendor.manufacturer)" = motorola ] && getprop ro.vend
-     setprop persist.sys.overlay.devinputjack true
- fi
- 
--if ! getprop ro.vendor.build.fingerprint |grep samsung/;then
-+if ! getprop ro.vendor.build.fingerprint | grep -q -e samsung/;then
-     if mount -o remount,rw /system; then
-         resize2fs "$(grep ' /system ' /proc/mounts | cut -d ' ' -f 1)" || true
-     else
-@@ -382,7 +382,7 @@ mkdir /mnt/phh/empty_dir
- touch /mnt/phh/empty
- touch /mnt/phh/unreadable
- chmod 0 /mnt/phh/unreadable
--if [ "$vndk" -le 29 ]; then
-+if [ -n "$vndk" ] && [ "$vndk" -le 29 ]; then
-     mount /mnt/phh/unreadable /vendor/etc/seccomp_policy/configstore@1.1.policy
- fi
- if ! getprop ro.product.vendor.model | grep -q -e oppo6771; then
-@@ -528,7 +528,7 @@ fi
- if [ "$(getprop ro.vendor.product.manufacturer)" = "motorola" ] || [ "$(getprop ro.product.vendor.manufacturer)" = "motorola" ]; then
-     if getprop ro.vendor.product.device | grep -q -e nora -e ali -e hannah -e evert -e jeter -e deen -e james -e pettyl -e jater; then
-         setprop  ro.audio.ignore_effects true
--        if [ "$vndk" -ge 28 ]; then
-+        if [ -n "$vndk" ] && [ "$vndk" -ge 28 ]; then
-             f="/vendor/lib/libeffects.so"
-             # shellcheck disable=SC2010
-             ctxt="$(ls -lZ $f | grep -oE 'u:object_r:[^:]*:s0')"
-@@ -589,18 +589,17 @@ if grep -qF 'PowerVR Rogue GE8100' /vendor/lib/egl/GLESv1_CM_mtk.so ||
- 
-     setprop debug.hwui.renderer opengl
+@@ -591,7 +591,6 @@ if grep -qF 'PowerVR Rogue GE8100' /vendor/lib/egl/GLESv1_CM_mtk.so ||
      setprop ro.skia.ignore_swizzle true
--    if [ "$vndk" = 26 ] || [ "$vndk" = 27 ];then
-+    if [ -n "$vndk" ] && { [ "$vndk" = 26 ] || [ "$vndk" = 27 ]; }; then
+     if [ -n "$vndk" ] && { [ "$vndk" = 26 ] || [ "$vndk" = 27 ]; }; then
         setprop debug.hwui.use_buffer_age false
 -
      fi
  fi
  
- #If we have both Samsung and AOSP power hal, take Samsung's
--if [ -f /vendor/bin/hw/vendor.samsung.hardware.miscpower@1.0-service ] && [ "$vndk" -lt 28 ]; then
-+if [ -f /vendor/bin/hw/vendor.samsung.hardware.miscpower@1.0-service ] && [ -n "$vndk" ] && [ "$vndk" -lt 28 ]; then
-     mount -o bind /mnt/phh/empty /vendor/bin/hw/android.hardware.power@1.0-service
- fi
- 
--if [ "$vndk" = 27 ] || [ "$vndk" = 26 ]; then
-+if [ -n "$vndk" ] && { [ "$vndk" = 27 ] || [ "$vndk" = 26 ]; }; then
-     mount -o bind /system/phh/libnfc-nci-oreo.conf /system/etc/libnfc-nci.conf
- fi
- 
-@@ -668,7 +667,7 @@ if getprop ro.vendor.build.fingerprint | grep -iq -E -e 'huawei|honor' || getpro
-     mount -o bind /system/phh/libnfc-nci-huawei.conf /system/etc/libnfc-nci.conf
- fi
- 
--if getprop ro.vendor.build.fingerprint | grep -qE -e ".*(crown|star)[q2]*lte.*" -e ".*(SC-0[23]K|SCV3[89]).*" && [ "$vndk" -lt 28 ]; then
-+if getprop ro.vendor.build.fingerprint | grep -qE -e ".*(crown|star)[q2]*lte.*" -e ".*(SC-0[23]K|SCV3[89]).*" && [ -n "$vndk" ] && [ "$vndk" -lt 28 ]; then
-     for f in /vendor/lib/libfloatingfeature.so /vendor/lib64/libfloatingfeature.so; do
-         [ ! -f "$f" ] && continue
-         # shellcheck disable=SC2010
-@@ -699,7 +698,7 @@ if getprop ro.vendor.build.fingerprint | grep -qiE '^samsung'; then
-     fi
- 
-     if getprop ro.hardware | grep -q -e samsungexynos7870 -e qcom; then
--        if [ "$vndk" -le 27 ]; then
-+        if [ -n "$vndk" ] && [ "$vndk" -le 27 ]; then
-             setprop persist.sys.phh.sdk_override /vendor/bin/hw/rild=27
-         fi
-     fi
-@@ -742,7 +741,7 @@ if [ -n "$(getprop ro.boot.product.hardware.sku)" ] && [ -z "$(getprop ro.hw.oem
- 	setprop ro.hw.oemName "$(getprop ro.boot.product.hardware.sku)"
- fi
- 
--if getprop ro.vendor.build.fingerprint | grep -qiE '^samsung/' && [ "$vndk" -ge 28 ];then
-+if getprop ro.vendor.build.fingerprint | grep -qiE '^samsung/' && [ -n "$vndk" ] && [ "$vndk" -ge 28 ];then
- 	setprop persist.sys.phh.samsung_fingerprint 0
- 	#obviously broken perms
- 	if [ "$(stat -c '%U' /sys/class/sec/tsp/cmd)" == "root" ] &&
 @@ -800,74 +799,133 @@ copyprop() {
          resetprop_phh "$1" "$(getprop "$2")"
      fi
@@ -358,11 +278,11 @@ index 3ac9aa5..9c95307 100644
 -    mkdir /mnt/phh/xbin
 -    chmod 0755 /mnt/phh/xbin
 -    chcon u:object_r:system_file:s0 /mnt/phh/xbin
--
+ 
 -    #phh-su will bind over this empty file to make a real su
 -    touch /mnt/phh/xbin/su
 -    chcon u:object_r:system_file:s0 /mnt/phh/xbin/su
- 
+-
 -    mount -o bind /mnt/phh/xbin /system/xbin
 +    # update usb gadget strings so the device appears correctly when connected
 +    model="$(getprop ro.product.model)"
@@ -379,51 +299,21 @@ index 3ac9aa5..9c95307 100644
  fi
  
  for abi in "" 64;do
-@@ -879,7 +937,7 @@ for abi in "" 64;do
-     fi
- done
- 
--setprop ro.product.first_api_level "$vndk"
-+[ -n "$vndk" ] && setprop ro.product.first_api_level "$vndk"
- 
- if getprop ro.boot.boot_devices |grep -v , |grep -qE .;then
-     ln -s /dev/block/platform/$(getprop ro.boot.boot_devices) /dev/block/bootdevice
-@@ -938,7 +996,7 @@ if [ -e /dev/sprd-adf-dev ];then
- fi
- 
- # Fix sensor services crashing on SPRD devices with Pie vendor
--if getprop ro.hardware.keystore | grep -iq sprd && [ "$vndk" -le 28 ]; then
-+if getprop ro.hardware.keystore | grep -iq sprd && [ -n "$vndk" ] && [ "$vndk" -le 28 ]; then
-     setprop persist.sys.phh.disable_sensor_direct_report true
- fi
- 
-@@ -981,7 +1039,7 @@ if getprop ro.build.overlay.deviceid |grep -qE '^RMX';then
-     fi
- fi
- 
--if [ "$vndk" -le 28 ] && getprop ro.hardware |grep -q -e mt6761 -e mt6763 -e mt6765 -e mt6785 -e mt8768 -e mt6779 -e mt6771 -e mt8766;then
-+if [ -n "$vndk" ] && [ "$vndk" -le 28 ] && getprop ro.hardware |grep -q -e mt6761 -e mt6763 -e mt6765 -e mt6785 -e mt8768 -e mt6779 -e mt6771 -e mt8766;then
-     setprop debug.stagefright.ccodec 0
- fi
- 
-@@ -1047,8 +1105,6 @@ if getprop ro.build.overlay.deviceid |grep -iq -e RMX2185 -e RMX1941 -e RMX1945
+@@ -1047,7 +1105,6 @@ if getprop ro.build.overlay.deviceid |grep -iq -e RMX2185 -e RMX1941 -e RMX1945
      setprop persist.sys.overlay.devinputjack true
  fi
  
--resetprop_phh ro.bluetooth.library_name libbluetooth.so
 -
  board="$(getprop ro.board.platform)"
  
  if [ "$board" = atoll ] || [ "$board" = sm6250 ]; then
-@@ -1096,32 +1152,32 @@ if getprop ro.bionic.cpu_variant |grep -q kryo300;then
+@@ -1095,14 +1152,13 @@ if getprop ro.bionic.cpu_variant |grep -q kryo300;then
      setprop dalvik.vm.isa.arm64.features runtime
  fi
  
--resetprop_phh ro.control_privapp_permissions log
 -
  if [ -f /vendor/etc/init/vendor.ozoaudio.media.c2@1.0-service.rc ];then
--    if [ "$vndk" -le 29 ]; then
-+    if [ -n "$vndk" ] && [ "$vndk" -le 29 ]; then
+     if [ -n "$vndk" ] && [ "$vndk" -le 29 ]; then
          mount /system/etc/seccomp_policy/mediacodec.policy /vendor/etc/seccomp_policy/codec2.vendor.base.policy
      fi
  fi
@@ -433,53 +323,14 @@ index 3ac9aa5..9c95307 100644
      setprop persist.sys.phh.no_present_or_validate true
  fi
  
- [ -d /mnt/vendor/persist ] && mount /mnt/vendor/persist /persist
- 
--for f in $(find /sys -name fts_gesture_mode);do
--    setprop persist.sys.phh.focaltech_node "$f"
--done
-+if [ -e /sys/bus/i2c/drivers/fts_ts ] || [ -e /sys/bus/spi/drivers/fts_ts ]; then
-+    for f in $(find /sys -name fts_gesture_mode 2>/dev/null);do
-+        setprop persist.sys.phh.focaltech_node "$f"
-+    done
-+fi
- 
--if [ "$vndk" -le 27 ] && [ -f /vendor/bin/mnld ];then
-+if [ -n "$vndk" ] && [ "$vndk" -le 27 ] && [ -f /vendor/bin/mnld ];then
-     setprop persist.sys.phh.sdk_override /vendor/bin/mnld=26
- fi
- 
--if [ "$vndk" -le 30 ];then
--	# On older vendor the default behavior was to disable color management
--	# Don't override vendor value, merely add a fallback
--	setprop ro.surface_flinger.use_color_management false
-+if [ -n "$vndk" ] && [ "$vndk" -le 30 ];then
-+	# on older vendors color management was disabled by default; use -n so
-+	# we only set a fallback and never override a value already present
-+	resetprop_phh -n ro.surface_flinger.use_color_management false
- fi
- 
- if [ "$(stat -c '%U'  /dev/nxp_smartpa_dev)" == "root" ] &&
-@@ -1222,10 +1278,6 @@ if getprop ro.product.vendor.device | grep -q -e TECNO-LG8n; then
+@@ -1222,7 +1278,6 @@ if getprop ro.product.vendor.device | grep -q -e TECNO-LG8n; then
      chown -R system:system /sys/class/leds/vibrator_single/
  fi
  
--# Override media volume steps
--resetprop_phh ro.config.media_vol_steps 25
--resetprop_phh ro.config.media_vol_default 8
 -
  # Force disable Sunlight Reading Mode to prevent weird color issues
  if getprop ro.vendor.build.fingerprint | grep -iq -e xiaomi/renoir; then
      resetprop_phh ro.vendor.sre.enable false
-diff --git a/system.prop b/system.prop
-index 8a2c5f4..3208f40 100644
---- a/system.prop
-+++ b/system.prop
-@@ -1,4 +1,3 @@
--ro.adb.secure=0
- #Some devices have sdcardfs kernel panicing on 8.0
- #Disable for everyone for the moment
- ro.sys.sdcardfs=0
 diff --git a/vndk.rc b/vndk.rc
 index 960e47f..6a9ce16 100644
 --- a/vndk.rc
