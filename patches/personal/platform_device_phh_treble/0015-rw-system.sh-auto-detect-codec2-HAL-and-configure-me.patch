@@ -1,4 +1,4 @@
-From 4398efb0879a3459cf4d232fdbd61dca52c44274 Mon Sep 17 00:00:00 2001
+From 8f07f7fb678d7c9f60884d1d33291bb9da01c75e Mon Sep 17 00:00:00 2001
 From: "Christopher A. Williamson" <contact@chrisaw.io>
 Date: Wed, 25 Mar 2026 09:22:30 +0000
 Subject: [PATCH 15/15] rw-system.sh: auto-detect codec2 HAL and configure media
@@ -13,29 +13,27 @@ when no vendor c2 HAL is found, explicitly disable codec2 (ccodec=0)
 to prevent playback failures from the framework trying to use a c2
 path that has no backing implementation.
 
-the detection is guarded by a check for an existing ccodec property,
-so device-specific overrides (e.g. old MTK ccodec=0) that fire earlier
-in rw-system.sh are respected.
-
-fixes codec issues reported on devices where the vendor supports c2
-but the GSI defaults were not selecting it (e.g. telegram video
-playback failures on android 16).
+this replaces the old blanket 'ccodec 0' override for MTK VNDK<=28
+devices. the VINTF manifest check is strictly more accurate than a
+hardcoded chipset name list -- devices like MT6765 with VNDK 28 DO
+ship a working c2 HAL and were incorrectly being forced to OMX.
 ---
- rw-system.sh | 38 ++++++++++++++++++++++++++++++++++++++
- 1 file changed, 38 insertions(+)
+ rw-system.sh | 35 ++++++++++++++++++++++++++++++++++-
+ 1 file changed, 34 insertions(+), 1 deletion(-)
 
 diff --git a/rw-system.sh b/rw-system.sh
-index c314aa1..09a3561 100644
+index c314aa1..c6cd393 100644
 --- a/rw-system.sh
 +++ b/rw-system.sh
-@@ -1043,6 +1043,44 @@ if [ -n "$vndk" ] && [ "$vndk" -le 28 ] && getprop ro.hardware |grep -q -e mt676
-     setprop debug.stagefright.ccodec 0
+@@ -1039,7 +1039,40 @@ if getprop ro.build.overlay.deviceid |grep -qE '^RMX';then
+     fi
  fi
  
+-if [ -n "$vndk" ] && [ "$vndk" -le 28 ] && getprop ro.hardware |grep -q -e mt6761 -e mt6763 -e mt6765 -e mt6785 -e mt8768 -e mt6779 -e mt6771 -e mt8766;then
 +# codec2 HAL detection: prefer c2 when the vendor ships a working HAL,
 +# otherwise fall back to OMX to avoid broken playback on older vendors.
-+# skip if an earlier block already set ccodec (e.g. old MTK override above).
-+if [ -z "$(getprop debug.stagefright.ccodec)" ]; then
++# this replaces the old blanket "ccodec 0" for MTK VNDK<=28 devices --
++# VINTF manifest scanning is more accurate than a chipset name list.
 +c2_hal_found=false
 +for manifest in /vendor/manifest.xml /vendor/etc/vintf/manifest.xml /vendor/etc/vintf/manifest/*.xml /odm/etc/vintf/manifest.xml /odm/etc/vintf/manifest/*.xml; do
 +    [ -f "$manifest" ] || continue
@@ -66,13 +64,9 @@ index c314aa1..09a3561 100644
 +    fi
 +else
 +    # no vendor codec2 HAL -- disable c2 and rely on OMX
-+    setprop debug.stagefright.ccodec 0
-+fi
-+fi # end ccodec guard
-+
- if getprop ro.omc.build.version |grep -qE .;then
- 	for f in $(find /odm -name \*.apk);do
- 		mount /mnt/phh/empty $f
+     setprop debug.stagefright.ccodec 0
+ fi
+ 
 -- 
 2.53.0
 
