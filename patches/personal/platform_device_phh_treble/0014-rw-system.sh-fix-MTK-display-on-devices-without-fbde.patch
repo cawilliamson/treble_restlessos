@@ -32,7 +32,7 @@ index 332af00..44cb295 100644
 @@ -1123,6 +1123,20 @@ if [ "$board" = mt6768 ]; then
  	setprop ro.netflix.bsp_rev MTK6768-19055-1
  fi
- 
+
 +# MTK HWComposer display power fallback.
 +#
 +# the /dev/graphics/fb0 symlink is created early in vndk.rc (before HALs
@@ -57,14 +57,14 @@ index 2b24965..f3e3d61 100644
 @@ -2,6 +2,11 @@ type hal_graphics_allocator_default, domain;
  type proc_ged, file_type;
  allowxperm domain proc_ged:file ioctl { 0x6700-0x67ff };
- 
+
 +# allow MTK hwcomposer to read system and debug properties
 +# (debug.renderengine.backend, debug.sf.*, etc.)
 +allow hal_graphics_composer_default debug_prop:file { getattr map open read };
 +allow hal_graphics_composer_default system_prop:file { getattr map open read };
 +
  allow init mnt_product_file:dir mounton;
- 
+
  type mtk_hal_audio, domain;
 diff --git a/vndk.rc b/vndk.rc
 index 6a9ce16..51d9bca 100644
