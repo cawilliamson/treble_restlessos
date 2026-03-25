@@ -1,0 +1,107 @@
+From 712e5eea22d3a4e1f4710b81fc9e66cf0b489fb5 Mon Sep 17 00:00:00 2001
+From: Doze-off <viniciussadxxx@gmail.com>
+Date: Wed, 25 Mar 2026 09:34:00 +0000
+Subject: [PATCH 5/5] SurfaceFlinger: add treble app toggles for latch unsignaled
+ and backpressure
+
+add support for the three new PHH treble app display toggles:
+
+- persist.sys.phh.sf_latch_unsignaled: when true, force-latch all
+  buffers unsignaled (LatchUnsignaledConfig::Always). useful for
+  devices where fence signaling is unreliable.
+
+- persist.sys.phh.sf_auto_latch_unsignaled: controls auto single-layer
+  latch unsignaled behaviour. defaults to the AOSP property value
+  (debug.sf.auto_latch_unsignaled, default true). the treble app can
+  toggle this independently.
+
+- persist.sys.phh.sf_disable_backpressure: when true, force-disable
+  backpressure propagation regardless of enable_sf_hwc_backpressure.
+  provides a dedicated kill-switch for backpressure in the treble app.
+
+all three properties require a reboot to take effect, matching the
+existing treble app behaviour for display properties.
+---
+ ..._RENDERING-power-mode-to-be-disabled.patch | 36 +++++++++++++++++++
+ services/surfaceflinger/SurfaceFlinger.cpp    | 15 ++++++--
+ 2 files changed, 49 insertions(+), 2 deletions(-)
+ create mode 100644 0001-Allow-EXPENSIVE_RENDERING-power-mode-to-be-disabled.patch
+
+diff --git a/0001-Allow-EXPENSIVE_RENDERING-power-mode-to-be-disabled.patch b/0001-Allow-EXPENSIVE_RENDERING-power-mode-to-be-disabled.patch
+new file mode 100644
+index 0000000000..771c328784
+--- /dev/null
++++ b/0001-Allow-EXPENSIVE_RENDERING-power-mode-to-be-disabled.patch
+@@ -0,0 +1,36 @@
++From 3053fde487bf17be8d80a5fae7beb80e0de1566b Mon Sep 17 00:00:00 2001
++From: "Christopher A. Williamson" <contact@chrisaw.io>
++Date: Sun, 1 Jun 2025 21:05:59 +0100
++Subject: [PATCH 5/5] Allow EXPENSIVE_RENDERING power mode to be disabled
++
++Disable the EXPENSIVE_RENDERING power mode in SurfaceFlinger's
++PowerAdvisor when persist.sys.phh.disable_expensive_rendering_mode is
++set. Prevents SurfaceFlinger from sending this hint to the power HAL.
++
++Companion patch: staging/platform_frameworks_base/0003
++(PowerManagerService JNI side of the same feature).
++---
++ services/surfaceflinger/PowerAdvisor/PowerAdvisor.cpp | 7 +++++++
++ 1 file changed, 7 insertions(+)
++
++diff --git a/services/surfaceflinger/PowerAdvisor/PowerAdvisor.cpp b/services/surfaceflinger/PowerAdvisor/PowerAdvisor.cpp
++index a3da24b99a..dcb6147123 100644
++--- a/services/surfaceflinger/PowerAdvisor/PowerAdvisor.cpp
+++++ b/services/surfaceflinger/PowerAdvisor/PowerAdvisor.cpp
++@@ -69,6 +69,13 @@ static constexpr ftl::Flags<Workload> TRIGGER_LOAD_CHANGE_HINTS = Workload::EFFE
++ PowerAdvisor::PowerAdvisor(std::function<void()>&& sfDisableExpensiveFn,
++                            std::chrono::milliseconds timeout)
++       : mPowerHal(std::make_unique<power::PowerHalController>()) {
+++    // Force disable if property is set
+++    constexpr const char* kDisableProp = "persist.sys.phh.disable_expensive_rendering_mode";
+++    if (android::base::GetBoolProperty(kDisableProp, false)) {
+++        mHasExpensiveRendering = false;
+++        ALOGI("EXPENSIVE_RENDERING forcibly disabled (property %s=1)", kDisableProp);
+++    }
+++
++     if (timeout > 0ms) {
++         mScreenUpdateTimer.emplace("UpdateImminentTimer", timeout,
++                                    /* resetCallback */ nullptr,
++-- 
++2.53.0
++
+diff --git a/services/surfaceflinger/SurfaceFlinger.cpp b/services/surfaceflinger/SurfaceFlinger.cpp
+index 145e4b8c52..eb481b1e1c 100644
+--- a/services/surfaceflinger/SurfaceFlinger.cpp
++++ b/services/surfaceflinger/SurfaceFlinger.cpp
+@@ -525,7 +525,11 @@ SurfaceFlinger::SurfaceFlinger(Factory& factory) : SurfaceFlinger(factory, SkipI
+     mBackpressureGpuComposition = base::GetBoolProperty("debug.sf.enable_gl_backpressure"s, true);
+     ALOGI_IF(mBackpressureGpuComposition, "Enabling backpressure for GPU composition");
+ 
+-    mPropagateBackpressure = base::GetBoolProperty("persist.sys.phh.enable_sf_hwc_backpressure"s, false);
++    // phh: backpressure is disabled by default for GSI compatibility.
++    // the treble app can enable it via enable_sf_hwc_backpressure=true,
++    // or force-disable it via sf_disable_backpressure=true.
++    mPropagateBackpressure = base::GetBoolProperty("persist.sys.phh.enable_sf_hwc_backpressure"s, false)
++            && !base::GetBoolProperty("persist.sys.phh.sf_disable_backpressure"s, false);
+     ALOGI_IF(!mPropagateBackpressure, "Disabling backpressure propagation");
+ 
+     property_get("ro.surface_flinger.supports_background_blur", value, "0");
+@@ -583,7 +587,14 @@ SurfaceFlinger::SurfaceFlinger(Factory& factory) : SurfaceFlinger(factory, SkipI
+ }
+ 
+ LatchUnsignaledConfig SurfaceFlinger::getLatchUnsignaledConfig() {
+-    if (base::GetBoolProperty("debug.sf.auto_latch_unsignaled"s, true)) {
++    // phh: force-latch all buffers unsignaled when requested via treble app
++    if (base::GetBoolProperty("persist.sys.phh.sf_latch_unsignaled"s, false)) {
++        return LatchUnsignaledConfig::Always;
++    }
++
++    // phh: auto-latch single-layer buffers (default behaviour)
++    if (base::GetBoolProperty("persist.sys.phh.sf_auto_latch_unsignaled"s,
++            base::GetBoolProperty("debug.sf.auto_latch_unsignaled"s, true))) {
+         return LatchUnsignaledConfig::AutoSingleLayer;
+     }
+ 
+-- 
+2.53.0
+

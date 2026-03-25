@@ -1,0 +1,93 @@
+From 6fbffd1f1b32b8f7aae4920822115a5f4c68d06d Mon Sep 17 00:00:00 2001
+From: "Christopher A. Williamson" <contact@chrisaw.io>
+Date: Wed, 25 Mar 2026 09:12:44 +0000
+Subject: [PATCH 2/2] make dnsmasq communication failures non-fatal for tethering
+
+on GSI builds the modern tethering stack (NetworkStackService) provides its
+own DHCP server and DNS resolver. dnsmasq may not be running or may have
+crashed, but its absence should not prevent tethering from functioning.
+
+demote the dnsmasq send failures in setDnsForwarders and applyDnsInterfaces
+from fatal errors (which cause tethering teardown) to warnings. the DNS
+forwarder state is still stored so that if dnsmasq recovers, subsequent
+calls will succeed.
+---
+ ...MIT-PING-parse-error-in-tethering-CT.patch | 34 +++++++++++++++++++
+ server/TetherController.cpp                   | 13 ++++---
+ 2 files changed, 43 insertions(+), 4 deletions(-)
+ create mode 100644 0001-fix-iptables-COMMIT-PING-parse-error-in-tethering-CT.patch
+
+diff --git a/0001-fix-iptables-COMMIT-PING-parse-error-in-tethering-CT.patch b/0001-fix-iptables-COMMIT-PING-parse-error-in-tethering-CT.patch
+new file mode 100644
+index 0000000..ea68899
+--- /dev/null
++++ b/0001-fix-iptables-COMMIT-PING-parse-error-in-tethering-CT.patch
+@@ -0,0 +1,34 @@
++From e9e46b81f150b1340f989d9e34dcb4de7479707c Mon Sep 17 00:00:00 2001
++From: "Christopher A. Williamson" <contact@chrisaw.io>
++Date: Wed, 25 Mar 2026 09:11:50 +0000
++Subject: [PATCH 2/2] fix iptables COMMIT#PING parse error in tethering CT helper
++ rules
++
++the trebledroid patch that splits FTP/PPTP conntrack helper rules into a
++separate iptables-restore batch uses "COMMIT" without a trailing newline.
++when IptablesRestoreController::sendCommand appends "#PING\n" immediately
++after the command, iptables-restore receives "COMMIT#PING" as a single
++token and fails with 'Bad argument COMMIT#PING'.
++
++the main v4 and v6 vectors already use "COMMIT\n" (with trailing newline).
++align v4Ftp to match, ensuring the PING sentinel lands on its own line.
++---
++ server/TetherController.cpp | 2 +-
++ 1 file changed, 1 insertion(+), 1 deletion(-)
++
++diff --git a/server/TetherController.cpp b/server/TetherController.cpp
++index 379c33b..bdc10e9 100644
++--- a/server/TetherController.cpp
+++++ b/server/TetherController.cpp
++@@ -728,7 +728,7 @@ int TetherController::setForwardRules(bool add, const char *intIface, const char
++                             op, LOCAL_RAW_PREROUTING, intIface),
++             StringPrintf("%s %s -p tcp --dport 1723 -i %s -j CT --helper pptp", op,
++                          LOCAL_RAW_PREROUTING, intIface),
++-            "COMMIT",
+++            "COMMIT\n",
++     };
++     if(iptablesRestoreFunction(V4, Join(v4Ftp, '\n'), nullptr) == -1) {
++             ALOGE("Failed adding iptables CT target on FTP.");
++-- 
++2.53.0
++
+diff --git a/server/TetherController.cpp b/server/TetherController.cpp
+index bdc10e9..2ee70af 100644
+--- a/server/TetherController.cpp
++++ b/server/TetherController.cpp
+@@ -406,9 +406,10 @@ int TetherController::setDnsForwarders(unsigned netId, char **servers, int numSe
+     mDnsmasqState.update_dns_cmd = std::move(daemonCmd);
+     if (mDaemonFd != -1) {
+         if (mDnsmasqState.sendAllState(mDaemonFd) != 0) {
+-            mDnsForwarders.clear();
+-            errno = EREMOTEIO;
+-            return -errno;
++            // on GSI builds dnsmasq may not be running; the modern tethering
++            // stack (NetworkStackService) provides its own DHCP/DNS server,
++            // so a dnsmasq communication failure is not fatal.
++            ALOGW("Failed to send DNS state to dnsmasq (non-fatal on GSI)");
+         }
+     }
+     return 0;
+@@ -446,7 +447,11 @@ bool TetherController::applyDnsInterfaces() {
+         mDnsmasqState.update_ifaces_cmd.clear();
+     } else {
+         mDnsmasqState.update_ifaces_cmd = std::move(daemonCmd);
+-        if (mDaemonFd != -1) return (mDnsmasqState.sendAllState(mDaemonFd) == 0);
++        if (mDaemonFd != -1) {
++            if (mDnsmasqState.sendAllState(mDaemonFd) != 0) {
++                ALOGW("Failed to send iface state to dnsmasq (non-fatal on GSI)");
++            }
++        }
+     }
+     return true;
+ }
+-- 
+2.53.0
+

@@ -1,0 +1,78 @@
+From 4398efb0879a3459cf4d232fdbd61dca52c44274 Mon Sep 17 00:00:00 2001
+From: "Christopher A. Williamson" <contact@chrisaw.io>
+Date: Wed, 25 Mar 2026 09:22:30 +0000
+Subject: [PATCH 15/15] rw-system.sh: auto-detect codec2 HAL and configure media
+ stack
+
+detect whether the vendor ships a codec2 HAL by scanning the VINTF
+manifests for android.hardware.media.c2. when present, set properties
+to prefer codec2 over OMX. further distinguish AIDL vs HIDL c2 HALs
+and set media.c2.hal.selection=aidl when appropriate.
+
+when no vendor c2 HAL is found, explicitly disable codec2 (ccodec=0)
+to prevent playback failures from the framework trying to use a c2
+path that has no backing implementation.
+
+the detection is guarded by a check for an existing ccodec property,
+so device-specific overrides (e.g. old MTK ccodec=0) that fire earlier
+in rw-system.sh are respected.
+
+fixes codec issues reported on devices where the vendor supports c2
+but the GSI defaults were not selecting it (e.g. telegram video
+playback failures on android 16).
+---
+ rw-system.sh | 38 ++++++++++++++++++++++++++++++++++++++
+ 1 file changed, 38 insertions(+)
+
+diff --git a/rw-system.sh b/rw-system.sh
+index c314aa1..09a3561 100644
+--- a/rw-system.sh
++++ b/rw-system.sh
+@@ -1043,6 +1043,44 @@ if [ -n "$vndk" ] && [ "$vndk" -le 28 ] && getprop ro.hardware |grep -q -e mt676
+     setprop debug.stagefright.ccodec 0
+ fi
+ 
++# codec2 HAL detection: prefer c2 when the vendor ships a working HAL,
++# otherwise fall back to OMX to avoid broken playback on older vendors.
++# skip if an earlier block already set ccodec (e.g. old MTK override above).
++if [ -z "$(getprop debug.stagefright.ccodec)" ]; then
++c2_hal_found=false
++for manifest in /vendor/manifest.xml /vendor/etc/vintf/manifest.xml /vendor/etc/vintf/manifest/*.xml /odm/etc/vintf/manifest.xml /odm/etc/vintf/manifest/*.xml; do
++    [ -f "$manifest" ] || continue
++    if grep -q 'android.hardware.media.c2' "$manifest"; then
++        c2_hal_found=true
++        break
++    fi
++done
++
++if [ "$c2_hal_found" = true ]; then
++    # vendor declares codec2 HAL -- prefer c2 over OMX
++    setprop debug.stagefright.c2inputsurface -1
++    setprop debug.stagefright.omx_default_rank 0
++    # detect AIDL vs HIDL: AIDL manifests use <fqname> or format="aidl"
++    c2_aidl=false
++    for manifest in /vendor/manifest.xml /vendor/etc/vintf/manifest.xml /vendor/etc/vintf/manifest/*.xml /odm/etc/vintf/manifest.xml /odm/etc/vintf/manifest/*.xml; do
++        [ -f "$manifest" ] || continue
++        if grep -A5 'android.hardware.media.c2' "$manifest" | grep -qE 'format.*aidl|<fqname>.*IComponentStore/'; then
++            c2_aidl=true
++            break
++        fi
++    done
++    if [ "$c2_aidl" = true ]; then
++        setprop debug.stagefright.ccodec 4
++        setprop media.c2.hal.selection aidl
++    else
++        setprop debug.stagefright.ccodec 4
++    fi
++else
++    # no vendor codec2 HAL -- disable c2 and rely on OMX
++    setprop debug.stagefright.ccodec 0
++fi
++fi # end ccodec guard
++
+ if getprop ro.omc.build.version |grep -qE .;then
+ 	for f in $(find /odm -name \*.apk);do
+ 		mount /mnt/phh/empty $f
+-- 
+2.53.0
+
