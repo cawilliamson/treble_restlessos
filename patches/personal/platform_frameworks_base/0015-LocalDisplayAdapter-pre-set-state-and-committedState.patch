@@ -1,7 +1,7 @@
 From 52249b304f4681f5532ac5dd53ec0679aae7baeb Mon Sep 17 00:00:00 2001
 From: "Christopher A. Williamson" <contact@chrisaw.io>
 Date: Thu, 19 Mar 2026 07:38:04 +0000
-Subject: [PATCH 15/15] LocalDisplayAdapter: pre-set state and committedState to ON
+Subject: [PATCH 15/16] LocalDisplayAdapter: pre-set state and committedState to ON
  for first internal display
 
 On devices where the vendor HWC does not implement getDisplayConnectionType
