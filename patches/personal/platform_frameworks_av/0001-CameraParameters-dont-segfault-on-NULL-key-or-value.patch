@@ -17,7 +17,7 @@ index cd58d01..d64a659 100644
 --- a/camera/CameraParameters.cpp
 +++ b/camera/CameraParameters.cpp
 @@ -238,6 +238,8 @@ void CameraParameters::unflatten(const String8 &params)
- 
+
  void CameraParameters::set(const char *key, const char *value)
  {
 +    if (key == NULL || value == NULL) return;

@@ -13,7 +13,7 @@ index a0c38dd82037..7adb6d30e133 100644
 --- a/services/core/java/com/android/server/wm/ActivityTaskManagerService.java
 +++ b/services/core/java/com/android/server/wm/ActivityTaskManagerService.java
 @@ -6443,19 +6443,7 @@ public class ActivityTaskManagerService extends IActivityTaskManager.Stub {
- 
+
                  if (!isBuildConsistent) {
                      Slog.e(TAG, "Build fingerprint is not consistent, warning user");
 -                    mUiHandler.post(() -> {

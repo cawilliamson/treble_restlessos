@@ -37,7 +37,7 @@ index 7032db0..abb041e 100644
 +
      return deviceIds;
  }
- 
+
 @@ -353,6 +363,18 @@ std::vector<std::string> CameraProviderManager::getAPI1CompatibleCameraDeviceIds
      std::sort(systemDeviceIds.begin(), systemDeviceIds.end(), sortFunc);
      deviceIds.insert(deviceIds.end(), publicDeviceIds.begin(), publicDeviceIds.end());
@@ -56,7 +56,7 @@ index 7032db0..abb041e 100644
 +
      return deviceIds;
  }
- 
+
 -- 
 2.52.0
 

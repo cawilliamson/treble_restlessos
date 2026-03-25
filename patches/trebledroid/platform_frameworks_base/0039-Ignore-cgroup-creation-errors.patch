@@ -24,7 +24,7 @@ index ac0ca27c8..1ce78eca2 100644
                                                  /* pid= */ 0, strerror(-rc)));
 +#endif
          }
- 
+
          if (is_system_server && UsePerAppMemcg()) {
 diff --git a/services/core/java/com/android/server/am/ProcessList.java b/services/core/java/com/android/server/am/ProcessList.java
 index 1a12925d4..6722d7981 100644

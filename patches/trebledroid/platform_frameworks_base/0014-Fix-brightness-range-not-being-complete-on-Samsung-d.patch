@@ -19,7 +19,7 @@ index bef505867a14..cf67cf8240e0 100644
 --- a/services/core/java/com/android/server/power/PowerManagerService.java
 +++ b/services/core/java/com/android/server/power/PowerManagerService.java
 @@ -1260,9 +1260,11 @@ public final class PowerManagerService extends SystemService
- 
+
          if (min == INVALID_BRIGHTNESS_IN_CONFIG || max == INVALID_BRIGHTNESS_IN_CONFIG
                  || def == INVALID_BRIGHTNESS_IN_CONFIG) {
 +            int correctedMin = mContext.getResources().getInteger(com.android.internal.R.integer

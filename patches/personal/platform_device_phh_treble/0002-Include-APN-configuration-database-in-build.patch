@@ -26,7 +26,7 @@ index a29e402..2d467e6 100644
 @@ -24,6 +24,10 @@ $(call inherit-product, vendor/hardware_overlay/overlay.mk)
  $(call inherit-product, $(SRC_TARGET_DIR)/product/core_64_bit.mk)
  $(call inherit-product, $(SRC_TARGET_DIR)/product/aosp_base_telephony.mk)
- 
+
 +# APN configuration database
 +PRODUCT_COPY_FILES += \
 +    device/sample/etc/apns-full-conf.xml:$(TARGET_COPY_OUT_PRODUCT)/etc/apns-conf.xml

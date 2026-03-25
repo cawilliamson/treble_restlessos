@@ -47,7 +47,7 @@ index c4becea462d5..a24586ed4da1 100644
 +                    getDisplayCutoutSideOverrides(res, displayUniqueId)).second;
 +        }
      }
- 
+
      /**
 -- 
 2.52.0

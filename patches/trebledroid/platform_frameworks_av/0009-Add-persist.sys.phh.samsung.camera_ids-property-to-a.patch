@@ -28,10 +28,10 @@ index 27ae766e1b..663eaf22ed 100644
 +++ b/services/camera/libcameraservice/common/hidl/HidlProviderInfo.cpp
 @@ -29,6 +29,7 @@
  #include <utils/Utils.h>
- 
+
  #include <android/hardware/camera/device/3.7/ICameraDevice.h>
 +#include <vendor/samsung/hardware/camera/provider/3.0/ISehCameraProvider.h>
- 
+
  namespace {
  const bool kEnableLazyHal(property_get_bool("ro.camera.enableLazyHal", false));
 @@ -137,6 +138,7 @@ status_t HidlProviderInfo::initializeHidlProvider(
@@ -45,7 +45,7 @@ index 27ae766e1b..663eaf22ed 100644
 @@ -173,6 +175,9 @@ status_t HidlProviderInfo::initializeHidlProvider(
          return mapToStatusT(status);
      }
- 
+
 +    auto samsungCast = vendor::samsung::hardware::camera::provider::V3_0::ISehCameraProvider::castFrom(interface);
 +    auto samsungProvider = samsungCast.isOk() ? static_cast<sp<vendor::samsung::hardware::camera::provider::V3_0::ISehCameraProvider>>(samsungCast) : nullptr;
 +
@@ -53,7 +53,7 @@ index 27ae766e1b..663eaf22ed 100644
      if (!linked.isOk()) {
          ALOGE("%s: Transaction error in linking to camera provider '%s' death: %s",
 @@ -203,7 +208,7 @@ status_t HidlProviderInfo::initializeHidlProvider(
- 
+
      // Get initial list of camera devices, if any
      std::vector<std::string> devices;
 -    hardware::Return<void> ret = interface->getCameraIdList([&status, this, &devices](

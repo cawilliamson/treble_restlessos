@@ -32,7 +32,7 @@ index 4ad758a..e14cd37 100644
 @@ -121,6 +122,14 @@ void GpuWork::initialize() {
      // Workaround b/347947040 by allowing time for statsd / bpf setup.
      std::this_thread::sleep_for(std::chrono::seconds(30));
- 
+
 +    // If the gpu_work_period tracepoint does not exist (e.g. older/GSI kernels),
 +    // stall this thread forever to prevent gpuservice from crash-looping.
 +    struct stat sb;
@@ -43,7 +43,7 @@ index 4ad758a..e14cd37 100644
 +
      // Make sure BPF programs are loaded.
      bpf::waitForProgsLoaded();
- 
+
 -- 
 2.53.0
 

@@ -33,7 +33,7 @@ index 8c70d4e70..a7fcd77d8 100644
 @@ -4028,6 +4028,16 @@ public class SettingsProvider extends ContentProvider {
                      migrateLegacySettingsForUserLocked(dbHelper, database, userId,
                              Context.DEVICE_ID_DEFAULT);
- 
+
 +                    // Ensure SSAID settings state exists before running upgrade.
 +                    // migrateLegacySettingsForUserLocked creates system, secure, and global
 +                    // settings states, but not SSAID. The upgrade path (version 136->137)
@@ -49,7 +49,7 @@ index 8c70d4e70..a7fcd77d8 100644
                              Context.DEVICE_ID_DEFAULT);
 @@ -4873,17 +4883,28 @@ public class SettingsProvider extends ContentProvider {
                          }
- 
+
                          final SettingsState ssaidSettings = getSsaidSettingsLocked(userId);
 -                        for (PackageInfo info : packages) {
 -                            // Check if the UID already has an entry in the table.

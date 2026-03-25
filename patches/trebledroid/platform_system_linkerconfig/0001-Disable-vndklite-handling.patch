@@ -14,12 +14,12 @@ index 559a5ec..5e455f9 100644
 +++ b/modules/environment.cc
 @@ -25,7 +25,7 @@ namespace linkerconfig {
  namespace modules {
- 
+
  bool IsVndkLiteDevice() {
 -  return Variables::GetValue("ro.vndk.lite").value_or("") == "true";
 +  return false;
  }
- 
+
  bool IsVndkInSystemNamespace() {
 -- 
 2.52.0

@@ -32,7 +32,7 @@ index 3ddf6762dd..2e625994e5 100644
 +        }
          RadioResponse.responseString(HAL_SERVICE_MESSAGING, mRil, responseInfo, smsc);
      }
- 
+
 diff --git a/src/java/com/android/internal/telephony/RadioResponse.java b/src/java/com/android/internal/telephony/RadioResponse.java
 index 5663dc816b..e470e68ac0 100644
 --- a/src/java/com/android/internal/telephony/RadioResponse.java
@@ -56,7 +56,7 @@ index 5663dc816b..e470e68ac0 100644
 +        }
          responseString(responseInfo, smsc);
      }
- 
+
 -- 
 2.52.0
 

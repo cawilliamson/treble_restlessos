@@ -20,13 +20,13 @@ index e0d38a822..60974e8ae 100644
  #include <unistd.h>
 +#include <string.h>
 +#include <fcntl.h>
- 
+
  #include <new>
- 
+
 @@ -53,6 +55,85 @@
  #define SERIAL_VALUE_LEN(serial) ((serial) >> 24)
  #define APPCOMPAT_PREFIX "ro.appcompat_override."
- 
+
 +static char comm[128];
 +static bool self_ok = false;
 +static char comm_override[PROP_VALUE_MAX];
@@ -111,21 +111,21 @@ index e0d38a822..60974e8ae 100644
    if (stat(pathname, &info) == -1) {
 @@ -160,17 +241,26 @@ uint32_t SystemProperties::AreaSerial() {
  }
- 
+
  const prop_info* SystemProperties::Find(const char* name) {
 +  const char* newName = redirectToProp(name);
 +
    if (!initialized_) {
      return nullptr;
    }
- 
+
 -  prop_area* pa = contexts_->GetPropAreaForName(name);
 +  prop_area* pa = contexts_->GetPropAreaForName(newName);
    if (!pa) {
      async_safe_format_log(ANDROID_LOG_WARN, "libc", "Access denied finding property \"%s\"", name);
      return nullptr;
    }
- 
+
 -  return pa->find(name);
 +  const prop_info* pi = pa->find(newName);
 +  if (pi == nullptr && newName != name) {
@@ -136,7 +136,7 @@ index e0d38a822..60974e8ae 100644
 +  }
 +  return pi;
  }
- 
+
  static bool is_appcompat_override(const char* name) {
 -- 
 2.52.0

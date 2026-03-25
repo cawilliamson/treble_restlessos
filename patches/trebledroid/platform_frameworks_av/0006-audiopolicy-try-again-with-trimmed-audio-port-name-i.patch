@@ -25,7 +25,7 @@ index 839974b9d3..21d3282134 100644
 @@ -593,6 +593,17 @@ std::variant<status_t, DevicePortTraits::Element> PolicySerializer::deserialize<
      return deviceDesc;
  }
- 
+
 +char* trim(char * s) {
 +    int l = strlen(s);
 +

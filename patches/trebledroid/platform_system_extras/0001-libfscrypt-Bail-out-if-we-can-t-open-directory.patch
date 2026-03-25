@@ -28,7 +28,7 @@ index 4c756b18..f3b106e9 100644
 -        return false;
 +        return true;
      }
- 
+
      bool already_encrypted = fscrypt_is_encrypted(fd);
 -- 
 2.52.0

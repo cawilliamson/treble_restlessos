@@ -20,7 +20,7 @@ index 364bd920799a..457f2c245820 100644
          "vendor.samsung.hardware.light@3.0",
 +        "vendor.samsung.hardware.miscpower@2.0",
      ],
- 
+
      static_libs: [
 -- 
 2.52.0

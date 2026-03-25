@@ -16,7 +16,7 @@ index 609db07184..7d7befa13e 100644
 +++ b/media/libaudiohal/Android.bp
 @@ -23,6 +23,7 @@ cc_library_shared {
      ],
- 
+
      required: [
 +        "libaudiohal@5.0",
          "libaudiohal@6.0",
@@ -38,7 +38,7 @@ index 2c30693a61..15cb297b5c 100644
      AudioHalVersionInfo(AudioHalVersionInfo::Type::HIDL, 6, 0),
 +    AudioHalVersionInfo(AudioHalVersionInfo::Type::HIDL, 5, 0),
  };
- 
+
  static const std::map<AudioHalVersionInfo::Type, InterfaceName> sDevicesHALInterfaces = {
 diff --git a/media/libaudiohal/impl/Android.bp b/media/libaudiohal/impl/Android.bp
 index 00f3929bff..3585402202 100644
@@ -47,7 +47,7 @@ index 00f3929bff..3585402202 100644
 @@ -82,6 +82,32 @@ cc_defaults {
      ],
  }
- 
+
 +cc_library_shared {
 +    name: "libaudiohal@5.0",
 +    defaults: [

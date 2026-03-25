@@ -33,7 +33,7 @@ index 6965cf9a11..145e4b8c52 100644
 +++ b/services/surfaceflinger/SurfaceFlinger.cpp
 @@ -1651,8 +1651,13 @@ void SurfaceFlinger::applyActiveMode(display::DisplayModeRequest&& activeMode) {
  }
- 
+
  void SurfaceFlinger::initiateDisplayModeChanges() {
 -    if (FlagManager::getInstance().synced_resolution_switch() && mBootStage != BootStage::FINISHED)
 -            [[unlikely]] {
@@ -46,7 +46,7 @@ index 6965cf9a11..145e4b8c52 100644
 +    if (mBootStage != BootStage::FINISHED) [[unlikely]] {
          return;
      }
- 
+
 -- 
 2.53.0
 

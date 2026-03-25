@@ -17,7 +17,7 @@ index 7b2e6c2013cf..394237288c73 100644
 @@ -8694,6 +8694,75 @@ public class TelephonyManager {
          }
      }
- 
+
 +    /**
 +     * Sets a per-phone telephony property with the value specified.
 +     *

@@ -13,7 +13,7 @@ index cb61b1fd4..9271818ff 100644
 +++ b/services/core/Android.bp
 @@ -269,6 +269,7 @@ java_library_static {
          "vendor.xiaomi.hardware.fingerprintextension-V1.0-java",
- 
+
          //AIDL
 +        "vendor.samsung.hardware.sysinput-V1-java",
          "vendor.samsung.hardware.biometrics.fingerprint-V1-java",

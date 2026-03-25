@@ -52,7 +52,7 @@ index 97d2179509..f9944cd7b0 100644
 +                tags.push_back(vendorTag);
 +        }
 +    }
- 
+
      int32_t bestWidth = -1;
      int32_t bestHeight = -1;
 -

@@ -15,15 +15,15 @@ index 063f5545dd71..79e72f48f7f2 100644
 @@ -28,6 +28,9 @@ import android.text.TextUtils;
  import android.util.ArrayMap;
  import android.util.SparseArray;
- 
+
 +import android.hardware.SensorManager;
 +import android.hardware.Sensor;
 +
  import com.android.internal.R;
  import com.android.internal.util.ArrayUtils;
- 
+
 @@ -111,8 +114,20 @@ public class AmbientDisplayConfiguration {
- 
+
      /** @hide */
      public boolean dozePickupSensorAvailable() {
 -        return mContext.getResources().getBoolean(R.bool.config_dozePulsePickup);
@@ -42,7 +42,7 @@ index 063f5545dd71..79e72f48f7f2 100644
 +            }
 +        }
 +        return mContext.getResources().getBoolean(R.bool.config_dozePulsePickup) || found;    }
- 
+
      /** @hide */
      public boolean tapGestureEnabled(int user) {
 -- 

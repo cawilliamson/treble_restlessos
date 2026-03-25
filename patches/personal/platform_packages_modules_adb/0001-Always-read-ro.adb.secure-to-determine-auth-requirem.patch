@@ -25,7 +25,7 @@ index 3d3f302..5c897b0 100644
 @@ -219,21 +219,9 @@ int adbd_main() {
      // descriptor will always be open.
      adbd_cloexec_auth_socket();
- 
+
 -#if defined(__ANDROID__)
 -    bool device_unlocked = android::base::GetProperty("ro.boot.verifiedbootstate", "") == "orange";
 -    if (device_unlocked || __android_log_is_debuggable()) {
@@ -44,7 +44,7 @@ index 3d3f302..5c897b0 100644
 +    // Allow boot scripts to control authentication via ro.adb.secure.
 +    // Default to requiring auth when the property is absent.
 +    auth_required = android::base::GetBoolProperty("ro.adb.secure", true);
- 
+
      // Our external storage path may be different than apps, since
      // we aren't able to bind mount after dropping root.
 -- 

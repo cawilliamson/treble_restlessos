@@ -30,11 +30,11 @@ index ea455a81..28f511b6 100644
 +++ b/FsCrypt.cpp
 @@ -49,6 +49,7 @@
  #include <cutils/properties.h>
- 
+
  #include <fscrypt/fscrypt.h>
 +#include <keyutils.h>
  #include <libdm/dm.h>
- 
+
  #include <android-base/file.h>
 @@ -74,6 +75,7 @@ using android::vold::retrieveOrGenerateKey;
  using android::vold::SetDefaultAcl;
@@ -43,11 +43,11 @@ index ea455a81..28f511b6 100644
 +using android::vold::writeStringToFile;
  using namespace android::fscrypt;
  using namespace android::dm;
- 
+
 @@ -682,6 +684,27 @@ bool fscrypt_create_user_keys(userid_t user_id, bool ephemeral) {
      return true;
  }
- 
+
 +// "Lock" all encrypted directories whose key has been removed.  This is needed
 +// in the case where the keys are being put in the session keyring (rather in
 +// the newer filesystem-level keyrings), because removing a key from the session
@@ -85,17 +85,17 @@ index bd2ccddd..9e8920d1 100644
 --- a/KeyUtil.cpp
 +++ b/KeyUtil.cpp
 @@ -28,6 +28,7 @@
- 
+
  #include <android-base/file.h>
  #include <android-base/logging.h>
 +#include <keyutils.h>
- 
+
  #include "KeyStorage.h"
  #include "Utils.h"
 @@ -74,6 +75,39 @@ bool generateStorageKey(const KeyGeneration& gen, KeyBuffer* key) {
      }
  }
- 
+
 +static bool isFsKeyringSupportedImpl() {
 +    android::base::unique_fd fd(open("/data", O_RDONLY | O_DIRECTORY | O_CLOEXEC));
 +
@@ -135,7 +135,7 @@ index bd2ccddd..9e8920d1 100644
 @@ -93,6 +127,20 @@ static std::string generateKeyRef(const uint8_t* key, int length) {
      return std::string((char*)key_ref2, FSCRYPT_KEY_DESCRIPTOR_SIZE);
  }
- 
+
 +static bool fillKey(const KeyBuffer& key, fscrypt_key* fs_key) {
 +    if (key.size() != FSCRYPT_MAX_KEY_SIZE) {
 +        LOG(ERROR) << "Wrong size key " << key.size();
@@ -156,7 +156,7 @@ index bd2ccddd..9e8920d1 100644
 @@ -101,6 +149,44 @@ static std::string keyrefstring(const std::string& raw_ref) {
      return o.str();
  }
- 
+
 +static std::string buildLegacyKeyName(const std::string& prefix, const std::string& raw_ref) {
 +    return prefix + ":" + keyrefstring(raw_ref);
 +}
@@ -211,7 +211,7 @@ index bd2ccddd..9e8920d1 100644
 @@ -187,6 +276,29 @@ bool installKey(const std::string& mountpoint, const EncryptionOptions& options,
      return true;
  }
- 
+
 +// Remove an encryption key from the legacy global session keyring.
 +static bool evictKeyLegacy(const std::string& raw_ref) {
 +    key_serial_t device_keyring;
@@ -239,13 +239,13 @@ index bd2ccddd..9e8920d1 100644
                               const std::string mountpoint) {
      android::base::unique_fd fd(open(mountpoint.c_str(), O_RDONLY | O_DIRECTORY | O_CLOEXEC));
 @@ -247,6 +359,9 @@ static void waitForBusyFiles(const struct fscrypt_key_specifier key_spec, const
- 
+
  bool evictKey(const std::string& mountpoint, const EncryptionPolicy& policy) {
      const std::lock_guard<std::mutex> lock(fscrypt_keyring_mutex);
 +    if (policy.options.version == 1 && !isFsKeyringSupported()) {
 +        return evictKeyLegacy(policy.key_raw_ref);
 +    }
- 
+
      android::base::unique_fd fd(open(mountpoint.c_str(), O_RDONLY | O_DIRECTORY | O_CLOEXEC));
      if (fd == -1) {
 diff --git a/KeyUtil.h b/KeyUtil.h
@@ -255,7 +255,7 @@ index cc1a1f98..17a234e6 100644
 @@ -43,15 +43,28 @@ bool generateStorageKey(const KeyGeneration& gen, KeyBuffer* key);
  // be generated.
  const KeyGeneration neverGen();
- 
+
 +bool isFsKeyringSupported(void);
 +
  // Install a file-based encryption key to the kernel, for use by encrypted files
@@ -271,7 +271,7 @@ index cc1a1f98..17a234e6 100644
  // to the EncryptionPolicy used to refer to this key.
  bool installKey(const std::string& mountpoint, const android::fscrypt::EncryptionOptions& options,
                  const KeyBuffer& key, android::fscrypt::EncryptionPolicy* policy);
- 
+
  // Evict a file-based encryption key from the kernel.
 +//
 +// We use FS_IOC_REMOVE_ENCRYPTION_KEY if the kernel supports it.  Otherwise we
@@ -279,7 +279,7 @@ index cc1a1f98..17a234e6 100644
 +//
 +// In the latter case, the caller is responsible for dropping caches.
  bool evictKey(const std::string& mountpoint, const android::fscrypt::EncryptionPolicy& policy);
- 
+
  // Retrieves the key from the named directory, or generates it if it doesn't
 -- 
 2.52.0

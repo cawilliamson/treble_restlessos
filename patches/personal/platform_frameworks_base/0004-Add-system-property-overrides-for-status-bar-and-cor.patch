@@ -84,7 +84,7 @@ index 517b93be9..1889c6bb1 100644
  import android.provider.AlarmClock
 @@ -702,7 +703,9 @@ constructor(
      }
- 
+
      private fun updateResources() {
 -        roundedCorners = resources.getDimensionPixelSize(R.dimen.rounded_corner_content_padding)
 +        roundedCorners = SystemProperties.getInt("persist.sys.phh.rounded_corners_padding", -1);
@@ -108,7 +108,7 @@ index 6806cfdc9..14f9d5299 100644
 @@ -331,20 +332,23 @@ constructor(
      ): Rect {
          val currentRotation = getExactRotation(context)
- 
+
 -        val roundedCornerPadding =
 -            if (context.displayId == DEFAULT_DISPLAY || !StatusBarConnectedDisplays.isEnabled) {
 -                rotatedResources.getDimensionPixelSize(R.dimen.rounded_corner_content_padding)
@@ -191,7 +191,7 @@ index 28621e1b0..0b3d8c621 100644
  import android.view.DisplayCutout;
 @@ -330,23 +331,36 @@ public class PhoneStatusBarView extends FrameLayout {
      }
- 
+
      private void updatePaddings() {
 -        int statusBarPaddingStart = getResources().getDimensionPixelSize(
 -                R.dimen.status_bar_padding_start);
@@ -210,7 +210,7 @@ index 28621e1b0..0b3d8c621 100644
 +        int statusBarPaddingBottom = SystemProperties.getInt("persist.sys.phh.status_bar_padding_bottom", -1);
 +        if(statusBarPaddingBottom == -1)
 +            statusBarPaddingBottom = getResources().getDimensionPixelSize(R.dimen.status_bar_icons_padding_bottom);
- 
+
          findViewById(R.id.status_bar_contents).setPaddingRelative(
 -                statusBarPaddingStart,
 -                getResources().getDimensionPixelSize(R.dimen.status_bar_padding_top),
@@ -219,10 +219,10 @@ index 28621e1b0..0b3d8c621 100644
 +                (int) statusBarPaddingTop,
 +                (int) statusBarPaddingEnd,
                  0);
- 
+
          findViewById(R.id.notification_lights_out)
                  .setPaddingRelative(0, statusBarPaddingStart, 0, 0);
- 
+
          findViewById(R.id.system_icons).setPaddingRelative(
 -                getResources().getDimensionPixelSize(R.dimen.status_bar_icons_padding_start),
 -                getResources().getDimensionPixelSize(R.dimen.status_bar_icons_padding_top),
@@ -234,7 +234,7 @@ index 28621e1b0..0b3d8c621 100644
 +                (int) statusBarPaddingBottom
          );
      }
- 
+
 -- 
 2.53.0
 

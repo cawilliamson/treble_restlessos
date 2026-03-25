@@ -57,7 +57,7 @@ index 030494b..58612c6 100644
 @@ -61,39 +60,6 @@ class MiscSettingsFragment : SettingsFragment() {
      override fun onCreatePreferences(savedInstanceState: Bundle?, rootKey: String?) {
          super.onCreatePreferences(savedInstanceState, rootKey)
- 
+
 -        val securizePref = findPreference<Preference>(MiscSettings.securize)
 -        securizePref!!.setOnPreferenceClickListener {
 -                val builder = AlertDialog.Builder( this.getActivity() )
@@ -93,7 +93,7 @@ index 030494b..58612c6 100644
 -
          val removeTelephonyPref = findPreference<Preference>(MiscSettings.removeTelephony)
          removeTelephonyPref!!.setOnPreferenceClickListener {
- 
+
 diff --git a/app/src/main/res/values/strings.xml b/app/src/main/res/values/strings.xml
 index 875a08f..4d264a9 100644
 --- a/app/src/main/res/values/strings.xml

@@ -14,7 +14,7 @@ index f2e1ad6b8..35f78ec90 100644
 +++ b/fs_mgr/libfstab/fstab.cpp
 @@ -215,7 +215,7 @@ bool ParseFsMgrFlags(const std::string& flags, FstabEntry* entry) {
  #undef CheckFlag
- 
+
          // Then handle flags that take an argument.
 -        if (StartsWith(flag, "encryptable=")) {
 +        if (StartsWith(flag, "encryptable=") || StartsWith(flag, "forceencrypt=")) {

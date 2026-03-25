@@ -28,7 +28,7 @@ index c314aa1..c6cd393 100644
 @@ -1039,7 +1039,40 @@ if getprop ro.build.overlay.deviceid |grep -qE '^RMX';then
      fi
  fi
- 
+
 -if [ -n "$vndk" ] && [ "$vndk" -le 28 ] && getprop ro.hardware |grep -q -e mt6761 -e mt6763 -e mt6765 -e mt6785 -e mt8768 -e mt6779 -e mt6771 -e mt8766;then
 +# codec2 HAL detection: prefer c2 when the vendor ships a working HAL,
 +# otherwise fall back to OMX to avoid broken playback on older vendors.
@@ -66,7 +66,7 @@ index c314aa1..c6cd393 100644
 +    # no vendor codec2 HAL -- disable c2 and rely on OMX
      setprop debug.stagefright.ccodec 0
  fi
- 
+
 -- 
 2.53.0
 

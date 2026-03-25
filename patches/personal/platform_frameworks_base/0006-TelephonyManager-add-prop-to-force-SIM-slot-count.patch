@@ -58,7 +58,7 @@ index 0e7f8400b..c30bc065c 100644
 +
          return TelephonyProperties.max_active_modems().orElse(getActiveModemCount());
      }
- 
+
 -- 
 2.53.0
 

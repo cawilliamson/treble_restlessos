@@ -22,7 +22,7 @@ index 32e836c..894a1db 100644
 --- a/src/java/com/android/internal/telephony/subscription/SubscriptionManagerService.java
 +++ b/src/java/com/android/internal/telephony/subscription/SubscriptionManagerService.java
 @@ -3329,7 +3329,22 @@ public class SubscriptionManagerService extends ISub.Stub {
- 
+
                  TelecomManager telecomManager = mContext.getSystemService(TelecomManager.class);
                  if (telecomManager != null) {
 -                    telecomManager.setUserSelectedOutgoingPhoneAccount(newHandle);
@@ -43,7 +43,7 @@ index 32e836c..894a1db 100644
 +                        log("[setDefaultVoiceSubId] default phoneAccountHandle not changed.");
 +                    }
                  }
- 
+
                  updateDefaultSubId();
 -- 
 2.52.0

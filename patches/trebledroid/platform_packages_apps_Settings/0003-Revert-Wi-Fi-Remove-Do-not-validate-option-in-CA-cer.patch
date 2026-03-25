@@ -33,7 +33,7 @@ index a76e203..588a270 100644
 @@ -233,6 +233,18 @@
                      android:prompt="@string/wifi_eap_ocsp"/>
              </LinearLayout>
- 
+
 +            <LinearLayout android:id="@+id/no_ca_cert_warning"
 +                    android:layout_width="match_parent"
 +                    android:layout_height="wrap_content"
@@ -73,7 +73,7 @@ index 098b4b3..42d1c29 100644
      private String mUseSystemCertsString;
      private String mDoNotProvideEapUserCertString;
 +    private String mDoNotValidateEapServerString;
- 
+
      private Spinner mSecuritySpinner;
      @VisibleForTesting Spinner mEapMethodSpinner;
 @@ -287,6 +288,8 @@ public class WifiConfigController implements TextWatcher,
@@ -82,7 +82,7 @@ index 098b4b3..42d1c29 100644
              mContext.getString(R.string.wifi_do_not_provide_eap_user_cert);
 +        mDoNotValidateEapServerString =
 +            mContext.getString(R.string.wifi_do_not_validate_eap_server);
- 
+
          if (Flags.androidVWifiApi() && mAccessPointSecurity == WifiEntry.SECURITY_WEP) {
              LinearLayout wepWarningLayout =
 @@ -537,7 +540,8 @@ public class WifiConfigController implements TextWatcher,
@@ -97,7 +97,7 @@ index 098b4b3..42d1c29 100644
                  // Disallow submit if the user chooses to use a certificate for EAP server
 @@ -559,6 +563,7 @@ public class WifiConfigController implements TextWatcher,
      }
- 
+
      void showWarningMessagesIfAppropriate() {
 +        mView.findViewById(R.id.no_ca_cert_warning).setVisibility(View.GONE);
          mView.findViewById(R.id.no_user_cert_warning).setVisibility(View.GONE);
@@ -130,7 +130,7 @@ index 098b4b3..42d1c29 100644
                      config.enterpriseConfig.setCaPath(SYSTEM_CA_STORE_PATH);
 @@ -745,7 +757,8 @@ public class WifiConfigController implements TextWatcher,
                  }
- 
+
                  // Only set OCSP option if there is a valid CA certificate.
 -                if (caCert.equals(mUnspecifiedCertString)) {
 +                if (caCert.equals(mUnspecifiedCertString)
@@ -166,7 +166,7 @@ index 098b4b3..42d1c29 100644
                              true /* showUsePreinstalledCertOption */);
                      setSelection(mEapCaCertSpinner, mMultipleCertSetString);
 @@ -1283,7 +1296,8 @@ public class WifiConfigController implements TextWatcher,
- 
+
          if (mView.findViewById(R.id.l_ca_cert).getVisibility() != View.GONE) {
              String eapCertSelection = (String) mEapCaCertSpinner.getSelectedItem();
 -            if (eapCertSelection.equals(mUnspecifiedCertString)) {
@@ -178,13 +178,13 @@ index 098b4b3..42d1c29 100644
 @@ -1540,8 +1554,7 @@ public class WifiConfigController implements TextWatcher,
                      }).collect(Collectors.toList()));
          }
- 
+
 -        if (!TextUtils.isEmpty(noCertificateString)
 -                && mAccessPointSecurity != AccessPoint.SECURITY_EAP_SUITE_B) {
 +        if (mAccessPointSecurity != AccessPoint.SECURITY_EAP_SUITE_B) {
              certs.add(noCertificateString);
          }
- 
+
 diff --git a/src/com/android/settings/wifi/WifiConfigController2.java b/src/com/android/settings/wifi/WifiConfigController2.java
 index a77289f..2bdb1f4 100644
 --- a/src/com/android/settings/wifi/WifiConfigController2.java
@@ -195,7 +195,7 @@ index a77289f..2bdb1f4 100644
      private String mDoNotProvideEapUserCertString;
 +    private String mDoNotValidateEapServerString;
      @VisibleForTesting String mInstallCertsString;
- 
+
      private Spinner mSecuritySpinner;
 @@ -306,6 +307,8 @@ public class WifiConfigController2 implements TextWatcher,
          mTrustOnFirstUse = mContext.getString(R.string.wifi_trust_on_first_use);
@@ -204,7 +204,7 @@ index a77289f..2bdb1f4 100644
 +        mDoNotValidateEapServerString =
 +            mContext.getString(R.string.wifi_do_not_validate_eap_server);
          mInstallCertsString = mContext.getString(R.string.wifi_install_credentials);
- 
+
          if (Flags.androidVWifiApi() && mWifiEntrySecurity == WifiEntry.SECURITY_WEP) {
 @@ -583,7 +586,8 @@ public class WifiConfigController2 implements TextWatcher,
                  // Disallow submit if the user has not selected a CA certificate for an EAP network
@@ -218,7 +218,7 @@ index a77289f..2bdb1f4 100644
                  // Disallow submit if the user chooses to use a certificate for EAP server
 @@ -605,6 +609,7 @@ public class WifiConfigController2 implements TextWatcher,
      }
- 
+
      void showWarningMessagesIfAppropriate() {
 +        mView.findViewById(R.id.no_ca_cert_warning).setVisibility(View.GONE);
          mView.findViewById(R.id.no_user_cert_warning).setVisibility(View.GONE);
@@ -251,7 +251,7 @@ index a77289f..2bdb1f4 100644
                      config.enterpriseConfig.enableTrustOnFirstUse(true);
 @@ -816,7 +828,8 @@ public class WifiConfigController2 implements TextWatcher,
                  }
- 
+
                  // Only set certificate option if there is a valid CA certificate.
 -                if (caCert.equals(mUnspecifiedCertString)) {
 +                if (caCert.equals(mUnspecifiedCertString)
@@ -299,13 +299,13 @@ index a77289f..2bdb1f4 100644
 @@ -1645,8 +1659,7 @@ public class WifiConfigController2 implements TextWatcher,
                      }).collect(Collectors.toList()));
          }
- 
+
 -        if (!TextUtils.isEmpty(noCertificateString)
 -                && mWifiEntrySecurity != WifiEntry.SECURITY_EAP_SUITE_B) {
 +        if (mWifiEntrySecurity != WifiEntry.SECURITY_EAP_SUITE_B) {
              certs.add(noCertificateString);
          }
- 
+
 -- 
 2.52.0
 

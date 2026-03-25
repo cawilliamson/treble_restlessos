@@ -16,15 +16,15 @@ index b834935..0aa2a64 100644
 --- a/Magisk/native/jni/systemproperties/prop_area.cpp
 +++ b/Magisk/native/jni/systemproperties/prop_area.cpp
 @@ -37,6 +37,10 @@
- 
+
  #include <new>
- 
+
 +#ifndef __BIONIC_ALIGN
 +#define __BIONIC_ALIGN(__value, __alignment) (((__value) + (__alignment) - 1) & ~((__alignment) - 1))
 +#endif
 +
  #include <async_safe/log.h>
- 
+
  #include "system_properties/prop_area.h"
 -- 
 2.52.0

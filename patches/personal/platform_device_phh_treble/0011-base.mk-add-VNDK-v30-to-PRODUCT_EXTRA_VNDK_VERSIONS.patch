@@ -17,7 +17,7 @@ index 84cdfac..a88edfc 100644
 @@ -263,4 +263,4 @@ $(call inherit-product, $(SRC_TARGET_DIR)/product/window_extensions.mk)
  PRODUCT_PRODUCT_PROPERTIES += \
      persist.settings.large_screen_opt.enabled=true
- 
+
 -PRODUCT_EXTRA_VNDK_VERSIONS += 28 29
 +PRODUCT_EXTRA_VNDK_VERSIONS += 28 29 30
 -- 

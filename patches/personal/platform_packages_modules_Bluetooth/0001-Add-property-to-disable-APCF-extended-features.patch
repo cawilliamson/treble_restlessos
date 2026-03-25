@@ -12,12 +12,12 @@ index 4896304..1d8de03 100644
 --- a/system/gd/hci/le_scanning_manager_impl.cc
 +++ b/system/gd/hci/le_scanning_manager_impl.cc
 @@ -64,6 +64,8 @@ constexpr uint8_t kCodedPhyMask = 1 << 2;
- 
+
  // system properties
  const std::string kLeRxPathLossCompProperty = "bluetooth.hardware.radio.le_rx_path_loss_comp_db";
 +const std::string kPropertyDisableApcfExtendedFeatures = "persist.sys.bt.le.disable_apcf_extended_features";
 +bool kDisableApcfExtendedFeatures = false;
- 
+
  enum class ScanApiType {
    LEGACY = 1,
 @@ -182,7 +184,9 @@ struct LeScanningManagerImpl::impl : public LeAddressManagerCallback {

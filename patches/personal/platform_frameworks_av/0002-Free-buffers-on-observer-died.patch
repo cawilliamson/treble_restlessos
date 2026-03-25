@@ -20,14 +20,14 @@ index 458ac9c..b49b6f7 100644
 @@ -600,6 +600,11 @@ status_t OMXNodeInstance::freeNode() {
              break;
      }
- 
+
 +    // Free any buffers leaked by an observer death during allocation.
 +    // freeActiveBuffers() acquires mLock internally, so call before the
 +    // outer Autolock to avoid deadlock (mLock is non-recursive).
 +    freeActiveBuffers();
 +
      Mutex::Autolock _l(mLock);
- 
+
      status_t err = mOwner->freeNode(this);
 -- 
 2.53.0

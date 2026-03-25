@@ -16,7 +16,7 @@ index 9ce6eed77b..aff5b8dece 100644
 @@ -402,6 +402,12 @@ class CommandWriterBase {
          endCommand();
      }
- 
+
 +    void vendor800_1(uint32_t val) {
 +        beginCommand(0x800 << 16, 1);
 +        write(val);

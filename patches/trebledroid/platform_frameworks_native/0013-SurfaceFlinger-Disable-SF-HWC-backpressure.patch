@@ -14,7 +14,7 @@ index 80d8f51..b6f893c 100644
 @@ -2891,7 +2891,8 @@ bool SurfaceFlinger::commit(PhysicalDisplayId pacesetterId,
          }
      }
- 
+
 -    if (pacesetterFrameTarget.wouldBackpressureHwc()) {
 +    if (base::GetBoolProperty("persist.sys.phh.enable_sf_hwc_backpressure"s, true)
 +            && pacesetterFrameTarget.isFramePending()) {

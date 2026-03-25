@@ -13,7 +13,7 @@ index 8bcc3f9..908f4bc 100644
 +++ b/main.cpp
 @@ -241,7 +241,7 @@ static int process_config(VolumeManager* vm, VoldConfigs* configs) {
      }
- 
+
      /* Loop through entries looking for ones that vold manages */
 -    configs->has_adoptable = false;
 +    configs->has_adoptable = true;

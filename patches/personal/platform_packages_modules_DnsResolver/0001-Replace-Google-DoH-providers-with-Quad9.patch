@@ -55,7 +55,7 @@ index 4cae0c2..69b22f7 100644
 +             "https://example.org/dns-query",
 +             true},
      }};
- 
+
      // Makes a DohIdentity if
 -- 
 2.53.0

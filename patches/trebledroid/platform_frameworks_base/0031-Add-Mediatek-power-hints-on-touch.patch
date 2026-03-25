@@ -48,7 +48,7 @@ index b05de11ff..2f85810c8 100644
 @@ -219,6 +219,9 @@ public class DisplayPolicy {
       */
      private boolean mRemoteInsetsControllerControlsSystemBars;
- 
+
 +    private vendor.mediatek.hardware.mtkpower.V1_1.IMtkPerf mMtkPerf;
 +    private vendor.mediatek.hardware.mtkpower.V1_0.IMtkPower mOldMtkPerf;
 +
@@ -72,7 +72,7 @@ index b05de11ff..2f85810c8 100644
 +            android.util.Log.d("PHH-Power", "Retrieving mtkpower 1.0", t);
 +            mOldMtkPerf = null;
 +        }
- 
+
          final Looper looper = UiThread.getHandler().getLooper();
          mHandler = new PolicyHandler(looper);
 @@ -545,6 +561,17 @@ public class DisplayPolicy {
@@ -91,7 +91,7 @@ index b05de11ff..2f85810c8 100644
 +                        }
 +                    }
                  }
- 
+
                  @Override
 @@ -563,6 +590,28 @@ public class DisplayPolicy {
                      if (listener != null) {
@@ -120,7 +120,7 @@ index b05de11ff..2f85810c8 100644
 +                        }
 +                    }
                  }
- 
+
                  @Override
 -- 
 2.52.0

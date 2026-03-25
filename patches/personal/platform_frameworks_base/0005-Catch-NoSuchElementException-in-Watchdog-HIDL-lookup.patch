@@ -30,7 +30,7 @@ index 115aaad1e..19281f25f 100644
 +            Log.w(TAG, "HIDL service manager not available", e);
          }
      }
- 
+
 -- 
 2.53.0
 

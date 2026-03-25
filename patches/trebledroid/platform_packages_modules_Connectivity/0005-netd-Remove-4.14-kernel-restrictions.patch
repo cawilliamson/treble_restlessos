@@ -15,7 +15,7 @@ index f320058..09d6159 100644
 @@ -81,16 +81,6 @@ static Status initPrograms(const char* cg2_path) {
      // This code was mainlined in T, so this should be trivially satisfied.
      if (!isAtLeastT) return Status("S- platform is unsupported");
- 
+
 -    // S requires eBPF support which was only added in 4.9, so this should be satisfied.
 -    if (!isAtLeastKernelVersion(4, 9)) {
 -        return Status("kernel version < 4.9.0 is unsupported");

@@ -48,11 +48,11 @@ index 7f97389..84cdfac 100644
 +++ b/base.mk
 @@ -173,7 +173,6 @@ PRODUCT_PACKAGES += \
      resetprop_phh
- 
+
  PRODUCT_COPY_FILES += \
 -    device/phh/treble/phh-securize.sh:system/bin/phh-securize.sh \
      device/phh/treble/files/ota.sh:system/bin/ota.sh \
- 
+
  PRODUCT_COPY_FILES += \
 diff --git a/phh-on-boot.sh b/phh-on-boot.sh
 index 678fef1..13b7cc9 100644
@@ -61,7 +61,7 @@ index 678fef1..13b7cc9 100644
 @@ -11,6 +11,31 @@ if [ ! -e /sys/fs/bpf/netd_shared/map_netd_uid_owner_map ]; then
      log -t phh-on-boot "Disabled restricted_networking_mode (BPF uid_owner_map absent)"
  fi
- 
+
 +# spoof post-boot props
 +# should be applied after boot complete to prevent breaking device features
 +if [ ! -f /metadata/securize_disable ]; then
@@ -89,7 +89,7 @@ index 678fef1..13b7cc9 100644
 +
  vndk="$(getprop persist.sys.vndk)"
  [ -z "$vndk" ] && vndk="$(getprop ro.vndk.version |grep -oE '^[0-9]+')"
- 
+
 diff --git a/phh-prop-handler.sh b/phh-prop-handler.sh
 index cae90d6..199f054 100644
 --- a/phh-prop-handler.sh
@@ -97,7 +97,7 @@ index cae90d6..199f054 100644
 @@ -146,6 +146,17 @@ if [ "$1" == "persist.sys.phh.oppo.usbotg" ]; then
      exit
  fi
- 
+
 +if [ "$1" == "persist.sys.phh.securize" ]; then
 +    if [[ "$prop_value" != "0" && "$prop_value" != "1" ]]; then
 +        exit 1
@@ -123,7 +123,7 @@ index 8ab75fc..332af00 100644
 -
      fi
  fi
- 
+
 @@ -800,74 +799,133 @@ copyprop() {
          resetprop_phh "$1" "$(getprop "$2")"
      fi
@@ -243,7 +243,7 @@ index 8ab75fc..332af00 100644
 +    copyprop ro.product.system.manufacturer ro.product.vendor.manufacturer
 +    copyprop ro.product.product.manufacturer ro.product.vendor.manufacturer
 +    copyprop ro.product.system_ext.manufacturer ro.product.vendor.manufacturer
- 
+
 -    resetprop_phh ro.build.user nobody
 -    resetprop_phh ro.build.host android-build
 -    resetprop_phh ro.build.tags release-keys
@@ -278,7 +278,7 @@ index 8ab75fc..332af00 100644
 -    mkdir /mnt/phh/xbin
 -    chmod 0755 /mnt/phh/xbin
 -    chcon u:object_r:system_file:s0 /mnt/phh/xbin
- 
+
 -    #phh-su will bind over this empty file to make a real su
 -    touch /mnt/phh/xbin/su
 -    chcon u:object_r:system_file:s0 /mnt/phh/xbin/su
@@ -297,36 +297,36 @@ index 8ab75fc..332af00 100644
 +        [ -n "$manufacturer" ] && echo "$manufacturer" > "$legacy_usb/iManufacturer"
 +    fi
  fi
- 
+
  for abi in "" 64;do
 @@ -1047,7 +1105,6 @@ if getprop ro.build.overlay.deviceid |grep -iq -e RMX2185 -e RMX1941 -e RMX1945
      setprop persist.sys.overlay.devinputjack true
  fi
- 
+
 -
  board="$(getprop ro.board.platform)"
- 
+
  if [ "$board" = atoll ] || [ "$board" = sm6250 ]; then
 @@ -1095,14 +1152,13 @@ if getprop ro.bionic.cpu_variant |grep -q kryo300;then
      setprop dalvik.vm.isa.arm64.features runtime
  fi
- 
+
 -
  if [ -f /vendor/etc/init/vendor.ozoaudio.media.c2@1.0-service.rc ];then
      if [ -n "$vndk" ] && [ "$vndk" -le 29 ]; then
          mount /system/etc/seccomp_policy/mediacodec.policy /vendor/etc/seccomp_policy/codec2.vendor.base.policy
      fi
  fi
- 
+
 -if [ "$vndk" -le 27 ];then
 +if [ -n "$vndk" ] && [ "$vndk" -le 27 ];then
      setprop persist.sys.phh.no_present_or_validate true
  fi
- 
+
 @@ -1222,7 +1278,6 @@ if getprop ro.product.vendor.device | grep -q -e TECNO-LG8n; then
      chown -R system:system /sys/class/leds/vibrator_single/
  fi
- 
+
 -
  # Force disable Sunlight Reading Mode to prevent weird color issues
  if getprop ro.vendor.build.fingerprint | grep -iq -e xiaomi/renoir; then
@@ -338,17 +338,17 @@ index 960e47f..6a9ce16 100644
 @@ -39,6 +39,9 @@ on property:persist.sys.phh.oppo.gaming_mode=*
  on property:sys.phh.oplus.fppress=*
      exec u:r:phhsu_daemon:s0 root -- /system/bin/phh-prop-handler.sh "sys.phh.oplus.fppress"
- 
+
 +on property:persist.sys.phh.securize=*
 +    exec u:r:phhsu_daemon:s0 root -- /system/bin/phh-prop-handler.sh "persist.sys.phh.securize"
 +
  on property:persist.sys.phh.oppo.usbotg=*
      exec u:r:phhsu_daemon:s0 root -- /system/bin/phh-prop-handler.sh "persist.sys.phh.oppo.usbotg"
- 
+
 @@ -115,6 +118,11 @@ service watchdogd-gsi /system/bin/watchdogd 10 20
      disabled
      seclabel u:r:watchdogd:s0
- 
+
 -on property:persist.sys.phh.adb_secure=1
 -    exec u:r:phhsu_daemon:s0 root -- /system/bin/resetprop_phh ro.adb.secure 1
 -    restart adbd

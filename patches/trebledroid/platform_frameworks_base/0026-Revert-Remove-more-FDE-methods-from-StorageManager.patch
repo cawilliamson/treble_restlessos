@@ -18,7 +18,7 @@ index e2ef800b5..b39f2a549 100644
 @@ -1713,6 +1713,80 @@ public class StorageManager {
          return RoSystemProperties.CRYPTO_FILE_ENCRYPTED;
      }
- 
+
 +    /** {@hide}
 +     * Is this device encryptable or already encrypted?
 +     * @return true for encryptable or encrypted
@@ -112,7 +112,7 @@ index 40d5c4761..66288706b 100644
              CRYPTO_TYPE == CryptoProperties.type_values.FILE;
 +    public static final boolean CRYPTO_BLOCK_ENCRYPTED =
 +            CRYPTO_TYPE == CryptoProperties.type_values.BLOCK;
- 
+
      public static final boolean CONTROL_PRIVAPP_PERMISSIONS_LOG =
              "log".equalsIgnoreCase(CONTROL_PRIVAPP_PERMISSIONS);
 -- 

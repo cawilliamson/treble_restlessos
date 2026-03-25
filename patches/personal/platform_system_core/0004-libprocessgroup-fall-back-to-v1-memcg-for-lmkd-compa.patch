@@ -58,7 +58,7 @@ index 458e4cd..5794926 100644
  #include <sys/stat.h>
  #include <sys/types.h>
  #include <unistd.h>
- 
+
 +#include <android-base/file.h>
  #include <android-base/logging.h>
 +#include <android-base/properties.h>
@@ -68,7 +68,7 @@ index 458e4cd..5794926 100644
 @@ -290,6 +293,83 @@ bool CgroupSetup() {
              return true;
          }
- 
+
 +        // lmkd requires the memory controller in the v1 hierarchy when using its
 +        // vmpressure-based kill strategy. This happens in two cases:
 +        //

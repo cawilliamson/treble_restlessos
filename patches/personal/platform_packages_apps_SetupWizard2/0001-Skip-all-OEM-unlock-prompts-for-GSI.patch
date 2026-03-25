@@ -26,7 +26,7 @@ index 785083c..ace027e 100644
 +++ b/java/app/grapheneos/setupwizard/action/FinishActions.kt
 @@ -49,16 +49,8 @@ object FinishActions {
      }
- 
+
      private fun refreshOemUnlockStatus() {
 -        if (Build.isDebuggable()) {
 -            val flag = DebugFlags.getBool("isOemUnlockAllowedByUser_override")
@@ -41,7 +41,7 @@ index 785083c..ace027e 100644
 +        // GSI requires an unlocked bootloader; never offer to disable OEM unlocking
 +        FinishData.oemUnlockingEnabled.value = false
      }
- 
+
      private fun disableOemUnlockByUser() {
 diff --git a/java/app/grapheneos/setupwizard/action/WelcomeActions.kt b/java/app/grapheneos/setupwizard/action/WelcomeActions.kt
 index bccfa44..ba4fff9 100644
@@ -49,7 +49,7 @@ index bccfa44..ba4fff9 100644
 +++ b/java/app/grapheneos/setupwizard/action/WelcomeActions.kt
 @@ -116,33 +116,13 @@ object WelcomeActions {
      }
- 
+
      fun next(activity: Activity) {
 -        if (Build.isDebuggable() && DebugFlags.getBool("enableUnlockedBootloaderHandling") != true) {
 -            // we allow free pass for development features on debug builds of the OS
@@ -70,7 +70,7 @@ index bccfa44..ba4fff9 100644
 +        // GSI requires an unlocked bootloader; skip relock prompt entirely
 +        SetupWizard.next(activity)
      }
- 
+
      private fun refreshOemUnlockStatus() {
 -        if (Build.isDebuggable()) {
 -            val flag = DebugFlags.getBool("isDeviceOemUnlocked_override")
@@ -93,14 +93,14 @@ index b2b8d84..7b72b9c 100644
 @@ -12,10 +12,8 @@ object FinishData : ViewModel() {
      // whether the "Disable OEM Unlocking" checkbox should be checked by default
      val disableOemUnlockingChecked = !Build.isDebuggable()
- 
+
 -    // whether "Disable OEM Unlocking" checkbox should be visible
 -    //     visible if bootloader is locked and user is primary
 -    val disableOemUnlockingVisible =
 -        WelcomeData.oemUnlocked.value?.not() ?: false && SetupWizard.isPrimaryUser
 +    // GSI requires an unlocked bootloader; never show "Disable OEM Unlocking"
 +    val disableOemUnlockingVisible = false
- 
+
      init {
          FinishActions
 -- 

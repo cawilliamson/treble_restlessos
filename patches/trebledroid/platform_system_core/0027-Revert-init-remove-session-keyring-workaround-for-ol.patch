@@ -38,7 +38,7 @@ index ede2fcd..4a89c45 100644
 +            return Error() << "FscryptInstallKeyring() failed";
 +        }
          SetProperty("ro.crypto.state", "encrypted");
- 
+
          // Although encrypted, vold has already set the device up, so we do not need to
 diff --git a/init/fscrypt_init_extensions.cpp b/init/fscrypt_init_extensions.cpp
 index 6a561e5..fbd8189 100644
@@ -50,11 +50,11 @@ index 6a561e5..fbd8189 100644
  #include <fscrypt/fscrypt.h>
 +#include <keyutils.h>
  #include <logwrap/logwrap.h>
- 
+
  #define TAG "fscrypt"
- 
+
  using namespace android::fscrypt;
- 
+
 +bool FscryptInstallKeyring() {
 +    if (keyctl_search(KEY_SPEC_SESSION_KEYRING, "keyring", "fscrypt", 0) != -1) {
 +        LOG(INFO) << "Keyring is already created";
@@ -111,7 +111,7 @@ index 08e7c66..7de53f9 100644
 @@ -1088,6 +1089,11 @@ int SecondStageMain(int argc, char** argv) {
                     << " to /proc/1/oom_score_adj: " << result.error();
      }
- 
+
 +    // Set up a session keyring that all processes will have access to. It
 +    // will hold things like FBE encryption keys. No process should override
 +    // its session keyring.
@@ -119,7 +119,7 @@ index 08e7c66..7de53f9 100644
 +
      // Indicate that booting is in progress to background fw loaders, etc.
      close(open("/dev/.booting", O_WRONLY | O_CREAT | O_CLOEXEC, 0000));
- 
+
 -- 
 2.52.0
 

@@ -54,7 +54,7 @@ index 1ab472f396..29d36ca00b 100644
 +    }
 +
      config->setHwModules(modules);
- 
+
      // Global Configuration
 -- 
 2.52.0

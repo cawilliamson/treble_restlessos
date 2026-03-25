@@ -15,7 +15,7 @@ index 69b2294..c0bfc69 100644
 @@ -21,6 +21,7 @@
  #include <bluetooth/metrics/os_metrics.h>
  #include <com_android_bluetooth_flags.h>
- 
+
 +#include <base/strings/string_split.h>
  #include <future>
  #include <memory>
@@ -23,12 +23,12 @@ index 69b2294..c0bfc69 100644
 @@ -35,6 +36,8 @@
  #include "sysprops/sysprops_module.h"
  #endif
- 
+
 +using bluetooth::os::GetSystemProperty;
 +
  namespace bluetooth {
  namespace hci {
- 
+
 @@ -364,7 +367,22 @@ struct ControllerImpl::impl {
      ASSERT(complete_view.IsValid());
      ErrorCode status = complete_view.GetStatus();
@@ -51,7 +51,7 @@ index 69b2294..c0bfc69 100644
 +
 +    local_supported_commands_ = local_commands;
    }
- 
+
    void read_local_extended_features_complete_handler(std::promise<void> promise,
 @@ -374,7 +392,24 @@ struct ControllerImpl::impl {
      ErrorCode status = complete_view.GetStatus();
@@ -99,7 +99,7 @@ index 69b2294..c0bfc69 100644
 +
 +    le_local_supported_features_ = local_features;
    }
- 
+
    void le_read_supported_states_handler(CommandCompleteView view) {
 @@ -545,7 +593,20 @@ struct ControllerImpl::impl {
      ASSERT(complete_view.IsValid());
@@ -121,7 +121,7 @@ index 69b2294..c0bfc69 100644
 +
 +    le_supported_states_ = local_states;
    }
- 
+
    void le_read_accept_list_size_handler(CommandCompleteView view) {
 -- 
 2.52.0

@@ -14,15 +14,15 @@ index 70606ba..8b556c0 100644
 +++ b/linker/linker.cpp
 @@ -98,7 +98,6 @@ static uint64_t g_module_unload_counter = 0;
  static const char* const kLdConfigArchFilePath = "/system/etc/ld.config." ABI_STRING ".txt";
- 
+
  static const char* const kLdConfigFilePath = "/system/etc/ld.config.txt";
 -static const char* const kLdConfigVndkLiteFilePath = "/system/etc/ld.config.vndk_lite.txt";
- 
+
  static const char* const kLdGeneratedConfigFilePath = "/linkerconfig/ld.config.txt";
- 
+
 @@ -3578,10 +3577,6 @@ static std::string get_ld_config_file_apex_path(const char* executable_path) {
  }
- 
+
  static std::string get_ld_config_file_vndk_path() {
 -  if (android::base::GetBoolProperty("ro.vndk.lite", false)) {
 -    return kLdConfigVndkLiteFilePath;

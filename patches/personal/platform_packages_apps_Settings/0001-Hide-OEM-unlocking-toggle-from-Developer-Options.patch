@@ -17,14 +17,14 @@ index 485e302..bb8c581 100644
 --- a/src/com/android/settings/development/OemUnlockPreferenceController.java
 +++ b/src/com/android/settings/development/OemUnlockPreferenceController.java
 @@ -78,7 +78,8 @@ public class OemUnlockPreferenceController extends DeveloperOptionsPreferenceCon
- 
+
      @Override
      public boolean isAvailable() {
 -        return mOemLockManager != null;
 +        // GSI requires an unlocked bootloader; hide to prevent accidental relock
 +        return false;
      }
- 
+
      @Override
 -- 
 2.52.0

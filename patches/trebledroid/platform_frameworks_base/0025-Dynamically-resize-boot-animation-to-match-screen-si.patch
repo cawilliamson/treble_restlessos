@@ -15,7 +15,7 @@ index b0070c5faa36..af3afa7668a0 100644
 @@ -578,6 +578,28 @@ status_t BootAnimation::initDisplaysAndSurfaces() {
          display.initHeight = display.height = h;
          mTargetInset = -1;
- 
+
 +        if ( mAnimation != nullptr ) {
 +            SLOGE("Got screen size %d, animation size %d", display.width, mAnimation->width);
 +            int origWidth = mAnimation->width;

@@ -26,18 +26,18 @@ index d6384e7b6..b5043f8c1 100644
  import vendor.goodix.hardware.biometrics.fingerprint.V2_1.IGoodixFingerprintDaemon;
  import vendor.samsung.hardware.sysinput.V1_0.ISehSysInputDev;
 +import vendor.samsung.hardware.biometrics.fingerprint.ISehFingerprint;
- 
+
  import vendor.xiaomi.hardware.fingerprintextension.V1_0.IXiaomiFingerprint;
- 
+
 @@ -123,6 +125,8 @@ public class AuthService extends SystemService {
- 
+
      private FileObserver fodFileObserver = null;
      private static ISehBiometricsFingerprint mSamsungFingerprint = null;
 +    private ISehFingerprint mSamsungFingerprintAidl = null;
 +    private vendor.samsung.hardware.sysinput.ISehSysInputDev mSamsungSysinputAidl = null;
- 
+
      private IXiaomiFingerprint mXiaomiFingerprint = null;
- 
+
 @@ -869,6 +873,101 @@ public class AuthService extends SystemService {
       *                 └── for (s : p.sensors)
       *                     └── BiometricService.registerAuthenticator(s)
@@ -141,7 +141,7 @@ index d6384e7b6..b5043f8c1 100644
      public void onStart() {
          mBiometricService = mInjector.getBiometricService();
 @@ -895,19 +994,9 @@ public class AuthService extends SystemService {
- 
+
          registerAuthenticators();
          mInjector.publishBinderService(this, mImpl);
 -        try {
@@ -176,7 +176,7 @@ index d6384e7b6..b5043f8c1 100644
                          int eventReq = 0;
 @@ -1327,22 +1414,53 @@ public class AuthService extends SystemService {
              udfpsProps[2] = (int)mW;
- 
+
              try {
 -                mSamsungFingerprint = ISehBiometricsFingerprint.getService();
 +                ISehBiometricsFingerprint samsungFingerprint = null;
@@ -197,7 +197,7 @@ index d6384e7b6..b5043f8c1 100644
                          Slog.d("PHH-Enroll", "\t" + i + ":" + out.get(i));
                      }
                  } );
- 
+
 +            } catch(Exception e) {
 +                if (e instanceof java.util.NoSuchElementException) {
 +                    Slog.d("PHH-Enroll", "Failed setting samsung3.0 fingerprint recognition, doesn't exist");

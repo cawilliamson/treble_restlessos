@@ -36,7 +36,7 @@ index d63a5496..b462649d 100644
 +	}
 +	return rc;
  }
- 
+
  static int cil_post_netifcon_context_compare(const void *a, const void *b)
 -- 
 2.52.0

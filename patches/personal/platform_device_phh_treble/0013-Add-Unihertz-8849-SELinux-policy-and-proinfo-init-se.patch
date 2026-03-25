@@ -71,7 +71,7 @@ index 76b1c4d..2462c9b 100644
 +    device/phh/treble/00-fix-metadata.sh:system/etc/00-fix-metadata.sh \
 +    device/phh/treble/8849-proinfo.rc:system/etc/init/8849-proinfo.rc \
 +    device/phh/treble/8849-proinfo.sh:system/etc/8849-proinfo.sh
- 
+
  # MTK incoming SMS fix
  PRODUCT_PACKAGES += \
 diff --git a/sepolicy/genfs_contexts b/sepolicy/genfs_contexts
@@ -87,7 +87,7 @@ index 4bed5f1..1f5e90e 100644
 --- a/sepolicy/treble_app.te
 +++ b/sepolicy/treble_app.te
 @@ -39,3 +39,14 @@ binder_call(system_app, hal_gesturewake_default);
- 
+
  type hal_aidl_agolddaemon_default, domain;
  binder_call(system_app, hal_aidl_agolddaemon_default);
 +binder_call(hal_aidl_agolddaemon_default, system_app);

@@ -30,7 +30,7 @@ index ee110e72f..40e40c2c4 100644
 @@ -1265,6 +1268,27 @@ public class SystemConfig {
          XmlUtils.skipCurrentTag(parser);
      }
- 
+
 +    private void readUnavailableFeatureConditional(XmlPullParser parser, File permFile,
 +            boolean allowFeatures, String name) throws IOException, XmlPullParserException {
 +        if (allowFeatures) {

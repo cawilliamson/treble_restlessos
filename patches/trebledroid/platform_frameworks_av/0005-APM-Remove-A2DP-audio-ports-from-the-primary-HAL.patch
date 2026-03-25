@@ -72,7 +72,7 @@ index 29d36ca00b..839974b9d3 100644
 +        }
 +    }
      module->setDeclaredDevices(devicePorts);
- 
+
      RouteTraits::Collection routes;
 -- 
 2.52.0

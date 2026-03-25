@@ -28,12 +28,12 @@ index a88edfc..76b1c4d 100644
 --- a/base.mk
 +++ b/base.mk
 @@ -42,7 +42,6 @@ PRODUCT_SYSTEM_DEFAULT_PROPERTIES += \
- 
+
  # Huawei HiSuite (also other OEM custom programs I guess) it's of no use in AOSP builds
  PRODUCT_SYSTEM_DEFAULT_PROPERTIES += \
 -    persist.sys.usb.config=adb \
      ro.cust.cdrom=/dev/null
- 
+
  # VNDK config files
 diff --git a/phh-on-boot.sh b/phh-on-boot.sh
 index 13b7cc9..9e084a0 100644
@@ -42,7 +42,7 @@ index 13b7cc9..9e084a0 100644
 @@ -36,6 +36,13 @@ if [ ! -f /metadata/securize_disable ]; then
    resetprop_phh -n init.svc.flash_recovery stopped
  fi
- 
+
 +# End first-boot debug ADB window.
 +if [ "$(getprop ro.adb.secure)" = "0" ]; then
 +    resetprop_phh --delete ro.adb.secure
@@ -52,7 +52,7 @@ index 13b7cc9..9e084a0 100644
 +
  vndk="$(getprop persist.sys.vndk)"
  [ -z "$vndk" ] && vndk="$(getprop ro.vndk.version |grep -oE '^[0-9]+')"
- 
+
 -- 
 2.53.0
 

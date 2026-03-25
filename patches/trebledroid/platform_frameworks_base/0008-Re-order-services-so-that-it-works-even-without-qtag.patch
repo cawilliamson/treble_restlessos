@@ -26,7 +26,7 @@ index 1d376b4bdfd5..b7f8d48c4fe6 100644
 @@ -1033,10 +1037,6 @@ public class NetworkPolicyManagerService extends INetworkPolicyManager.Stub {
                  return;
              }
- 
+
 -            mUsageStats = LocalServices.getService(UsageStatsManagerInternal.class);
 -            mAppStandby = LocalServices.getService(AppStandbyInternal.class);
 -            mActivityManagerInternal = LocalServices.getService(ActivityManagerInternal.class);

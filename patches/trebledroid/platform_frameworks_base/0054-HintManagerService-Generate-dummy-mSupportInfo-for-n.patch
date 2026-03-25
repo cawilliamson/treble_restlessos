@@ -35,7 +35,7 @@ index 9174855b6..4d81b90b6 100644
          }
 +        return getDummySupportInfo();
 +    }
- 
+
 +    private SupportInfo getDummySupportInfo() {
          SupportInfo supportInfo = new SupportInfo();
          supportInfo.usesSessions = isHintSessionSupported();

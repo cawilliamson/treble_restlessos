@@ -20,7 +20,7 @@ index c41fe7ac..379c33b0 100644
 @@ -722,13 +722,19 @@ int TetherController::setForwardRules(bool add, const char *intIface, const char
          return -EREMOTEIO;
      }
- 
+
 -    std::vector<std::string> v4 = {
 +    std::vector<std::string> v4Ftp = {
              "*raw",

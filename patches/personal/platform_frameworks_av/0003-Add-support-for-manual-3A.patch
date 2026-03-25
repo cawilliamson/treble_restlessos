@@ -30,7 +30,7 @@ index d64a659..b0e1d21 100644
  const char CameraParameters::WHITE_BALANCE_TWILIGHT[] = "twilight";
  const char CameraParameters::WHITE_BALANCE_SHADE[] = "shade";
 +const char CameraParameters::WHITE_BALANCE_MANUAL_CCT[] = "manual-cct";
- 
+
  // Values for effect settings.
  const char CameraParameters::EFFECT_NONE[] = "none";
 @@ -169,6 +170,7 @@ const char CameraParameters::FOCUS_MODE_FIXED[] = "fixed";
@@ -38,7 +38,7 @@ index d64a659..b0e1d21 100644
  const char CameraParameters::FOCUS_MODE_CONTINUOUS_VIDEO[] = "continuous-video";
  const char CameraParameters::FOCUS_MODE_CONTINUOUS_PICTURE[] = "continuous-picture";
 +const char CameraParameters::FOCUS_MODE_MANUAL_POSITION[] = "manual";
- 
+
  // Values for light fx settings
  const char CameraParameters::LIGHTFX_LOWLIGHT[] = "low-light";
 diff --git a/camera/include/camera/CameraParameters.h b/camera/include/camera/CameraParameters.h
@@ -50,13 +50,13 @@ index ba33ffe..88437b1 100644
      static const char WHITE_BALANCE_TWILIGHT[];
      static const char WHITE_BALANCE_SHADE[];
 +    static const char WHITE_BALANCE_MANUAL_CCT[];
- 
+
      // Values for effect settings.
      static const char EFFECT_NONE[];
 @@ -677,6 +678,8 @@ public:
      // other modes.
      static const char FOCUS_MODE_CONTINUOUS_PICTURE[];
- 
+
 +    static const char FOCUS_MODE_MANUAL_POSITION[];
 +
      // Values for light special effects

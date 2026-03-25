@@ -12,13 +12,13 @@ index 0344d0f..2b24965 100644
 --- a/sepolicy/mediatek.te
 +++ b/sepolicy/mediatek.te
 @@ -6,6 +6,9 @@ allow init mnt_product_file:dir mounton;
- 
+
  type mtk_hal_audio, domain;
  typeattribute mtk_hal_audio hal_broadcastradio_client;
 +allow mtk_hal_audio audioserver:fifo_file write;
 +allow mtk_hal_audio untrusted_app:fifo_file write;
 +allow hal_audio_sysbta untrusted_app:fifo_file write;
- 
+
  type mtk_hal_power, domain;
  allow mtk_hal_power system_data_root_file:file create_file_perms;
 -- 

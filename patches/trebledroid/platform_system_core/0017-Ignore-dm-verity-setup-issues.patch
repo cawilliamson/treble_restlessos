@@ -23,7 +23,7 @@ index 6b413f6d6..5a7a78e3d 100644
          PLOG(ERROR) << "Failed to setup verity for '" << begin->mount_point << "'";
 -        return false;
      }
- 
+
      bool mounted = (fs_mgr_do_mount_one(*begin) == 0);
 -- 
 2.52.0

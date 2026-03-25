@@ -35,7 +35,7 @@ index 622501c..7f97389 100644
 -    ro.adb.secure=0 \
      ro.logd.auditd=true \
      ro.logd.kernel=true \
- 
+
 diff --git a/rw-system.sh b/rw-system.sh
 index 227913f..8ab75fc 100644
 --- a/rw-system.sh
@@ -43,32 +43,32 @@ index 227913f..8ab75fc 100644
 @@ -1047,7 +1047,6 @@ if getprop ro.build.overlay.deviceid |grep -iq -e RMX2185 -e RMX1941 -e RMX1945
      setprop persist.sys.overlay.devinputjack true
  fi
- 
+
 -resetprop_phh ro.bluetooth.library_name libbluetooth.so
- 
+
  board="$(getprop ro.board.platform)"
- 
+
 @@ -1096,7 +1095,6 @@ if getprop ro.bionic.cpu_variant |grep -q kryo300;then
      setprop dalvik.vm.isa.arm64.features runtime
  fi
- 
+
 -resetprop_phh ro.control_privapp_permissions log
- 
+
  if [ -f /vendor/etc/init/vendor.ozoaudio.media.c2@1.0-service.rc ];then
      if [ -n "$vndk" ] && [ "$vndk" -le 29 ]; then
 @@ -1224,9 +1222,6 @@ if getprop ro.product.vendor.device | grep -q -e TECNO-LG8n; then
      chown -R system:system /sys/class/leds/vibrator_single/
  fi
- 
+
 -# Override media volume steps
 -resetprop_phh ro.config.media_vol_steps 25
 -resetprop_phh ro.config.media_vol_default 8
- 
+
  # Force disable Sunlight Reading Mode to prevent weird color issues
  if getprop ro.vendor.build.fingerprint | grep -iq -e xiaomi/renoir; then
 @@ -1249,4 +1244,6 @@ if getprop ro.vendor.build.fingerprint | grep -iq -e Rebecco/K70_ROW; then
  fi
- 
+
  # Enable pen mode on Lenovo/goodix
 -echo 1 > /sys/devices/platform/goodix_ts.0/support_pen
 +if [ -e /sys/devices/platform/goodix_ts.0/support_pen ]; then

@@ -51,7 +51,7 @@ index f4123f82b1..2d7224486d 100644
 @@ -34,6 +34,7 @@ import java.util.ArrayList;
  import java.util.List;
  import java.util.stream.Collectors;
- 
+
 +// AIDL
  import vendor.samsung.hardware.radio.network.ISehRadioNetworkIndication;
  import vendor.samsung.hardware.radio.network.ISehRadioNetworkResponse;
@@ -59,7 +59,7 @@ index f4123f82b1..2d7224486d 100644
 @@ -48,6 +49,10 @@ import vendor.samsung.hardware.radio.network.SehRoamingNetworkInfo;
  import vendor.samsung.hardware.radio.network.SehSignalBar;
  import vendor.samsung.hardware.radio.network.SehVendorConfiguration;
- 
+
 +// HIDL
 +import android.hardware.radio.V1_0.RadioResponseInfo;
 +import vendor.samsung.hardware.radio.V2_2.ISehRadio;
@@ -78,7 +78,7 @@ index f4123f82b1..2d7224486d 100644
              version = RIL.getServiceHalVersion(network.getInterfaceVersion());
 @@ -167,7 +172,7 @@ public class RadioNetworkProxy extends RadioServiceProxy {
              };
- 
+
              var samsungResponse = new ISehRadioNetworkResponse.Stub() {
 -                void l(String v) {
 +                private void l(String v) {
@@ -97,7 +97,7 @@ index f4123f82b1..2d7224486d 100644
 @@ -808,6 +813,117 @@ public class RadioNetworkProxy extends RadioServiceProxy {
          }
      }
- 
+
 +    @Override
 +    public void setHidl(HalVersion halVersion, android.hardware.radio.V1_4.IRadio radio) {
 +        super.setHidl(halVersion, radio);

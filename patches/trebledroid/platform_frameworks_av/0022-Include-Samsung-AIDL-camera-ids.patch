@@ -27,7 +27,7 @@ index b9e8cddf5a..59789d4e35 100644
 @@ -34,6 +34,8 @@
  #include <utils/SessionConfigurationUtils.h>
  #include <utils/Trace.h>
- 
+
 +#include <aidl/vendor/samsung/hardware/camera/provider/ISehCameraProvider.h>
 +
  namespace {
@@ -36,7 +36,7 @@ index b9e8cddf5a..59789d4e35 100644
 @@ -176,6 +178,25 @@ status_t AidlProviderInfo::initializeAidlProvider(
          return mapToStatusT(status);
      }
- 
+
 +    if(true) {
 +        AIBinder *ext;
 +        auto spaibinder = interface->asBinder();

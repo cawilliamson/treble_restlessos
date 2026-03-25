@@ -2990,7 +2990,7 @@ index 8aab2a0..24e2b47 100644
 @@ -1,4 +1,4 @@
 -<kernel minlts="4.19.191" />
 +<kernel minlts="4.19.127" />
- 
+
  <!-- KEEP ALPHABETICALLY SORTED -->
  <!-- ARM base requirements -->
 -- 

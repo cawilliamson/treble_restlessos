@@ -45,7 +45,7 @@ index ae00fa4..b64405f 100644
      }
    }
 @@ -457,7 +457,7 @@ static void btif_a2dp_source_startup_delayed() {
- 
+
    if (!btif_a2dp_source_thread.EnableRealTimeScheduling()) {
  #if defined(__ANDROID__)
 -    log::fatal("unable to enable real time scheduling");

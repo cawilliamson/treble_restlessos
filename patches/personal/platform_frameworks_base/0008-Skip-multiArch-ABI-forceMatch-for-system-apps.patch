@@ -30,7 +30,7 @@ index 639d02ca4..ccc234655 100644
 +                final boolean forceMatch = !isSystemApp &&
                          pkg.getTargetSdkVersion() >= Build.VERSION_CODES.VANILLA_ICE_CREAM
                          && cpuAbiOverride == null;
- 
+
 -- 
 2.53.0
 

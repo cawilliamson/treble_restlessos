@@ -19,7 +19,7 @@ index 4dfc5ec..e8be76f 100644
 +++ b/services/inputflinger/reader/EventHub.cpp
 @@ -1160,7 +1160,7 @@ int32_t EventHub::getKeyCodeForKeyLocation(RawDeviceId deviceId, int32_t locatio
  }
- 
+
  int32_t EventHub::getSwitchState(RawDeviceId deviceId, int32_t sw) const {
 -    if (sw < 0 || sw > SW_MAX) {
 +    if (sw < 0 || sw > (SW_MAX * 4)) {
@@ -28,7 +28,7 @@ index 4dfc5ec..e8be76f 100644
      std::scoped_lock _l(mLock);
 @@ -2546,7 +2546,7 @@ void EventHub::openDeviceLocked(const std::string& devicePath) {
      }
- 
+
      // Check whether this device has switches.
 -    for (int i = 0; i <= SW_MAX; i++) {
 +    for (int i = 0; i <= (SW_MAX * 4); i++) {

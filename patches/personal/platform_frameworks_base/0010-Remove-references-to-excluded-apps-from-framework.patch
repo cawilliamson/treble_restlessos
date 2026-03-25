@@ -33,11 +33,11 @@ index 3fe16a1a2..6476ed372 100644
 +++ b/core/java/com/android/internal/gmscompat/sysservice/GmcPackageManager.java
 @@ -234,7 +234,6 @@ public class GmcPackageManager extends ApplicationPackageManager {
      }
- 
+
      private static final ArraySet<String> HIDDEN_PACKAGES = new ArraySet<>(new String[] {
 -            "app.attestation.auditor",
      });
- 
+
      private static void throwIfHidden(String pkgName) throws NameNotFoundException {
 diff --git a/core/res/res/values/config_ext.xml b/core/res/res/values/config_ext.xml
 index 9f66d22bc..8264085d1 100644
@@ -51,7 +51,7 @@ index 9f66d22bc..8264085d1 100644
 -        <item>990e04f0864b19f14f84e0e432f7a393f297ab105a22c1e1b10b442a4a62c42c</item>
      </string-array>
      <java-symbol type="array" name="read_additional_security_state_known_signers" />
- 
+
 diff --git a/data/etc/hiddenapi-package-whitelist.xml b/data/etc/hiddenapi-package-whitelist.xml
 index 98f582401..1912d314f 100644
 --- a/data/etc/hiddenapi-package-whitelist.xml
@@ -72,7 +72,7 @@ index f9d078cb6..613c72c7d 100644
 @@ -106,10 +106,6 @@ applications that come with the platform
          <permission name="android.permission.MANAGE_EXTERNAL_STORAGE"/>
      </privapp-permissions>
- 
+
 -    <privapp-permissions package="com.android.musicfx">
 -        <permission name="android.permission.CHANGE_COMPONENT_ENABLED_STATE"/>
 -    </privapp-permissions>

@@ -22,7 +22,7 @@ index 6f19a7a145..1ab472f396 100644
 @@ -667,6 +667,98 @@ std::variant<status_t, RouteTraits::Element> PolicySerializer::deserialize<Route
      return route;
  }
- 
+
 +static void fixupQualcommBtScoRoute(RouteTraits::Collection& routes, DevicePortTraits::Collection& devicePorts, HwModule* ctx) {
 +    // On many Qualcomm devices, there is a BT SCO Headset Mic => primary input mix
 +    // But Telephony Rx => BT SCO Headset route is missing
@@ -124,7 +124,7 @@ index 6f19a7a145..1ab472f396 100644
      }
 +    fixupQualcommBtScoRoute(routes, devicePorts, module.get());
      module->setRoutes(routes);
- 
+
      for (const xmlNode *children = cur->xmlChildrenNode; children != NULL;
 -- 
 2.52.0

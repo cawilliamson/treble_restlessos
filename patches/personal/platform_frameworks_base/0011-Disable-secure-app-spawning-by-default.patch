@@ -22,11 +22,11 @@ index 821f3d238..cb58a97f9 100644
 +++ b/core/java/android/ext/settings/ExtSettings.java
 @@ -22,7 +22,7 @@ import java.util.function.ToIntFunction;
  public class ExtSettings {
- 
+
      public static final BoolSysProperty EXEC_SPAWNING = new BoolSysProperty(
 -            "persist.security.exec_spawn", true);
 +            "persist.security.exec_spawn", false);
- 
+
      public static final BoolSetting ALLOW_KEYGUARD_CAMERA = new BoolSetting(
              Setting.Scope.SYSTEM_PROPERTY, "persist.keyguard.camera", true);
 -- 

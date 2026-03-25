@@ -39,7 +39,7 @@ index 4da892fae2..4c42bc5840 100644
 +    if (timestampSourceValue == 1) {
          mDeviceTimeBaseIsRealtime = true;
      }
- 
+
 -- 
 2.52.0
 

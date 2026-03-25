@@ -17,7 +17,7 @@ index e04d285d6632..36826e8ff43d 100644
 @@ -2968,6 +2968,20 @@ public class SubscriptionManager {
          return TelephonyManager.getDefault().isNetworkRoaming(subId);
      }
- 
+
 +    /**
 +     * Returns a constant indicating the state of sim for the slot index.
 +     *

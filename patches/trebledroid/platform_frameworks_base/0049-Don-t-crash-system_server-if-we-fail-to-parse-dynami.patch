@@ -36,7 +36,7 @@ index 5fc5a57bd1ef..b13beef51177 100644
 +                android.util.Log.e("PHH-Enroll", "FingerprintProvider dynamicUdfpsProps", t);
              }
          }
- 
+
 -- 
 2.52.0
 

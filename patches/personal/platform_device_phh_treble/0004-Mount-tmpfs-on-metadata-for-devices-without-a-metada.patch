@@ -70,13 +70,13 @@ index 2d467e6..622501c 100644
 +++ b/base.mk
 @@ -154,7 +154,9 @@ PRODUCT_PACKAGES += \
      uevent
- 
+
  PRODUCT_COPY_FILES += \
 -    device/phh/treble/files/adbd.rc:system/etc/init/adbd.rc
 +    device/phh/treble/files/adbd.rc:system/etc/init/adbd.rc \
 +    device/phh/treble/00-fix-metadata.rc:system/etc/init/00-fix-metadata.rc \
 +    device/phh/treble/00-fix-metadata.sh:system/etc/00-fix-metadata.sh
- 
+
  # MTK incoming SMS fix
  PRODUCT_PACKAGES += \
 diff --git a/sepolicy/file_contexts b/sepolicy/file_contexts
@@ -90,18 +90,18 @@ index beb639a..bd5b48d 100644
 +/system/etc/00-fix-metadata.sh u:object_r:phhsu_exec:s0
  /system/bin/asus-motor u:object_r:phhsu_exec:s0
  /system/bin/xiaomi-touch u:object_r:phhsu_exec:s0
- 
+
 diff --git a/sepolicy/su.te b/sepolicy/su.te
 index f8829cd..03208fc 100644
 --- a/sepolicy/su.te
 +++ b/sepolicy/su.te
 @@ -7,6 +7,7 @@ permissive phhsu_daemon;
- 
+
  tmpfs_domain(phhsu_daemon);
  domain_auto_trans(init, phhsu_exec, phhsu_daemon);
 +domain_trans(init, shell_exec, phhsu_daemon);
  file_type_auto_trans(phhsu_daemon, device, phhsu_daemon);
- 
+
  allow { appdomain shell } phhsu_daemon:unix_stream_socket { connectto write read };
 -- 
 2.53.0

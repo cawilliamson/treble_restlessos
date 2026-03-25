@@ -774,7 +774,7 @@ index be895d9..4a144de 100644
 @@ -23,6 +23,13 @@ package {
      default_applicable_licenses: ["system_sepolicy_license"],
  }
- 
+
 +se_build_files {
 +    name: "28.0.board.compat.map",
 +    srcs: [
@@ -788,7 +788,7 @@ index be895d9..4a144de 100644
 @@ -58,6 +65,13 @@ se_build_files {
      ],
  }
- 
+
 +se_build_files {
 +    name: "28.0.board.compat.cil",
 +    srcs: [
@@ -802,7 +802,7 @@ index be895d9..4a144de 100644
 @@ -93,6 +107,13 @@ se_build_files {
      ],
  }
- 
+
 +se_build_files {
 +    name: "28.0.board.ignore.map",
 +    srcs: [
@@ -816,7 +816,7 @@ index be895d9..4a144de 100644
 @@ -128,6 +149,14 @@ se_build_files {
      ],
  }
- 
+
 +se_cil_compat_map {
 +    name: "plat_28.0.cil",
 +    stem: "28.0.cil",
@@ -831,7 +831,7 @@ index be895d9..4a144de 100644
 @@ -168,6 +197,15 @@ se_cil_compat_map {
      version: "33.0",
  }
- 
+
 +se_cil_compat_map {
 +    name: "system_ext_28.0.cil",
 +    stem: "28.0.cil",
@@ -847,7 +847,7 @@ index be895d9..4a144de 100644
 @@ -213,6 +251,15 @@ se_cil_compat_map {
      version: "33.0",
  }
- 
+
 +se_cil_compat_map {
 +    name: "product_28.0.cil",
 +    stem: "28.0.cil",
@@ -863,7 +863,7 @@ index be895d9..4a144de 100644
 @@ -258,6 +305,13 @@ se_cil_compat_map {
      version: "33.0",
  }
- 
+
 +se_cil_compat_map {
 +    name: "28.0.ignore.cil",
 +    bottom_half: [":28.0.board.ignore.map{.plat_private}"],
@@ -877,7 +877,7 @@ index be895d9..4a144de 100644
 @@ -357,6 +411,12 @@ se_cil_compat_map {
      version: "33.0",
  }
- 
+
 +se_compat_cil {
 +    name: "28.0.compat.cil",
 +    srcs: [":28.0.board.compat.cil{.plat_private}"],
@@ -890,7 +890,7 @@ index be895d9..4a144de 100644
 @@ -387,6 +447,14 @@ se_compat_cil {
      version: "33.0",
  }
- 
+
 +se_compat_cil {
 +    name: "system_ext_28.0.compat.cil",
 +    srcs: [":28.0.board.compat.cil{.system_ext_private}"],

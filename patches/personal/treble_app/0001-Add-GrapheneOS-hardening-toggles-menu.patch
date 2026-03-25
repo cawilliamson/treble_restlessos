@@ -34,7 +34,7 @@ index f6c501b..971f354 100644
              tryC { Custom.startup(this) }
 +            tryC { GrapheneOS.startup(this) }
              tryC { Hct.startup(this) }
- 
+
              tryC { Desktop.startup(this) }
 diff --git a/app/src/main/java/me/phh/treble/app/GrapheneOS.kt b/app/src/main/java/me/phh/treble/app/GrapheneOS.kt
 new file mode 100644
@@ -111,7 +111,7 @@ index 547c579..02832b0 100644
                  || AudioEffectsFragment::class.java.name == fragmentName
 +                || GrapheneOSSettingsFragment::class.java.name == fragmentName
      }
- 
+
      companion object {
 diff --git a/app/src/main/res/xml/pref_grapheneos.xml b/app/src/main/res/xml/pref_grapheneos.xml
 new file mode 100644

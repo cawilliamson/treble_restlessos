@@ -42,7 +42,7 @@ index abf7655..9409efc 100644
 @@ -779,6 +779,17 @@ status_t AudioPolicyManager::updateCallRoutingInternal(
      ALOGV("%s device rxDevice %s txDevice %s", __func__,
            rxDevices.itemAt(0)->toString().c_str(), txSourceDevice->toString().c_str());
- 
+
 +    // release existing RX patch if any
 +    if (mCallRxPatch != 0) {
 +        releaseAudioPatchInternal(mCallRxPatch->getHandle());
@@ -114,7 +114,7 @@ index abf7655..9409efc 100644
 @@ -850,6 +884,36 @@ status_t AudioPolicyManager::updateCallRoutingInternal(
      return NO_ERROR;
  }
- 
+
 +sp<AudioPatch> AudioPolicyManager::createTelephonyPatch(
 +        bool isRx, const sp<DeviceDescriptor> &device, uint32_t delayMs) {
 +    PatchBuilder patchBuilder;
@@ -313,15 +313,15 @@ index 017da7c..92f578d 100644
 --- a/services/audiopolicy/managerdefault/AudioPolicyManager.h
 +++ b/services/audiopolicy/managerdefault/AudioPolicyManager.h
 @@ -1089,6 +1089,9 @@ protected:
- 
+
          SoundTriggerSessionCollection mSoundTriggerSessions;
- 
+
 +        sp<AudioPatch> mCallTxPatch;
 +        sp<AudioPatch> mCallRxPatch;
 +
          HwAudioOutputCollection mHwOutputs;
          SourceClientCollection mAudioSources;
- 
+
 -- 
 2.52.0
 

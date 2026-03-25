@@ -50,7 +50,7 @@ index 951dc38..972efcf 100644
 +            PLOG(FATAL) << "restorecon failed of /system/bin/init failed";
 +        }
      }
- 
+
      setenv(kEnvSelinuxStartedAt, std::to_string(start_time.time_since_epoch().count()).c_str(), 1);
 -- 
 2.53.0

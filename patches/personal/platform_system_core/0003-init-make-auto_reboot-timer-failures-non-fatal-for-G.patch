@@ -22,15 +22,15 @@ index 2ed1578..46f9d9a 100644
 +++ b/init/property_service.cpp
 @@ -532,6 +532,7 @@ uint32_t CheckPermissions(const std::string& name, const std::string& value,
  }
- 
+
  static timer_t auto_reboot_timer;
 +static bool auto_reboot_timer_valid;
  static bool device_unlocked_at_least_once;
  static bool is_auto_reboot_timer_started;
- 
+
 @@ -549,11 +550,23 @@ static void auto_reboot_timer_init() {
      sev.sigev_notify_function = auto_reboot_timer_callback;
- 
+
      if (int r = timer_create(CLOCK_BOOTTIME_ALARM, &sev, &auto_reboot_timer); r != 0) {
 -        LOG(FATAL) << "auto_reboot: timer_create failed: " << strerror(errno);
 +        // CLOCK_BOOTTIME_ALARM may be unavailable on some vendor kernels.
@@ -47,7 +47,7 @@ index 2ed1578..46f9d9a 100644
      }
 +    auto_reboot_timer_valid = true;
  }
- 
+
  static void auto_reboot_timer_set(time_t duration_sec) {
 +    if (!auto_reboot_timer_valid) return;
      const time_t min_duration = 20;

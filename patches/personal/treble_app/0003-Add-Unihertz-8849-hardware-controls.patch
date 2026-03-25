@@ -484,7 +484,7 @@ index 02832b0..27a7118 100644
                  || GrapheneOSSettingsFragment::class.java.name == fragmentName
 +                || Unihertz8849SettingsFragment::class.java.name == fragmentName
      }
- 
+
      companion object {
 diff --git a/app/src/main/java/me/phh/treble/app/Unihertz8849.kt b/app/src/main/java/me/phh/treble/app/Unihertz8849.kt
 new file mode 100644

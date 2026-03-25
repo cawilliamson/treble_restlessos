@@ -26,7 +26,7 @@ index 1f2b251..83d07cc 100644
  #include <sys/personality.h>
 +#include <sys/system_properties.h>
  #include <sys/utsname.h>
- 
+
  namespace android {
 @@ -34,6 +35,11 @@ static inline unsigned uncachedKernelVersion() {
      unsigned kver_major = 0;

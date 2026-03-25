@@ -25,7 +25,7 @@ index f3c0c45..8a2c5f4 100644
 --- a/system.prop
 +++ b/system.prop
 @@ -49,3 +49,16 @@ bluetooth.profile.sap.server.enabled?=true
- 
+
  # Samsung vendors default to a Samsung-specific gadget for MTP. Set this to use AOSP's functionfs MTP
  vendor.usb.use_ffs_mtp=1
 +

@@ -26,7 +26,7 @@ index aac4953..c4718b2 100644
 @@ -50,5 +50,6 @@ class AppHardenedMallocFragment : AswExploitProtectionFragment<AswUseHardenedMal
  class HardenedMallocAppListPrefController(context: Context, preferenceKey: String) :
      AswAppListPrefController(context, preferenceKey, AswAdapterUseHardenedMalloc) {
- 
+
 -    override fun getAvailabilityStatus() = AVAILABLE
 +    // GSI uses Scudo instead of hardened_malloc; this toggle has no effect
 +    override fun getAvailabilityStatus() = UNSUPPORTED_ON_DEVICE
@@ -36,7 +36,7 @@ index e1fcc52..0e1fadb 100644
 --- a/src/com/android/settings/spa/app/appinfo/AppInfoSettings.kt
 +++ b/src/com/android/settings/spa/app/appinfo/AppInfoSettings.kt
 @@ -185,7 +185,6 @@ private fun AppInfoSettings(packageInfoPresenter: PackageInfoPresenter) {
- 
+
          Category(title = stringResource(R.string.exploit_protection_category_title)) {
              AppExploitProtectionCompatModeSwitchPreference(app, packageInfoPresenter)
 -            com.android.settings.applications.AppHardenedMallocPreference(app)

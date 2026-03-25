@@ -29,7 +29,7 @@ index e18d15a..b3c3769 100644
 @@ -134,8 +134,16 @@ int selinux_android_setcontext2(uid_t uid,
  	if (selinux_flags != 0) {
  		snprintf(buf_for_hex_uint64, sizeof buf_for_hex_uint64, "%" PRIx64 , selinux_flags);
- 
+
 -		 rc = setselinux_flags(buf_for_hex_uint64);
 -		if (rc < 0)
 +		rc = setselinux_flags(buf_for_hex_uint64);
@@ -44,6 +44,6 @@ index e18d15a..b3c3769 100644
 +		} else if (rc < 0)
  			goto err;
  	}
- 
+
 -- 
 2.53.0

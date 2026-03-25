@@ -25,7 +25,7 @@ index d2d5b0a..678fef1 100644
 +++ b/phh-on-boot.sh
 @@ -1,5 +1,16 @@
  #!/system/bin/sh
- 
+
 +# Disable restricted networking mode on devices without working BPF.
 +# Android 14+ uses BPF firewall chains to enforce restricted_networking_mode.
 +# On older kernels where BPF maps failed to load, the restricted chain cannot
@@ -39,7 +39,7 @@ index d2d5b0a..678fef1 100644
 +
  vndk="$(getprop persist.sys.vndk)"
  [ -z "$vndk" ] && vndk="$(getprop ro.vndk.version |grep -oE '^[0-9]+')"
- 
+
 -- 
 2.53.0
 

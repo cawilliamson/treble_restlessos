@@ -16,7 +16,7 @@ index 204e69093..b4ea91172 100644
 @@ -374,6 +374,13 @@ static void tune_quota(const std::string& blk_device, const FstabEntry& entry,
          return;
      }
- 
+
 +    // There is no relation between quotas and encryption disabled, it's just that encryption
 +    // being disabled shows that the device is pretty old, so quotas might be broken on it
 +    if (!entry.fs_mgr_flags.file_encryption) {

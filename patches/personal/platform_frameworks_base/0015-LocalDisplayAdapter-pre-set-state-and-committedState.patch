@@ -62,7 +62,7 @@ index 6865a23a7..5885e905b 100644
 +                updateDeviceInfoLocked();
 +            }
          }
- 
+
          @Override
 -- 
 2.53.0

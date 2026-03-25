@@ -25,14 +25,14 @@ index cde6447..6303d30 100644
 -        exit(121);
 +        return;
      }
- 
+
      const char* args[] = {"/apex/com.android.tethering/bin/netbpfload", "done", NULL};
 diff --git a/loader/include/libbpf_android.h b/loader/include/libbpf_android.h
 index 706c0e8..d5a25bd 100644
 --- a/loader/include/libbpf_android.h
 +++ b/loader/include/libbpf_android.h
 @@ -19,6 +19,6 @@
- 
+
  // The C++ portion of the BpfLoader is exposed as a terminal function.
  #ifdef __cplusplus
 -extern "C" __noreturn

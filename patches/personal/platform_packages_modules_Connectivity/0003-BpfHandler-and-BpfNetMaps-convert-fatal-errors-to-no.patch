@@ -28,7 +28,7 @@ index 09d6159..0f53e26 100644
 --- a/bpf/netd/BpfHandler.cpp
 +++ b/bpf/netd/BpfHandler.cpp
 @@ -164,32 +164,46 @@ static Status initPrograms(const char* cg2_path) {
- 
+
          // This should trivially pass, since we just attached up above,
          // but BPF_PROG_QUERY is only implemented on 4.19+ kernels.
 -        if (queryProgram(cg_fd, BPF_CGROUP_INET_EGRESS) <= 0) abort();
@@ -47,13 +47,13 @@ index 09d6159..0f53e26 100644
 +        if (queryProgram(cg_fd, BPF_CGROUP_INET6_BIND) <= 0)
 +            ALOGW("BPF_CGROUP_INET6_BIND query failed, continuing anyway");
      }
- 
+
      if (isAtLeastKernelVersion(5, 10)) {
 -        if (queryProgram(cg_fd, BPF_CGROUP_INET_SOCK_RELEASE) <= 0) abort();
 +        if (queryProgram(cg_fd, BPF_CGROUP_INET_SOCK_RELEASE) <= 0)
 +            ALOGW("BPF_CGROUP_INET_SOCK_RELEASE query failed, continuing anyway");
      }
- 
+
      if (isAtLeastV) {
          // V requires 4.19+, so technically this 2nd 'if' is not required, but it
          // doesn't hurt us to try to support AOSP forks that try to support older kernels.
@@ -77,7 +77,7 @@ index 09d6159..0f53e26 100644
 +            if (queryProgram(cg_fd, BPF_CGROUP_UDP6_SENDMSG) <= 0)
 +                ALOGW("BPF_CGROUP_UDP6_SENDMSG query failed, continuing anyway");
          }
- 
+
          if (isAtLeastKernelVersion(5, 8)) {
 -            if (queryProgram(cg_fd, BPF_CGROUP_GETSOCKOPT) <= 0) abort();
 -            if (queryProgram(cg_fd, BPF_CGROUP_SETSOCKOPT) <= 0) abort();
@@ -87,7 +87,7 @@ index 09d6159..0f53e26 100644
 +                ALOGW("BPF_CGROUP_SETSOCKOPT query failed, continuing anyway");
          }
      }
- 
+
 @@ -218,10 +232,11 @@ static inline void waitForNetProgsLoaded() {
          ALOGW("Waited %ds for init.svc.mdnsd_netbpfload=stopped, still waiting...", delay);
      }
@@ -112,12 +112,12 @@ index 09d6159..0f53e26 100644
 +            ALOGW("Continuing without mdnsd_netbpfload");
 +            return;
          }
- 
+
          ALOGI("Waiting for Networking BPF programs");
 @@ -300,9 +316,18 @@ static void mapLockTest(void) {
      const char * const m1 = BPF_NETD_PATH "map_netd_lock_array_test_map";
      const char * const m2 = BPF_NETD_PATH "map_netd_lock_hash_test_map";
- 
+
 -    unique_fd fd0(bpf::mapRetrieveExclusiveRW(m1)); if (!fd0.ok()) abort();  // grabs exclusive lock
 +    unique_fd fd0(bpf::mapRetrieveExclusiveRW(m1));
 +    if (!fd0.ok()) {
@@ -125,7 +125,7 @@ index 09d6159..0f53e26 100644
 +        ALOGW("mapLockTest: failed to retrieve %s, skipping lock test", m1);
 +        return;
 +    }
- 
+
 -    unique_fd fd1(bpf::mapRetrieveExclusiveRW(m2)); if (!fd1.ok()) abort();  // no conflict with fd0
 +    unique_fd fd1(bpf::mapRetrieveExclusiveRW(m2));
 +    if (!fd1.ok()) {
@@ -147,7 +147,7 @@ index 44a4c29..fc609f8 100644
 -                && "Baklava".equals(Build.VERSION.CODENAME));
 +        return false;
      }
- 
+
      private void removeRule(final int uid, final long match, final String caller) {
 @@ -1079,6 +1078,10 @@ public class BpfNetMaps {
      @RequiresApi(Build.VERSION_CODES.CUR_DEVELOPMENT)

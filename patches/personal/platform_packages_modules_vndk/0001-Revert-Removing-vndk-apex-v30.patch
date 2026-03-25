@@ -23,7 +23,7 @@ index baf8d19..ca076b8 100644
 +    vndk_version: "30",
 +    system_ext_specific: true,
 +}
- 
+
  apex_vndk {
      name: "com.android.vndk.v29",
 -- 

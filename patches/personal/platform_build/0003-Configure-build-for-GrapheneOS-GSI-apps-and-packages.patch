@@ -51,7 +51,7 @@ index 35a3c2f..755e8ec 100644
      unwind_reg_info \
      unwind_symbols \
 -    HardeningTestApp \
- 
+
  # The set of packages whose code can be loaded by the system server.
  PRODUCT_SYSTEM_SERVER_APPS += \
 diff --git a/target/product/generic/Android.bp b/target/product/generic/Android.bp
@@ -64,7 +64,7 @@ index 5a609aa..aeb06aa 100644
          ///////////////////////////////////////////
 -        "webview",
 +        "TrichromeWebView",
- 
+
          ///////////////////////////////////////////
          // base_product
 @@ -817,7 +817,6 @@ system_image_defaults {
@@ -95,7 +95,7 @@ index 2fee93e..a61d544 100644
          "frameworks-base-overlays",
      ],
 @@ -179,13 +179,12 @@ android_system_image {
- 
+
          // handheld_product
          "AvatarPicker",
 -        "Calendar",
@@ -108,7 +108,7 @@ index 2fee93e..a61d544 100644
 -        "QuickSearchBox",
          "SettingsIntelligence",
          "frameworks-base-overlays",
- 
+
 diff --git a/target/product/handheld_product.mk b/target/product/handheld_product.mk
 index dde952e..6686eee 100644
 --- a/target/product/handheld_product.mk

@@ -29,7 +29,7 @@ index 8978797..baf7ce1 100644
          mHasSwbAptXEnabled = false;
 +        mReportScoSampleRate = 0;
      }
- 
+
      public void dump(StringBuilder sb) {
 @@ -586,6 +588,7 @@ class HeadsetStateMachine extends StateMachine {
              mHasSwbLc3Enabled = false;
@@ -37,7 +37,7 @@ index 8978797..baf7ce1 100644
              mHasSwbAptXEnabled = false;
 +            mReportScoSampleRate = 0;
              mHasRfcommConnectionCompleted = false;
- 
+
              if (mHeadsetService.mPendingScoConnectionDevice != null
 @@ -1828,6 +1831,9 @@ class HeadsetStateMachine extends StateMachine {
              am.setParameters("bt_swb=" + (mHasSwbAptXEnabled ? "0" : "65535"));
@@ -47,7 +47,7 @@ index 8978797..baf7ce1 100644
 +            am.setParameters("g_sco_samplerate=" + mReportScoSampleRate);
 +        }
      }
- 
+
      @VisibleForTesting
 @@ -1982,12 +1988,15 @@ class HeadsetStateMachine extends StateMachine {
          switch (wbsConfig) {

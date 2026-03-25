@@ -20,7 +20,7 @@ index f8e7f10ea..e305d617b 100644
 +        String path = System.getenv(variableName);
 +        return (path == null || path.isEmpty()) ? null : path;
      }
- 
+
      static {
 -- 
 2.52.0

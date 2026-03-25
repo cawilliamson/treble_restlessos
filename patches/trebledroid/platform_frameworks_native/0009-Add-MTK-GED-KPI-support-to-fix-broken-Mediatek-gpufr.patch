@@ -34,9 +34,9 @@ index cabc177..6adae2d 100644
 +#include <sys/ioctl.h>
 +#include <fcntl.h>
 +#include <unistd.h>
- 
+
  #include <inttypes.h>
- 
+
 @@ -36,6 +39,8 @@
  #include <gui/LayerState.h>
  #include <private/gui/ComposerService.h>
@@ -44,12 +44,12 @@ index cabc177..6adae2d 100644
 +#include <android-base/properties.h>
 +#include <binder/IPCThreadState.h>
  #endif
- 
+
  #include <android/native_window.h>
 @@ -104,6 +109,37 @@ bool isInterceptorRegistrationOp(int op) {
- 
+
  } // namespace
- 
+
 +#define GED_MAGIC 'g'
 +#define GED_BRIDGE_COMMAND_GPU_TIMESTAMP      103
 +#define GED_IOWR(INDEX)  _IOWR(GED_MAGIC, INDEX, GED_BRIDGE_PACKAGE)
@@ -83,7 +83,7 @@ index cabc177..6adae2d 100644
 +
  Surface::ProducerDeathListenerProxy::ProducerDeathListenerProxy(wp<SurfaceListener> surfaceListener)
        : mSurfaceListener(surfaceListener) {}
- 
+
 @@ -175,6 +211,47 @@ Surface::Surface(const sp<IGraphicBufferProducer>& bufferProducer, bool controll
      mSwapIntervalZero = false;
      mMaxBufferCount = NUM_BUFFER_SLOTS;
@@ -130,12 +130,12 @@ index cabc177..6adae2d 100644
 +        }
 +    }
  }
- 
+
  Surface::~Surface() {
 @@ -754,6 +831,37 @@ int Surface::dequeueBuffer(sp<GraphicBuffer>* buffer, int* fenceFd) {
          }
      }
- 
+
 +    if (mGraphicBufferProducer != nullptr && ged_fd >= 0) {
 +        uint64_t uniqueId;
 +        mGraphicBufferProducer->getUniqueId(&uniqueId);
@@ -171,9 +171,9 @@ index cabc177..6adae2d 100644
          *fenceFd = fence->dup();
          if (*fenceFd == -1) {
 @@ -1323,6 +1431,61 @@ void Surface::onBufferQueuedLocked(int slot, sp<Fence> fence,
- 
+
      mQueueBufferCondition.broadcast();
- 
+
 +    if (mGraphicBufferProducer != nullptr && ged_fd >= 0) {
 +        sp<GraphicBuffer>& gbuf(mSlots[slot].buffer);
 +        uint64_t uniqueId;
@@ -285,7 +285,7 @@ index 9a6e75c..d7c51d7 100644
 @@ -761,6 +761,9 @@ protected:
      // Buffers that are successfully dequeued/attached and handed to clients
      std::unordered_set<int> mDequeuedSlots;
- 
+
 +    pid_t mPid;
 +    bool mIsSurfaceFlinger;
 +

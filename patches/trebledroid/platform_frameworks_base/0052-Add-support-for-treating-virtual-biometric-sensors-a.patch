@@ -23,7 +23,7 @@ index 586830c8d189..d7fcfdb6df2b 100644
 +import android.os.SystemProperties;
  import android.util.Log;
  import android.util.Slog;
- 
+
 @@ -172,6 +173,10 @@ public class FingerprintSensorConfigurations implements Parcelable {
       * @return real fqName
       */

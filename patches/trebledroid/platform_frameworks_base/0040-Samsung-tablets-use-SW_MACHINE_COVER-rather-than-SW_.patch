@@ -18,7 +18,7 @@ index 841cb6160..0d4a2b739 100644
 @@ -443,6 +443,9 @@ public class InputManagerService extends IInputManager.Stub
      /** Switch code: Microphone. When set, the mic is muted. */
      public static final int SW_MUTE_DEVICE = 0x0e;
- 
+
 +    /** Switch code: Cover. When set, the cover is closed. */
 +    public static final int SW_MACHINE_COVER = 0x10;
 +
@@ -31,13 +31,13 @@ index 841cb6160..0d4a2b739 100644
      public static final int SW_MUTE_DEVICE_BIT = 1 << SW_MUTE_DEVICE;
 +    public static final int SW_MACHINE_COVER_BIT = 1 << SW_MACHINE_COVER;
 +    private int mSwForLid = SW_LID;
- 
+
      // The following are layer numbers used for z-ordering the input overlay layers on the display.
      // This is used for ordering layers inside {@code DisplayContent#getInputOverlayLayer()}.
 @@ -604,6 +609,16 @@ public class InputManagerService extends IInputManager.Stub
          mWiredAccessoryCallbacks = callbacks;
      }
- 
+
 +    private void checkForSwMachineCover() {
 +        int machineCoverState = getSwitchState(-1 /* deviceId */, InputDevice.SOURCE_ANY, SW_MACHINE_COVER);
 +        if (machineCoverState != KEY_STATE_UNKNOWN) {
@@ -62,7 +62,7 @@ index 841cb6160..0d4a2b739 100644
                  callback.notifyLidSwitchChanged(0 /* whenNanos */, lidOpen);
              }
 @@ -656,7 +672,8 @@ public class InputManagerService extends IInputManager.Stub
- 
+
              // Send the initial lid switch state to any callback registered before the system was
              // ready.
 -            int switchState = getSwitchState(-1 /* deviceId */, InputDevice.SOURCE_ANY, SW_LID);
@@ -74,7 +74,7 @@ index 841cb6160..0d4a2b739 100644
 @@ -2506,8 +2523,8 @@ public class InputManagerService extends IInputManager.Stub
                      + ", mask=" + Integer.toHexString(switchMask));
          }
- 
+
 -        if ((switchMask & SW_LID_BIT) != 0) {
 -            final boolean lidOpen = ((switchValues & SW_LID_BIT) == 0);
 +        if ((switchMask & (1 << mSwForLid)) != 0) {

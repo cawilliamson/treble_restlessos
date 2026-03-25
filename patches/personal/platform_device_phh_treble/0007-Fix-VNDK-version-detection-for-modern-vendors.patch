@@ -23,7 +23,7 @@ index db19f19..417b1e9 100644
 @@ -9,6 +9,17 @@ while read version;do
  	setprop persist.sys.vndk $version
  done
- 
+
 +# fallback for Android 10+ vendors without nonplat_sepolicy.cil
 +if [ -z "$(getprop persist.sys.vndk)" ]; then
 +	vndk_version=$(grep -m1 '^ro\.vndk\.version=' /vendor/build.prop 2>/dev/null | cut -d= -f2)

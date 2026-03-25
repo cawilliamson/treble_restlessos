@@ -42,7 +42,7 @@ index 5db77067f2..f4123f82b1 100644
 @@ -34,6 +34,20 @@ import java.util.ArrayList;
  import java.util.List;
  import java.util.stream.Collectors;
- 
+
 +import vendor.samsung.hardware.radio.network.ISehRadioNetworkIndication;
 +import vendor.samsung.hardware.radio.network.ISehRadioNetworkResponse;
 +import vendor.samsung.hardware.radio.network.ISehRadioNetwork;
@@ -72,7 +72,7 @@ index 5db77067f2..f4123f82b1 100644
 @@ -80,6 +94,133 @@ public class RadioNetworkProxy extends RadioServiceProxy {
          mNetworkProxy = network;
          mIsAidl = true;
- 
+
 +        try {
 +            var samsungIndication = new ISehRadioNetworkIndication.Stub() {
 +                void l(String v) {

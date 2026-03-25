@@ -22,12 +22,12 @@ index a11b40ea4..a5b8739ed 100644
  #include <utils/Timers.h>
  #include <utils/misc.h>
 +#include <android-base/properties.h>
- 
+
  #include "jni.h"
- 
+
 @@ -84,6 +85,11 @@ static void setPowerBoost(Boost boost, int32_t durationMs) {
  }
- 
+
  static bool setPowerMode(Mode mode, bool enabled) {
 +    // disable EXPENSIVE_RENDERING mode
 +    if (android::base::GetBoolProperty("persist.sys.phh.disable_expensive_rendering_mode", false) && mode == Mode::EXPENSIVE_RENDERING) {

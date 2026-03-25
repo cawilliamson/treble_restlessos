@@ -15,7 +15,7 @@ index d036f24..cae90d6 100644
 @@ -118,6 +118,22 @@ if [ "$1" == "persist.sys.phh.oppo.gaming_mode" ]; then
      exit
  fi
- 
+
 +if [ "$1" == "sys.phh.oplus.fppress" ]; then
 +    prop_value=$(getprop sys.phh.oplus.fppress)
 +
@@ -42,13 +42,13 @@ index 2f56680..960e47f 100644
 @@ -36,6 +36,9 @@ on property:persist.sys.phh.oppo.dt2w=*
  on property:persist.sys.phh.oppo.gaming_mode=*
      exec u:r:phhsu_daemon:s0 root -- /system/bin/phh-prop-handler.sh "persist.sys.phh.oppo.gaming_mode"
- 
+
 +on property:sys.phh.oplus.fppress=*
 +    exec u:r:phhsu_daemon:s0 root -- /system/bin/phh-prop-handler.sh "sys.phh.oplus.fppress"
 +
  on property:persist.sys.phh.oppo.usbotg=*
      exec u:r:phhsu_daemon:s0 root -- /system/bin/phh-prop-handler.sh "persist.sys.phh.oppo.usbotg"
- 
+
 -- 
 2.53.0
 

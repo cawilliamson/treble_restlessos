@@ -75,7 +75,7 @@ index 58612c6..1c16d5f 100644
      val escoTransportUnitSize = "key_misc_esco_transport_unit_size"
 +    val disableLeApcfExtended = "key_misc_disable_le_apcfe"
      val treatVirtualSensorsAsReal = "key_misc_treat_virtual_sensors_as_real"
- 
+
      override fun enabled() = true
 diff --git a/app/src/main/res/xml/pref_misc.xml b/app/src/main/res/xml/pref_misc.xml
 index 2016122..8644415 100644
