@@ -1,65 +1,47 @@
-From 590034ab0711e1c19c364adc951991513d0d4e27 Mon Sep 17 00:00:00 2001
+From e36a83cb6ec060d2c248366214bfd175cb256af3 Mon Sep 17 00:00:00 2001
 From: "Christopher A. Williamson" <contact@chrisaw.io>
-Date: Tue, 24 Mar 2026 12:44:06 +0000
-Subject: [PATCH 14/14] rw-system.sh: fix MTK display on devices without fbdev
+Date: Wed, 25 Mar 2026 22:07:34 +0000
+Subject: [PATCH 14/15] rw-system.sh: fix MTK display on devices without fbdev
 
-On many MTK devices the vendor kernel DRM driver does not expose the
-standard KMS atomic plane properties (alpha, pixel blend mode).  The
-HWC then fails to initialise any overlay plane; atomic commits for
-display power management also fail, leaving the display black or
-causing it to turn off after boot.
+the vendor HWC uses /dev/graphics/fb0 for legacy display power
+management (FBIOBLANK).  on kernels with CONFIG_DRM_FBDEV_EMULATION=y,
+/dev/fb0 exists but ueventd may not create the android symlink at
+/dev/graphics/fb0 -- the HWC can't find it and the atomic commit
+fallback also fails with -EINVAL, leaving the panel physically dark.
 
-The reliable runtime signal is the absence of /dev/fb0: kernels built
-with CONFIG_DRM_FBDEV_EMULATION=n create no fb node, and those same
-kernels also lack the standard KMS atomic plane properties.
+create the /dev/graphics/fb0 symlink early in vndk.rc (before any HAL
+services start) so the HWC can use the kernel fbdev emulation node.
+both mkdir and symlink are non-fatal if the paths already exist.
 
-Fix strategy (applied only when /dev/fb0 is absent on MTK):
-- persist.sys.phh.no_present_or_validate=true to force pure client
-  (GPU) composition, bypassing broken DRM atomic commit paths
-- debug.sf.latch_unsignaled=1 to prevent missed frames when the HWC
-  cannot signal fences properly
+for kernels without fbdev emulation (neither /dev/fb0 nor
+/dev/graphics/fb0), fall back to forcing GPU composition and
+unsignaled buffer latching in rw-system.sh.
 
-Add SELinux rules allowing the MTK HWComposer HAL to read debug_prop
-and system_prop so it can pick up the renderengine backend override
-and other display configuration properties set by rw-system.sh.
+add SELinux rules allowing the MTK HWComposer HAL to read debug_prop
+and system_prop so it can pick up display configuration properties.
 ---
- rw-system.sh         | 30 ++++++++++++++++++++++++++++++
+ rw-system.sh         | 14 ++++++++++++++
  sepolicy/mediatek.te |  5 +++++
- 2 files changed, 35 insertions(+)
+ vndk.rc              |  7 +++++++
+ 3 files changed, 26 insertions(+)
 
 diff --git a/rw-system.sh b/rw-system.sh
-index 332af00..c314aa1 100644
+index 332af00..44cb295 100644
 --- a/rw-system.sh
 +++ b/rw-system.sh
-@@ -1123,6 +1123,36 @@ if [ "$board" = mt6768 ]; then
+@@ -1123,6 +1123,20 @@ if [ "$board" = mt6768 ]; then
  	setprop ro.netflix.bsp_rev MTK6768-19055-1
  fi
  
-+# MTK HWComposer DRM plane and display power fixes.
++# MTK HWComposer display power fallback.
 +#
-+# on many MTK devices the vendor kernel DRM driver does not expose the
-+# standard KMS atomic plane properties (alpha, pixel blend mode).  the
-+# HWC then fails to initialise any overlay plane; atomic commits for
-+# display power management also fail, leaving the display black or
-+# causing it to turn off after boot.  integrated touch/display drivers
-+# (e.g. chipone TDDI) use DRM notifier callbacks to track display
-+# state -- when display power transitions fail the touch driver thinks
-+# the panel is off and disables itself.
-+#
-+# the reliable runtime signal is the absence of /dev/fb0: kernels built
-+# with CONFIG_DRM_FBDEV_EMULATION=n create no fb node, and those same
-+# kernels also lack the standard KMS atomic plane properties.
-+#
-+# fix strategy (applied only when /dev/fb0 is absent on MTK):
-+#  - persist.sys.phh.no_present_or_validate=true -- tells the
-+#    trebledroid surfaceflinger shim to skip presentOrValidateDisplay,
-+#    forcing pure client (GPU) composition and avoiding the atomic
-+#    commit paths that fail without working DRM planes.
-+#  - debug.sf.latch_unsignaled=1 -- allows SF to latch buffers that
-+#    have not yet been signalled by the HWC fence, preventing missed
-+#    frames when the HWC cannot signal properly.
++# the /dev/graphics/fb0 symlink is created early in vndk.rc (before HALs
++# start) so the vendor HWC can use FBIOBLANK for display power management.
++# if neither /dev/fb0 nor /dev/graphics/fb0 exists (kernel built without
++# CONFIG_DRM_FBDEV_EMULATION), fall back to forcing GPU composition and
++# unsignaled buffer latching to work around the broken DRM atomic paths.
 +if echo "$board" | grep -qiE '^mt[0-9]'; then
-+	if [ ! -e /dev/fb0 ]; then
++	if [ ! -e /dev/fb0 ] && [ ! -e /dev/graphics/fb0 ]; then
 +		setprop persist.sys.phh.no_present_or_validate true
 +		setprop debug.sf.latch_unsignaled 1
 +	fi
@@ -84,6 +66,22 @@ index 2b24965..f3e3d61 100644
  allow init mnt_product_file:dir mounton;
  
  type mtk_hal_audio, domain;
+diff --git a/vndk.rc b/vndk.rc
+index 6a9ce16..51d9bca 100644
+--- a/vndk.rc
++++ b/vndk.rc
+@@ -1,4 +1,11 @@
+ on post-fs
++    # ensure /dev/graphics/fb0 exists for vendor HWCs that use the android
++    # fbdev path for display power management (FBIOBLANK).  on kernels with
++    # CONFIG_DRM_FBDEV_EMULATION=y the node appears at /dev/fb0 but ueventd
++    # may not create the /dev/graphics/ symlink.  both mkdir and symlink are
++    # non-fatal if the paths already exist.
++    mkdir /dev/graphics 0660 root graphics
++    symlink /dev/fb0 /dev/graphics/fb0
+     exec - root -- /system/bin/vndk-detect
+     exec - root -- /system/bin/rw-system.sh
+     mount none /system/etc/usb_audio_policy_configuration.xml /vendor/etc/usb_audio_policy_configuration.xml bind
 -- 
 2.53.0
 

@@ -1,7 +1,7 @@
 From b5d315130f60ab3b9cf78a5de9a4cc35ee2fce39 Mon Sep 17 00:00:00 2001
 From: "Christopher A. Williamson" <contact@chrisaw.io>
 Date: Wed, 4 Mar 2026 23:41:03 +0000
-Subject: [PATCH 5/5] Replace Google DNS IP in bionic IPv4 connectivity probe
+Subject: [PATCH 5/6] Replace Google DNS IP in bionic IPv4 connectivity probe
 
 The bionic libc IPv4 connectivity check uses 8.8.8.8 (Google DNS) as a
 routable destination address when determining the local source address.

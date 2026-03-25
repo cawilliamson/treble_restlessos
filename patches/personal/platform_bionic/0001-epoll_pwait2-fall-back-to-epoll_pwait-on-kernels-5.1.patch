@@ -1,7 +1,7 @@
 From 74ac0f09780bbd7b137a7db920e719d683e015d0 Mon Sep 17 00:00:00 2001
 From: "Christopher A. Williamson" <contact@chrisaw.io>
 Date: Thu, 12 Mar 2026 00:27:03 +0000
-Subject: [PATCH 1/5] epoll_pwait2: fall back to epoll_pwait on kernels < 5.11
+Subject: [PATCH 1/6] epoll_pwait2: fall back to epoll_pwait on kernels < 5.11
 
 epoll_pwait2 (syscall 441) was introduced in Linux 5.11, but many
 Treble-compatible devices still run kernels as old as 4.19 or 5.10.

@@ -1,0 +1,59 @@
+From d6a977ab91ecaea1c8a9d51545f0d2493422e911 Mon Sep 17 00:00:00 2001
+From: "Christopher A. Williamson" <contact@chrisaw.io>
+Date: Wed, 25 Mar 2026 21:50:04 +0000
+Subject: [PATCH 6/6] make appcompat_override property area init failure non-fatal
+
+on old vendor kernels (e.g. 4.14 with VNDK 30) fsetxattr on tmpfs
+fails with ENOTSUP for the appcompat_override property area because
+the SELinux context for it doesn't exist in the vendor's policy.
+this caused __system_property_area_init() to return -1, which made
+init call LOG(FATAL) and reboot to recovery.
+
+the appcompat_override mechanism is an android 14+ feature for SDK
+compatibility shims.  it is not essential for the system to function,
+and all callsites already null-check appcompat_override_contexts_.
+
+decouple the appcompat_override fsetxattr result from the caller's
+fsetxattr_failed flag so that a labelling failure in the override
+area doesn't propagate as a fatal error to init.  if initialisation
+fails entirely, log a warning and continue with the override area
+disabled (nullptr).
+---
+ libc/system_properties/system_properties.cpp | 21 ++++++++++++++++----
+ 1 file changed, 17 insertions(+), 4 deletions(-)
+
+diff --git a/libc/system_properties/system_properties.cpp b/libc/system_properties/system_properties.cpp
+index 5f9b971..b5af20d 100644
+--- a/libc/system_properties/system_properties.cpp
++++ b/libc/system_properties/system_properties.cpp
+@@ -205,10 +205,23 @@ bool SystemProperties::AreaInit(const char* filename, bool* fsetxattr_failed,
+   appcompat_override_contexts_ = nullptr;
+   if (access(appcompat_filename_.c_str(), F_OK) != -1) {
+     auto* appcompat_contexts = new (appcompat_override_contexts_data_) ContextsSerialized();
+-    if (!appcompat_contexts->Initialize(true, appcompat_filename_.c_str(), fsetxattr_failed,
+-                                        load_default_path)) {
+-      // The appcompat folder exists, but initializing it failed
+-      return false;
++    // on old vendor kernels (e.g. 4.14 with VNDK 30) fsetxattr on tmpfs may
++    // fail with ENOTSUP for the appcompat_override property area because the
++    // SELinux context doesn't exist in the vendor's policy.  this is non-fatal
++    // -- all callsites already null-check appcompat_override_contexts_.
++    bool appcompat_fsetxattr_failed = false;
++    if (!appcompat_contexts->Initialize(true, appcompat_filename_.c_str(),
++                                        &appcompat_fsetxattr_failed, load_default_path)) {
++      // the appcompat folder exists, but initialising it failed -- continue
++      // without appcompat override support rather than aborting init
++      async_safe_format_log(ANDROID_LOG_WARN, "libc",
++                            "Failed to initialise appcompat_override property area, continuing without it");
++    } else if (appcompat_fsetxattr_failed) {
++      // initialisation succeeded but SELinux labelling failed -- still usable
++      // but don't propagate the failure to the caller as fatal
++      async_safe_format_log(ANDROID_LOG_WARN, "libc",
++                            "appcompat_override fsetxattr failed, continuing without SELinux labels");
++      appcompat_override_contexts_ = appcompat_contexts;
+     } else {
+       appcompat_override_contexts_ = appcompat_contexts;
+     }
+-- 
+2.53.0
+
