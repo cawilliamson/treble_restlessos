@@ -1,27 +1,66 @@
-From d6a977ab91ecaea1c8a9d51545f0d2493422e911 Mon Sep 17 00:00:00 2001
+From 2aef183452b3d7a2fb330ab7a884798dba388302 Mon Sep 17 00:00:00 2001
 From: "Christopher A. Williamson" <contact@chrisaw.io>
 Date: Wed, 25 Mar 2026 21:50:04 +0000
 Subject: [PATCH 6/6] make appcompat_override property area init failure non-fatal
 
 on old vendor kernels (e.g. 4.14 with VNDK 30) fsetxattr on tmpfs
-fails with ENOTSUP for the appcompat_override property area because
-the SELinux context for it doesn't exist in the vendor's policy.
-this caused __system_property_area_init() to return -1, which made
-init call LOG(FATAL) and reboot to recovery.
+fails with ENOTSUP for property area files because the SELinux
+context doesn't exist in the vendor's policy.  this caused
+__system_property_area_init() to return -1, which made init call
+LOG(FATAL) and reboot to recovery.
 
-the appcompat_override mechanism is an android 14+ feature for SDK
-compatibility shims.  it is not essential for the system to function,
-and all callsites already null-check appcompat_override_contexts_.
+the fsetxattr failure affects both the primary property area and the
+appcompat_override area.  the property system functions correctly
+without SELinux labels on the property files -- it just loses
+per-context SELinux isolation.
 
-decouple the appcompat_override fsetxattr result from the caller's
-fsetxattr_failed flag so that a labelling failure in the override
-area doesn't propagate as a fatal error to init.  if initialisation
-fails entirely, log a warning and continue with the override area
-disabled (nullptr).
+fix both failure paths:
+- __system_property_area_init: ignore fsetxattr failures and log a
+  warning instead of returning -1 to init
+- SystemProperties::AreaInit: decouple appcompat_override's
+  fsetxattr result from the caller so that a labelling failure in
+  the override area doesn't propagate as a fatal error; if
+  initialisation fails entirely, log and continue with the override
+  area disabled (nullptr)
 ---
+ libc/bionic/system_property_api.cpp          | 16 ++++++++++++++-
  libc/system_properties/system_properties.cpp | 21 ++++++++++++++++----
- 1 file changed, 17 insertions(+), 4 deletions(-)
+ 2 files changed, 32 insertions(+), 5 deletions(-)
 
+diff --git a/libc/bionic/system_property_api.cpp b/libc/bionic/system_property_api.cpp
+index ed30fc2..4362718 100644
+--- a/libc/bionic/system_property_api.cpp
++++ b/libc/bionic/system_property_api.cpp
+@@ -29,6 +29,7 @@
+ #include <sys/system_properties.h>
+ 
+ #include <async_safe/CHECK.h>
++#include <async_safe/log.h>
+ #include <system_properties/prop_area.h>
+ #include <system_properties/system_properties.h>
+ 
+@@ -56,7 +57,20 @@ int __system_property_set_filename(const char*) {
+ __BIONIC_WEAK_FOR_NATIVE_BRIDGE
+ int __system_property_area_init() {
+   bool fsetxattr_fail = false;
+-  return system_properties.AreaInit(PROP_DIRNAME, &fsetxattr_fail) && !fsetxattr_fail ? 0 : -1;
++  if (!system_properties.AreaInit(PROP_DIRNAME, &fsetxattr_fail)) {
++    return -1;
++  }
++  // on old vendor kernels (e.g. 4.14) fsetxattr on tmpfs may fail with
++  // ENOTSUP because the SELinux context doesn't exist in the vendor's
++  // policy.  the property system functions correctly without labels --
++  // it just loses per-context SELinux isolation.  don't abort init for
++  // this; the alternative is a boot loop into recovery.
++  if (fsetxattr_fail) {
++    async_safe_format_log(ANDROID_LOG_WARN, "libc",
++                          "fsetxattr failed during property area init, "
++                          "continuing without SELinux property labels");
++  }
++  return 0;
+ }
+ 
+ __BIONIC_WEAK_FOR_NATIVE_BRIDGE
 diff --git a/libc/system_properties/system_properties.cpp b/libc/system_properties/system_properties.cpp
 index 5f9b971..b5af20d 100644
 --- a/libc/system_properties/system_properties.cpp
