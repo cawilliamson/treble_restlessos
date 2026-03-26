@@ -1,5 +1,5 @@
-From a3632357669ebf1f69766c91a53a174e51b3f518 Mon Sep 17 00:00:00 2001
-From: "Christopher A. Williamson" <contact@chrisaw.io>
+From 9a8253df64e3af4e59ff6167a6683520a5332724 Mon Sep 17 00:00:00 2001
+From: Manikanta Kanamarlapudi <kmanikan@codeaurora.org>
 Date: Tue, 24 Mar 2026 13:09:25 +0000
 Subject: [PATCH 2/3] libstagefright: Free buffers on observer died
 
@@ -20,14 +20,14 @@ index 458ac9c..b49b6f7 100644
 @@ -600,6 +600,11 @@ status_t OMXNodeInstance::freeNode() {
              break;
      }
-
+ 
 +    // Free any buffers leaked by an observer death during allocation.
 +    // freeActiveBuffers() acquires mLock internally, so call before the
 +    // outer Autolock to avoid deadlock (mLock is non-recursive).
 +    freeActiveBuffers();
 +
      Mutex::Autolock _l(mLock);
-
+ 
      status_t err = mOwner->freeNode(this);
 -- 
 2.53.0
