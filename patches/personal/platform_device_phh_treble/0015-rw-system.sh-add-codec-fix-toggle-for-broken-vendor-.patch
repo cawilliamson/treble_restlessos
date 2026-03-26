@@ -1,7 +1,7 @@
 From 8b272060ca6707f489bd98cb66282882fcd71b14 Mon Sep 17 00:00:00 2001
 From: doissM <doissM@users.noreply.github.com>
 Date: Thu, 26 Mar 2026 16:34:54 +0000
-Subject: [PATCH 15/15] rw-system.sh: add codec fix toggle for broken vendor C2 HALs
+Subject: [PATCH 15/16] rw-system.sh: add codec fix toggle for broken vendor C2 HALs
 
 add treble app toggle (persist.sys.phh.prefer_sw_codecs) that applies
 the codec fix from the CodecFix magisk module: force AIDL C2 HAL

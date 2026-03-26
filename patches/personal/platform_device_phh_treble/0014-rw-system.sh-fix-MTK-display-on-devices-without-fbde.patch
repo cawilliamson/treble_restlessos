@@ -1,7 +1,7 @@
 From fdd29becf2e970c3d71b711526afdbf1e705d0de Mon Sep 17 00:00:00 2001
 From: "Christopher A. Williamson" <contact@chrisaw.io>
 Date: Wed, 25 Mar 2026 22:07:34 +0000
-Subject: [PATCH 14/15] rw-system.sh: fix MTK display on devices without fbdev
+Subject: [PATCH 14/16] rw-system.sh: fix MTK display on devices without fbdev
 
 the vendor HWC uses /dev/graphics/fb0 for legacy display power
 management (FBIOBLANK).  on kernels with CONFIG_DRM_FBDEV_EMULATION=y,
