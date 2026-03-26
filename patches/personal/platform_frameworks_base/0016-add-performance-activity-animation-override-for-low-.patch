@@ -1,7 +1,7 @@
 From 61c8c18ca724a93272e1bb3030ec4c875f735f6f Mon Sep 17 00:00:00 2001
 From: "Christopher A. Williamson" <contact@chrisaw.io>
 Date: Wed, 25 Mar 2026 23:09:40 +0000
-Subject: [PATCH 16/16] add performance activity animation override for low-end MTK
+Subject: [PATCH 16/17] add performance activity animation override for low-end MTK
  devices
 
 on MTK and other low-end devices running android 16, the stock AOSP
