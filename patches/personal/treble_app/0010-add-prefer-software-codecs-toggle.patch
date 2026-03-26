@@ -1,4 +1,4 @@
-From e855934fa564d059c768f21caf344d9f7a1dc0f9 Mon Sep 17 00:00:00 2001
+From 9c077984cdbdca0bdae352db585fb2a69fa97519 Mon Sep 17 00:00:00 2001
 From: "Christopher A. Williamson" <contact@chrisaw.io>
 Date: Thu, 26 Mar 2026 16:18:35 +0000
 Subject: [PATCH 10/10] add prefer software codecs toggle
@@ -43,7 +43,7 @@ index cdb08fc..a006904 100644
      val disableExpensiveRenderingMode = "key_misc_disable_expensive_rendering_mode"
      val secureAdb = "key_misc_secure_adb"
 diff --git a/app/src/main/res/xml/pref_misc.xml b/app/src/main/res/xml/pref_misc.xml
-index c120344..c81a970 100644
+index c120344..e0bf4d0 100644
 --- a/app/src/main/res/xml/pref_misc.xml
 +++ b/app/src/main/res/xml/pref_misc.xml
 @@ -280,6 +280,11 @@
@@ -53,8 +53,8 @@ index c120344..c81a970 100644
 +        <SwitchPreference
 +            android:defaultValue="false"
 +            android:key="key_misc_prefer_sw_codecs"
-+            android:title="Prefer software codecs"
-+            android:summary="Rank AOSP software codecs above vendor hardware codecs\nFixes camera recording crashes on devices with broken HW encoders\nRequires reboot" />
++            android:title="Prefer software/OMX codecs"
++            android:summary="Hide broken vendor C2 codecs and prefer OMX\nFixes video playback and camera recording on some devices\nRequires reboot" />
          <SwitchPreference
              android:defaultValue="false"
              android:key="key_misc_disable_expensive_rendering_mode"
