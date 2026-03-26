@@ -21,6 +21,8 @@ rules not taking effect.
 **This cannot be fixed from the GSI** — the bug is in the vendor kernel
 binary. To fix it, patch the kernel using
 [mtk-bpf-patcher](https://github.com/R0rt1z2/mtk-bpf-patcher) by
-R0rt1z2.
+R0rt1z2. There is also an [APK version](https://xdaforums.com/t/mtk-4-14-kernel-bpf-patching.4717277/post-90062437)
+that applies the same patch on-device (untested by us — use at your own
+risk).
 
 [ALPS05247589]: https://gist.github.com/R0rt1z2/8af7735c6c3802148fa4da61b3cba506
