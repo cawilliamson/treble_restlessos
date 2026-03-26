@@ -1,0 +1,430 @@
+name: Build GrapheneOS GSI
+
+on:
+  workflow_dispatch:
+    inputs:
+      grapheneos_tag:
+        description: 'grapheneos tag to build (blank = auto-detect latest stable)'
+        required: false
+        default: ''
+      grapheneos_branch:
+        description: 'grapheneos branch to build from HEAD (ignored if tag is set)'
+        required: false
+        default: ''
+      release_channel:
+        description: 'release channel for auto-detection (stable/beta/alpha)'
+        required: false
+        default: 'stable'
+
+permissions:
+  actions: write
+  contents: write
+
+# only one build at a time - spot instances are expensive
+concurrency:
+  group: build
+  cancel-in-progress: false
+
+jobs:
+  # ---------------------------------------------------------------------------
+  # job 1: provision
+  # runs on a free github-hosted runner. launches an EC2 spot instance,
+  # registers it as an ephemeral self-hosted runner, and waits for it to
+  # come online.
+  # ---------------------------------------------------------------------------
+  provision:
+    name: Provision EC2 Spot Instance
+    runs-on: ubuntu-latest
+    outputs:
+      instance_id: ${{ steps.launch.outputs.instance_id }}
+      runner_label: ${{ steps.runner_label.outputs.label }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: eu-west-2
+
+      - name: Generate unique runner label
+        id: runner_label
+        run: |
+          LABEL="gsi-build-${{ github.run_id }}"
+          echo "label=${LABEL}" >> "$GITHUB_OUTPUT"
+          echo "Runner label: ${LABEL}"
+
+      - name: Get GitHub Actions runner registration token
+        id: runner_token
+        run: |
+          RESPONSE=$(curl -sf -X POST \
+            -H "Authorization: Bearer ${{ secrets.GH_PAT }}" \
+            -H "Accept: application/vnd.github+json" \
+            "https://api.github.com/repos/${{ github.repository }}/actions/runners/registration-token")
+          TOKEN=$(echo "$RESPONSE" | jq -r '.token')
+          if [ -z "$TOKEN" ] || [ "$TOKEN" = "null" ]; then
+            echo "ERROR: failed to get runner registration token"
+            echo "$RESPONSE" | jq .
+            exit 1
+          fi
+          echo "::add-mask::${TOKEN}"
+          echo "token=${TOKEN}" >> "$GITHUB_OUTPUT"
+
+      - name: Render cloud-init user-data
+        run: |
+          SSH_KEY_B64=$(echo "${{ secrets.BUILD_SSH_KEY }}" | base64 -w0)
+          REPO_URL="https://github.com/${{ github.repository }}"
+          RUNNER_LABEL="${{ steps.runner_label.outputs.label }}"
+          RUNNER_TOKEN="${{ steps.runner_token.outputs.token }}"
+
+          sed \
+            -e "s|__SSH_KEY_B64__|${SSH_KEY_B64}|g" \
+            -e "s|__REPO_URL__|${REPO_URL}|g" \
+            -e "s|__RUNNER_LABELS__|${RUNNER_LABEL}|g" \
+            -e "s|__RUNNER_TOKEN__|${RUNNER_TOKEN}|g" \
+            .github/cloud-init/user-data.yml \
+            > /tmp/user-data.yml
+
+          echo "user-data rendered: $(wc -c < /tmp/user-data.yml) bytes"
+
+      - name: Find latest Ubuntu 24.04 AMI
+        id: ami
+        run: |
+          AMI_ID=$(aws ec2 describe-images \
+            --owners 099720109477 \
+            --filters \
+              "Name=name,Values=ubuntu/images/hvm-ssd-gp3/ubuntu-noble-24.04-amd64-server-*" \
+              "Name=state,Values=available" \
+            --query 'Images | sort_by(@, &CreationDate) | [-1].ImageId' \
+            --output text)
+          echo "ami_id=${AMI_ID}" >> "$GITHUB_OUTPUT"
+          echo "Using AMI: ${AMI_ID}"
+
+      - name: Launch EC2 spot instance
+        id: launch
+        run: |
+          # c7i.48xlarge: 192 vCPUs, 384 GiB RAM
+          # InstanceInitiatedShutdownBehavior=terminate ensures the cloud-init
+          # safety timer (shutdown -P +120) destroys the instance entirely.
+          INSTANCE_ID=$(aws ec2 run-instances \
+            --image-id "${{ steps.ami.outputs.ami_id }}" \
+            --instance-type c7i.48xlarge \
+            --instance-market-options '{"MarketType":"spot","SpotOptions":{"SpotInstanceType":"one-time","InstanceInterruptionBehavior":"terminate"}}' \
+            --instance-initiated-shutdown-behavior terminate \
+            --subnet-id "${{ secrets.AWS_SUBNET_ID }}" \
+            --security-group-ids "${{ secrets.AWS_SECURITY_GROUP_ID }}" \
+            --block-device-mappings '[{"DeviceName":"/dev/sda1","Ebs":{"VolumeSize":500,"VolumeType":"gp3","Iops":16000,"Throughput":1000,"DeleteOnTermination":true}}]' \
+            --user-data "file:///tmp/user-data.yml" \
+            --tag-specifications "ResourceType=instance,Tags=[{Key=Name,Value=gsi-build-${{ github.run_id }}},{Key=Project,Value=treble-grapheneos},{Key=Ephemeral,Value=true}]" \
+            --query 'Instances[0].InstanceId' \
+            --output text)
+
+          if [ -z "$INSTANCE_ID" ] || [ "$INSTANCE_ID" = "None" ]; then
+            echo "ERROR: failed to launch spot instance"
+            exit 1
+          fi
+
+          echo "instance_id=${INSTANCE_ID}" >> "$GITHUB_OUTPUT"
+          echo "Launched spot instance: ${INSTANCE_ID} (c7i.48xlarge in eu-west-2)"
+
+      - name: Wait for instance to reach running state
+        run: |
+          echo "Waiting for instance ${{ steps.launch.outputs.instance_id }} to start..."
+          aws ec2 wait instance-running \
+            --instance-ids "${{ steps.launch.outputs.instance_id }}"
+          echo "Instance is running"
+
+      - name: Wait for runner to register with GitHub Actions
+        run: |
+          LABEL="${{ steps.runner_label.outputs.label }}"
+          echo "Waiting for runner with label '${LABEL}' to register..."
+
+          for i in $(seq 1 60); do
+            ONLINE=$(curl -sf \
+              -H "Authorization: Bearer ${{ secrets.GH_PAT }}" \
+              -H "Accept: application/vnd.github+json" \
+              "https://api.github.com/repos/${{ github.repository }}/actions/runners" \
+              | jq -r --arg label "$LABEL" \
+                '[.runners[] | select(.labels[].name == $label) | select(.status == "online")] | length')
+
+            echo "  attempt ${i}/60: ${ONLINE} runner(s) online with label '${LABEL}'"
+
+            if [ "${ONLINE}" -ge 1 ] 2>/dev/null; then
+              echo "Runner is online and ready"
+              exit 0
+            fi
+            sleep 15
+          done
+
+          echo "ERROR: runner never came online after 15 minutes"
+          exit 1
+
+  # ---------------------------------------------------------------------------
+  # job 2: build
+  # runs DIRECTLY ON the EC2 spot instance via the ephemeral self-hosted
+  # runner. all steps execute on the 192-vCPU machine.
+  # ---------------------------------------------------------------------------
+  build:
+    name: Build ROM
+    needs: provision
+    runs-on: [ self-hosted, "${{ needs.provision.outputs.runner_label }}" ]
+    timeout-minutes: 120
+
+    env:
+      GRAPHENEOS_TAG: ${{ github.event.inputs.grapheneos_tag }}
+      GRAPHENEOS_BRANCH: ${{ github.event.inputs.grapheneos_branch }}
+      GRAPHENEOS_RELEASE_CHANNEL: ${{ github.event.inputs.release_channel || 'stable' }}
+      WEB_DIR: /var/www/build.chrisaw.io
+      REPO_PATH: ${{ github.repository }}
+
+    steps:
+      - name: Checkout build scripts
+        uses: actions/checkout@v4
+
+      - name: Authenticate gh CLI
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: echo "${GH_TOKEN}" | gh auth login --with-token
+
+      - name: Resolve GrapheneOS tag
+        run: |
+          mkdir -p tmp/ out/ src/
+          BUILD_DATETIME=$(date "+%s")
+          BUILD_NUMBER=$(date "+%Y%m%d%H%M")
+          echo "${BUILD_DATETIME}" > tmp/.build_datetime
+          echo "${BUILD_NUMBER}" > tmp/.build_number
+
+          if [ -n "${GRAPHENEOS_TAG}" ]; then
+            echo "Using manually specified tag: ${GRAPHENEOS_TAG}"
+            echo "${GRAPHENEOS_TAG}" > tmp/.grapheneos_tag
+
+          elif [ -n "${GRAPHENEOS_BRANCH}" ]; then
+            echo "WARNING: building from branch '${GRAPHENEOS_BRANCH}' (HEAD) - not a stable release!"
+            echo "${GRAPHENEOS_BRANCH}" > tmp/.grapheneos_branch
+
+          else
+            echo "Fetching latest ${GRAPHENEOS_RELEASE_CHANNEL} tag from grapheneos.org/releases..."
+            RELEASES_HTML=$(curl -sf "https://grapheneos.org/releases")
+            TAG=$(echo "${RELEASES_HTML}" \
+              | grep -oP "id=[a-z]+-${GRAPHENEOS_RELEASE_CHANNEL}><td>[^<]+</td><td><a href=#\K[0-9]{10}" \
+              | sort -rn | head -1)
+            if [ -z "${TAG}" ]; then
+              echo "ERROR: failed to extract a valid ${GRAPHENEOS_RELEASE_CHANNEL} tag"
+              exit 1
+            fi
+            echo "Resolved latest ${GRAPHENEOS_RELEASE_CHANNEL} tag: ${TAG}"
+            echo "${TAG}" > tmp/.grapheneos_tag
+          fi
+
+      - name: Sync GrapheneOS sources
+        working-directory: src/
+        run: |
+          GRAPHENEOS_TAG=$(cat ../tmp/.grapheneos_tag 2>/dev/null || true)
+          GRAPHENEOS_BRANCH=$(cat ../tmp/.grapheneos_branch 2>/dev/null || true)
+          if [ -n "${GRAPHENEOS_TAG}" ]; then
+            echo "Initialising from tag: ${GRAPHENEOS_TAG}"
+            repo init -u https://github.com/GrapheneOS/platform_manifest.git \
+              -b "refs/tags/${GRAPHENEOS_TAG}" --depth=1 --git-lfs
+          elif [ -n "${GRAPHENEOS_BRANCH}" ]; then
+            echo "Initialising from branch: ${GRAPHENEOS_BRANCH}"
+            repo init -u https://github.com/GrapheneOS/platform_manifest.git \
+              -b "${GRAPHENEOS_BRANCH}" --depth=1 --git-lfs
+          else
+            echo "ERROR: no tag or branch resolved"
+            exit 1
+          fi
+          mkdir -p .repo/local_manifests
+          cp -v ../configs/manifests/*.xml .repo/local_manifests/
+          while ! repo sync -j$(nproc --all) --force-sync --no-clone-bundle --no-tags; do
+            echo "repo sync failed, retrying in 30s..."
+            sleep 30
+          done
+          AOSP_TAG=$(grep -m1 "aosp_revision:" .repo/manifests/config.yml | sed "s/.*: *//")
+          ANDROID_VERSION=$(echo "${AOSP_TAG}" | sed "s/android-//;s/_r.*//")
+          echo "Detected ANDROID_VERSION: ${ANDROID_VERSION}"
+          echo "${ANDROID_VERSION}" > ../tmp/.android_version
+          ANDROID_VERSION_TAG=$(grep -m1 "target:" build/release/release_config_map.textproto \
+            | sed "s/.*\"\([^\"]*\)\".*/\1/")
+          echo "Detected ANDROID_VERSION_TAG: ${ANDROID_VERSION_TAG}"
+          echo "${ANDROID_VERSION_TAG}" > ../tmp/.android_version_tag
+
+      - name: Apply patches
+        working-directory: src/
+        run: |
+          cp -Rv ../patches .
+          patches/apply.sh . trebledroid
+          patches/apply.sh . personal
+
+      - name: Build TrebleApp
+        working-directory: src/treble_app
+        run: bash build.sh release
+
+      - name: Build ROM image (arm64)
+        working-directory: src/
+        run: |
+          ANDROID_VERSION_TAG_VAL=$(cat ../tmp/.android_version_tag)
+          pushd device/phh/treble
+            cp -fv ../../../configs/rom/grapheneos.mk .
+            bash generate.sh grapheneos
+          popd
+          . build/envsetup.sh
+          lunch treble_arm64_bvN-${ANDROID_VERSION_TAG_VAL}-userdebug
+          make systemimage -j$(nproc --all)
+          make target-files-package otatools -j$(nproc --all)
+
+      - name: Sign ROM image (arm64)
+        working-directory: src/
+        run: |
+          ANDROID_VERSION_TAG_VAL=$(cat ../tmp/.android_version_tag)
+          . build/envsetup.sh
+          lunch treble_arm64_bvN-${ANDROID_VERSION_TAG_VAL}-userdebug
+          bash vendor/cawilliamson-priv/keys/sign.sh
+          rm -fv ${OUT}/system.img
+          unzip -joq ${OUT}/signed-target_files.zip IMAGES/system.img -d ${OUT}/
+          rm -fv ${OUT}/signed-target_files.zip
+          mv -v ${OUT}/system.img ../tmp/system.img
+
+      - name: Compress ROM image (arm64)
+        id: compress
+        run: |
+          ANDROID_VERSION=$(cat tmp/.android_version)
+          BUILD_NUMBER=$(cat tmp/.build_number)
+          VERSION_TAG="${ANDROID_VERSION}-${BUILD_NUMBER}"
+          cd tmp/
+          mv -v system.img GrapheneOS-arm64-ab-${VERSION_TAG}.img
+          xz -9 -T0 -v -z GrapheneOS-arm64-ab-${VERSION_TAG}.img
+          cp -fv GrapheneOS-arm64-ab-${VERSION_TAG}.img.xz ../out/
+          echo "version_tag=${VERSION_TAG}" >> "$GITHUB_OUTPUT"
+          echo "release_name=GrapheneOS-ab-${VERSION_TAG}" >> "$GITHUB_OUTPUT"
+
+      - name: Upload artifacts to build.chrisaw.io
+        run: |
+          RELEASE_NAME="${{ steps.compress.outputs.release_name }}"
+          rsync -avz --mkpath \
+            out/*.img.xz \
+            "build.chrisaw.io:/var/www/build.chrisaw.io/${RELEASE_NAME}/"
+
+      - name: Create GitHub release
+        run: |
+          VERSION_TAG="${{ steps.compress.outputs.version_tag }}"
+          RELEASE_NAME="${{ steps.compress.outputs.release_name }}"
+          RELEASE_DESCRIPTION="Download mirror: https://build.chrisaw.io/${RELEASE_NAME}/"
+          cd out/
+          gh release create \
+            --draft \
+            --title "GrapheneOS ${VERSION_TAG}" \
+            --notes "${RELEASE_DESCRIPTION}" \
+            "${VERSION_TAG}" \
+            *.img.xz
+
+      - name: Upload build logs on failure
+        if: failure()
+        run: |
+          LOG_DIR="build-logs-${{ github.run_id }}"
+          mkdir -p "/tmp/${LOG_DIR}"
+          cp -v /var/log/actions-runner.log "/tmp/${LOG_DIR}/" 2>/dev/null || true
+          journalctl -u cloud-init --no-pager > "/tmp/${LOG_DIR}/cloud-init.log" 2>/dev/null || true
+          ls -lah out/ tmp/ > "/tmp/${LOG_DIR}/build-dir-listing.txt" 2>/dev/null || true
+          rsync -avz \
+            "/tmp/${LOG_DIR}/" \
+            "build.chrisaw.io:/var/www/build.chrisaw.io/${LOG_DIR}/" \
+            || echo "WARNING: failed to rsync logs"
+          echo "Logs uploaded to https://build.chrisaw.io/${LOG_DIR}/"
+
+  # ---------------------------------------------------------------------------
+  # job 3: teardown
+  # always runs - terminates the EC2 instance and removes the runner.
+  # the cloud-init shutdown timer is the backup if this job fails.
+  # ---------------------------------------------------------------------------
+  teardown:
+    name: Terminate EC2 Instance
+    needs: [ provision, build ]
+    runs-on: ubuntu-latest
+    if: always()
+
+    steps:
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: eu-west-2
+
+      - name: Terminate instance
+        env:
+          INSTANCE_ID: ${{ needs.provision.outputs.instance_id }}
+        run: |
+          if [ -z "${INSTANCE_ID}" ] || [ "${INSTANCE_ID}" = "" ]; then
+            echo "No instance ID found - nothing to terminate"
+            exit 0
+          fi
+
+          echo "Terminating instance ${INSTANCE_ID}..."
+          aws ec2 terminate-instances --instance-ids "${INSTANCE_ID}"
+          echo "Terminate request sent"
+
+      - name: Wait for instance termination
+        env:
+          INSTANCE_ID: ${{ needs.provision.outputs.instance_id }}
+        run: |
+          if [ -z "${INSTANCE_ID}" ] || [ "${INSTANCE_ID}" = "" ]; then
+            exit 0
+          fi
+
+          echo "Waiting for instance ${INSTANCE_ID} to terminate..."
+          aws ec2 wait instance-terminated \
+            --instance-ids "${INSTANCE_ID}" \
+            || echo "WARNING: wait timed out, instance may still be terminating"
+
+          STATE=$(aws ec2 describe-instances \
+            --instance-ids "${INSTANCE_ID}" \
+            --query 'Reservations[0].Instances[0].State.Name' \
+            --output text 2>/dev/null || echo "unknown")
+
+          if [ "$STATE" = "terminated" ] || [ "$STATE" = "shutting-down" ]; then
+            echo "Confirmed: instance ${INSTANCE_ID} is ${STATE}"
+          else
+            echo "::error::Instance ${INSTANCE_ID} is in state '${STATE}' - may still be running!"
+            echo "::error::MANUAL ACTION REQUIRED: https://eu-west-2.console.aws.amazon.com/ec2"
+            exit 1
+          fi
+
+      - name: Remove ephemeral runner from GitHub
+        env:
+          RUNNER_LABEL: ${{ needs.provision.outputs.runner_label }}
+        run: |
+          RUNNER_ID=$(curl -sf \
+            -H "Authorization: Bearer ${{ secrets.GH_PAT }}" \
+            -H "Accept: application/vnd.github+json" \
+            "https://api.github.com/repos/${{ github.repository }}/actions/runners" \
+            | jq -r --arg label "${RUNNER_LABEL}" \
+              '.runners[] | select(.labels[].name == $label) | .id' \
+            | head -1)
+
+          if [ -n "$RUNNER_ID" ] && [ "$RUNNER_ID" != "null" ]; then
+            curl -sf -X DELETE \
+              -H "Authorization: Bearer ${{ secrets.GH_PAT }}" \
+              -H "Accept: application/vnd.github+json" \
+              "https://api.github.com/repos/${{ github.repository }}/actions/runners/${RUNNER_ID}"
+            echo "Removed runner ${RUNNER_ID} from GitHub"
+          else
+            echo "Runner already removed (ephemeral runners deregister themselves on exit)"
+          fi
+
+      - name: Build summary
+        if: always()
+        run: |
+          BUILD_RESULT="${{ needs.build.result }}"
+          echo "## Build Summary" >> "$GITHUB_STEP_SUMMARY"
+          echo "" >> "$GITHUB_STEP_SUMMARY"
+          echo "| Item | Value |" >> "$GITHUB_STEP_SUMMARY"
+          echo "|------|-------|" >> "$GITHUB_STEP_SUMMARY"
+          echo "| Build result | ${BUILD_RESULT} |" >> "$GITHUB_STEP_SUMMARY"
+          echo "| Instance ID | ${{ needs.provision.outputs.instance_id }} |" >> "$GITHUB_STEP_SUMMARY"
+          echo "| Instance type | c7i.48xlarge (192 vCPUs) |" >> "$GITHUB_STEP_SUMMARY"
+          echo "| Region | eu-west-2 (London) |" >> "$GITHUB_STEP_SUMMARY"
+          echo "| Runner label | ${{ needs.provision.outputs.runner_label }} |" >> "$GITHUB_STEP_SUMMARY"
+          echo "| Instance terminated | yes |" >> "$GITHUB_STEP_SUMMARY"
