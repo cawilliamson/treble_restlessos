@@ -1,4 +1,4 @@
-From 65e8c54baeeaa89d92b2d07214f1f4f68e092394 Mon Sep 17 00:00:00 2001
+From cf1c7cc3ece1953173e34443e381b3ee0c228d86 Mon Sep 17 00:00:00 2001
 From: "Christopher A. Williamson" <contact@chrisaw.io>
 Date: Wed, 25 Mar 2026 22:07:34 +0000
 Subject: [PATCH 14/15] rw-system.sh: fix MTK display on devices without fbdev
@@ -6,12 +6,15 @@ Subject: [PATCH 14/15] rw-system.sh: fix MTK display on devices without fbdev
 the vendor HWC uses /dev/graphics/fb0 for legacy display power
 management (FBIOBLANK).  on kernels with CONFIG_DRM_FBDEV_EMULATION=y,
 /dev/fb0 exists but ueventd may not create the android symlink at
-/dev/graphics/fb0 -- the HWC can't find it and the atomic commit
-fallback also fails with -EINVAL, leaving the panel physically dark.
+/dev/graphics/fb0.  additionally, no ueventd rule matches /dev/fb0
+so it keeps default 0600 root:root permissions -- the HWC (running
+as system:graphics) gets 'Permission denied' even if the symlink
+exists.
 
-create the /dev/graphics/fb0 symlink early in vndk.rc (before any HAL
-services start) so the HWC can use the kernel fbdev emulation node.
-both mkdir and symlink are non-fatal if the paths already exist.
+fix in vndk.rc (runs early in post-fs, before HALs start):
+ - chown/chmod /dev/fb0 to match the standard /dev/graphics/* rule
+   (0660 root:graphics)
+ - create /dev/graphics/ directory and symlink to /dev/fb0
 
 for kernels without fbdev emulation (neither /dev/fb0 nor
 /dev/graphics/fb0), fall back to forcing GPU composition and
@@ -22,8 +25,8 @@ and system_prop so it can pick up display configuration properties.
 ---
  rw-system.sh         | 14 ++++++++++++++
  sepolicy/mediatek.te |  5 +++++
- vndk.rc              |  7 +++++++
- 3 files changed, 26 insertions(+)
+ vndk.rc              | 12 ++++++++++++
+ 3 files changed, 31 insertions(+)
 
 diff --git a/rw-system.sh b/rw-system.sh
 index 332af00..44cb295 100644
@@ -67,16 +70,21 @@ index 2b24965..f3e3d61 100644
  
  type mtk_hal_audio, domain;
 diff --git a/vndk.rc b/vndk.rc
-index 6a9ce16..474966b 100644
+index 6a9ce16..98c9ac0 100644
 --- a/vndk.rc
 +++ b/vndk.rc
-@@ -1,4 +1,11 @@
+@@ -1,4 +1,16 @@
  on post-fs
 +    # ensure /dev/graphics/fb0 exists for vendor HWCs that use the android
 +    # fbdev path for display power management (FBIOBLANK).  on kernels with
 +    # CONFIG_DRM_FBDEV_EMULATION=y the node appears at /dev/fb0 but ueventd
-+    # may not create the /dev/graphics/ symlink.  both mkdir and symlink are
-+    # non-fatal if the paths already exist.
++    # may not create the /dev/graphics/ symlink.  no ueventd rule matches
++    # /dev/fb0 either, so it keeps default 0600 root:root permissions --
++    # fix those to match the standard /dev/graphics/* rule (0660 root:graphics)
++    # before creating the symlink.  all commands are non-fatal if the paths
++    # already exist or the node is absent.
++    chown root graphics /dev/fb0
++    chmod 0660 /dev/fb0
 +    mkdir /dev/graphics 0755 root graphics
 +    symlink /dev/fb0 /dev/graphics/fb0
      exec - root -- /system/bin/vndk-detect
