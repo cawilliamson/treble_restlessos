@@ -1,4 +1,4 @@
-From e36a83cb6ec060d2c248366214bfd175cb256af3 Mon Sep 17 00:00:00 2001
+From 65e8c54baeeaa89d92b2d07214f1f4f68e092394 Mon Sep 17 00:00:00 2001
 From: "Christopher A. Williamson" <contact@chrisaw.io>
 Date: Wed, 25 Mar 2026 22:07:34 +0000
 Subject: [PATCH 14/15] rw-system.sh: fix MTK display on devices without fbdev
@@ -32,7 +32,7 @@ index 332af00..44cb295 100644
 @@ -1123,6 +1123,20 @@ if [ "$board" = mt6768 ]; then
  	setprop ro.netflix.bsp_rev MTK6768-19055-1
  fi
-
+ 
 +# MTK HWComposer display power fallback.
 +#
 +# the /dev/graphics/fb0 symlink is created early in vndk.rc (before HALs
@@ -57,17 +57,17 @@ index 2b24965..f3e3d61 100644
 @@ -2,6 +2,11 @@ type hal_graphics_allocator_default, domain;
  type proc_ged, file_type;
  allowxperm domain proc_ged:file ioctl { 0x6700-0x67ff };
-
+ 
 +# allow MTK hwcomposer to read system and debug properties
 +# (debug.renderengine.backend, debug.sf.*, etc.)
 +allow hal_graphics_composer_default debug_prop:file { getattr map open read };
 +allow hal_graphics_composer_default system_prop:file { getattr map open read };
 +
  allow init mnt_product_file:dir mounton;
-
+ 
  type mtk_hal_audio, domain;
 diff --git a/vndk.rc b/vndk.rc
-index 6a9ce16..51d9bca 100644
+index 6a9ce16..474966b 100644
 --- a/vndk.rc
 +++ b/vndk.rc
 @@ -1,4 +1,11 @@
@@ -77,7 +77,7 @@ index 6a9ce16..51d9bca 100644
 +    # CONFIG_DRM_FBDEV_EMULATION=y the node appears at /dev/fb0 but ueventd
 +    # may not create the /dev/graphics/ symlink.  both mkdir and symlink are
 +    # non-fatal if the paths already exist.
-+    mkdir /dev/graphics 0660 root graphics
++    mkdir /dev/graphics 0755 root graphics
 +    symlink /dev/fb0 /dev/graphics/fb0
      exec - root -- /system/bin/vndk-detect
      exec - root -- /system/bin/rw-system.sh
