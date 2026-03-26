@@ -161,16 +161,13 @@ compress-rom: build-container
             echo "Compressing ROM image..." && \
             ANDROID_VERSION=$(cat /repo/tmp/.android_version) && \
             BUILD_NUM=$(cat /repo/tmp/.build_number) && \
-            VERSION_TAG="${ANDROID_VERSION}-${BUILD_NUM}" && \
-            src="system.img" && \
-            dest="GrapheneOS-arm64-ab-${VERSION_TAG}.img" && \
-            zsync_dest="GrapheneOS-arm64-ab-${ANDROID_VERSION}.img" && \
-            mv -v "${src}" "${dest}" && \
+            img="GrapheneOS-arm64-ab-${ANDROID_VERSION}-${BUILD_NUM}.img" && \
+            mv -v system.img "${img}" && \
             mkdir -p /repo/out/zsync && \
-            zsyncmake -v -u "${zsync_dest}" -o "/repo/out/zsync/${zsync_dest}.zsync" "${dest}" && \
-            cp -v "${dest}" "/repo/out/zsync/${zsync_dest}" && \
-            xz -9 -T0 -v -z "${dest}" && \
-            cp -fv "${dest}.xz" /repo/out/'
+            zsyncmake -v -u "${img}" -o "/repo/out/zsync/${img}.zsync" "${img}" && \
+            cp -v "${img}" "/repo/out/zsync/${img}" && \
+            xz -9 -T0 -v -z "${img}" && \
+            cp -fv "${img}.xz" /repo/out/'
 
 # tag the repo commit with the build version and push to origin
 tag-build:

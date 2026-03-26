@@ -4,6 +4,28 @@ GrapheneOS as a Generic System Image (GSI) for Project Treble devices.
 
 For discussion and support, join the Telegram group: https://t.me/grapheneosgsi
 
+## Delta Updates with zsync2
+
+Each release includes a `.zsync` file alongside the uncompressed `.img`,
+enabling delta downloads via [zsync2](https://github.com/AppImageCommunity/zsync2).
+Only the changed blocks are downloaded, saving significant bandwidth on
+incremental updates.
+
+```sh
+zsync2 <url to .zsync file> -i <full path to previous .img file>
+```
+
+For example:
+
+```sh
+zsync2 https://build.chrisaw.io/GrapheneOS-ab-16-202603261200/zsync/GrapheneOS-arm64-ab-16-202603261200.img.zsync \
+    -i ~/Downloads/GrapheneOS-arm64-ab-16-202603201400.img
+```
+
+> **Note:** point `-i` at the uncompressed `.img` file, not the `.img.xz`
+> archive. If you only have the `.xz`, decompress it first with
+> `xz -dk <file>.img.xz`.
+
 ## Known Issues
 
 ### MediaTek BPF bug (kernel 4.14 / 4.19)

@@ -294,9 +294,13 @@ jobs:
           BUILD_NUMBER=$(cat tmp/.build_number)
           VERSION_TAG="${ANDROID_VERSION}-${BUILD_NUMBER}"
           cd tmp/
-          mv -v system.img GrapheneOS-arm64-ab-${VERSION_TAG}.img
-          xz -9 -T0 -v -z GrapheneOS-arm64-ab-${VERSION_TAG}.img
-          cp -fv GrapheneOS-arm64-ab-${VERSION_TAG}.img.xz ../out/
+          img="GrapheneOS-arm64-ab-${VERSION_TAG}.img"
+          mv -v system.img "${img}"
+          mkdir -p ../out/zsync
+          zsyncmake -v -u "${img}" -o "../out/zsync/${img}.zsync" "${img}"
+          cp -v "${img}" "../out/zsync/${img}"
+          xz -9 -T0 -v -z "${img}"
+          cp -fv "${img}.xz" ../out/
           echo "version_tag=${VERSION_TAG}" >> "$GITHUB_OUTPUT"
           echo "release_name=GrapheneOS-ab-${VERSION_TAG}" >> "$GITHUB_OUTPUT"
 
@@ -306,6 +310,9 @@ jobs:
           rsync -avz --mkpath \
             out/*.img.xz \
             "build.chrisaw.io:/var/www/build.chrisaw.io/${RELEASE_NAME}/"
+          rsync -avz --mkpath \
+            out/zsync/ \
+            "build.chrisaw.io:/var/www/build.chrisaw.io/${RELEASE_NAME}/zsync/"
 
       - name: Create GitHub release
         run: |
