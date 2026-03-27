@@ -131,6 +131,7 @@ runcmd:
 
   - |
     cd /opt/actions-runner
+    export RUNNER_ALLOW_RUNASROOT=1
     ./config.sh \
       --url "__REPO_URL__" \
       --token "__RUNNER_TOKEN__" \
@@ -142,6 +143,7 @@ runcmd:
 
   - |
     cd /opt/actions-runner
+    export RUNNER_ALLOW_RUNASROOT=1
     # run the runner as a background service so cloud-init can exit
     nohup ./run.sh >> /var/log/actions-runner.log 2>&1 &
     echo "GitHub Actions runner started (pid=$!)"
