@@ -1,7 +1,7 @@
 From e15d0148fa1d4caa4b8342ecb8809bff040e075d Mon Sep 17 00:00:00 2001
 From: "Christopher A. Williamson" <contact@chrisaw.io>
 Date: Wed, 25 Mar 2026 09:01:11 +0000
-Subject: [PATCH 1/1] init: make auto_reboot timer failures non-fatal for GSI
+Subject: [PATCH] init: make auto_reboot timer failures non-fatal for GSI
 
 GrapheneOS's auto-reboot feature uses CLOCK_BOOTTIME_ALARM which may
 not be available on some vendor kernels. Fall back to CLOCK_BOOTTIME

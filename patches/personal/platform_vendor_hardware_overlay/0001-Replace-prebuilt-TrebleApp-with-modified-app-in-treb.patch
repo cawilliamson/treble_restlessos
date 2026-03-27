@@ -1,7 +1,7 @@
 From 2b748cb98dbdb204d731f4e61a8e9db30b8f28d3 Mon Sep 17 00:00:00 2001
 From: mytja <mitja@severkar.eu>
 Date: Fri, 11 Oct 2024 21:33:24 +0200
-Subject: [PATCH 1/1] Replace prebuilt TrebleApp with modified app in treble_app
+Subject: [PATCH] Replace prebuilt TrebleApp with modified app in treble_app
 
 This commit replaces the path to Treble app from the prebuilt included with TrebleDroid/vendor_hardware_overlay to PROJECT_ROOT/treble_app.
 

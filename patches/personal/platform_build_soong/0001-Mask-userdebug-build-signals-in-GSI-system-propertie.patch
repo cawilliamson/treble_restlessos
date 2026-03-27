@@ -1,7 +1,7 @@
 From abeb40d544569333faa53142c62a8e41fefc4c53 Mon Sep 17 00:00:00 2001
 From: "Christopher A. Williamson" <contact@chrisaw.io>
 Date: Tue, 24 Mar 2026 12:23:28 +0000
-Subject: [PATCH 1/1] Mask userdebug build signals in GSI system properties
+Subject: [PATCH] Mask userdebug build signals in GSI system properties
 
 Write ro.build.type and ro.{partition}.build.type as "user" into the
 system image properties regardless of the actual build variant. This

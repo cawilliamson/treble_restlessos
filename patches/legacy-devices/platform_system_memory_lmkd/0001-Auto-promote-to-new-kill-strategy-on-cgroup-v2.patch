@@ -1,7 +1,7 @@
 From 4e03391b0b0d2d121be9ace22e261229f9445049 Mon Sep 17 00:00:00 2001
 From: "Christopher A. Williamson" <contact@chrisaw.io>
 Date: Tue, 24 Mar 2026 11:47:03 +0000
-Subject: [PATCH 1/1] Auto-promote to new kill strategy on cgroup v2
+Subject: [PATCH] Auto-promote to new kill strategy on cgroup v2
 
 Vendor partitions may set ro.lmk.use_new_strategy=false for the old
 kill strategy which depends on cgroup v1 memcg attributes.  When a

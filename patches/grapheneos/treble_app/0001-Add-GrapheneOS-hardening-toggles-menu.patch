@@ -1,7 +1,7 @@
 From f742c03ed8d53dd90fe13ba14d05511168f631ef Mon Sep 17 00:00:00 2001
 From: "Christopher A. Williamson" <contact@chrisaw.io>
 Date: Mon, 23 Feb 2026 10:27:17 +0000
-Subject: [PATCH 1/1] Add GrapheneOS hardening toggles menu
+Subject: [PATCH] Add GrapheneOS hardening toggles menu
 
 Add a new 'GrapheneOS features' submenu to TrebleApp with toggles
 for GrapheneOS security hardening features that may cause vendor

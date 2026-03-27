@@ -1,7 +1,7 @@
 From bc5a9d980df802f88d5e10effc314fd56740fd11 Mon Sep 17 00:00:00 2001
 From: "Christopher A. Williamson" <contact@chrisaw.io>
 Date: Tue, 17 Mar 2026 23:26:56 +0000
-Subject: [PATCH 1/1] bpfloader: relax kernel version gates and fatal errors for
+Subject: [PATCH] bpfloader: relax kernel version gates and fatal errors for
  GSI
 
 Remove min_kver checks from set_skip_loading() so only max_kver gates

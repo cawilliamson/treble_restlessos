@@ -1,7 +1,7 @@
 From 47d4e0aeea92d4b48c685f94419c901892331fdd Mon Sep 17 00:00:00 2001
 From: "Christopher A. Williamson" <contact@chrisaw.io>
 Date: Wed, 18 Feb 2026 09:04:54 +0000
-Subject: [PATCH 1/1] Enable navbar flip order option
+Subject: [PATCH] Enable navbar flip order option
 
 Enable the navbar_flip_order_option accessibility flag so users can
 reverse the order of the 3-button navigation bar buttons (Back, Home,

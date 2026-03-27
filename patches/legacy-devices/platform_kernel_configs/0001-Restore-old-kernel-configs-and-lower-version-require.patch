@@ -1,7 +1,7 @@
 From b45328dfb29f26b97aec45bb8f766d61c0434435 Mon Sep 17 00:00:00 2001
 From: "Christopher A. Williamson" <contact@chrisaw.io>
 Date: Tue, 24 Mar 2026 12:24:19 +0000
-Subject: [PATCH 1/1] Restore old kernel configs and lower version requirements for
+Subject: [PATCH] Restore old kernel configs and lower version requirements for
  GSI
 
 Restore kernel config definitions for older Android releases (P/4.4,

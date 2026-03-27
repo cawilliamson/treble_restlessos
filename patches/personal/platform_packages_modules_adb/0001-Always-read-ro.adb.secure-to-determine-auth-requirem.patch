@@ -1,7 +1,7 @@
 From f860977abc138ab08337f2bf8f0b6df91bfa31c6 Mon Sep 17 00:00:00 2001
 From: "Christopher A. Williamson" <contact@chrisaw.io>
 Date: Sat, 7 Mar 2026 19:52:08 +0000
-Subject: [PATCH 1/1] Always read ro.adb.secure to determine auth requirement
+Subject: [PATCH] Always read ro.adb.secure to determine auth requirement
 
 Remove the ro.debuggable / ro.boot.verifiedbootstate gate around the
 ro.adb.secure property check.  On a GSI the securize mechanism spoofs

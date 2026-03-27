@@ -1,7 +1,7 @@
 From 902f93c1b4da5bc3d8e07a67594f6a68077eae14 Mon Sep 17 00:00:00 2001
 From: "Christopher A. Williamson" <contact@chrisaw.io>
 Date: Wed, 4 Mar 2026 23:39:29 +0000
-Subject: [PATCH 1/1] Replace hardcoded Google captive portal fallback URL
+Subject: [PATCH] Replace hardcoded Google captive portal fallback URL
 
 The CaptivePortalLoginActivity has a hardcoded fallback URL pointing to
 connectivitycheck.gstatic.com that is used when no URL is provided via

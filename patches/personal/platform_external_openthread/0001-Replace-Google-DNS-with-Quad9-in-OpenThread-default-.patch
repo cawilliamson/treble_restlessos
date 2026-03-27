@@ -1,7 +1,7 @@
 From 75b4229d9a8deaf4bcbd465c59c411f21d1910d8 Mon Sep 17 00:00:00 2001
 From: "Christopher A. Williamson" <contact@chrisaw.io>
 Date: Wed, 4 Mar 2026 23:42:07 +0000
-Subject: [PATCH 1/1] Replace Google DNS with Quad9 in OpenThread default config
+Subject: [PATCH] Replace Google DNS with Quad9 in OpenThread default config
 
 The OpenThread DNS client default server was set to Google Public DNS
 (2001:4860:4860::8888). Replace with Quad9 (2620:fe::fe) which is a
