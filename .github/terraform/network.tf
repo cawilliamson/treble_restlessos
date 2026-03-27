@@ -15,11 +15,12 @@ resource "aws_internet_gateway" "build" {
 }
 
 resource "aws_subnet" "build" {
+  for_each                = toset(["a", "b", "c"])
   vpc_id                  = aws_vpc.build.id
-  cidr_block              = "10.0.1.0/24"
-  availability_zone       = "${var.region}a"
+  cidr_block              = "10.0.${index(["a", "b", "c"], each.key) + 1}.0/24"
+  availability_zone       = "${var.region}${each.key}"
   map_public_ip_on_launch = true
-  tags                    = { Name = "gsi-build", Project = var.project_tag }
+  tags                    = { Name = "gsi-build-${each.key}", Project = var.project_tag }
 }
 
 resource "aws_route_table" "build" {
@@ -33,7 +34,8 @@ resource "aws_route_table" "build" {
 }
 
 resource "aws_route_table_association" "build" {
-  subnet_id      = aws_subnet.build.id
+  for_each       = aws_subnet.build
+  subnet_id      = each.value.id
   route_table_id = aws_route_table.build.id
 }
 

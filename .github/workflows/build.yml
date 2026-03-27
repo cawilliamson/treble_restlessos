@@ -109,21 +109,29 @@ jobs:
           # c7i.48xlarge: 192 vCPUs, 384 GiB RAM
           # InstanceInitiatedShutdownBehavior=terminate ensures the cloud-init
           # safety timer (shutdown -P +120) destroys the instance entirely.
-          INSTANCE_ID=$(aws ec2 run-instances \
-            --image-id "${{ steps.ami.outputs.ami_id }}" \
-            --instance-type c7i.48xlarge \
-            --instance-market-options '{"MarketType":"spot","SpotOptions":{"SpotInstanceType":"one-time","InstanceInterruptionBehavior":"terminate"}}' \
-            --instance-initiated-shutdown-behavior terminate \
-            --subnet-id "${{ secrets.AWS_SUBNET_ID }}" \
-            --security-group-ids "${{ secrets.AWS_SECURITY_GROUP_ID }}" \
-            --block-device-mappings '[{"DeviceName":"/dev/sda1","Ebs":{"VolumeSize":500,"VolumeType":"gp3","Iops":16000,"Throughput":1000,"DeleteOnTermination":true}}]' \
-            --user-data "file:///tmp/user-data.yml" \
-            --tag-specifications "ResourceType=instance,Tags=[{Key=Name,Value=gsi-build-${{ github.run_id }}},{Key=Project,Value=treble-grapheneos},{Key=Ephemeral,Value=true}]" \
-            --query 'Instances[0].InstanceId' \
-            --output text)
+          # try each subnet (AZ) until one has capacity.
+          IFS=',' read -ra SUBNETS <<< "${{ secrets.AWS_SUBNET_IDS }}"
+          INSTANCE_ID=""
+          for SUBNET in "${SUBNETS[@]}"; do
+            echo "Trying subnet ${SUBNET}..."
+            INSTANCE_ID=$(aws ec2 run-instances \
+              --image-id "${{ steps.ami.outputs.ami_id }}" \
+              --instance-type c7i.48xlarge \
+              --instance-market-options '{"MarketType":"spot","SpotOptions":{"SpotInstanceType":"one-time","InstanceInterruptionBehavior":"terminate"}}' \
+              --instance-initiated-shutdown-behavior terminate \
+              --subnet-id "${SUBNET}" \
+              --security-group-ids "${{ secrets.AWS_SECURITY_GROUP_ID }}" \
+              --block-device-mappings '[{"DeviceName":"/dev/sda1","Ebs":{"VolumeSize":500,"VolumeType":"gp3","Iops":16000,"Throughput":1000,"DeleteOnTermination":true}}]' \
+              --user-data "file:///tmp/user-data.yml" \
+              --tag-specifications "ResourceType=instance,Tags=[{Key=Name,Value=gsi-build-${{ github.run_id }}},{Key=Project,Value=treble-grapheneos},{Key=Ephemeral,Value=true}]" \
+              --query 'Instances[0].InstanceId' \
+              --output text 2>&1) && break
+            echo "  failed: ${INSTANCE_ID}"
+            INSTANCE_ID=""
+          done
 
           if [ -z "$INSTANCE_ID" ] || [ "$INSTANCE_ID" = "None" ]; then
-            echo "ERROR: failed to launch spot instance"
+            echo "ERROR: failed to launch spot instance in any AZ"
             exit 1
           fi
 

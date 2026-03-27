@@ -14,9 +14,9 @@ output "aws_secret_access_key" {
   sensitive   = true
 }
 
-output "subnet_id" {
-  description = "build subnet — set as AWS_SUBNET_ID secret"
-  value       = aws_subnet.build.id
+output "subnet_ids" {
+  description = "build subnets (one per AZ) — set as AWS_SUBNET_IDS secret (comma-separated)"
+  value       = join(",", [for s in aws_subnet.build : s.id])
 }
 
 output "security_group_id" {
