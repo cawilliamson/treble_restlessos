@@ -1,4 +1,4 @@
-From 841081ca207a08b4cc82512ea79b7c9671be36e4 Mon Sep 17 00:00:00 2001
+From bc5a9d980df802f88d5e10effc314fd56740fd11 Mon Sep 17 00:00:00 2001
 From: "Christopher A. Williamson" <contact@chrisaw.io>
 Date: Tue, 17 Mar 2026 23:26:56 +0000
 Subject: [PATCH] bpfloader: relax kernel version gates and fatal errors for
@@ -6,26 +6,41 @@ Subject: [PATCH] bpfloader: relax kernel version gates and fatal errors for
 
 Remove min_kver checks from set_skip_loading() so only max_kver gates
 are applied. Programs are only skipped on kernels below 4.9 (where
-eBPF is entirely unusable) or above max_kver. This allows 5.10 kernels
-to load BPF programs that AOSP QPR2 would incorrectly skip.
+eBPF is entirely unusable) or above max_kver.
 
-Convert the /sys/fs/bpf/vendor mkdir panic to a non-fatal error,
-allowing boot to continue on devices where the BPF filesystem may
-not be fully functional.
+Convert the /sys/fs/bpf/vendor mkdir panic to a non-fatal warning
+and continue into vendorBpfLoader() regardless.
 
-Change-Id: Ieff06c5c46515620516c23474616ff9786a3487b
+Remove the early return in vendorBpfLoader() on loadAllElfObjects
+failure so it always exec's back to netbpfload with 'done'. without
+this, bpf.progs_loaded is never set and reboot_on_failure triggers.
+
+Change-Id: I281d8f500c3638604c035d518d00e4ffca7d2905
 ---
- loader/bpfloader.rs | 23 ++++++++++++++++-------
- 1 file changed, 16 insertions(+), 7 deletions(-)
+ loader/Loader.cpp   |  1 -
+ loader/bpfloader.rs | 22 +++++++++++++++-------
+ 2 files changed, 15 insertions(+), 8 deletions(-)
 
+diff --git a/loader/Loader.cpp b/loader/Loader.cpp
+index 6303d30..fd57db2 100644
+--- a/loader/Loader.cpp
++++ b/loader/Loader.cpp
+@@ -689,7 +689,6 @@ void vendorBpfLoader() {
+         ALOGE("If this triggers randomly, you might be hitting some memory allocation "
+               "problems or startup script race.");
+         ALOGE("--- DO NOT EXPECT SYSTEM TO BOOT SUCCESSFULLY ---");
+-        return;
+     }
+ 
+     const char* args[] = {"/apex/com.android.tethering/bin/netbpfload", "done", NULL};
 diff --git a/loader/bpfloader.rs b/loader/bpfloader.rs
-index 512683f..172169c 100644
+index 512683f..d25ebfa 100644
 --- a/loader/bpfloader.rs
 +++ b/loader/bpfloader.rs
 @@ -149,6 +149,7 @@ fn libbpf_print(level: PrintLevel, mut msg: String) {
      }
  }
-
+ 
 +#[allow(dead_code)]
  struct MapDesc {
      name: &'static str,
@@ -33,7 +48,7 @@ index 512683f..172169c 100644
 @@ -169,6 +170,7 @@ impl MapDesc {
      }
  }
-
+ 
 +#[allow(dead_code)]
  struct ProgDesc {
      name: &'static str,
@@ -41,7 +56,7 @@ index 512683f..172169c 100644
 @@ -449,15 +451,21 @@ fn set_skip_loading(
  ) -> Result<(), anyhow::Error> {
      let kvers = kernel_version()?;
-
+ 
 +    // Skip everything on kernels below 4.9 where eBPF is not usable
 +    let skip_all = kvers < kver(4, 9, 0);
 +    if skip_all {
@@ -77,15 +92,14 @@ index 512683f..172169c 100644
                      );
                      prog.set_autoload(false);
                  }
-@@ -671,7 +679,8 @@ fn main() {
+@@ -671,7 +679,7 @@ fn main() {
      info!("Loading legacy BPF progs");
-
+ 
      if let Err(e) = create_dir(Path::new("/sys/fs/bpf/vendor")) {
 -        panic!("Error during mkdir /sys/fs/bpf/vendor: {e}");
-+        error!("Failed to mkdir /sys/fs/bpf/vendor: {e} -- BPF fs may not be mounted, skipping vendor BPF loading");
-+        return;
++        error!("Failed to mkdir /sys/fs/bpf/vendor: {e} -- continuing anyway");
      };
-
+ 
      // SAFETY: Linking in the existing legacy vendor bpfloader functionality.
 -- 
 2.53.0
