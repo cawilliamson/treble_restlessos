@@ -1,4 +1,4 @@
-From a54558609e6ea717f839a683045c1a1d337a0c67 Mon Sep 17 00:00:00 2001
+From 3f5cbf49a72bc6d2db87c44376753d35eca8170b Mon Sep 17 00:00:00 2001
 From: "Christopher A. Williamson" <contact@chrisaw.io>
 Date: Thu, 26 Mar 2026 14:27:44 +0000
 Subject: [PATCH 2/3] skip fs-verity on kernels that don't support it
@@ -11,17 +11,20 @@ and INSTALL_PARSE_FAILED_NO_CERTIFICATES when verifying v4 signatures
 on kernel 4.14/4.19 devices.
 
 add a /sys/fs/verity existence check to isFsVeritySupported() and
-guard the three unguarded fs-verity callsites:
+guard the four unguarded fs-verity callsites:
 - PackageInstallerSession: enabling fs-verity on APKs with .idsig
 - InstallPackageHelper: checking fs-verity on system package updates
 - ApkSignatureSchemeV4Verifier: fs-verity consistency check during
   v4 signature verification
+- PackageVerityExt: boot-time fs-verity check on system package
+  updates that was causing updates to be rolled back on every reboot
 ---
  .../java/android/util/apk/ApkSignatureSchemeV4Verifier.java | 4 +++-
  core/java/com/android/internal/security/VerityUtils.java    | 6 +++++-
  .../java/com/android/server/pm/InstallPackageHelper.java    | 5 ++++-
  .../java/com/android/server/pm/PackageInstallerSession.java | 2 +-
- 4 files changed, 13 insertions(+), 4 deletions(-)
+ .../core/java/com/android/server/pm/PackageVerityExt.java   | 2 +-
+ 5 files changed, 14 insertions(+), 5 deletions(-)
 
 diff --git a/core/java/android/util/apk/ApkSignatureSchemeV4Verifier.java b/core/java/android/util/apk/ApkSignatureSchemeV4Verifier.java
 index ac9ebe58e..a8b8beda0 100644
@@ -89,6 +92,19 @@ index 36adc149c..822054250 100644
 -        if (!isIncrementalInstallation()) {
 +        if (!isIncrementalInstallation() && VerityUtils.isFsVeritySupported()) {
              enableFsVerityToAddedApksWithIdsig();
+         }
+ 
+diff --git a/services/core/java/com/android/server/pm/PackageVerityExt.java b/services/core/java/com/android/server/pm/PackageVerityExt.java
+index 83972db25..e16de1dca 100644
+--- a/services/core/java/com/android/server/pm/PackageVerityExt.java
++++ b/services/core/java/com/android/server/pm/PackageVerityExt.java
+@@ -133,7 +133,7 @@ public class PackageVerityExt {
+             }
+         }
+ 
+-        if (checkFsVerity) {
++        if (checkFsVerity && VerityUtils.isFsVeritySupported()) {
+             checkFsVerity(systemPkgUpdate);
          }
  
 -- 
