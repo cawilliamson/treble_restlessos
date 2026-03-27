@@ -1,7 +1,7 @@
 From 16d17669fd40fba73cf71cd6182216d19284e459 Mon Sep 17 00:00:00 2001
 From: "Christopher A. Williamson" <contact@chrisaw.io>
 Date: Sat, 21 Mar 2026 23:02:19 +0000
-Subject: [PATCH 2/2] SurfaceFlinger: defer display mode changes until boot is
+Subject: [PATCH 2/3] SurfaceFlinger: defer display mode changes until boot is
  finished
 
 The upstream boot guard in initiateDisplayModeChanges is gated on the
