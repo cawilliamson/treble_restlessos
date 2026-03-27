@@ -45,13 +45,54 @@ packages:
   - xz-utils
   - zip
   - zlib1g-dev
-  - zsync
+
+users:
+  - default
+  - name: github
+    shell: /bin/bash
+    groups: [sudo]
+    sudo: ['ALL=(ALL) NOPASSWD:ALL']
+    home: /home/github
 
 write_files:
-  - path: /root/.ssh/build_key
+  - path: /home/github/.ssh/build_key
     permissions: '0600'
     encoding: b64
     content: __SSH_KEY_B64__
+    owner: github:github
+
+  - path: /home/github/.ssh/config
+    permissions: '0600'
+    owner: github:github
+    content: |
+      Host github.com
+        IdentityFile /home/github/.ssh/build_key
+        StrictHostKeyChecking no
+        User git
+
+      Host build.chrisaw.io
+        IdentityFile /home/github/.ssh/build_key
+        StrictHostKeyChecking no
+
+  - path: /etc/systemd/system/actions-runner.service
+    permissions: '0644'
+    content: |
+      [Unit]
+      Description=GitHub Actions Runner
+      After=network-online.target
+      Wants=network-online.target
+
+      [Service]
+      Type=simple
+      User=github
+      WorkingDirectory=/opt/actions-runner
+      ExecStart=/opt/actions-runner/run.sh
+      Restart=no
+      StandardOutput=journal
+      StandardError=journal
+
+      [Install]
+      WantedBy=multi-user.target
 
 runcmd:
   # -------------------------------------------------------------------------
@@ -63,22 +104,13 @@ runcmd:
   - shutdown -P +120 "SAFETY: 2-hour maximum build time reached. self-destructing."
 
   # -------------------------------------------------------------------------
-  # SSH key - used for private vendor repo + rsync to build.chrisaw.io
+  # SSH key - derive public key
   # -------------------------------------------------------------------------
   - |
-    ssh-keygen -y -f /root/.ssh/build_key > /root/.ssh/build_key.pub
-    chmod 644 /root/.ssh/build_key.pub
-    cat > /root/.ssh/config <<'EOF'
-    Host github.com
-      IdentityFile /root/.ssh/build_key
-      StrictHostKeyChecking no
-      User git
-
-    Host build.chrisaw.io
-      IdentityFile /root/.ssh/build_key
-      StrictHostKeyChecking no
-    EOF
-    chmod 600 /root/.ssh/config
+    chown -R github:github /home/github/.ssh
+    sudo -u github ssh-keygen -y -f /home/github/.ssh/build_key \
+      > /home/github/.ssh/build_key.pub
+    chown github:github /home/github/.ssh/build_key.pub
 
   # -------------------------------------------------------------------------
   # libncurses5 - not in ubuntu 24.04 repos, required by AOSP host tools
@@ -113,12 +145,12 @@ runcmd:
   # git identity (required for patch application via git am)
   # -------------------------------------------------------------------------
   - |
-    git config --global user.email 'androidbuild@localhost'
-    git config --global user.name 'androidbuild'
-    git config --global color.ui false
+    sudo -u github git config --global user.email 'androidbuild@localhost'
+    sudo -u github git config --global user.name 'androidbuild'
+    sudo -u github git config --global color.ui false
 
   # -------------------------------------------------------------------------
-  # github actions runner
+  # github actions runner - install, configure, start via systemd
   # -------------------------------------------------------------------------
   - |
     RUNNER_VERSION=$(curl -sf https://api.github.com/repos/actions/runner/releases/latest \
@@ -127,23 +159,21 @@ runcmd:
     curl -sf -L \
       "https://github.com/actions/runner/releases/download/v${RUNNER_VERSION}/actions-runner-linux-x64-${RUNNER_VERSION}.tar.gz" \
       | tar -xz -C /opt/actions-runner
+    chown -R github:github /opt/actions-runner
     /opt/actions-runner/bin/installdependencies.sh
 
   - |
     cd /opt/actions-runner
-    export RUNNER_ALLOW_RUNASROOT=1
-    ./config.sh \
+    sudo -u github ./config.sh \
       --url "__REPO_URL__" \
       --token "__RUNNER_TOKEN__" \
       --name "aws-gsi-build-$(hostname)" \
       --labels "__RUNNER_LABELS__" \
-      --work /root/actions-runner-work \
+      --work /home/github/actions-runner-work \
       --unattended \
       --ephemeral
 
   - |
-    cd /opt/actions-runner
-    export RUNNER_ALLOW_RUNASROOT=1
-    # run the runner as a background service so cloud-init can exit
-    nohup ./run.sh >> /var/log/actions-runner.log 2>&1 &
-    echo "GitHub Actions runner started (pid=$!)"
+    systemctl daemon-reload
+    systemctl enable --now actions-runner.service
+    echo "GitHub Actions runner started via systemd"
