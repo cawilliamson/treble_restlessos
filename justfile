@@ -135,7 +135,22 @@ build-rom: build-container
                 cp -fv "/repo/configs/rom/grapheneos.mk" . && \
                 bash generate.sh grapheneos && \
             popd && \
-            rm -rfv out/.lock out/soong/.intermediates/prebuilts/ out/target/product/tdgsi_arm64_ab/ && \
+            rm -rfv out/.lock out/target/product/tdgsi_arm64_ab/ && \
+            echo "Scanning out/ for null-byte corruption in build state..." && \
+            CORRUPTED=$(find out/ -type f \( \
+                -name "*.ninja" -o -name "*.ninja_log" -o -name "*.ninja.d" -o \
+                -name "*.d" -o -name "*.rsp" -o -name "*.txt" -o \
+                -name "*.textproto" -o -name "*.mk" -o -name "*.csv" -o \
+                -name "*.sha256" -o -name "*.list" -o -name "*.json" -o \
+                -name "*.xml" -o -name "*.flags" -o -name "*.config" -o \
+                -name "*.intermediates.lock" \
+            \) -exec grep -Pl "\x00" {} + 2>/dev/null || true) && \
+            if [[ -n "${CORRUPTED}" ]]; then \
+                echo "WARNING: null-byte corruption detected — removing affected files:" && \
+                echo "${CORRUPTED}" | tee /dev/stderr | xargs rm -fv; \
+            else \
+                echo "No corruption found."; \
+            fi && \
             rm -fv /repo/tmp/*.img* /repo/out/*.img* && \
             rm -rfv /repo/out/zsync/ && \
             . build/envsetup.sh && \
