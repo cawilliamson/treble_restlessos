@@ -1,7 +1,7 @@
 From e3b5b377d927f80dbd968398a560089f4edeea43 Mon Sep 17 00:00:00 2001
 From: "Christopher A. Williamson" <contact@chrisaw.io>
 Date: Sat, 21 Feb 2026 21:51:05 +0000
-Subject: [PATCH 3/6] Toggle MTE/TBI vendor override via
+Subject: [PATCH 2/3] Toggle MTE/TBI vendor override via
  persist.sys.phh.gos.mte_vendor
 
 GrapheneOS forces M_HEAP_TAGGING_LEVEL_ASYNC on vendor processes.

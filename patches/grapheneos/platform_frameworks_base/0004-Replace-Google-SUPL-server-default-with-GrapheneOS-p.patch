@@ -1,7 +1,7 @@
 From 54940b5005056862da54ffb339ee5401d74ac065 Mon Sep 17 00:00:00 2001
 From: "Christopher A. Williamson" <contact@chrisaw.io>
 Date: Tue, 10 Mar 2026 08:42:57 +0000
-Subject: [PATCH 14/17] Replace Google SUPL server default with GrapheneOS
+Subject: [PATCH 4/5] Replace Google SUPL server default with GrapheneOS
  proxy
 
 The CarrierConfigManager hardcodes supl.google.com as the default SUPL

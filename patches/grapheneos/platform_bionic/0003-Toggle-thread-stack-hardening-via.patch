@@ -1,7 +1,7 @@
 From f4e7ece5b1ff58ccf8f0b68b72bb032342f4557f Mon Sep 17 00:00:00 2001
 From: "Christopher A. Williamson" <contact@chrisaw.io>
 Date: Sat, 21 Feb 2026 21:56:46 +0000
-Subject: [PATCH 4/6] Toggle thread stack hardening via
+Subject: [PATCH 3/3] Toggle thread stack hardening via
  persist.sys.phh.gos.stack_hardening
 
 GrapheneOS hardens thread stacks with 8MB default size, random

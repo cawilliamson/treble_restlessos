@@ -1,7 +1,7 @@
 From 0d722b45895270b2d5460303f6e70fe6dc2fb281 Mon Sep 17 00:00:00 2001
 From: "Christopher A. Williamson" <contact@chrisaw.io>
 Date: Tue, 10 Mar 2026 16:36:44 +0000
-Subject: [PATCH 5/5] Redirect Certificate Transparency log list to self-hosted
+Subject: [PATCH 1/1] Redirect Certificate Transparency log list to self-hosted
  proxy
 
 The CT log list downloader unconditionally contacts www.gstatic.com to

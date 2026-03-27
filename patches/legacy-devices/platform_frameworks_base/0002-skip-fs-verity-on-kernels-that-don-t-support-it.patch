@@ -1,7 +1,7 @@
 From a54558609e6ea717f839a683045c1a1d337a0c67 Mon Sep 17 00:00:00 2001
 From: "Christopher A. Williamson" <contact@chrisaw.io>
 Date: Thu, 26 Mar 2026 14:27:44 +0000
-Subject: [PATCH 17/17] skip fs-verity on kernels that don't support it
+Subject: [PATCH 2/3] skip fs-verity on kernels that don't support it
 
 on GSI builds the system partition is android 16 but the vendor kernel
 may predate fs-verity (added in 5.4).  isFsVeritySupported() only

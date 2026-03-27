@@ -1,0 +1,106 @@
+From fa6f1e3c91144422fb6b105c64f19df5395581b1 Mon Sep 17 00:00:00 2001
+From: "Christopher A. Williamson" <contact@chrisaw.io>
+Date: Tue, 24 Mar 2026 12:44:06 +0000
+Subject: [PATCH 4/4] Add Unihertz 8849 SELinux policy and proinfo init
+ service
+
+- SELinux: label FPGA SPI and NDS03 sysfs nodes, allow system_app
+  read/write access for projector controls and laser rangefinder
+- SELinux: allow bidirectional binder calls between system_app and
+  hal_aidl_agolddaemon_default (needed for AIDL callback)
+- Init: read factory calibration from proinfo at boot and set
+  sys.phh.8849.focus_cal and sys.phh.8849.other_cal properties
+  (guarded by FPGA sysfs check so it's a no-op on other devices)
+---
+ 8849-proinfo.rc         |  2 ++
+ 8849-proinfo.sh         | 24 ++++++++++++++++++++++++
+ base.mk                 |  4 +++-
+ sepolicy/genfs_contexts |  2 ++
+ sepolicy/treble_app.te  | 11 +++++++++++
+ 5 files changed, 42 insertions(+), 1 deletion(-)
+ create mode 100644 8849-proinfo.rc
+ create mode 100644 8849-proinfo.sh
+
+diff --git a/8849-proinfo.rc b/8849-proinfo.rc
+new file mode 100644
+index 0000000..706352c
+--- /dev/null
++++ b/8849-proinfo.rc
+@@ -0,0 +1,2 @@
++on post-fs-data
++    exec u:r:phhsu_daemon:s0 root -- /system/bin/sh /system/etc/8849-proinfo.sh
+diff --git a/8849-proinfo.sh b/8849-proinfo.sh
+new file mode 100644
+index 0000000..364ae14
+--- /dev/null
++++ b/8849-proinfo.sh
+@@ -0,0 +1,24 @@
++#!/system/bin/sh
++# Read Unihertz 8849 factory calibration from proinfo partition and
++# expose it via system properties for TrebleApp to consume.
++#
++# Focus calibration: 17 CSV values at offset 0x1000cc (1048780)
++# Other calibration: 3 CSV values at offset 0x10014c (1048908)
++
++# Only run on Unihertz 8849 (Tank) devices
++[ -d /sys/bus/spi/drivers/fpga_spi ] || exit 0
++
++PROINFO=/dev/block/by-name/proinfo
++[ -e "$PROINFO" ] || exit 0
++
++# Read focus calibration
++focus=$(dd if="$PROINFO" bs=1 skip=1048780 count=128 2>/dev/null | tr -d '\0')
++if echo "$focus" | grep -q '^550,'; then
++    setprop sys.phh.8849.focus_cal "$focus"
++fi
++
++# Read other calibration (AWB, horizontal, vertical)
++other=$(dd if="$PROINFO" bs=1 skip=1048908 count=128 2>/dev/null | tr -d '\0')
++if echo "$other" | grep -qE '^[0-9]+,[0-9]+,[0-9]+$'; then
++    setprop sys.phh.8849.other_cal "$other"
++fi
+diff --git a/base.mk b/base.mk
+index 76b1c4d..2462c9b 100644
+--- a/base.mk
++++ b/base.mk
+@@ -154,7 +154,9 @@ PRODUCT_PACKAGES += \
+ PRODUCT_COPY_FILES += \
+     device/phh/treble/files/adbd.rc:system/etc/init/adbd.rc \
+     device/phh/treble/00-fix-metadata.rc:system/etc/init/00-fix-metadata.rc \
+-    device/phh/treble/00-fix-metadata.sh:system/etc/00-fix-metadata.sh
++    device/phh/treble/00-fix-metadata.sh:system/etc/00-fix-metadata.sh \
++    device/phh/treble/8849-proinfo.rc:system/etc/init/8849-proinfo.rc \
++    device/phh/treble/8849-proinfo.sh:system/etc/8849-proinfo.sh
+
+ # MTK incoming SMS fix
+ PRODUCT_PACKAGES += \
+diff --git a/sepolicy/genfs_contexts b/sepolicy/genfs_contexts
+index 56e8950..17ce43a 100644
+--- a/sepolicy/genfs_contexts
++++ b/sepolicy/genfs_contexts
+@@ -1 +1,3 @@
+ genfscon sysfs /board_properties u:object_r:sysfs_board_properties:s0
++genfscon sysfs /bus/spi/drivers/fpga_spi u:object_r:sysfs_fpga_spi:s0
++genfscon sysfs /nds03_ctrl u:object_r:sysfs_nds03:s0
+diff --git a/sepolicy/treble_app.te b/sepolicy/treble_app.te
+index 4bed5f1..1f5e90e 100644
+--- a/sepolicy/treble_app.te
++++ b/sepolicy/treble_app.te
+@@ -39,3 +39,14 @@ binder_call(system_app, hal_gesturewake_default);
+
+ type hal_aidl_agolddaemon_default, domain;
+ binder_call(system_app, hal_aidl_agolddaemon_default);
++binder_call(hal_aidl_agolddaemon_default, system_app);
++
++# Unihertz 8849 (Tank) projector FPGA sysfs access.
++type sysfs_fpga_spi, fs_type, sysfs_type;
++allow system_app sysfs_fpga_spi:dir r_dir_perms;
++allow system_app sysfs_fpga_spi:file rw_file_perms;
++
++# Unihertz 8849 (Tank) NDS03 laser rangefinder sysfs access.
++type sysfs_nds03, fs_type, sysfs_type;
++allow system_app sysfs_nds03:dir r_dir_perms;
++allow system_app sysfs_nds03:file r_file_perms;
+-- 
+2.53.0
+

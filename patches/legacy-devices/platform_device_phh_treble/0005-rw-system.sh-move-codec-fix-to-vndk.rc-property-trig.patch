@@ -1,0 +1,50 @@
+From 8c8d73364dac148aa611d1c77a0b12c2de36f626 Mon Sep 17 00:00:00 2001
+From: "Christopher A. Williamson" <contact@chrisaw.io>
+Date: Fri, 27 Mar 2026 08:09:42 +0000
+Subject: [PATCH 5/5] rw-system.sh: move codec fix to vndk.rc property trigger
+
+move the codec fix (persist.sys.phh.prefer_sw_codecs) from rw-system.sh
+to an init property trigger in vndk.rc using resetprop_phh -n.
+
+the rw-system.sh approach set the stagefright properties via setprop too
+late -- media services could already have initialised with broken vendor
+C2 HALs.  the CodecFix magisk module avoids this by using system.prop,
+which injects values into the property area at early init before any
+service reads them.
+
+an init property trigger with resetprop_phh -n replicates this: it
+patches the property area directly (bypassing property_service) as soon
+as persist properties are loaded from /data, well before class main
+services (mediaserver, media.codec) start.  -n suppresses change
+notifications so no service restarts mid-boot.
+
+based on doissM's CodecFix magisk module.
+---
+ vndk.rc | 11 +++++++++++
+ 1 file changed, 11 insertions(+)
+
+diff --git a/vndk.rc b/vndk.rc
+index 01508ee..908336a 100644
+--- a/vndk.rc
++++ b/vndk.rc
+@@ -122,6 +122,17 @@ on property:persist.sys.phh.enable_sf_gl_backpressure=*
+ on property:persist.sys.phh.dynamic_fps=*
+     setprop ro.surface_flinger.use_content_detection_for_refresh_rate ${persist.sys.phh.dynamic_fps}
+ 
++# prefer software/OMX codecs over broken vendor C2 HW codecs.
++# forces AIDL C2 HAL selection (hiding HIDL vendor codecs),
++# promotes OMX to highest rank, and disables C2 input surface.
++# uses resetprop_phh -n to patch property area directly, matching
++# the timing behaviour of doissM's CodecFix magisk module system.prop.
++on property:persist.sys.phh.prefer_sw_codecs=true
++    exec u:r:phhsu_daemon:s0 root -- /system/bin/resetprop_phh -n debug.stagefright.c2inputsurface -1
++    exec u:r:phhsu_daemon:s0 root -- /system/bin/resetprop_phh -n debug.stagefright.ccodec 4
++    exec u:r:phhsu_daemon:s0 root -- /system/bin/resetprop_phh -n debug.stagefright.omx_default_rank 0
++    exec u:r:phhsu_daemon:s0 root -- /system/bin/resetprop_phh -n media.c2.hal.selection aidl
++
+ # Set watchdog timer to 30 seconds and pet it every 10 seconds to get a 20 second margin
+ service watchdogd-gsi /system/bin/watchdogd 10 20
+     class core
+-- 
+2.53.0
+

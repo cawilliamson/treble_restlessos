@@ -1,0 +1,94 @@
+From fdd29becf2e970c3d71b711526afdbf1e705d0de Mon Sep 17 00:00:00 2001
+From: "Christopher A. Williamson" <contact@chrisaw.io>
+Date: Wed, 25 Mar 2026 22:07:34 +0000
+Subject: [PATCH 4/5] rw-system.sh: fix MTK display on devices without fbdev
+
+the vendor HWC uses /dev/graphics/fb0 for legacy display power
+management (FBIOBLANK).  on kernels with CONFIG_DRM_FBDEV_EMULATION=y,
+/dev/fb0 exists but ueventd may not create the android symlink at
+/dev/graphics/fb0.  additionally, no ueventd rule matches /dev/fb0
+so it keeps default 0600 root:root permissions -- the HWC (running
+as system:graphics) gets 'Permission denied' even if the symlink
+exists.
+
+fix in vndk.rc (runs early in post-fs, before HALs start):
+ - chown/chmod /dev/fb0 to match the standard /dev/graphics/* rule
+   (0660 root:graphics)
+ - create /dev/graphics/ directory and symlink to /dev/fb0
+
+for kernels without fbdev emulation (neither /dev/fb0 nor
+/dev/graphics/fb0), fall back to forcing GPU composition and
+unsignaled buffer latching in rw-system.sh.
+
+add SELinux rules allowing the MTK HWComposer HAL to read debug_prop
+and system_prop so it can pick up display configuration properties.
+---
+ rw-system.sh         | 14 ++++++++++++++
+ sepolicy/mediatek.te |  5 +++++
+ vndk.rc              | 11 +++++++++++
+ 3 files changed, 30 insertions(+)
+
+diff --git a/rw-system.sh b/rw-system.sh
+index 332af00..44cb295 100644
+--- a/rw-system.sh
++++ b/rw-system.sh
+@@ -1123,6 +1123,20 @@ if [ "$board" = mt6768 ]; then
+ 	setprop ro.netflix.bsp_rev MTK6768-19055-1
+ fi
+ 
++# MTK HWComposer display power fallback.
++#
++# the /dev/graphics/fb0 symlink is created early in vndk.rc (before HALs
++# start) so the vendor HWC can use FBIOBLANK for display power management.
++# if neither /dev/fb0 nor /dev/graphics/fb0 exists (kernel built without
++# CONFIG_DRM_FBDEV_EMULATION), fall back to forcing GPU composition and
++# unsignaled buffer latching to work around the broken DRM atomic paths.
++if echo "$board" | grep -qiE '^mt[0-9]'; then
++	if [ ! -e /dev/fb0 ] && [ ! -e /dev/graphics/fb0 ]; then
++		setprop persist.sys.phh.no_present_or_validate true
++		setprop debug.sf.latch_unsignaled 1
++	fi
++fi
++
+ if [ "$board" = lahaina ]; then
+ 	setprop ro.netflix.bsp_rev Q875-32774-1
+ fi
+diff --git a/sepolicy/mediatek.te b/sepolicy/mediatek.te
+index 2b24965..f3e3d61 100644
+--- a/sepolicy/mediatek.te
++++ b/sepolicy/mediatek.te
+@@ -2,6 +2,11 @@ type hal_graphics_allocator_default, domain;
+ type proc_ged, file_type;
+ allowxperm domain proc_ged:file ioctl { 0x6700-0x67ff };
+ 
++# allow MTK hwcomposer to read system and debug properties
++# (debug.renderengine.backend, debug.sf.*, etc.)
++allow hal_graphics_composer_default debug_prop:file { getattr map open read };
++allow hal_graphics_composer_default system_prop:file { getattr map open read };
++
+ allow init mnt_product_file:dir mounton;
+ 
+ type mtk_hal_audio, domain;
+diff --git a/vndk.rc b/vndk.rc
+index 6a9ce16..01508ee 100644
+--- a/vndk.rc
++++ b/vndk.rc
+@@ -1,4 +1,15 @@
+ on post-fs
++    # ensure /dev/graphics/fb0 exists for vendor HWCs that use the android
++    # fbdev path for display power management (FBIOBLANK).  on kernels with
++    # CONFIG_DRM_FBDEV_EMULATION=y the node appears at /dev/fb0 but ueventd
++    # may not create the /dev/graphics/ symlink.  all commands are non-fatal
++    # if the paths already exist or the node is absent.
++    mkdir /dev/graphics 0755 root graphics
++    symlink /dev/fb0 /dev/graphics/fb0
++    # no ueventd rule matches /dev/fb0 so it keeps default 0600 root:root --
++    # fix to match the standard /dev/graphics/* rule (0660 root:graphics)
++    chown root graphics /dev/fb0
++    chmod 0660 /dev/fb0
+     exec - root -- /system/bin/vndk-detect
+     exec - root -- /system/bin/rw-system.sh
+     mount none /system/etc/usb_audio_policy_configuration.xml /vendor/etc/usb_audio_policy_configuration.xml bind
+-- 
+2.53.0
+

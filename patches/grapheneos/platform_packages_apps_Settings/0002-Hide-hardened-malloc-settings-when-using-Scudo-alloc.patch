@@ -1,7 +1,7 @@
 From b41d56297ca0f9a7bc5e0c117aa9cf5145f82496 Mon Sep 17 00:00:00 2001
 From: "Christopher A. Williamson" <contact@chrisaw.io>
 Date: Mon, 23 Feb 2026 12:06:01 +0000
-Subject: [PATCH 3/4] Hide hardened malloc settings when using Scudo allocator
+Subject: [PATCH 2/2] Hide hardened malloc settings when using Scudo allocator
 
 The GSI build replaces GrapheneOS hardened_malloc with AOSP Scudo
 because hardened_malloc's 3 TiB virtual address space reservation

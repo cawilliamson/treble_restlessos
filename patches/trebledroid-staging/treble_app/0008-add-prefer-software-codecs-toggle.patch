@@ -1,7 +1,7 @@
 From 9c077984cdbdca0bdae352db585fb2a69fa97519 Mon Sep 17 00:00:00 2001
 From: "Christopher A. Williamson" <contact@chrisaw.io>
 Date: Thu, 26 Mar 2026 16:18:35 +0000
-Subject: [PATCH 10/10] add prefer software codecs toggle
+Subject: [PATCH 8/8] add prefer software codecs toggle
 
 add a toggle for persist.sys.phh.prefer_sw_codecs which sets
 ccodec=1, ranking AOSP software codecs above vendor hardware codecs.

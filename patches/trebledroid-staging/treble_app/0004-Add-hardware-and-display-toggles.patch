@@ -1,7 +1,7 @@
 From 60908aa31cb5ec374238515a5dfde0ffb2ed6aa2 Mon Sep 17 00:00:00 2001
 From: ChonDoit <thphantomblog@gmail.com>
 Date: Mon, 10 Mar 2025 23:08:52 -0300
-Subject: [PATCH 6/7] Add hardware and display toggles
+Subject: [PATCH 4/8] Add hardware and display toggles
 
 Add Treble app UI toggles for:
 - Disable Bluetooth LE APCF extended features (fixes BT crashes)

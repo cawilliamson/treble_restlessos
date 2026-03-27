@@ -1,7 +1,7 @@
 From 7b03d6e70a3090aeb5e93fa27822059a42c1a5d5 Mon Sep 17 00:00:00 2001
 From: "Christopher A. Williamson" <contact@chrisaw.io>
 Date: Wed, 25 Mar 2026 23:10:58 +0000
-Subject: [PATCH 9/10] add activity animation performance override toggle
+Subject: [PATCH 7/8] add activity animation performance override toggle
 
 add a toggle for persist.sys.activity_anim_perf_override which
 replaces stock AOSP XML-based activity transition animations with
