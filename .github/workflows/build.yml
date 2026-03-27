@@ -256,6 +256,9 @@ jobs:
         run: |
           cp -Rv ../patches .
           patches/apply.sh . trebledroid
+          patches/apply.sh . trebledroid-staging
+          patches/apply.sh . legacy-devices
+          patches/apply.sh . grapheneos
           patches/apply.sh . personal
 
       - name: Build TrebleApp

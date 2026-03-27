@@ -104,7 +104,7 @@ sync-grapheneos-sources: build-container
             echo "Detected ANDROID_VERSION_TAG: ${ANDROID_VERSION_TAG}" && \
             echo "${ANDROID_VERSION_TAG}" > /repo/tmp/.android_version_tag'
 
-# apply patches in correct order: trebledroid -> personal
+# apply patches in correct order: trebledroid -> trebledroid-staging -> legacy-devices -> grapheneos -> personal
 apply-patches: build-container
     {{CONTAINER_RUN}} -w /repo/src gsi-builder \
         /bin/bash -e -c ' \
@@ -112,6 +112,9 @@ apply-patches: build-container
             rm -rf patches/ && \
             cp -Rv /repo/patches . && \
             patches/apply.sh . trebledroid && \
+            patches/apply.sh . trebledroid-staging && \
+            patches/apply.sh . legacy-devices && \
+            patches/apply.sh . grapheneos && \
             patches/apply.sh . personal'
 
 # build treble app

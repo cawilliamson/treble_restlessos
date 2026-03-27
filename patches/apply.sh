@@ -6,6 +6,7 @@ patches=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
 tree="$2"
 
 echo "Applying ${tree} patches:"
+[ -d "$patches/$tree" ] || { echo "  (no patches for tier '$tree', skipping)"; exit 0; }
 
 for project in $(cd "$patches"/"$tree"; echo *); do
     echo "> ${project}"
