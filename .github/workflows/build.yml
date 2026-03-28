@@ -149,10 +149,10 @@ jobs:
           SNAP_ID="${{ steps.snapshot.outputs.snapshot_id }}"
           if [ -n "$SNAP_ID" ]; then
             echo "Using snapshot ${SNAP_ID} for data volume"
-            BDM="[{\"DeviceName\":\"/dev/sda1\",\"Ebs\":{\"VolumeSize\":50,\"VolumeType\":\"gp3\",\"DeleteOnTermination\":true}},{\"DeviceName\":\"/dev/sdf\",\"Ebs\":{\"SnapshotId\":\"${SNAP_ID}\",\"VolumeSize\":500,\"VolumeType\":\"gp3\",\"Iops\":16000,\"Throughput\":1000,\"DeleteOnTermination\":true}}]"
+            BDM="[{\"DeviceName\":\"/dev/sdf\",\"Ebs\":{\"SnapshotId\":\"${SNAP_ID}\",\"VolumeSize\":500,\"VolumeType\":\"gp3\",\"Iops\":16000,\"Throughput\":1000,\"DeleteOnTermination\":true}}]"
           else
             echo "No snapshot — fresh data volume"
-            BDM="[{\"DeviceName\":\"/dev/sda1\",\"Ebs\":{\"VolumeSize\":50,\"VolumeType\":\"gp3\",\"DeleteOnTermination\":true}},{\"DeviceName\":\"/dev/sdf\",\"Ebs\":{\"VolumeSize\":500,\"VolumeType\":\"gp3\",\"Iops\":16000,\"Throughput\":1000,\"DeleteOnTermination\":true}}]"
+            BDM="[{\"DeviceName\":\"/dev/sdf\",\"Ebs\":{\"VolumeSize\":500,\"VolumeType\":\"gp3\",\"Iops\":16000,\"Throughput\":1000,\"DeleteOnTermination\":true}}]"
           fi
           # try each subnet (AZ) until one has capacity.
           IFS=',' read -ra SUBNETS <<< "${{ secrets.AWS_SUBNET_IDS }}"
