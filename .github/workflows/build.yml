@@ -236,6 +236,17 @@ jobs:
       REPO_PATH: ${{ github.repository }}
 
     steps:
+      - name: Diagnose disk layout
+        run: |
+          echo "=== lsblk ==="
+          lsblk -o NAME,SIZE,TYPE,MOUNTPOINT,FSTYPE
+          echo "=== df -h ==="
+          df -h
+          echo "=== mount | grep data ==="
+          mount | grep data || echo "(no /data mount)"
+          echo "=== cloud-init log (data volume section) ==="
+          grep -A20 'block device diagnostics\|data volume\|DATA_DEV\|mkfs\|Selected data' /var/log/cloud-init-output.log 2>/dev/null | head -40 || echo "(no cloud-init log found)"
+
       - name: Checkout build scripts
         uses: actions/checkout@v6
 
