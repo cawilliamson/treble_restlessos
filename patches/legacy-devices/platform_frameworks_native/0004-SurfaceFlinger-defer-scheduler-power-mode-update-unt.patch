@@ -1,0 +1,60 @@
+From 3a0a31cd65b48f9786820df7219decf813e9199b Mon Sep 17 00:00:00 2001
+From: "Christopher A. Williamson" <contact@chrisaw.io>
+Date: Sat, 28 Mar 2026 17:22:15 +0000
+Subject: [PATCH 4/4] SurfaceFlinger: defer scheduler power-mode update until after
+ HWC commit
+
+in QPR2 (android-16.0.0_r4), mScheduler->setDisplayPowerMode() was moved
+from the end of setPhysicalDisplayPowerMode to before the HWC
+setPowerMode call.  this means the scheduler updates its internal power
+state (vsync routing, pacesetter selection, synthetic vsync) before the
+vendor HWC has actually committed the power transition to the hardware.
+
+on GSI targets with HIDL HWC 2.x (e.g. mediatek MT6789), the HWC's
+setPowerMode(ON) can fail -- the DRM atomic commit returns EINVAL
+because the DRM pipeline state is inconsistent after a SurfaceFlinger
+restart during early boot.  when the scheduler has already flipped to
+the 'display ON' state but the hardware never actually powered on, the
+display stays blank: vsync is routed to hardware that isn't producing
+it, and no frames are ever composited.
+
+restore the QPR1 ordering: call mScheduler->setDisplayPowerMode() and
+the resulting onNewPacesetterDisplay() after all HWC power-mode calls
+have completed.  this ensures the scheduler only transitions to the new
+power state once the hardware has actually accepted it.
+---
+ services/surfaceflinger/SurfaceFlinger.cpp | 11 +++++++----
+ 1 file changed, 7 insertions(+), 4 deletions(-)
+
+diff --git a/services/surfaceflinger/SurfaceFlinger.cpp b/services/surfaceflinger/SurfaceFlinger.cpp
+index eb481b1e1c..24dd344d49 100644
+--- a/services/surfaceflinger/SurfaceFlinger.cpp
++++ b/services/surfaceflinger/SurfaceFlinger.cpp
+@@ -6115,10 +6115,6 @@ void SurfaceFlinger::setPhysicalDisplayPowerMode(const sp<DisplayDevice>& displa
+         applyOptimizationPolicy(__func__);
+     }
+ 
+-    if (mScheduler->setDisplayPowerMode(displayId, mode)) {
+-        onNewPacesetterDisplay();
+-    }
+-
+     const auto activeMode = display->refreshRateSelector().getActiveMode().modePtr;
+     using OptimizationPolicy = gui::ISurfaceComposer::OptimizationPolicy;
+     if (currentMode == hal::PowerMode::OFF) {
+@@ -6226,6 +6222,13 @@ void SurfaceFlinger::setPhysicalDisplayPowerMode(const sp<DisplayDevice>& displa
+         mScheduler->setActiveDisplayPowerModeForRefreshRateStats(mode);
+     }
+ 
++    // notify scheduler after the HWC power mode has been committed so that
++    // vsync and pacesetter state reflect the actual hardware state rather
++    // than racing ahead of it -- matches QPR1 call-site ordering
++    if (mScheduler->setDisplayPowerMode(displayId, mode)) {
++        onNewPacesetterDisplay();
++    }
++
+     ALOGD("Finished setting power mode %d on physical display %s", mode,
+           to_string(displayId).c_str());
+ }
+-- 
+2.53.0
+

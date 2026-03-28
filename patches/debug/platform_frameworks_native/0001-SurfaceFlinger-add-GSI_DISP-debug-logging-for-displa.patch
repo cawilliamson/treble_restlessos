@@ -1,0 +1,224 @@
+From 3da507fb1e54bd12833b78cba66e8a07ea0073d1 Mon Sep 17 00:00:00 2001
+From: "Christopher A. Williamson" <contact@chrisaw.io>
+Date: Sat, 28 Mar 2026 17:28:32 +0000
+Subject: [PATCH] SurfaceFlinger: add GSI_DISP debug logging for display
+ power-on sequence
+
+add verbose ALOGI traces tagged GSI_DISP to the display initialisation
+and power management paths.  covers:
+
+- SurfaceFlinger::init(): pid, HWC creation, callback registration,
+  configureLocked, processDisplayAdded, initial power mode state
+- SurfaceFlinger::initializeDisplays(): display count, per-display
+  OFF/ON sequencing with power mode before/after
+- SurfaceFlinger::setPhysicalDisplayPowerMode(): current vs requested
+  mode, early-return on same-mode, isInternal, feature flag values,
+  optimization policy, HWC setPowerMode call/return, vsync routing
+  (hardware vs synthetic), resync, scheduler notification, final state
+
+all lines use the GSI_DISP tag prefix for easy filtering:
+  adb logcat -s SurfaceFlinger:I | grep GSI_DISP
+
+debug-only patch -- not for release builds.
+---
+ services/surfaceflinger/SurfaceFlinger.cpp | 56 +++++++++++++++++++++-
+ 1 file changed, 54 insertions(+), 2 deletions(-)
+
+diff --git a/services/surfaceflinger/SurfaceFlinger.cpp b/services/surfaceflinger/SurfaceFlinger.cpp
+index 24dd344d49..85ca3cfa8f 100644
+--- a/services/surfaceflinger/SurfaceFlinger.cpp
++++ b/services/surfaceflinger/SurfaceFlinger.cpp
+@@ -944,6 +944,7 @@ renderengine::RenderEngine::BlurAlgorithm chooseBlurAlgorithm(bool supportsBlur)
+ 
+ void SurfaceFlinger::init() FTL_FAKE_GUARD(kMainThreadContext) {
+     SFTRACE_CALL();
++    ALOGI("GSI_DISP: SurfaceFlinger::init() starting, pid=%d", getpid());
+     ALOGI("SurfaceFlinger's main thread ready to run. "
+           "Initializing graphics H/W...");
+     addTransactionReadyFilters();
+@@ -977,12 +978,15 @@ void SurfaceFlinger::init() FTL_FAKE_GUARD(kMainThreadContext) {
+ 
+     mCompositionEngine->setTimeStats(mTimeStats);
+ 
++    ALOGI("GSI_DISP: creating HWComposer service='%s'", mHwcServiceName.c_str());
+     mHWComposer = getFactory().createHWComposer(mHwcServiceName);
+     mCompositionEngine->setHwComposer(mHWComposer.get());
+     mOffloadedCompositionEngine->setHwComposer(mHWComposer.get());
+     auto& composer = mCompositionEngine->getHwComposer();
++    ALOGI("GSI_DISP: registering HWC callback");
+     composer.setCallback(*this);
+     mDisplayModeController.setHwComposer(&composer);
++    ALOGI("GSI_DISP: HWC callback registered");
+ 
+     ClientCache::getInstance().setRenderEngine(&getRenderEngine());
+ 
+@@ -996,10 +1000,12 @@ void SurfaceFlinger::init() FTL_FAKE_GUARD(kMainThreadContext) {
+     }
+ 
+     // Process hotplug for displays connected at boot.
++    ALOGI("GSI_DISP: calling configureLocked() for initial hotplug");
+     LOG_ALWAYS_FATAL_IF(!configureLocked(),
+                         "Initial display configuration failed: HWC did not hotplug");
+ 
+     mFrontInternalDisplayId = getPrimaryDisplayIdLocked();
++    ALOGI("GSI_DISP: primary display id=%s", to_string(mFrontInternalDisplayId).c_str());
+ 
+     // Commit primary display.
+     sp<const DisplayDevice> display;
+@@ -1009,10 +1015,13 @@ void SurfaceFlinger::init() FTL_FAKE_GUARD(kMainThreadContext) {
+         const auto& token = displays.keyAt(*indexOpt);
+         const auto& state = displays.valueAt(*indexOpt);
+ 
++        ALOGI("GSI_DISP: calling processDisplayAdded for primary display");
+         processDisplayAdded(token, state);
+         mDrawingState.displays.add(token, state);
+ 
+         display = getFrontInternalDisplayLocked();
++        ALOGI("GSI_DISP: primary display added, powerMode=%d, isPoweredOn=%d",
++              static_cast<int>(display->getPowerMode()), display->isPoweredOn());
+     }
+ 
+     LOG_ALWAYS_FATAL_IF(!display, "Failed to configure the primary display");
+@@ -1066,6 +1075,7 @@ void SurfaceFlinger::init() FTL_FAKE_GUARD(kMainThreadContext) {
+     }
+     onNewFrontInternalDisplay(nullptr, *display);
+ 
++    ALOGI("GSI_DISP: scheduling initializeDisplays()");
+     static_cast<void>(mScheduler->schedule(
+             [this]() FTL_FAKE_GUARD(kMainThreadContext) { initializeDisplays(); }));
+ 
+@@ -6032,6 +6042,8 @@ void SurfaceFlinger::onHandleDestroyed(sp<Layer>& layer, uint32_t layerId) {
+ }
+ 
+ void SurfaceFlinger::initializeDisplays() {
++    ALOGI("GSI_DISP: initializeDisplays() entered, %zu physical displays",
++          FTL_FAKE_GUARD(mStateLock, mPhysicalDisplays.size()));
+     QueuedTransactionState state;
+     state.inputWindowCommands = mInputWindowCommands;
+     const nsecs_t now = systemTime();
+@@ -6061,19 +6073,29 @@ void SurfaceFlinger::initializeDisplays() {
+ 
+         // In case of a restart, ensure all displays are off.
+         for (const auto& [id, display] : mPhysicalDisplays) {
+-            setPhysicalDisplayPowerMode(getDisplayDeviceLocked(id), hal::PowerMode::OFF);
++            const auto dev = getDisplayDeviceLocked(id);
++            ALOGI("GSI_DISP: initializeDisplays OFF: display %s, currentPowerMode=%d",
++                  to_string(id).c_str(), static_cast<int>(dev->getPowerMode()));
++            setPhysicalDisplayPowerMode(dev, hal::PowerMode::OFF);
+         }
+ 
+         // Power on all displays. The primary display is first, so becomes the active display. Also,
+         // the DisplayCapability set of a display is populated on its first powering on. Do this now
+         // before responding to any Binder query from DisplayManager about display capabilities.
+         // Additionally, do not turn on displays if the boot should be quiescent.
++        ALOGI("GSI_DISP: initializeDisplays ON phase, quiescent=%d", mSkipPowerOnForQuiescent);
+         if (!mSkipPowerOnForQuiescent) {
+             for (const auto& [id, display] : mPhysicalDisplays) {
+-                setPhysicalDisplayPowerMode(getDisplayDeviceLocked(id), hal::PowerMode::ON);
++                const auto dev = getDisplayDeviceLocked(id);
++                ALOGI("GSI_DISP: initializeDisplays ON: display %s, currentPowerMode=%d",
++                      to_string(id).c_str(), static_cast<int>(dev->getPowerMode()));
++                setPhysicalDisplayPowerMode(dev, hal::PowerMode::ON);
++                ALOGI("GSI_DISP: initializeDisplays ON: display %s done, newPowerMode=%d",
++                      to_string(id).c_str(), static_cast<int>(dev->getPowerMode()));
+             }
+         }
+     }
++    ALOGI("GSI_DISP: initializeDisplays() finished");
+ }
+ 
+ void SurfaceFlinger::setPhysicalDisplayPowerMode(const sp<DisplayDevice>& display,
+@@ -6089,17 +6111,25 @@ void SurfaceFlinger::setPhysicalDisplayPowerMode(const sp<DisplayDevice>& displa
+     ALOGD("Setting power mode %d on physical display %s", mode, to_string(displayId).c_str());
+ 
+     const auto currentMode = display->getPowerMode();
++    ALOGI("GSI_DISP: setPowerMode: display %s, current=%d, requested=%d, isPoweredOn=%d, "
++          "isRefreshable=%d",
++          to_string(displayId).c_str(), static_cast<int>(currentMode),
++          static_cast<int>(mode), display->isPoweredOn(), display->isRefreshable());
+     if (currentMode == mode) {
++        ALOGI("GSI_DISP: setPowerMode: already at mode %d, skipping", static_cast<int>(mode));
+         return;
+     }
+ 
+     const bool isInternalDisplay = mPhysicalDisplays.get(displayId)
+                                            .transform(&PhysicalDisplay::isInternal)
+                                            .value_or(false);
++    ALOGI("GSI_DISP: setPowerMode: isInternal=%d, frontInternalDisplayId=%s",
++          isInternalDisplay, to_string(mFrontInternalDisplayId).c_str());
+ 
+     const bool couldRefresh = display->isRefreshable();
+     display->setPowerMode(mode);
+     const bool canRefresh = display->isRefreshable();
++    ALOGI("GSI_DISP: setPowerMode: refreshable changed %d -> %d", couldRefresh, canRefresh);
+ 
+     if (couldRefresh && !canRefresh) {
+         decRefreshableDisplays();
+@@ -6110,8 +6140,16 @@ void SurfaceFlinger::setPhysicalDisplayPowerMode(const sp<DisplayDevice>& displa
+     const bool shouldApplyOptimizationPolicy =
+             FlagManager::getInstance().disable_synthetic_vsync_for_performance() &&
+             FlagManager::getInstance().correct_virtual_display_power_state();
++    ALOGI("GSI_DISP: setPowerMode: flags: disable_synthetic_vsync=%d, "
++          "correct_virtual_display_power_state=%d, pacesetter_selection=%d, "
++          "shouldApplyOptimizationPolicy=%d",
++          FlagManager::getInstance().disable_synthetic_vsync_for_performance(),
++          FlagManager::getInstance().correct_virtual_display_power_state(),
++          FlagManager::getInstance().pacesetter_selection(),
++          shouldApplyOptimizationPolicy);
+     if ((isInternalDisplay || FlagManager::getInstance().pacesetter_selection()) &&
+         shouldApplyOptimizationPolicy) {
++        ALOGI("GSI_DISP: setPowerMode: applying optimization policy");
+         applyOptimizationPolicy(__func__);
+     }
+ 
+@@ -6135,22 +6173,30 @@ void SurfaceFlinger::setPhysicalDisplayPowerMode(const sp<DisplayDevice>& displa
+                                      OptimizationPolicy::optimizeForPerformance);
+         }
+ 
++        ALOGI("GSI_DISP: setPowerMode OFF->ON: calling HWC setPowerMode(%d)",
++              static_cast<int>(mode));
+         getHwComposer().setPowerMode(displayId, mode);
++        ALOGI("GSI_DISP: setPowerMode OFF->ON: HWC setPowerMode returned");
+         if (mode != hal::PowerMode::DOZE_SUSPEND) {
+             const bool enable =
+                     mScheduler->getVsyncSchedule(displayId)->getPendingHardwareVsyncState();
++            ALOGI("GSI_DISP: setPowerMode OFF->ON: requestHardwareVsync enable=%d", enable);
+             requestHardwareVsync(displayId, enable);
+ 
+             if (displayId == mFrontInternalDisplayId && !shouldApplyOptimizationPolicy) {
++                ALOGI("GSI_DISP: setPowerMode OFF->ON: disabling synthetic vsync");
+                 mScheduler->enableSyntheticVsync(false);
+             }
+ 
+             constexpr bool kAllowToEnable = true;
++            ALOGI("GSI_DISP: setPowerMode OFF->ON: resync to hw vsync, fps=%s",
++                  to_string(activeMode->getPeakFps()).c_str());
+             mScheduler->resyncToHardwareVsync(displayId, kAllowToEnable, activeMode.get());
+         }
+ 
+         mVisibleRegionsDirty = true;
+         scheduleComposite(FrameHint::kActive);
++        ALOGI("GSI_DISP: setPowerMode OFF->ON: composite scheduled");
+     } else if (mode == hal::PowerMode::OFF) {
+         const bool currentModeNotDozeSuspend = (currentMode != hal::PowerMode::DOZE_SUSPEND);
+         // Turn off the display
+@@ -6225,10 +6271,16 @@ void SurfaceFlinger::setPhysicalDisplayPowerMode(const sp<DisplayDevice>& displa
+     // notify scheduler after the HWC power mode has been committed so that
+     // vsync and pacesetter state reflect the actual hardware state rather
+     // than racing ahead of it -- matches QPR1 call-site ordering
++    ALOGI("GSI_DISP: setPowerMode: notifying scheduler of power mode %d",
++          static_cast<int>(mode));
+     if (mScheduler->setDisplayPowerMode(displayId, mode)) {
++        ALOGI("GSI_DISP: setPowerMode: pacesetter display changed");
+         onNewPacesetterDisplay();
+     }
+ 
++    ALOGI("GSI_DISP: setPowerMode: finished, display %s now powerMode=%d isPoweredOn=%d",
++          to_string(displayId).c_str(), static_cast<int>(display->getPowerMode()),
++          display->isPoweredOn());
+     ALOGD("Finished setting power mode %d on physical display %s", mode,
+           to_string(displayId).c_str());
+ }
+-- 
+2.53.0
+
