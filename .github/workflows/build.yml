@@ -245,7 +245,7 @@ jobs:
           fi
           mkdir -p .repo/local_manifests
           cp -v ../configs/manifests/*.xml .repo/local_manifests/
-          while ! repo sync -j16 --force-sync --no-clone-bundle --no-tags; do
+          while ! repo sync -j32 --force-sync --no-clone-bundle --no-tags; do
             echo "repo sync failed, retrying in 30s..."
             sleep 30
           done
