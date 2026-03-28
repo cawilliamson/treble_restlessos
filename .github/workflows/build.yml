@@ -182,6 +182,7 @@ jobs:
     timeout-minutes: 120
 
     env:
+      GH_TOKEN: ${{ github.token }}
       GRAPHENEOS_TAG: ${{ github.event.inputs.grapheneos_tag }}
       GRAPHENEOS_BRANCH: ${{ github.event.inputs.grapheneos_branch }}
       GRAPHENEOS_RELEASE_CHANNEL: ${{ github.event.inputs.release_channel || 'stable' }}
@@ -192,10 +193,8 @@ jobs:
       - name: Checkout build scripts
         uses: actions/checkout@v4
 
-      - name: Authenticate gh CLI
-        env:
-          GH_TOKEN: ${{ github.token }}
-        run: echo "${GH_TOKEN}" | gh auth login --with-token
+      - name: Verify gh CLI authentication
+        run: gh auth status
 
       - name: Resolve GrapheneOS tag
         run: |
