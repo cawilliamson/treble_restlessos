@@ -1,7 +1,7 @@
-From e1f3c797ac00a59451e2139d38a34b75abc6603b Mon Sep 17 00:00:00 2001
+From 74c43eb727252c8c1d9d98f269fdd279a1a876c0 Mon Sep 17 00:00:00 2001
 From: "Christopher A. Williamson" <contact@chrisaw.io>
-Date: Sat, 28 Mar 2026 18:38:18 +0000
-Subject: [PATCH 7/8] allow health HAL to access samsung sysfs_battery nodes
+Date: Sat, 28 Mar 2026 20:14:56 +0000
+Subject: [PATCH 7/7] allow health HAL to access samsung sysfs_battery nodes
 
 samsung vendor sepolicy labels all power_supply sysfs nodes (battery,
 ac, charger, fuelgauge, pogo, wireless, usb) under the sysfs_battery
@@ -10,30 +10,34 @@ to this vendor-defined type, so SELinux blocks every read attempt in
 enforcing mode. healthd then reports 'No battery devices found' and
 the battery status indicator shows incorrect data.
 
-grant hal_health_default the minimum permissions needed to enumerate
-and read power_supply attributes under sysfs_battery.
+declare hal_health_default and sysfs_battery in system_ext sepolicy
+(they are vendor-side types not visible to system_ext by default) and
+grant the minimum permissions needed to enumerate and read
+power_supply attributes.
 ---
- sepolicy/samsung.te | 7 +++++++
- 1 file changed, 7 insertions(+)
+ sepolicy/samsung.te | 9 +++++++++
+ 1 file changed, 9 insertions(+)
 
 diff --git a/sepolicy/samsung.te b/sepolicy/samsung.te
-index 3d0225c..b692e84 100644
+index 3d0225c..ffe8b08 100644
 --- a/sepolicy/samsung.te
 +++ b/sepolicy/samsung.te
-@@ -4,6 +4,13 @@ set_prop(system_server, boot_prop);
+@@ -3,6 +3,15 @@ type boot_prop, property_type;
+ set_prop(system_server, boot_prop);
  
  type hal_graphics_composer_default, domain;
- 
++type hal_health_default, domain;
++type sysfs_battery, fs_type, sysfs_type;
++
 +# allow health HAL to read samsung-labelled battery/charger/power_supply sysfs
 +# (samsung vendors label all power_supply nodes as sysfs_battery; without this
 +# the GSI's hal_health_default is denied access and healthd reports no battery)
 +allow hal_health_default sysfs_battery:dir { getattr open read search };
 +allow hal_health_default sysfs_battery:file { getattr open read };
 +allow hal_health_default sysfs_battery:lnk_file { getattr read };
-+
+ 
  # allow samsung touch input HAL to read system properties
  # (without this, touch stops working after wake on some samsung devices)
- type hal_sec_inputdev_default, domain;
 -- 
 2.53.0
 
