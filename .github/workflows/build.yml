@@ -274,13 +274,16 @@ jobs:
 
       - name: Clean stale build artifacts
         run: |
-          # remove stale locks, product output, and aapt2 intermediates that
+          # remove stale locks, product output, and intermediates that
           # break incremental builds when running from a snapshot.
-          rm -rfv src/out/.lock src/out/target/product/tdgsi_arm64_ab/ 2>/dev/null || true
-          find src/out/soong/.intermediates/prebuilts/sdk/ -type d \
-            \( -name aapt2 -o -name flat-res \) -exec rm -rfv {} + 2>/dev/null || true
+          # the soong intermediates cache is the main incremental win;
+          # target/product/ and the final images must be rebuilt anyway.
+          rm -rfv src/out/.lock 2>/dev/null || true
+          rm -rfv src/out/target/ 2>/dev/null || true
           rm -fv tmp/*.img* out/*.img* 2>/dev/null || true
           rm -rfv out/zsync/ 2>/dev/null || true
+          echo "Disk usage after cleanup:"
+          df -h /data 2>/dev/null || df -h .
 
       - name: Sync GrapheneOS sources
         working-directory: src/
