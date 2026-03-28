@@ -108,19 +108,45 @@ jobs:
           echo "ami_id=${AMI_ID}" >> "$GITHUB_OUTPUT"
           echo "Using AMI: ${AMI_ID}"
 
+      - name: Find latest build snapshot
+        id: snapshot
+        run: |
+          SNAP_ID=$(aws ec2 describe-snapshots \
+            --owner-ids self \
+            --filters "Name=tag:Project,Values=treble-grapheneos" \
+            --query 'Snapshots | sort_by(@, &StartTime) | [-1].SnapshotId' \
+            --output text 2>/dev/null || echo "None")
+          if [ "$SNAP_ID" != "None" ] && [ -n "$SNAP_ID" ]; then
+            echo "Found snapshot: ${SNAP_ID}"
+            echo "snapshot_id=${SNAP_ID}" >> "$GITHUB_OUTPUT"
+          else
+            echo "No snapshot found — will use empty volume"
+            echo "snapshot_id=" >> "$GITHUB_OUTPUT"
+          fi
+
       - name: Launch EC2 spot instance
         id: launch
         run: |
           # c7i.48xlarge: 192 vCPUs, 384 GiB RAM
           # InstanceInitiatedShutdownBehavior=terminate ensures the cloud-init
           # safety timer (shutdown -P +120) destroys the instance entirely.
+          # if a build snapshot exists, use it as the root volume to get
+          # cached src/, out/, and pre-installed packages.
+          SNAP_ID="${{ steps.snapshot.outputs.snapshot_id }}"
+          if [ -n "$SNAP_ID" ]; then
+            echo "Using snapshot ${SNAP_ID} for root volume"
+            BDM="[{\"DeviceName\":\"/dev/sda1\",\"Ebs\":{\"SnapshotId\":\"${SNAP_ID}\",\"VolumeSize\":500,\"VolumeType\":\"gp3\",\"Iops\":16000,\"Throughput\":1000,\"DeleteOnTermination\":true}}]"
+          else
+            echo "No snapshot — starting with empty volume"
+            BDM='[{"DeviceName":"/dev/sda1","Ebs":{"VolumeSize":500,"VolumeType":"gp3","Iops":16000,"Throughput":1000,"DeleteOnTermination":true}}]'
+          fi
           # try each subnet (AZ) until one has capacity.
           IFS=',' read -ra SUBNETS <<< "${{ secrets.AWS_SUBNET_IDS }}"
           INSTANCE_ID=""
           for SUBNET in "${SUBNETS[@]}"; do
             echo "Trying subnet ${SUBNET}..."
             INSTANCE_ID=$(aws ec2 run-instances \
-              --block-device-mappings '[{"DeviceName":"/dev/sda1","Ebs":{"VolumeSize":500,"VolumeType":"gp3","Iops":16000,"Throughput":1000,"DeleteOnTermination":true}}]' \
+              --block-device-mappings "${BDM}" \
               --image-id "${{ steps.ami.outputs.ami_id }}" \
               --instance-initiated-shutdown-behavior terminate \
               --instance-market-options '{"MarketType":"spot","SpotOptions":{"SpotInstanceType":"one-time","InstanceInterruptionBehavior":"terminate"}}' \
@@ -232,6 +258,16 @@ jobs:
             echo "${TAG}" > tmp/.grapheneos_tag
           fi
 
+      - name: Clean stale build artifacts
+        run: |
+          # remove stale locks, product output, and aapt2 intermediates that
+          # break incremental builds when running from a snapshot.
+          rm -rfv src/out/.lock src/out/target/product/tdgsi_arm64_ab/ 2>/dev/null || true
+          find src/out/soong/.intermediates/prebuilts/sdk/ -type d \
+            \( -name aapt2 -o -name flat-res \) -exec rm -rfv {} + 2>/dev/null || true
+          rm -fv tmp/*.img* out/*.img* 2>/dev/null || true
+          rm -rfv out/zsync/ 2>/dev/null || true
+
       - name: Sync GrapheneOS sources
         working-directory: src/
         run: |
@@ -267,6 +303,19 @@ jobs:
           echo "Detected ANDROID_VERSION_TAG: ${ANDROID_VERSION_TAG}"
           echo "${ANDROID_VERSION_TAG}" > ../tmp/.android_version_tag
 
+      - name: Reset repos to upstream
+        working-directory: src/
+        run: |
+          # strip any patches left over from a previous build (snapshot).
+          # each repo is a shallow clone — the root commit is the upstream
+          # manifest revision.
+          if [ -d .repo ]; then
+            echo "Resetting all repos to upstream..."
+            # shellcheck disable=SC2016 # single quotes are intentional;
+            # the expansion must happen inside the repo forall subshell
+            repo forall -c 'git reset --hard $(git rev-list --max-parents=0 HEAD | tail -1)' 2>/dev/null || true
+          fi
+
       - name: Apply patches
         working-directory: src/
         run: |
@@ -294,21 +343,21 @@ jobs:
             bash generate.sh grapheneos
           popd
           . build/envsetup.sh
-          lunch treble_arm64_bvN-${ANDROID_VERSION_TAG_VAL}-userdebug
-          make systemimage -j$(nproc --all)
-          make target-files-package otatools -j$(nproc --all)
+          lunch "treble_arm64_bvN-${ANDROID_VERSION_TAG_VAL}-userdebug"
+          make systemimage -j"$(nproc --all)"
+          make target-files-package otatools -j"$(nproc --all)"
 
       - name: Sign ROM image
         working-directory: src/
         run: |
           ANDROID_VERSION_TAG_VAL=$(cat ../tmp/.android_version_tag)
           . build/envsetup.sh
-          lunch treble_arm64_bvN-${ANDROID_VERSION_TAG_VAL}-userdebug
+          lunch "treble_arm64_bvN-${ANDROID_VERSION_TAG_VAL}-userdebug"
           bash vendor/cawilliamson-priv/keys/sign.sh
-          rm --force --verbose ${OUT}/system.img
-          unzip -joq ${OUT}/signed-target_files.zip IMAGES/system.img -d ${OUT}/
-          rm --force --verbose ${OUT}/signed-target_files.zip
-          mv --verbose ${OUT}/system.img ../tmp/system.img
+          rm --force --verbose "${OUT}/system.img"
+          unzip -joq "${OUT}/signed-target_files.zip" IMAGES/system.img -d "${OUT}/"
+          rm --force --verbose "${OUT}/signed-target_files.zip"
+          mv --verbose "${OUT}/system.img" ../tmp/system.img
 
       - name: Compress ROM image
         id: compress
@@ -352,7 +401,7 @@ jobs:
             --notes "${RELEASE_DESCRIPTION}" \
             --title "GrapheneOS ${VERSION_TAG}" \
             "${VERSION_TAG}" \
-            *.img.xz
+            ./*.img.xz
 
 
   # ---------------------------------------------------------------------------
@@ -373,6 +422,49 @@ jobs:
           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: eu-west-2
+
+      - name: Snapshot build volume
+        env:
+          INSTANCE_ID: ${{ needs.provision.outputs.instance_id }}
+        run: |
+          if [ -z "${INSTANCE_ID}" ] || [ "${INSTANCE_ID}" = "" ]; then
+            echo "No instance to snapshot"
+            exit 0
+          fi
+
+          # find the root volume
+          VOL_ID=$(aws ec2 describe-instances \
+            --instance-ids "${INSTANCE_ID}" \
+            --query 'Reservations[0].Instances[0].BlockDeviceMappings[0].Ebs.VolumeId' \
+            --output text 2>/dev/null || echo "None")
+
+          if [ "$VOL_ID" = "None" ] || [ -z "$VOL_ID" ]; then
+            echo "WARNING: could not find volume for instance — skipping snapshot"
+            exit 0
+          fi
+
+          # delete ALL existing snapshots for this project (keep exactly 0 before creating 1)
+          echo "Cleaning old snapshots..."
+          OLD_SNAPS=$(aws ec2 describe-snapshots \
+            --owner-ids self \
+            --filters "Name=tag:Project,Values=treble-grapheneos" \
+            --query 'Snapshots[].SnapshotId' \
+            --output text 2>/dev/null || true)
+          for SNAP in $OLD_SNAPS; do
+            echo "  deleting old snapshot: ${SNAP}"
+            aws ec2 delete-snapshot --snapshot-id "$SNAP" 2>/dev/null || true
+          done
+
+          # create new snapshot
+          echo "Creating snapshot of volume ${VOL_ID}..."
+          NEW_SNAP=$(aws ec2 create-snapshot \
+            --volume-id "$VOL_ID" \
+            --description "treble_grapheneos build cache $(date -u +%Y-%m-%dT%H:%M:%SZ)" \
+            --tag-specifications 'ResourceType=snapshot,Tags=[{Key=Project,Value=treble-grapheneos},{Key=Ephemeral,Value=true}]' \
+            --query 'SnapshotId' \
+            --output text)
+          echo "Created snapshot: ${NEW_SNAP}"
+          echo "Snapshot will be available for next build"
 
       - name: Terminate instance
         env:
@@ -439,13 +531,15 @@ jobs:
         if: always()
         run: |
           BUILD_RESULT="${{ needs.build.result }}"
-          echo "## Build Summary" >> "$GITHUB_STEP_SUMMARY"
-          echo "" >> "$GITHUB_STEP_SUMMARY"
-          echo "| Item | Value |" >> "$GITHUB_STEP_SUMMARY"
-          echo "|------|-------|" >> "$GITHUB_STEP_SUMMARY"
-          echo "| Build result | ${BUILD_RESULT} |" >> "$GITHUB_STEP_SUMMARY"
-          echo "| Instance ID | ${{ needs.provision.outputs.instance_id }} |" >> "$GITHUB_STEP_SUMMARY"
-          echo "| Instance type | c7i.48xlarge (192 vCPUs) |" >> "$GITHUB_STEP_SUMMARY"
-          echo "| Region | eu-west-2 (London) |" >> "$GITHUB_STEP_SUMMARY"
-          echo "| Runner label | ${{ needs.provision.outputs.runner_label }} |" >> "$GITHUB_STEP_SUMMARY"
-          echo "| Instance terminated | yes |" >> "$GITHUB_STEP_SUMMARY"
+          {
+            echo "## Build Summary"
+            echo ""
+            echo "| Item | Value |"
+            echo "|------|-------|"
+            echo "| Build result | ${BUILD_RESULT} |"
+            echo "| Instance ID | ${{ needs.provision.outputs.instance_id }} |"
+            echo "| Instance type | c7i.48xlarge (192 vCPUs) |"
+            echo "| Region | eu-west-2 (London) |"
+            echo "| Runner label | ${{ needs.provision.outputs.runner_label }} |"
+            echo "| Instance terminated | yes |"
+          } >> "$GITHUB_STEP_SUMMARY"

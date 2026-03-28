@@ -146,16 +146,24 @@ runcmd:
 
   # -------------------------------------------------------------------------
   # github actions runner - install, configure, start via systemd
+  #
+  # when booting from a snapshot-based volume, the runner binaries and old
+  # config may already exist.  clean stale state so config.sh runs fresh.
   # -------------------------------------------------------------------------
   - |
+    rm -rf /opt/actions-runner/.runner /opt/actions-runner/.credentials* /opt/actions-runner/_diag
+    systemctl stop actions-runner.service 2>/dev/null || true
     RUNNER_VERSION=$(curl -sf https://api.github.com/repos/actions/runner/releases/latest \
       | jq -r '.tag_name' | sed 's/^v//')
-    mkdir -p /opt/actions-runner
-    curl -sf -L \
-      "https://github.com/actions/runner/releases/download/v${RUNNER_VERSION}/actions-runner-linux-x64-${RUNNER_VERSION}.tar.gz" \
-      | tar -xz -C /opt/actions-runner
+    INSTALLED_VERSION=$(/opt/actions-runner/run.sh --version 2>/dev/null || echo none)
+    if [ ! -f /opt/actions-runner/run.sh ] || [ "$INSTALLED_VERSION" != "$RUNNER_VERSION" ]; then
+      mkdir -p /opt/actions-runner
+      curl -sf -L \
+        "https://github.com/actions/runner/releases/download/v${RUNNER_VERSION}/actions-runner-linux-x64-${RUNNER_VERSION}.tar.gz" \
+        | tar -xz -C /opt/actions-runner
+      /opt/actions-runner/bin/installdependencies.sh
+    fi
     chown -R github:github /opt/actions-runner
-    /opt/actions-runner/bin/installdependencies.sh
 
   - |
     cd /opt/actions-runner
