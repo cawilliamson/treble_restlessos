@@ -236,17 +236,6 @@ jobs:
       REPO_PATH: ${{ github.repository }}
 
     steps:
-      - name: Diagnose disk layout
-        run: |
-          echo "=== lsblk ==="
-          lsblk -o NAME,SIZE,TYPE,MOUNTPOINT,FSTYPE
-          echo "=== df -h ==="
-          df -h
-          echo "=== mount | grep data ==="
-          mount | grep data || echo "(no /data mount)"
-          echo "=== cloud-init log (data volume section) ==="
-          grep -A20 'block device diagnostics\|data volume\|DATA_DEV\|mkfs\|Selected data' /var/log/cloud-init-output.log 2>/dev/null | head -40 || echo "(no cloud-init log found)"
-
       - name: Checkout build scripts
         uses: actions/checkout@v6
 
@@ -293,8 +282,6 @@ jobs:
           rm -rfv src/out/target/ 2>/dev/null || true
           rm -fv tmp/*.img* out/*.img* 2>/dev/null || true
           rm -rfv out/zsync/ 2>/dev/null || true
-          echo "Disk usage after cleanup:"
-          df -h /data 2>/dev/null || df -h .
 
       - name: Sync GrapheneOS sources
         working-directory: src/
