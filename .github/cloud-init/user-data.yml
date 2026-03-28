@@ -45,6 +45,7 @@ packages:
   - xz-utils
   - zip
   - zlib1g-dev
+  - zsync
 
 users:
   - default
@@ -115,15 +116,6 @@ runcmd:
     curl -sf -LO http://launchpadlibrarian.net/648013227/libncurses5_6.4-2_amd64.deb
     dpkg -i libncurses5_6.4-2_amd64.deb
     rm -f ./*.deb
-
-  # -------------------------------------------------------------------------
-  # zsyncmake2 - generates zsync2-compatible metadata for delta downloads
-  # -------------------------------------------------------------------------
-  - |
-    ZSYNC2_URL=$(curl -sf https://api.github.com/repos/AppImageCommunity/zsync2/releases/latest \
-      | jq -r '.assets[] | select(.name | test("zsyncmake2.*x86_64.AppImage$")) | .browser_download_url')
-    curl -sfL -o /usr/local/bin/zsyncmake2 "${ZSYNC2_URL}"
-    chmod a+x /usr/local/bin/zsyncmake2
 
   # -------------------------------------------------------------------------
   # repo tool
