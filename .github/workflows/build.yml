@@ -312,7 +312,7 @@ jobs:
           mkdir --parents ../out/zsync
           zsyncmake -o "../out/zsync/${img}.zsync" -u "${img}" -v "${img}"
           cp --verbose "${img}" "../out/zsync/${img}"
-          xz -9 --compress --threads=0 --verbose "${img}"
+          xz -9 --compress --memlimit-compress=0 --threads=0 --verbose "${img}"
           cp --force --verbose "${img}.xz" ../out/
           echo "version_tag=${VERSION_TAG}" >> "$GITHUB_OUTPUT"
           echo "release_name=GrapheneOS-ab-${VERSION_TAG}" >> "$GITHUB_OUTPUT"
