@@ -144,13 +144,17 @@ jobs:
           # safety timer (shutdown -P +120) destroys the instance entirely.
           # if a build snapshot exists, use it as the root volume to get
           # cached src/, out/, and pre-installed packages.
+          # root volume: standard AMI root, sized for OS + build tools
+          # data volume: /dev/sdf, optionally restored from a snapshot for
+          # incremental builds.  mounted at /data by cloud-init, then
+          # bind-mounted over the runner work directory.
           SNAP_ID="${{ steps.snapshot.outputs.snapshot_id }}"
           if [ -n "$SNAP_ID" ]; then
-            echo "Using snapshot ${SNAP_ID} for root volume"
-            BDM="[{\"DeviceName\":\"/dev/sda1\",\"Ebs\":{\"SnapshotId\":\"${SNAP_ID}\",\"VolumeSize\":500,\"VolumeType\":\"gp3\",\"Iops\":16000,\"Throughput\":1000,\"DeleteOnTermination\":true}}]"
+            echo "Using snapshot ${SNAP_ID} for data volume"
+            BDM="[{\"DeviceName\":\"/dev/sda1\",\"Ebs\":{\"VolumeSize\":50,\"VolumeType\":\"gp3\",\"DeleteOnTermination\":true}},{\"DeviceName\":\"/dev/sdf\",\"Ebs\":{\"SnapshotId\":\"${SNAP_ID}\",\"VolumeSize\":500,\"VolumeType\":\"gp3\",\"Iops\":16000,\"Throughput\":1000,\"DeleteOnTermination\":true}}]"
           else
-            echo "No snapshot — starting with empty volume"
-            BDM='[{"DeviceName":"/dev/sda1","Ebs":{"VolumeSize":500,"VolumeType":"gp3","Iops":16000,"Throughput":1000,"DeleteOnTermination":true}}]'
+            echo "No snapshot — fresh data volume"
+            BDM="[{\"DeviceName\":\"/dev/sda1\",\"Ebs\":{\"VolumeSize\":50,\"VolumeType\":\"gp3\",\"DeleteOnTermination\":true}},{\"DeviceName\":\"/dev/sdf\",\"Ebs\":{\"VolumeSize\":500,\"VolumeType\":\"gp3\",\"Iops\":16000,\"Throughput\":1000,\"DeleteOnTermination\":true}}]"
           fi
           # try each subnet (AZ) until one has capacity.
           IFS=',' read -ra SUBNETS <<< "${{ secrets.AWS_SUBNET_IDS }}"
@@ -438,10 +442,10 @@ jobs:
             exit 0
           fi
 
-          # find the root volume
+          # find the data volume (/dev/sdf)
           VOL_ID=$(aws ec2 describe-instances \
             --instance-ids "${INSTANCE_ID}" \
-            --query 'Reservations[0].Instances[0].BlockDeviceMappings[0].Ebs.VolumeId' \
+            --query 'Reservations[0].Instances[0].BlockDeviceMappings[?DeviceName==`/dev/sdf`].Ebs.VolumeId | [0]' \
             --output text 2>/dev/null || echo "None")
 
           if [ "$VOL_ID" = "None" ] || [ -z "$VOL_ID" ]; then
