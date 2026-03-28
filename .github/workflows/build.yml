@@ -15,11 +15,6 @@ on:
         description: 'release channel for auto-detection (stable/beta/alpha)'
         required: false
         default: 'stable'
-      debug_build:
-        description: 'enable debug patches (verbose logging, open logcat) -- do not ship'
-        required: false
-        type: boolean
-        default: false
 
 permissions:
   actions: write
@@ -188,7 +183,6 @@ jobs:
 
     env:
       GH_TOKEN: ${{ github.token }}
-      DEBUG_BUILD: ${{ github.event.inputs.debug_build || 'false' }}
       GRAPHENEOS_TAG: ${{ github.event.inputs.grapheneos_tag }}
       GRAPHENEOS_BRANCH: ${{ github.event.inputs.grapheneos_branch }}
       GRAPHENEOS_RELEASE_CHANNEL: ${{ github.event.inputs.release_channel || 'stable' }}
@@ -276,10 +270,6 @@ jobs:
           patches/apply.sh . legacy-devices
           patches/apply.sh . grapheneos
           patches/apply.sh . personal
-          if [ "${DEBUG_BUILD}" = "true" ]; then
-            echo "*** DEBUG BUILD: applying debug patches ***"
-            patches/apply.sh . debug
-          fi
 
       - name: Build TrebleApp
         working-directory: src/treble_app
@@ -316,9 +306,6 @@ jobs:
           ANDROID_VERSION=$(cat tmp/.android_version)
           BUILD_NUMBER=$(cat tmp/.build_number)
           VERSION_TAG="${ANDROID_VERSION}-${BUILD_NUMBER}"
-          if [ "${DEBUG_BUILD}" = "true" ]; then
-            VERSION_TAG="${VERSION_TAG}-debug"
-          fi
           cd tmp/
           img="GrapheneOS-arm64-ab-${VERSION_TAG}.img"
           mv --verbose system.img "${img}"
@@ -341,7 +328,6 @@ jobs:
             "build.chrisaw.io:/var/www/build.chrisaw.io/${RELEASE_NAME}/zsync/"
 
       - name: Create GitHub release
-        if: env.DEBUG_BUILD != 'true'
         run: |
           VERSION_TAG="${{ steps.compress.outputs.version_tag }}"
           RELEASE_NAME="${{ steps.compress.outputs.release_name }}"
