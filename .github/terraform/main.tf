@@ -1,8 +1,7 @@
-# grapheneos GSI build infrastructure — safety guardrails
+# grapheneos GSI build infrastructure
 #
-# sets up all AWS resources needed to prevent runaway costs from
-# EC2 spot instances. the actual instances are launched ephemerally
-# by the github actions workflow — this only manages the safety net.
+# manages the persistent AWS resources (VPC, IAM) needed by the
+# github actions workflow to launch ephemeral EC2 spot instances.
 
 terraform {
   required_version = ">= 1.5"
@@ -18,5 +17,3 @@ terraform {
 provider "aws" {
   region = var.region
 }
-
-data "aws_caller_identity" "current" {}

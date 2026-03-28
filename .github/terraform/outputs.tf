@@ -24,12 +24,4 @@ output "security_group_id" {
   value       = aws_security_group.build.id
 }
 
-output "budget_name" {
-  description = "name of the $200/month budget"
-  value       = aws_budgets_budget.monthly.name
-}
 
-output "ssm_document_name" {
-  description = "SSM automation document for stale instance termination"
-  value       = aws_ssm_document.terminate_stale.name
-}
