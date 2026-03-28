@@ -47,6 +47,17 @@ packages:
   - zlib1g-dev
   - zsync
 
+# format /dev/sdf only if it has no filesystem (fresh volume).
+# snapshot-restored volumes already have ext4 and are left as-is.
+fs_setup:
+  - device: /dev/sdf
+    filesystem: ext4
+    label: builddata
+    overwrite: false
+
+mounts:
+  - [ /dev/sdf, /data, ext4, "defaults,nofail", "0", "2" ]
+
 users:
   - default
   - name: github
@@ -86,32 +97,10 @@ runcmd:
   - "shutdown -P +120 'SAFETY: 2-hour maximum build time reached. self-destructing.'"
 
   # -------------------------------------------------------------------------
-  # DATA VOLUME - /dev/sdf (appears as nvmeXn1 on nitro instances)
-  # format only if no existing filesystem (fresh volume); snapshot-based
-  # volumes already have ext4 and are mounted as-is for incremental builds.
-  # the runner work directory points here directly — no bind-mount needed.
+  # DATA VOLUME - mounted at /data by cloud-init fs_setup + mounts above.
+  # just ensure ownership is correct for the runner.
   # -------------------------------------------------------------------------
-  - |
-    # find the data volume: the largest unmounted disk.
-    # dump diagnostics first for debugging.
-    echo "=== block device diagnostics ==="
-    lsblk -o NAME,SIZE,TYPE,MOUNTPOINT,FSTYPE
-    echo "=== findmnt / ==="
-    findmnt -no SOURCE /
-    echo "================================"
-    DATA_DEV=$(lsblk -dpbno NAME,SIZE,TYPE,MOUNTPOINT | awk '$3=="disk" && $4=="" {print $2, $1}' | sort -rn | head -1 | awk '{print $2}')
-    if [ -z "$DATA_DEV" ]; then
-      echo "WARNING: no unmounted data volume found — building on root volume"
-      mkdir -p /data
-    else
-      echo "Selected data device: ${DATA_DEV} ($(lsblk -dno SIZE "$DATA_DEV"))"
-      if ! blkid "$DATA_DEV" | grep -q ext4; then
-        mkfs.ext4 -m 0 -L builddata "$DATA_DEV"
-      fi
-      mkdir -p /data
-      mount "$DATA_DEV" /data
-    fi
-    chown github:github /data
+  - chown github:github /data
 
   # -------------------------------------------------------------------------
   # SSH key + config — created here because write_files runs before users
