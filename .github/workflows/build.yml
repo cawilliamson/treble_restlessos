@@ -338,19 +338,6 @@ jobs:
             "${VERSION_TAG}" \
             *.img.xz
 
-      - name: Upload build logs on failure
-        if: failure()
-        run: |
-          LOG_DIR="build-logs-${{ github.run_id }}"
-          mkdir -p "/tmp/${LOG_DIR}"
-          cp -v /var/log/actions-runner.log "/tmp/${LOG_DIR}/" 2>/dev/null || true
-          journalctl -u cloud-init --no-pager > "/tmp/${LOG_DIR}/cloud-init.log" 2>/dev/null || true
-          ls -lah out/ tmp/ > "/tmp/${LOG_DIR}/build-dir-listing.txt" 2>/dev/null || true
-          rsync -avz \
-            "/tmp/${LOG_DIR}/" \
-            "build.chrisaw.io:/var/www/build.chrisaw.io/${LOG_DIR}/" \
-            || echo "WARNING: failed to rsync logs"
-          echo "Logs uploaded to https://build.chrisaw.io/${LOG_DIR}/"
 
   # ---------------------------------------------------------------------------
   # job 3: teardown
