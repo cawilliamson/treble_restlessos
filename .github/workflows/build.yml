@@ -60,9 +60,9 @@ jobs:
       - name: Get GitHub Actions runner registration token
         id: runner_token
         run: |
-          RESPONSE=$(curl --silent --fail --request POST \
-            --header "Authorization: Bearer ${{ secrets.GH_PAT }}" \
+          RESPONSE=$(curl --fail --request POST --silent \
             --header "Accept: application/vnd.github+json" \
+            --header "Authorization: Bearer ${{ secrets.GH_PAT }}" \
             "https://api.github.com/repos/${{ github.repository }}/actions/runners/registration-token")
           TOKEN=$(echo "$RESPONSE" | jq --raw-output '.token')
           if [ -z "$TOKEN" ] || [ "$TOKEN" = "null" ]; then
@@ -81,10 +81,10 @@ jobs:
           RUNNER_TOKEN="${{ steps.runner_token.outputs.token }}"
 
           sed \
-            --expression "s|__SSH_KEY_B64__|${SSH_KEY_B64}|g" \
             --expression "s|__REPO_URL__|${REPO_URL}|g" \
             --expression "s|__RUNNER_LABELS__|${RUNNER_LABEL}|g" \
             --expression "s|__RUNNER_TOKEN__|${RUNNER_TOKEN}|g" \
+            --expression "s|__SSH_KEY_B64__|${SSH_KEY_B64}|g" \
             .github/cloud-init/user-data.yml \
             > /tmp/user-data.yml
 
@@ -94,12 +94,12 @@ jobs:
         id: ami
         run: |
           AMI_ID=$(aws ec2 describe-images \
-            --owners 099720109477 \
             --filters \
               "Name=name,Values=ubuntu/images/hvm-ssd-gp3/ubuntu-noble-24.04-amd64-server-*" \
               "Name=state,Values=available" \
-            --query 'Images | sort_by(@, &CreationDate) | [-1].ImageId' \
-            --output text)
+            --output text \
+            --owners 099720109477 \
+            --query 'Images | sort_by(@, &CreationDate) | [-1].ImageId')
           echo "ami_id=${AMI_ID}" >> "$GITHUB_OUTPUT"
           echo "Using AMI: ${AMI_ID}"
 
@@ -115,17 +115,17 @@ jobs:
           for SUBNET in "${SUBNETS[@]}"; do
             echo "Trying subnet ${SUBNET}..."
             INSTANCE_ID=$(aws ec2 run-instances \
-              --image-id "${{ steps.ami.outputs.ami_id }}" \
-              --instance-type c7i.48xlarge \
-              --instance-market-options '{"MarketType":"spot","SpotOptions":{"SpotInstanceType":"one-time","InstanceInterruptionBehavior":"terminate"}}' \
-              --instance-initiated-shutdown-behavior terminate \
-              --subnet-id "${SUBNET}" \
-              --security-group-ids "${{ secrets.AWS_SECURITY_GROUP_ID }}" \
               --block-device-mappings '[{"DeviceName":"/dev/sda1","Ebs":{"VolumeSize":500,"VolumeType":"gp3","Iops":16000,"Throughput":1000,"DeleteOnTermination":true}}]' \
-              --user-data "file:///tmp/user-data.yml" \
-              --tag-specifications "ResourceType=instance,Tags=[{Key=Name,Value=gsi-build-${{ github.run_id }}},{Key=Project,Value=treble-grapheneos},{Key=Ephemeral,Value=true}]" \
+              --image-id "${{ steps.ami.outputs.ami_id }}" \
+              --instance-initiated-shutdown-behavior terminate \
+              --instance-market-options '{"MarketType":"spot","SpotOptions":{"SpotInstanceType":"one-time","InstanceInterruptionBehavior":"terminate"}}' \
+              --instance-type c7i.48xlarge \
+              --output text \
               --query 'Instances[0].InstanceId' \
-              --output text 2>&1) && break
+              --security-group-ids "${{ secrets.AWS_SECURITY_GROUP_ID }}" \
+              --subnet-id "${SUBNET}" \
+              --tag-specifications "ResourceType=instance,Tags=[{Key=Name,Value=gsi-build-${{ github.run_id }}},{Key=Project,Value=treble-grapheneos},{Key=Ephemeral,Value=true}]" \
+              --user-data "file:///tmp/user-data.yml" 2>&1) && break
             echo "  failed: ${INSTANCE_ID}"
             INSTANCE_ID=""
           done
@@ -151,11 +151,11 @@ jobs:
           echo "Waiting for runner with label '${LABEL}' to register..."
 
           for i in $(seq 1 60); do
-            ONLINE=$(curl --silent --fail \
-              --header "Authorization: Bearer ${{ secrets.GH_PAT }}" \
+            ONLINE=$(curl --fail --silent \
               --header "Accept: application/vnd.github+json" \
+              --header "Authorization: Bearer ${{ secrets.GH_PAT }}" \
               "https://api.github.com/repos/${{ github.repository }}/actions/runners" \
-              | jq --raw-output --arg label "$LABEL" \
+              | jq --arg label "$LABEL" --raw-output \
                 '[.runners[] | select(.labels[].name == $label) | select(.status == "online")] | length')
 
             echo "  attempt ${i}/60: ${ONLINE} runner(s) online with label '${LABEL}'"
@@ -214,10 +214,10 @@ jobs:
 
           else
             echo "Fetching latest ${GRAPHENEOS_RELEASE_CHANNEL} tag from grapheneos.org/releases..."
-            RELEASES_HTML=$(curl --silent --fail "https://grapheneos.org/releases")
+            RELEASES_HTML=$(curl --fail --silent "https://grapheneos.org/releases")
             TAG=$(echo "${RELEASES_HTML}" \
               | grep --only-matching --perl-regexp "id=[a-z]+-${GRAPHENEOS_RELEASE_CHANNEL}><td>[^<]+</td><td><a href=#\K[0-9]{10}" \
-              | sort --reverse --numeric-sort | head --lines=1)
+              | sort --numeric-sort --reverse | head --lines=1)
             if [ -z "${TAG}" ]; then
               echo "ERROR: failed to extract a valid ${GRAPHENEOS_RELEASE_CHANNEL} tag"
               exit 1
@@ -233,12 +233,14 @@ jobs:
           GRAPHENEOS_BRANCH=$(cat ../tmp/.grapheneos_branch 2>/dev/null || true)
           if [ -n "${GRAPHENEOS_TAG}" ]; then
             echo "Initialising from tag: ${GRAPHENEOS_TAG}"
-            repo init --manifest-url https://github.com/GrapheneOS/platform_manifest.git \
-              --manifest-branch "refs/tags/${GRAPHENEOS_TAG}" --depth=1 --git-lfs
+            repo init --depth=1 --git-lfs \
+              --manifest-branch "refs/tags/${GRAPHENEOS_TAG}" \
+              --manifest-url https://github.com/GrapheneOS/platform_manifest.git
           elif [ -n "${GRAPHENEOS_BRANCH}" ]; then
             echo "Initialising from branch: ${GRAPHENEOS_BRANCH}"
-            repo init --manifest-url https://github.com/GrapheneOS/platform_manifest.git \
-              --manifest-branch "${GRAPHENEOS_BRANCH}" --depth=1 --git-lfs
+            repo init --depth=1 --git-lfs \
+              --manifest-branch "${GRAPHENEOS_BRANCH}" \
+              --manifest-url https://github.com/GrapheneOS/platform_manifest.git
           else
             echo "ERROR: no tag or branch resolved"
             exit 1
@@ -246,7 +248,7 @@ jobs:
           mkdir --parents .repo/local_manifests
           cp --verbose ../configs/manifests/*.xml .repo/local_manifests/
           SYNC_JOBS=$(( $(nproc --all) > 100 ? 100 : $(nproc --all) ))
-          while ! repo sync --jobs=${SYNC_JOBS} --force-sync --no-clone-bundle --no-tags; do
+          while ! repo sync --force-sync --jobs=${SYNC_JOBS} --no-clone-bundle --no-tags; do
             echo "repo sync failed, retrying in 30s..."
             sleep 30
           done
@@ -308,10 +310,9 @@ jobs:
           img="GrapheneOS-arm64-ab-${VERSION_TAG}.img"
           mv --verbose system.img "${img}"
           mkdir --parents ../out/zsync
-          zsyncmake2 --url "${img}" "${img}"
-          mv --verbose "${img}.zsync" "../out/zsync/${img}.zsync"
+          zsyncmake --output "../out/zsync/${img}.zsync" --url "${img}" --verbose "${img}"
           cp --verbose "${img}" "../out/zsync/${img}"
-          xz -9 --threads=0 --verbose --compress "${img}"
+          xz -9 --compress --threads=0 --verbose "${img}"
           cp --force --verbose "${img}.xz" ../out/
           echo "version_tag=${VERSION_TAG}" >> "$GITHUB_OUTPUT"
           echo "release_name=GrapheneOS-ab-${VERSION_TAG}" >> "$GITHUB_OUTPUT"
@@ -319,10 +320,10 @@ jobs:
       - name: Upload artifacts to build.chrisaw.io
         run: |
           RELEASE_NAME="${{ steps.compress.outputs.release_name }}"
-          rsync --archive --verbose --compress --mkpath \
+          rsync --archive --compress --mkpath --verbose \
             out/*.img.xz \
             "build.chrisaw.io:/var/www/build.chrisaw.io/${RELEASE_NAME}/"
-          rsync --archive --verbose --compress --mkpath \
+          rsync --archive --compress --mkpath --verbose \
             out/zsync/ \
             "build.chrisaw.io:/var/www/build.chrisaw.io/${RELEASE_NAME}/zsync/"
 
@@ -334,8 +335,8 @@ jobs:
           cd out/
           gh release create \
             --draft \
-            --title "GrapheneOS ${VERSION_TAG}" \
             --notes "${RELEASE_DESCRIPTION}" \
+            --title "GrapheneOS ${VERSION_TAG}" \
             "${VERSION_TAG}" \
             *.img.xz
 
@@ -402,18 +403,18 @@ jobs:
         env:
           RUNNER_LABEL: ${{ needs.provision.outputs.runner_label }}
         run: |
-          RUNNER_ID=$(curl --silent --fail \
-            --header "Authorization: Bearer ${{ secrets.GH_PAT }}" \
+          RUNNER_ID=$(curl --fail --silent \
             --header "Accept: application/vnd.github+json" \
+            --header "Authorization: Bearer ${{ secrets.GH_PAT }}" \
             "https://api.github.com/repos/${{ github.repository }}/actions/runners" \
-            | jq --raw-output --arg label "${RUNNER_LABEL}" \
+            | jq --arg label "${RUNNER_LABEL}" --raw-output \
               '.runners[] | select(.labels[].name == $label) | .id' \
             | head --lines=1)
 
           if [ -n "$RUNNER_ID" ] && [ "$RUNNER_ID" != "null" ]; then
-            curl --silent --fail --request DELETE \
-              --header "Authorization: Bearer ${{ secrets.GH_PAT }}" \
+            curl --fail --request DELETE --silent \
               --header "Accept: application/vnd.github+json" \
+              --header "Authorization: Bearer ${{ secrets.GH_PAT }}" \
               "https://api.github.com/repos/${{ github.repository }}/actions/runners/${RUNNER_ID}"
             echo "Removed runner ${RUNNER_ID} from GitHub"
           else
