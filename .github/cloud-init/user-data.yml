@@ -92,12 +92,23 @@ runcmd:
   # the runner work directory points here directly — no bind-mount needed.
   # -------------------------------------------------------------------------
   - |
-    ROOT_DEV=$(lsblk -no PKNAME "$(findmnt -no SOURCE /)" | head -1)
+    # find the root disk, handling /dev/root (kernel alias on ubuntu AMIs)
+    ROOT_SRC=$(findmnt -no SOURCE /)
+    if [ "$ROOT_SRC" = "/dev/root" ]; then
+      ROOT_SRC=$(readlink -f /dev/root 2>/dev/null || true)
+    fi
+    ROOT_DEV=$(lsblk -no PKNAME "$ROOT_SRC" 2>/dev/null | head -1)
+    if [ -z "$ROOT_DEV" ]; then
+      # last resort: assume the smallest disk is root
+      ROOT_DEV=$(lsblk -dpno NAME,SIZE,TYPE | awk '$3=="disk"' | sort -k2 -h | head -1 | awk '{print $1}')
+    fi
+    # data volume: the disk that isn't root
     DATA_DEV=$(lsblk -dpno NAME,TYPE | awk '$2=="disk" {print $1}' | grep -v "$ROOT_DEV" | head -1)
     if [ -z "$DATA_DEV" ]; then
       echo "WARNING: no data volume found — building on root volume"
       mkdir -p /data
     else
+      echo "Root device: ${ROOT_DEV}, data device: ${DATA_DEV}"
       if ! blkid "$DATA_DEV" | grep -q ext4; then
         mkfs.ext4 -m 0 -L builddata "$DATA_DEV"
       fi
