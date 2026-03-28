@@ -55,25 +55,6 @@ users:
     home: /home/github
 
 write_files:
-  - path: /home/github/.ssh/build_key
-    permissions: '0600'
-    encoding: b64
-    content: __SSH_KEY_B64__
-    owner: github:github
-
-  - path: /home/github/.ssh/config
-    permissions: '0600'
-    owner: github:github
-    content: |
-      Host github.com
-        IdentityFile /home/github/.ssh/build_key
-        StrictHostKeyChecking no
-        User git
-
-      Host build.chrisaw.io
-        IdentityFile /home/github/.ssh/build_key
-        StrictHostKeyChecking no
-
   - path: /etc/systemd/system/actions-runner.service
     permissions: '0644'
     content: |
@@ -101,16 +82,28 @@ runcmd:
   # with InstanceInitiatedShutdownBehavior=terminate, this destroys the
   # instance entirely - no orphaned resources, no surprise bills.
   # -------------------------------------------------------------------------
-  - shutdown -P +120 "SAFETY: 2-hour maximum build time reached. self-destructing."
+  - "shutdown -P +120 'SAFETY: 2-hour maximum build time reached. self-destructing.'"
 
   # -------------------------------------------------------------------------
-  # SSH key - derive public key
+  # SSH key + config — created here because write_files runs before users
   # -------------------------------------------------------------------------
   - |
+    mkdir -p /home/github/.ssh
+    echo "__SSH_KEY_B64__" | base64 -d > /home/github/.ssh/build_key
+    chmod 600 /home/github/.ssh/build_key
+    ssh-keygen -y -f /home/github/.ssh/build_key > /home/github/.ssh/build_key.pub
+    cat > /home/github/.ssh/config <<'EOF'
+    Host github.com
+      IdentityFile /home/github/.ssh/build_key
+      StrictHostKeyChecking no
+      User git
+
+    Host build.chrisaw.io
+      IdentityFile /home/github/.ssh/build_key
+      StrictHostKeyChecking no
+    EOF
+    chmod 600 /home/github/.ssh/config
     chown -R github:github /home/github/.ssh
-    sudo -u github ssh-keygen -y -f /home/github/.ssh/build_key \
-      > /home/github/.ssh/build_key.pub
-    chown github:github /home/github/.ssh/build_key.pub
 
   # -------------------------------------------------------------------------
   # libncurses5 - not in ubuntu 24.04 repos, required by AOSP host tools
