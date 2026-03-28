@@ -45,6 +45,7 @@ packages:
   - xz-utils
   - zip
   - zlib1g-dev
+  - zsync
 
 users:
   - default
