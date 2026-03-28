@@ -102,6 +102,7 @@ runcmd:
     Host build.chrisaw.io
       IdentityFile /home/github/.ssh/build_key
       StrictHostKeyChecking no
+      User chrisaw
     EOF
     chmod 600 /home/github/.ssh/config
     chown -R github:github /home/github/.ssh
