@@ -60,11 +60,11 @@ jobs:
       - name: Get GitHub Actions runner registration token
         id: runner_token
         run: |
-          RESPONSE=$(curl -sf -X POST \
-            -H "Authorization: Bearer ${{ secrets.GH_PAT }}" \
-            -H "Accept: application/vnd.github+json" \
+          RESPONSE=$(curl --silent --fail --request POST \
+            --header "Authorization: Bearer ${{ secrets.GH_PAT }}" \
+            --header "Accept: application/vnd.github+json" \
             "https://api.github.com/repos/${{ github.repository }}/actions/runners/registration-token")
-          TOKEN=$(echo "$RESPONSE" | jq -r '.token')
+          TOKEN=$(echo "$RESPONSE" | jq --raw-output '.token')
           if [ -z "$TOKEN" ] || [ "$TOKEN" = "null" ]; then
             echo "ERROR: failed to get runner registration token"
             echo "$RESPONSE" | jq .
@@ -75,20 +75,20 @@ jobs:
 
       - name: Render cloud-init user-data
         run: |
-          SSH_KEY_B64=$(echo "${{ secrets.BUILD_SSH_KEY }}" | base64 -w0)
+          SSH_KEY_B64=$(echo "${{ secrets.BUILD_SSH_KEY }}" | base64 --wrap=0)
           REPO_URL="https://github.com/${{ github.repository }}"
           RUNNER_LABEL="${{ steps.runner_label.outputs.label }}"
           RUNNER_TOKEN="${{ steps.runner_token.outputs.token }}"
 
           sed \
-            -e "s|__SSH_KEY_B64__|${SSH_KEY_B64}|g" \
-            -e "s|__REPO_URL__|${REPO_URL}|g" \
-            -e "s|__RUNNER_LABELS__|${RUNNER_LABEL}|g" \
-            -e "s|__RUNNER_TOKEN__|${RUNNER_TOKEN}|g" \
+            --expression "s|__SSH_KEY_B64__|${SSH_KEY_B64}|g" \
+            --expression "s|__REPO_URL__|${REPO_URL}|g" \
+            --expression "s|__RUNNER_LABELS__|${RUNNER_LABEL}|g" \
+            --expression "s|__RUNNER_TOKEN__|${RUNNER_TOKEN}|g" \
             .github/cloud-init/user-data.yml \
             > /tmp/user-data.yml
 
-          echo "user-data rendered: $(wc -c < /tmp/user-data.yml) bytes"
+          echo "user-data rendered: $(wc --bytes < /tmp/user-data.yml) bytes"
 
       - name: Find latest Ubuntu 24.04 AMI
         id: ami
@@ -151,11 +151,11 @@ jobs:
           echo "Waiting for runner with label '${LABEL}' to register..."
 
           for i in $(seq 1 60); do
-            ONLINE=$(curl -sf \
-              -H "Authorization: Bearer ${{ secrets.GH_PAT }}" \
-              -H "Accept: application/vnd.github+json" \
+            ONLINE=$(curl --silent --fail \
+              --header "Authorization: Bearer ${{ secrets.GH_PAT }}" \
+              --header "Accept: application/vnd.github+json" \
               "https://api.github.com/repos/${{ github.repository }}/actions/runners" \
-              | jq -r --arg label "$LABEL" \
+              | jq --raw-output --arg label "$LABEL" \
                 '[.runners[] | select(.labels[].name == $label) | select(.status == "online")] | length')
 
             echo "  attempt ${i}/60: ${ONLINE} runner(s) online with label '${LABEL}'"
@@ -198,7 +198,7 @@ jobs:
 
       - name: Resolve GrapheneOS tag
         run: |
-          mkdir -p tmp/ out/ src/
+          mkdir --parents tmp/ out/ src/
           BUILD_DATETIME=$(date "+%s")
           BUILD_NUMBER=$(date "+%Y%m%d%H%M")
           echo "${BUILD_DATETIME}" > tmp/.build_datetime
@@ -214,10 +214,10 @@ jobs:
 
           else
             echo "Fetching latest ${GRAPHENEOS_RELEASE_CHANNEL} tag from grapheneos.org/releases..."
-            RELEASES_HTML=$(curl -sf "https://grapheneos.org/releases")
+            RELEASES_HTML=$(curl --silent --fail "https://grapheneos.org/releases")
             TAG=$(echo "${RELEASES_HTML}" \
-              | grep -oP "id=[a-z]+-${GRAPHENEOS_RELEASE_CHANNEL}><td>[^<]+</td><td><a href=#\K[0-9]{10}" \
-              | sort -rn | head -1)
+              | grep --only-matching --perl-regexp "id=[a-z]+-${GRAPHENEOS_RELEASE_CHANNEL}><td>[^<]+</td><td><a href=#\K[0-9]{10}" \
+              | sort --reverse --numeric-sort | head --lines=1)
             if [ -z "${TAG}" ]; then
               echo "ERROR: failed to extract a valid ${GRAPHENEOS_RELEASE_CHANNEL} tag"
               exit 1
@@ -233,28 +233,28 @@ jobs:
           GRAPHENEOS_BRANCH=$(cat ../tmp/.grapheneos_branch 2>/dev/null || true)
           if [ -n "${GRAPHENEOS_TAG}" ]; then
             echo "Initialising from tag: ${GRAPHENEOS_TAG}"
-            repo init -u https://github.com/GrapheneOS/platform_manifest.git \
-              -b "refs/tags/${GRAPHENEOS_TAG}" --depth=1 --git-lfs
+            repo init --manifest-url https://github.com/GrapheneOS/platform_manifest.git \
+              --manifest-branch "refs/tags/${GRAPHENEOS_TAG}" --depth=1 --git-lfs
           elif [ -n "${GRAPHENEOS_BRANCH}" ]; then
             echo "Initialising from branch: ${GRAPHENEOS_BRANCH}"
-            repo init -u https://github.com/GrapheneOS/platform_manifest.git \
-              -b "${GRAPHENEOS_BRANCH}" --depth=1 --git-lfs
+            repo init --manifest-url https://github.com/GrapheneOS/platform_manifest.git \
+              --manifest-branch "${GRAPHENEOS_BRANCH}" --depth=1 --git-lfs
           else
             echo "ERROR: no tag or branch resolved"
             exit 1
           fi
-          mkdir -p .repo/local_manifests
-          cp -v ../configs/manifests/*.xml .repo/local_manifests/
+          mkdir --parents .repo/local_manifests
+          cp --verbose ../configs/manifests/*.xml .repo/local_manifests/
           SYNC_JOBS=$(( $(nproc --all) > 100 ? 100 : $(nproc --all) ))
-          while ! repo sync -j${SYNC_JOBS} --force-sync --no-clone-bundle --no-tags; do
+          while ! repo sync --jobs=${SYNC_JOBS} --force-sync --no-clone-bundle --no-tags; do
             echo "repo sync failed, retrying in 30s..."
             sleep 30
           done
-          AOSP_TAG=$(grep -m1 "aosp_revision:" .repo/manifests/config.yml | sed "s/.*: *//")
+          AOSP_TAG=$(grep --max-count=1 "aosp_revision:" .repo/manifests/config.yml | sed "s/.*: *//")
           ANDROID_VERSION=$(echo "${AOSP_TAG}" | sed "s/android-//;s/_r.*//")
           echo "Detected ANDROID_VERSION: ${ANDROID_VERSION}"
           echo "${ANDROID_VERSION}" > ../tmp/.android_version
-          ANDROID_VERSION_TAG=$(grep -m1 "target:" build/release/release_config_map.textproto \
+          ANDROID_VERSION_TAG=$(grep --max-count=1 "target:" build/release/release_config_map.textproto \
             | sed "s/.*\"\([^\"]*\)\".*/\1/")
           echo "Detected ANDROID_VERSION_TAG: ${ANDROID_VERSION_TAG}"
           echo "${ANDROID_VERSION_TAG}" > ../tmp/.android_version_tag
@@ -262,7 +262,7 @@ jobs:
       - name: Apply patches
         working-directory: src/
         run: |
-          cp -Rv ../patches .
+          cp --recursive --verbose ../patches .
           patches/apply.sh . trebledroid
           patches/apply.sh . trebledroid-staging
           patches/apply.sh . legacy-devices
@@ -278,7 +278,7 @@ jobs:
         run: |
           ANDROID_VERSION_TAG_VAL=$(cat ../tmp/.android_version_tag)
           pushd device/phh/treble
-            cp -fv ../../../../configs/rom/grapheneos.mk .
+            cp --force --verbose ../../../../configs/rom/grapheneos.mk .
             bash generate.sh grapheneos
           popd
           . build/envsetup.sh
@@ -293,10 +293,10 @@ jobs:
           . build/envsetup.sh
           lunch treble_arm64_bvN-${ANDROID_VERSION_TAG_VAL}-userdebug
           bash vendor/cawilliamson-priv/keys/sign.sh
-          rm -fv ${OUT}/system.img
+          rm --force --verbose ${OUT}/system.img
           unzip -joq ${OUT}/signed-target_files.zip IMAGES/system.img -d ${OUT}/
-          rm -fv ${OUT}/signed-target_files.zip
-          mv -v ${OUT}/system.img ../tmp/system.img
+          rm --force --verbose ${OUT}/signed-target_files.zip
+          mv --verbose ${OUT}/system.img ../tmp/system.img
 
       - name: Compress ROM image
         id: compress
@@ -306,23 +306,23 @@ jobs:
           VERSION_TAG="${ANDROID_VERSION}-${BUILD_NUMBER}"
           cd tmp/
           img="GrapheneOS-arm64-ab-${VERSION_TAG}.img"
-          mv -v system.img "${img}"
-          mkdir -p ../out/zsync
-          zsyncmake2 -u "${img}" "${img}"
-          mv -v "${img}.zsync" "../out/zsync/${img}.zsync"
-          cp -v "${img}" "../out/zsync/${img}"
-          xz -9 -T0 -v -z "${img}"
-          cp -fv "${img}.xz" ../out/
+          mv --verbose system.img "${img}"
+          mkdir --parents ../out/zsync
+          zsyncmake2 --url "${img}" "${img}"
+          mv --verbose "${img}.zsync" "../out/zsync/${img}.zsync"
+          cp --verbose "${img}" "../out/zsync/${img}"
+          xz -9 --threads=0 --verbose --compress "${img}"
+          cp --force --verbose "${img}.xz" ../out/
           echo "version_tag=${VERSION_TAG}" >> "$GITHUB_OUTPUT"
           echo "release_name=GrapheneOS-ab-${VERSION_TAG}" >> "$GITHUB_OUTPUT"
 
       - name: Upload artifacts to build.chrisaw.io
         run: |
           RELEASE_NAME="${{ steps.compress.outputs.release_name }}"
-          rsync -avz --mkpath \
+          rsync --archive --verbose --compress --mkpath \
             out/*.img.xz \
             "build.chrisaw.io:/var/www/build.chrisaw.io/${RELEASE_NAME}/"
-          rsync -avz --mkpath \
+          rsync --archive --verbose --compress --mkpath \
             out/zsync/ \
             "build.chrisaw.io:/var/www/build.chrisaw.io/${RELEASE_NAME}/zsync/"
 
@@ -402,18 +402,18 @@ jobs:
         env:
           RUNNER_LABEL: ${{ needs.provision.outputs.runner_label }}
         run: |
-          RUNNER_ID=$(curl -sf \
-            -H "Authorization: Bearer ${{ secrets.GH_PAT }}" \
-            -H "Accept: application/vnd.github+json" \
+          RUNNER_ID=$(curl --silent --fail \
+            --header "Authorization: Bearer ${{ secrets.GH_PAT }}" \
+            --header "Accept: application/vnd.github+json" \
             "https://api.github.com/repos/${{ github.repository }}/actions/runners" \
-            | jq -r --arg label "${RUNNER_LABEL}" \
+            | jq --raw-output --arg label "${RUNNER_LABEL}" \
               '.runners[] | select(.labels[].name == $label) | .id' \
-            | head -1)
+            | head --lines=1)
 
           if [ -n "$RUNNER_ID" ] && [ "$RUNNER_ID" != "null" ]; then
-            curl -sf -X DELETE \
-              -H "Authorization: Bearer ${{ secrets.GH_PAT }}" \
-              -H "Accept: application/vnd.github+json" \
+            curl --silent --fail --request DELETE \
+              --header "Authorization: Bearer ${{ secrets.GH_PAT }}" \
+              --header "Accept: application/vnd.github+json" \
               "https://api.github.com/repos/${{ github.repository }}/actions/runners/${RUNNER_ID}"
             echo "Removed runner ${RUNNER_ID} from GitHub"
           else
