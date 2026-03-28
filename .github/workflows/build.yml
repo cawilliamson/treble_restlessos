@@ -273,7 +273,7 @@ jobs:
         working-directory: src/treble_app
         run: bash build.sh release
 
-      - name: Build ROM image (arm64)
+      - name: Build ROM image
         working-directory: src/
         run: |
           ANDROID_VERSION_TAG_VAL=$(cat ../tmp/.android_version_tag)
@@ -286,7 +286,7 @@ jobs:
           make systemimage -j$(nproc --all)
           make target-files-package otatools -j$(nproc --all)
 
-      - name: Sign ROM image (arm64)
+      - name: Sign ROM image
         working-directory: src/
         run: |
           ANDROID_VERSION_TAG_VAL=$(cat ../tmp/.android_version_tag)
@@ -298,7 +298,7 @@ jobs:
           rm -fv ${OUT}/signed-target_files.zip
           mv -v ${OUT}/system.img ../tmp/system.img
 
-      - name: Compress ROM image (arm64)
+      - name: Compress ROM image
         id: compress
         run: |
           ANDROID_VERSION=$(cat tmp/.android_version)
