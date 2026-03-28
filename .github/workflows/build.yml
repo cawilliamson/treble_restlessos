@@ -20,6 +20,11 @@ on:
         required: false
         type: boolean
         default: false
+      clean_build:
+        description: 'ignore snapshot cache and build from a clean volume'
+        required: false
+        type: boolean
+        default: false
 
 permissions:
   actions: write
@@ -110,7 +115,14 @@ jobs:
 
       - name: Find latest build snapshot
         id: snapshot
+        env:
+          CLEAN_BUILD: ${{ github.event.inputs.clean_build || 'false' }}
         run: |
+          if [ "${CLEAN_BUILD}" = "true" ]; then
+            echo "Clean build requested — ignoring snapshots"
+            echo "snapshot_id=" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
           SNAP_ID=$(aws ec2 describe-snapshots \
             --owner-ids self \
             --filters "Name=tag:Project,Values=treble-grapheneos" \
@@ -424,6 +436,7 @@ jobs:
           aws-region: eu-west-2
 
       - name: Snapshot build volume
+        continue-on-error: true
         env:
           INSTANCE_ID: ${{ needs.provision.outputs.instance_id }}
         run: |
