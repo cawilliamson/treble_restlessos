@@ -1,0 +1,35 @@
+From 4393240c25182b04aed484724e19154bf23779cf Mon Sep 17 00:00:00 2001
+From: "Christopher A. Williamson" <contact@chrisaw.io>
+Date: Sat, 28 Mar 2026 19:18:28 +0000
+Subject: [PATCH 3/3] Skip biometric enrollment gracefully when no hardware is
+ available
+
+On GSI builds where no biometric sensor is properly configured,
+BiometricEnrollActivity enters an unhandled state during the setup
+wizard because no modalities are enrollable. It finishes without
+setting a result, defaulting to RESULT_CANCELED, which causes the
+setup wizard SecurityActivity to re-launch in an infinite loop.
+
+Return RESULT_OK when running in setup wizard mode with no enrollable
+biometrics so the wizard can proceed to the next step.
+---
+ .../android/settings/biometrics/BiometricEnrollActivity.java   | 3 +++
+ 1 file changed, 3 insertions(+)
+
+diff --git a/src/com/android/settings/biometrics/BiometricEnrollActivity.java b/src/com/android/settings/biometrics/BiometricEnrollActivity.java
+index 0d0e44d..f639f08 100644
+--- a/src/com/android/settings/biometrics/BiometricEnrollActivity.java
++++ b/src/com/android/settings/biometrics/BiometricEnrollActivity.java
+@@ -390,6 +390,9 @@ public class BiometricEnrollActivity extends InstrumentedActivity {
+             if (mParentalOptionsRequired) {
+                 Log.d(TAG, "No consent for any modality: skipping enrollment");
+                 setResult(RESULT_OK, newResultIntent());
++            } else if (setupWizard) {
++                Log.d(TAG, "No enrollable biometrics during SUW, skipping");
++                setResult(RESULT_OK, newResultIntent());
+             } else {
+                 Log.e(TAG, "Unknown state, finishing (was SUW: " + setupWizard + ")");
+             }
+-- 
+2.53.0
+

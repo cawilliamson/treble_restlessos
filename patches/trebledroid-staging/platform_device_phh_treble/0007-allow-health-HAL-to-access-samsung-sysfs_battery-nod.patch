@@ -1,7 +1,7 @@
 From e1f3c797ac00a59451e2139d38a34b75abc6603b Mon Sep 17 00:00:00 2001
 From: "Christopher A. Williamson" <contact@chrisaw.io>
 Date: Sat, 28 Mar 2026 18:38:18 +0000
-Subject: [PATCH 7/7] allow health HAL to access samsung sysfs_battery nodes
+Subject: [PATCH 7/8] allow health HAL to access samsung sysfs_battery nodes
 
 samsung vendor sepolicy labels all power_supply sysfs nodes (battery,
 ac, charger, fuelgauge, pogo, wireless, usb) under the sysfs_battery
