@@ -1,7 +1,7 @@
 From e2822db815517f8db96fa4506d96ff6aed4aff2e Mon Sep 17 00:00:00 2001
 From: "Christopher A. Williamson" <contact@chrisaw.io>
 Date: Tue, 17 Feb 2026 16:19:21 +0000
-Subject: [PATCH 3/8] Include APN configuration database in build
+Subject: [PATCH 3/9] Include APN configuration database in build
 
 The treble build inherits aosp_base_telephony but does not include the
 AOSP APN database. The apns-full-conf.xml module has no_full_install

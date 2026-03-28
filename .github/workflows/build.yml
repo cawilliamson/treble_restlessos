@@ -318,15 +318,8 @@ jobs:
       - name: Reset repos to upstream
         working-directory: src/
         run: |
-          # strip any patches left over from a previous build (snapshot).
-          # each repo is a shallow clone — the root commit is the upstream
-          # manifest revision.
-          if [ -d .repo ]; then
-            echo "Resetting all repos to upstream..."
-            # shellcheck disable=SC2016 # single quotes are intentional;
-            # the expansion must happen inside the repo forall subshell
-            repo forall -c 'git reset --hard $(git rev-list --max-parents=0 HEAD | tail -1)' 2>/dev/null || true
-          fi
+          # abort any in-progress git am from a previous interrupted build
+          repo forall -c 'git am --abort' 2>/dev/null || true
 
       - name: Apply patches
         working-directory: src/
