@@ -1,0 +1,82 @@
+From a965f5efd1c36eb57bd39c7f16f3b912919e76ec Mon Sep 17 00:00:00 2001
+From: "Christopher A. Williamson" <contact@chrisaw.io>
+Date: Sat, 28 Mar 2026 17:54:39 +0000
+Subject: [PATCH 2/2] add debug boot watchdog that reboots to recovery on timeout
+
+add a 5-minute watchdog service started at post-fs.  if
+sys.boot_completed is not set within 300 seconds, the watchdog
+writes a marker to /metadata/debug_watchdog_triggered and reboots
+to recovery.  this ensures devices that hang silently during boot
+eventually land in recovery where pstore/last_kmsg can be pulled.
+
+debug-only patch -- must not be shipped in release builds.
+---
+ base.mk               |  1 +
+ phh-debug-watchdog.sh | 19 +++++++++++++++++++
+ vndk.rc               |  8 ++++++++
+ 3 files changed, 28 insertions(+)
+ create mode 100755 phh-debug-watchdog.sh
+
+diff --git a/base.mk b/base.mk
+index fda86c1..03a9ecb 100644
+--- a/base.mk
++++ b/base.mk
+@@ -74,6 +74,7 @@ PRODUCT_COPY_FILES += \
+     device/phh/treble/rw-system.sh:system/bin/rw-system.sh \
+     device/phh/treble/phh-on-boot.sh:system/bin/phh-on-boot.sh \
+     device/phh/treble/phh-on-data.sh:system/bin/phh-on-data.sh \
++    device/phh/treble/phh-debug-watchdog.sh:system/bin/phh-debug-watchdog.sh \
+     device/phh/treble/phh-prop-handler.sh:system/bin/phh-prop-handler.sh \
+     device/phh/treble/fixSPL/getSPL.arm:system/bin/getSPL
+ 
+diff --git a/phh-debug-watchdog.sh b/phh-debug-watchdog.sh
+new file mode 100755
+index 0000000..4149f01
+--- /dev/null
++++ b/phh-debug-watchdog.sh
+@@ -0,0 +1,19 @@
++#!/system/bin/sh
++# debug boot watchdog: reboot to recovery if boot never completes.
++# this script is started by init early in boot and sleeps for a fixed
++# timeout.  if sys.boot_completed is still unset when the timer fires,
++# it writes a marker to /metadata so the failure is detectable from
++# recovery, then reboots into recovery mode.
++#
++# debug-only -- must not be shipped in release builds.
++
++TIMEOUT=300  # 5 minutes
++
++sleep "$TIMEOUT"
++
++if [ "$(getprop sys.boot_completed)" != "1" ]; then
++    echo "GSI_DISP: debug watchdog fired after ${TIMEOUT}s -- boot did not complete" > /dev/kmsg
++    # leave a breadcrumb in /metadata for recovery to find
++    echo "boot_incomplete $(date) timeout=${TIMEOUT}s" > /metadata/debug_watchdog_triggered 2>/dev/null
++    reboot recovery
++fi
+diff --git a/vndk.rc b/vndk.rc
+index da4116c..e9c6e60 100644
+--- a/vndk.rc
++++ b/vndk.rc
+@@ -1,6 +1,7 @@
+ on post-fs
+     exec - root -- /system/bin/vndk-detect
+     exec - root -- /system/bin/rw-system.sh
++    start phh_debug_watchdog
+     mount none /system/etc/usb_audio_policy_configuration.xml /vendor/etc/usb_audio_policy_configuration.xml bind
+     setprop ro.vndk.version ${persist.sys.vndk}
+ 
+@@ -137,3 +138,10 @@ on property:sys.oem_unlock_allowed=*
+ # hide adbd is running
+ on property:init.svc.adbd=*
+     exec u:r:magisk:s0 root root -- /system/bin/resetprop_phh -n init.svc.adbd stopped
++
++# debug boot watchdog: reboot to recovery if boot never completes
++service phh_debug_watchdog /system/bin/phh-debug-watchdog.sh
++    class core
++    user root
++    oneshot
++    seclabel u:r:phhsu_daemon:s0
+-- 
+2.53.0
+

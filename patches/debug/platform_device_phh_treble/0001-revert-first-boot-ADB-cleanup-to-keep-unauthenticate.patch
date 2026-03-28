@@ -1,7 +1,7 @@
 From 376cb9f426767dc41f2ac3d6602e73c2db7a6041 Mon Sep 17 00:00:00 2001
 From: "Christopher A. Williamson" <contact@chrisaw.io>
 Date: Sat, 28 Mar 2026 17:37:38 +0000
-Subject: [PATCH] revert first-boot ADB cleanup to keep unauthenticated ADB
+Subject: [PATCH 1/2] revert first-boot ADB cleanup to keep unauthenticated ADB
  open
 
 remove the phh-on-boot.sh block that deletes ro.adb.secure and stops

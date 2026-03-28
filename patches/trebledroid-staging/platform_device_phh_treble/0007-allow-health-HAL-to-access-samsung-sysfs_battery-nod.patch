@@ -1,0 +1,39 @@
+From e1f3c797ac00a59451e2139d38a34b75abc6603b Mon Sep 17 00:00:00 2001
+From: "Christopher A. Williamson" <contact@chrisaw.io>
+Date: Sat, 28 Mar 2026 18:38:18 +0000
+Subject: [PATCH 7/7] allow health HAL to access samsung sysfs_battery nodes
+
+samsung vendor sepolicy labels all power_supply sysfs nodes (battery,
+ac, charger, fuelgauge, pogo, wireless, usb) under the sysfs_battery
+type. the GSI's hal_health_default domain has no rule granting access
+to this vendor-defined type, so SELinux blocks every read attempt in
+enforcing mode. healthd then reports 'No battery devices found' and
+the battery status indicator shows incorrect data.
+
+grant hal_health_default the minimum permissions needed to enumerate
+and read power_supply attributes under sysfs_battery.
+---
+ sepolicy/samsung.te | 7 +++++++
+ 1 file changed, 7 insertions(+)
+
+diff --git a/sepolicy/samsung.te b/sepolicy/samsung.te
+index 3d0225c..b692e84 100644
+--- a/sepolicy/samsung.te
++++ b/sepolicy/samsung.te
+@@ -4,6 +4,13 @@ set_prop(system_server, boot_prop);
+ 
+ type hal_graphics_composer_default, domain;
+ 
++# allow health HAL to read samsung-labelled battery/charger/power_supply sysfs
++# (samsung vendors label all power_supply nodes as sysfs_battery; without this
++# the GSI's hal_health_default is denied access and healthd reports no battery)
++allow hal_health_default sysfs_battery:dir { getattr open read search };
++allow hal_health_default sysfs_battery:file { getattr open read };
++allow hal_health_default sysfs_battery:lnk_file { getattr read };
++
+ # allow samsung touch input HAL to read system properties
+ # (without this, touch stops working after wake on some samsung devices)
+ type hal_sec_inputdev_default, domain;
+-- 
+2.53.0
+
