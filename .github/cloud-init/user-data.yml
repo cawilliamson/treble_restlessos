@@ -47,17 +47,6 @@ packages:
   - zlib1g-dev
   - zsync
 
-# format /dev/sdf only if it has no filesystem (fresh volume).
-# snapshot-restored volumes already have ext4 and are left as-is.
-fs_setup:
-  - device: /dev/sdf
-    filesystem: ext4
-    label: builddata
-    overwrite: false
-
-mounts:
-  - [ /dev/sdf, /data, ext4, "defaults,nofail", "0", "2" ]
-
 users:
   - default
   - name: github
@@ -97,10 +86,29 @@ runcmd:
   - "shutdown -P +120 'SAFETY: 2-hour maximum build time reached. self-destructing.'"
 
   # -------------------------------------------------------------------------
-  # DATA VOLUME - mounted at /data by cloud-init fs_setup + mounts above.
-  # just ensure ownership is correct for the runner.
+  # DATA VOLUME - /dev/sdf (nvme1n1 on nitro instances)
+  # cloud-init fs_setup/mounts can't resolve the sdf→nvme mapping, so
+  # we handle it directly.  format only if no existing filesystem.
   # -------------------------------------------------------------------------
-  - chown github:github /data
+  - |
+    for d in /dev/nvme1n1 /dev/sdf /dev/xvdf; do
+      [ -b "$d" ] && DATA_DEV="$d" && break
+    done
+    if [ -n "$DATA_DEV" ]; then
+      echo "Found data device: $DATA_DEV"
+      if ! blkid -s TYPE -o value "$DATA_DEV" 2>/dev/null | grep -q ext4; then
+        echo "Formatting $DATA_DEV..."
+        mkfs.ext4 -m 0 -L builddata "$DATA_DEV"
+      fi
+      mkdir -p /data
+      mount "$DATA_DEV" /data
+      chown github:github /data
+      echo "Mounted $DATA_DEV at /data ($(df -h /data | tail -1 | awk '{print $2}'))"
+    else
+      echo "ERROR: no data volume found"
+      lsblk
+      exit 1
+    fi
 
   # -------------------------------------------------------------------------
   # SSH key + config — created here because write_files runs before users
