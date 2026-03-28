@@ -142,12 +142,10 @@ jobs:
           # c7i.48xlarge: 192 vCPUs, 384 GiB RAM
           # InstanceInitiatedShutdownBehavior=terminate ensures the cloud-init
           # safety timer (shutdown -P +120) destroys the instance entirely.
-          # if a build snapshot exists, use it as the root volume to get
-          # cached src/, out/, and pre-installed packages.
-          # root volume: standard AMI root, sized for OS + build tools
+          # root volume: standard AMI root, sized for OS + build tools.
           # data volume: /dev/sdf, optionally restored from a snapshot for
-          # incremental builds.  mounted at /data by cloud-init, then
-          # bind-mounted over the runner work directory.
+          # incremental builds.  mounted at /data by cloud-init; the runner
+          # work directory points here directly.
           SNAP_ID="${{ steps.snapshot.outputs.snapshot_id }}"
           if [ -n "$SNAP_ID" ]; then
             echo "Using snapshot ${SNAP_ID} for data volume"
@@ -412,6 +410,12 @@ jobs:
             "${VERSION_TAG}" \
             ./*.img.xz
 
+
+      - name: Sync data volume for snapshot
+        if: always()
+        run: |
+          sync
+          sudo umount /data 2>/dev/null || true
 
   # ---------------------------------------------------------------------------
   # job 3: teardown

@@ -86,29 +86,25 @@ runcmd:
   - "shutdown -P +120 'SAFETY: 2-hour maximum build time reached. self-destructing.'"
 
   # -------------------------------------------------------------------------
-  # DATA VOLUME - /dev/sdf (nvme1n1 on nitro instances)
+  # DATA VOLUME - /dev/sdf (appears as nvmeXn1 on nitro instances)
   # format only if no existing filesystem (fresh volume); snapshot-based
   # volumes already have ext4 and are mounted as-is for incremental builds.
-  # bind-mounted over the runner work directory so builds use the fast disk.
+  # the runner work directory points here directly — no bind-mount needed.
   # -------------------------------------------------------------------------
   - |
-    DATA_DEV=""
-    for d in /dev/nvme1n1 /dev/sdf /dev/xvdf; do
-      [ -b "$d" ] && DATA_DEV="$d" && break
-    done
+    ROOT_DEV=$(lsblk -no PKNAME "$(findmnt -no SOURCE /)" | head -1)
+    DATA_DEV=$(lsblk -dpno NAME,TYPE | awk '$2=="disk" {print $1}' | grep -v "$ROOT_DEV" | head -1)
     if [ -z "$DATA_DEV" ]; then
       echo "WARNING: no data volume found — building on root volume"
+      mkdir -p /data
     else
       if ! blkid "$DATA_DEV" | grep -q ext4; then
         mkfs.ext4 -m 0 -L builddata "$DATA_DEV"
       fi
       mkdir -p /data
       mount "$DATA_DEV" /data
-      mkdir -p /data/actions-runner-work
-      chown github:github /data/actions-runner-work
-      mkdir -p /home/github/actions-runner-work
-      mount --bind /data/actions-runner-work /home/github/actions-runner-work
     fi
+    chown github:github /data
 
   # -------------------------------------------------------------------------
   # SSH key + config — created here because write_files runs before users
@@ -197,7 +193,7 @@ runcmd:
       --token "__RUNNER_TOKEN__" \
       --name "aws-gsi-build-$(hostname)" \
       --labels "__RUNNER_LABELS__" \
-      --work /home/github/actions-runner-work \
+      --work /data \
       --unattended \
       --ephemeral
 
