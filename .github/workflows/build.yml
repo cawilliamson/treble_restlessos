@@ -442,7 +442,7 @@ jobs:
           INSTANCE_ID: ${{ needs.provision.outputs.instance_id }}
         run: |
           if [ -z "${INSTANCE_ID}" ] || [ "${INSTANCE_ID}" = "" ]; then
-            echo "No instance to snapshot"
+            echo "No instance was launched — preserving existing snapshots"
             exit 0
           fi
 
@@ -453,23 +453,12 @@ jobs:
             --output text 2>/dev/null || echo "None")
 
           if [ "$VOL_ID" = "None" ] || [ -z "$VOL_ID" ]; then
-            echo "WARNING: could not find volume for instance — skipping snapshot"
+            echo "WARNING: could not find data volume — preserving existing snapshots"
             exit 0
           fi
 
-          # delete ALL existing snapshots for this project (keep exactly 0 before creating 1)
-          echo "Cleaning old snapshots..."
-          OLD_SNAPS=$(aws ec2 describe-snapshots \
-            --owner-ids self \
-            --filters "Name=tag:Project,Values=treble-grapheneos" \
-            --query 'Snapshots[].SnapshotId' \
-            --output text 2>/dev/null || true)
-          for SNAP in $OLD_SNAPS; do
-            echo "  deleting old snapshot: ${SNAP}"
-            aws ec2 delete-snapshot --snapshot-id "$SNAP" 2>/dev/null || true
-          done
-
-          # create new snapshot
+          # create new snapshot FIRST — never delete the old one until the
+          # new one exists, so we always maintain at least one valid snapshot.
           echo "Creating snapshot of volume ${VOL_ID}..."
           NEW_SNAP=$(aws ec2 create-snapshot \
             --volume-id "$VOL_ID" \
@@ -477,8 +466,26 @@ jobs:
             --tag-specifications 'ResourceType=snapshot,Tags=[{Key=Project,Value=treble-grapheneos},{Key=Ephemeral,Value=true}]' \
             --query 'SnapshotId' \
             --output text)
+
+          if [ -z "$NEW_SNAP" ] || [ "$NEW_SNAP" = "None" ]; then
+            echo "WARNING: failed to create snapshot — preserving existing snapshots"
+            exit 0
+          fi
+
           echo "Created snapshot: ${NEW_SNAP}"
-          echo "Snapshot will be available for next build"
+
+          # now safe to clean up old snapshots (excluding the one we just created)
+          echo "Cleaning old snapshots..."
+          OLD_SNAPS=$(aws ec2 describe-snapshots \
+            --owner-ids self \
+            --filters "Name=tag:Project,Values=treble-grapheneos" \
+            --query 'Snapshots[].SnapshotId' \
+            --output text 2>/dev/null || true)
+          for SNAP in $OLD_SNAPS; do
+            [ "$SNAP" = "$NEW_SNAP" ] && continue
+            echo "  deleting old snapshot: ${SNAP}"
+            aws ec2 delete-snapshot --snapshot-id "$SNAP" 2>/dev/null || true
+          done
 
       - name: Terminate instance
         env:
