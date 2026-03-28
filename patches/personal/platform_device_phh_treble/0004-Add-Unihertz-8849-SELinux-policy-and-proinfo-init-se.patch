@@ -1,7 +1,7 @@
 From fa6f1e3c91144422fb6b105c64f19df5395581b1 Mon Sep 17 00:00:00 2001
 From: "Christopher A. Williamson" <contact@chrisaw.io>
 Date: Tue, 24 Mar 2026 12:44:06 +0000
-Subject: [PATCH 4/4] Add Unihertz 8849 SELinux policy and proinfo init
+Subject: [PATCH 4/5] Add Unihertz 8849 SELinux policy and proinfo init
  service
 
 - SELinux: label FPGA SPI and NDS03 sysfs nodes, allow system_app

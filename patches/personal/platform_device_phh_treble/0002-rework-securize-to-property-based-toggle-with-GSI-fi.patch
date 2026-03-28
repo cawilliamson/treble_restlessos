@@ -1,7 +1,7 @@
 From 46678add10e5eb42175fbac055bae33267e412fb Mon Sep 17 00:00:00 2001
 From: "Christopher A. Williamson" <contact@chrisaw.io>
 Date: Fri, 27 Mar 2026 11:48:26 +0000
-Subject: [PATCH 2/4] rework securize to property-based toggle with GSI fingerprint
+Subject: [PATCH 2/5] rework securize to property-based toggle with GSI fingerprint
  tracking
 
 replace /system/phh/secure file check with persist.sys.phh.securize property

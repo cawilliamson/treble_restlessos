@@ -1,7 +1,7 @@
 From ff91eb3a27c24d4c7b12af47fdc8446e4ab4631a Mon Sep 17 00:00:00 2001
 From: "Christopher A. Williamson" <contact@chrisaw.io>
 Date: Fri, 27 Mar 2026 11:03:04 +0000
-Subject: [PATCH 1/4] remove stale property overrides from rw-system.sh and base.mk
+Subject: [PATCH 1/5] remove stale property overrides from rw-system.sh and base.mk
 
 remove ro.adb.secure=0: adb authentication is now controlled per-boot
 by the fingerprint change detection block.

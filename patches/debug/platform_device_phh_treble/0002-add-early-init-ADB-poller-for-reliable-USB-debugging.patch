@@ -1,0 +1,129 @@
+From fd69f7394c31aa4f6196e1bbace7acad14b54282 Mon Sep 17 00:00:00 2001
+From: "Christopher A. Williamson" <contact@chrisaw.io>
+Date: Sat, 28 Mar 2026 18:57:26 +0000
+Subject: [PATCH 2/2] add early-init ADB poller for reliable USB debugging
+
+many vendor init scripts either never set sys.usb.controller or set
+it after AOSP's init.usb.configfs.rc property triggers have already
+fired and failed silently.  on these devices ADB never comes up
+because the UDC wasn't registered when the triggers ran.
+
+add a background service that starts at early-init (the earliest
+possible phase from the system partition) and tight-polls /sys/class/udc
+at 100ms intervals.  once a USB controller appears it:
+
+  - sets sys.usb.controller to the detected UDC
+  - ensures sys.usb.configfs=1 and configfs is mounted
+  - creates the gadget structure AOSP expects if vendor hasn't
+  - re-triggers sys.usb.config to fire AOSP's USB flow again
+
+this replaces the need for PHH's /cache/phh-adb manual gadget
+teardown approach.  unlike that method, this is non-destructive
+(doesn't fight with vendor USB HAL), uses AOSP's expected configfs
+layout and google VID/PID, and lets init manage adbd properly.
+---
+ 00-early-adb.rc  | 14 +++++++++++++
+ base.mk          |  2 ++
+ phh-early-adb.sh | 54 ++++++++++++++++++++++++++++++++++++++++++++++++
+ 3 files changed, 70 insertions(+)
+ create mode 100644 00-early-adb.rc
+ create mode 100755 phh-early-adb.sh
+
+diff --git a/00-early-adb.rc b/00-early-adb.rc
+new file mode 100644
+index 0000000..cb743e5
+--- /dev/null
++++ b/00-early-adb.rc
+@@ -0,0 +1,14 @@
++# start early ADB poller at the earliest possible init phase.
++# the service runs in the background and polls for a USB controller
++# to appear in sysfs, then sets the properties AOSP's init.usb.configfs.rc
++# needs to bring up adbd.  this is necessary because many vendor init
++# scripts either don't set sys.usb.controller at all or set it after
++# AOSP's USB triggers have already fired and failed.
++on early-init
++    start phh_early_adb
++
++service phh_early_adb /system/bin/sh /system/etc/phh-early-adb.sh
++    user root
++    oneshot
++    disabled
++    seclabel u:r:phhsu_daemon:s0
+diff --git a/base.mk b/base.mk
+index fda86c1..e75ce34 100644
+--- a/base.mk
++++ b/base.mk
+@@ -154,8 +154,10 @@ PRODUCT_PACKAGES += \
+ 
+ PRODUCT_COPY_FILES += \
+     device/phh/treble/files/adbd.rc:system/etc/init/adbd.rc \
++    device/phh/treble/00-early-adb.rc:system/etc/init/00-early-adb.rc \
+     device/phh/treble/00-fix-metadata.rc:system/etc/init/00-fix-metadata.rc \
+     device/phh/treble/00-fix-metadata.sh:system/etc/00-fix-metadata.sh \
++    device/phh/treble/phh-early-adb.sh:system/etc/phh-early-adb.sh \
+     device/phh/treble/8849-proinfo.rc:system/etc/init/8849-proinfo.rc \
+     device/phh/treble/8849-proinfo.sh:system/etc/8849-proinfo.sh
+ 
+diff --git a/phh-early-adb.sh b/phh-early-adb.sh
+new file mode 100755
+index 0000000..2f78cdd
+--- /dev/null
++++ b/phh-early-adb.sh
+@@ -0,0 +1,54 @@
++#!/system/bin/sh
++# early ADB: poll for a USB controller and ensure AOSP's USB triggers
++# can fire successfully.  starts at early-init so it runs concurrently
++# with vendor init, catching the UDC the instant it appears.
++#
++# problems this solves:
++#   - vendor never sets sys.usb.controller → AOSP writes empty UDC
++#   - vendor sets sys.usb.configfs too late → triggers already fired
++#   - AOSP triggers fired before UDC registered → "No such device"
++#   - gadget structure missing when triggers fire
++
++# poll for UDC — 100ms intervals, 60s timeout
++i=0
++while [ $i -lt 600 ]; do
++    udc="$(ls /sys/class/udc 2>/dev/null | head -1)"
++    [ -n "$udc" ] && break
++    sleep 0.1
++    i=$((i + 1))
++done
++[ -z "$udc" ] && exit 1
++
++# ensure configfs is mounted
++mountpoint -q /config || mount -t configfs none /config 2>/dev/null
++
++# create gadget structure if vendor hasn't done it.
++# uses AOSP's expected layout (b.1) and google ADB VID/PID.
++gadget="/config/usb_gadget/g1"
++if [ -d /config ] && [ ! -d "$gadget" ]; then
++    mkdir -p "$gadget/strings/0x409" "$gadget/configs/b.1/strings/0x409"
++    echo 0x18d1 > "$gadget/idVendor"
++    echo 0x4EE7 > "$gadget/idProduct"
++    serial="$(cat /sys/class/android_usb/android0/iSerial 2>/dev/null)"
++    [ -z "$serial" ] && serial="$(getprop ro.serialno)"
++    echo "${serial:-GSI}" > "$gadget/strings/0x409/serialnumber"
++    echo "Android" > "$gadget/strings/0x409/manufacturer"
++    echo "GSI" > "$gadget/strings/0x409/product"
++fi
++
++# ensure ffs.adb function and config dir exist
++[ -d "$gadget/functions/ffs.adb" ] || mkdir -p "$gadget/functions/ffs.adb" 2>/dev/null
++[ -d "$gadget/configs/b.1/strings/0x409" ] || mkdir -p "$gadget/configs/b.1/strings/0x409" 2>/dev/null
++
++# set properties — these are the prerequisites for AOSP's init.usb.configfs.rc
++setprop sys.usb.controller "$udc"
++[ "$(getprop sys.usb.configfs)" != "1" ] && setprop sys.usb.configfs 1
++
++# re-trigger USB config.  AOSP's triggers likely already fired and failed
++# because the UDC wasn't ready.  cycling through "none" then back to the
++# desired config causes the triggers to fire again, now with valid UDC.
++config="$(getprop persist.sys.usb.config)"
++[ -z "$config" ] && config="adb"
++setprop sys.usb.config none
++sleep 0.2
++setprop sys.usb.config "$config"
+-- 
+2.53.0
+

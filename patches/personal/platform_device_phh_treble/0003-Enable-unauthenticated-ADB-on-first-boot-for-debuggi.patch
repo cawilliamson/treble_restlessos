@@ -1,7 +1,7 @@
 From def8f040e89fd2ee31309a1315597ff8b18a80c7 Mon Sep 17 00:00:00 2001
 From: "Christopher A. Williamson" <contact@chrisaw.io>
 Date: Tue, 24 Mar 2026 12:44:06 +0000
-Subject: [PATCH 3/4] Enable unauthenticated ADB on first boot for debugging
+Subject: [PATCH 3/5] Enable unauthenticated ADB on first boot for debugging
 
 On first boot after a fresh install or GSI upgrade, enable ADB with
 no authentication so boot issues can be diagnosed. Uses the normal
