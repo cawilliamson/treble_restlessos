@@ -308,7 +308,8 @@ jobs:
           img="GrapheneOS-arm64-ab-${VERSION_TAG}.img"
           mv -v system.img "${img}"
           mkdir -p ../out/zsync
-          zsyncmake2 -u "${img}" -o "../out/zsync/${img}.zsync" "${img}"
+          zsyncmake2 -u "${img}" "${img}"
+          mv -v "${img}.zsync" "../out/zsync/${img}.zsync"
           cp -v "${img}" "../out/zsync/${img}"
           xz -9 -T0 -v -z "${img}"
           cp -fv "${img}.xz" ../out/
