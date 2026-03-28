@@ -1,0 +1,51 @@
+From 376cb9f426767dc41f2ac3d6602e73c2db7a6041 Mon Sep 17 00:00:00 2001
+From: "Christopher A. Williamson" <contact@chrisaw.io>
+Date: Sat, 28 Mar 2026 17:37:38 +0000
+Subject: [PATCH] revert first-boot ADB cleanup to keep unauthenticated ADB
+ open
+
+remove the phh-on-boot.sh block that deletes ro.adb.secure and stops
+adbd at boot_completed, and restore persist.sys.usb.config=adb in
+base.mk.  this effectively reverts the first-boot-only ADB window so
+that unauthenticated ADB remains available across all boots.
+
+debug-only patch -- must not be shipped in release builds.
+---
+ base.mk        | 1 +
+ phh-on-boot.sh | 8 ++------
+ 2 files changed, 3 insertions(+), 6 deletions(-)
+
+diff --git a/base.mk b/base.mk
+index 2462c9b..fda86c1 100644
+--- a/base.mk
++++ b/base.mk
+@@ -42,6 +42,7 @@ PRODUCT_SYSTEM_DEFAULT_PROPERTIES += \
+ 
+ # Huawei HiSuite (also other OEM custom programs I guess) it's of no use in AOSP builds
+ PRODUCT_SYSTEM_DEFAULT_PROPERTIES += \
++    persist.sys.usb.config=adb \
+     ro.cust.cdrom=/dev/null
+ 
+ # VNDK config files
+diff --git a/phh-on-boot.sh b/phh-on-boot.sh
+index 9e084a0..d8b7f81 100644
+--- a/phh-on-boot.sh
++++ b/phh-on-boot.sh
+@@ -36,12 +36,8 @@ if [ ! -f /metadata/securize_disable ]; then
+   resetprop_phh -n init.svc.flash_recovery stopped
+ fi
+ 
+-# End first-boot debug ADB window.
+-if [ "$(getprop ro.adb.secure)" = "0" ]; then
+-    resetprop_phh --delete ro.adb.secure
+-    resetprop_phh --delete persist.sys.usb.config
+-    stop adbd
+-fi
++# debug build: keep unauthenticated ADB open permanently
++# (the cleanup block that disables ADB at boot_completed is removed)
+ 
+ vndk="$(getprop persist.sys.vndk)"
+ [ -z "$vndk" ] && vndk="$(getprop ro.vndk.version |grep -oE '^[0-9]+')"
+-- 
+2.53.0
+
