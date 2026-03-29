@@ -154,31 +154,35 @@ jobs:
             echo "No snapshot — fresh data volume"
             BDM="[{\"DeviceName\":\"/dev/sdf\",\"Ebs\":{\"VolumeSize\":500,\"VolumeType\":\"gp3\",\"Iops\":16000,\"Throughput\":1000,\"DeleteOnTermination\":true}}]"
           fi
-          # try each subnet (AZ) until one has capacity.
+          # retry across all subnets until one succeeds.  keeps retrying
+          # indefinitely — common transient failures include vCPU quota
+          # limits (old instance still terminating) and snapshots that
+          # haven't finished creating yet.
           IFS=',' read -ra SUBNETS <<< "${{ secrets.AWS_SUBNET_IDS }}"
           INSTANCE_ID=""
-          for SUBNET in "${SUBNETS[@]}"; do
-            echo "Trying subnet ${SUBNET}..."
-            INSTANCE_ID=$(aws ec2 run-instances \
-              --block-device-mappings "${BDM}" \
-              --image-id "${{ steps.ami.outputs.ami_id }}" \
-              --instance-initiated-shutdown-behavior terminate \
-              --instance-market-options '{"MarketType":"spot","SpotOptions":{"SpotInstanceType":"one-time","InstanceInterruptionBehavior":"terminate"}}' \
-              --instance-type c7i.48xlarge \
-              --output text \
-              --query 'Instances[0].InstanceId' \
-              --security-group-ids "${{ secrets.AWS_SECURITY_GROUP_ID }}" \
-              --subnet-id "${SUBNET}" \
-              --tag-specifications "ResourceType=instance,Tags=[{Key=Name,Value=gsi-build-${{ github.run_id }}},{Key=Project,Value=treble-grapheneos},{Key=Ephemeral,Value=true}]" \
-              --user-data "file:///tmp/user-data.yml" 2>&1) && break
-            echo "  failed: ${INSTANCE_ID}"
-            INSTANCE_ID=""
+          ATTEMPT=0
+          while [ -z "$INSTANCE_ID" ]; do
+            ATTEMPT=$((ATTEMPT + 1))
+            for SUBNET in "${SUBNETS[@]}"; do
+              echo "Attempt ${ATTEMPT}: trying subnet ${SUBNET}..."
+              INSTANCE_ID=$(aws ec2 run-instances \
+                --block-device-mappings "${BDM}" \
+                --image-id "${{ steps.ami.outputs.ami_id }}" \
+                --instance-initiated-shutdown-behavior terminate \
+                --instance-market-options '{"MarketType":"spot","SpotOptions":{"SpotInstanceType":"one-time","InstanceInterruptionBehavior":"terminate"}}' \
+                --instance-type c7i.48xlarge \
+                --output text \
+                --query 'Instances[0].InstanceId' \
+                --security-group-ids "${{ secrets.AWS_SECURITY_GROUP_ID }}" \
+                --subnet-id "${SUBNET}" \
+                --tag-specifications "ResourceType=instance,Tags=[{Key=Name,Value=gsi-build-${{ github.run_id }}},{Key=Project,Value=treble-grapheneos},{Key=Ephemeral,Value=true}]" \
+                --user-data "file:///tmp/user-data.yml" 2>&1) && break 2
+              echo "  failed: ${INSTANCE_ID}"
+              INSTANCE_ID=""
+            done
+            echo "All subnets failed — retrying in 30s..."
+            sleep 30
           done
-
-          if [ -z "$INSTANCE_ID" ] || [ "$INSTANCE_ID" = "None" ]; then
-            echo "ERROR: failed to launch spot instance in any AZ"
-            exit 1
-          fi
 
           echo "instance_id=${INSTANCE_ID}" >> "$GITHUB_OUTPUT"
           echo "Launched spot instance: ${INSTANCE_ID} (c7i.48xlarge in eu-west-2)"
