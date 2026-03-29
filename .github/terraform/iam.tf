@@ -26,14 +26,14 @@ resource "aws_iam_user_policy" "gha_ec2" {
         Sid    = "EC2SpotBuild"
         Effect = "Allow"
         Action = [
-          "ec2:CreateSnapshot",
+          "ec2:AttachVolume",
           "ec2:CreateTags",
-          "ec2:DeleteSnapshot",
+          "ec2:CreateVolume",
           "ec2:DescribeImages",
           "ec2:DescribeInstanceStatus",
           "ec2:DescribeInstances",
-          "ec2:DescribeSnapshots",
           "ec2:DescribeVolumes",
+          "ec2:DetachVolume",
           "ec2:RunInstances",
           "ec2:TerminateInstances",
         ]

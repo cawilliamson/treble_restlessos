@@ -21,7 +21,7 @@ on:
         type: boolean
         default: false
       clean_build:
-        description: 'ignore snapshot cache and build from a clean volume'
+        description: 'wipe persistent data volume and start fresh'
         required: false
         type: boolean
         default: false
@@ -113,51 +113,14 @@ jobs:
           echo "ami_id=${AMI_ID}" >> "$GITHUB_OUTPUT"
           echo "Using AMI: ${AMI_ID}"
 
-      - name: Find latest build snapshot
-        id: snapshot
-        env:
-          CLEAN_BUILD: ${{ github.event.inputs.clean_build || 'false' }}
-        run: |
-          if [ "${CLEAN_BUILD}" = "true" ]; then
-            echo "Clean build requested — ignoring snapshots"
-            echo "snapshot_id=" >> "$GITHUB_OUTPUT"
-            exit 0
-          fi
-          SNAP_ID=$(aws ec2 describe-snapshots \
-            --owner-ids self \
-            --filters "Name=tag:Project,Values=treble-grapheneos" \
-            --query 'Snapshots | sort_by(@, &StartTime) | [-1].SnapshotId' \
-            --output text 2>/dev/null || echo "None")
-          if [ "$SNAP_ID" != "None" ] && [ -n "$SNAP_ID" ]; then
-            echo "Found snapshot: ${SNAP_ID}"
-            echo "snapshot_id=${SNAP_ID}" >> "$GITHUB_OUTPUT"
-          else
-            echo "No snapshot found — will use empty volume"
-            echo "snapshot_id=" >> "$GITHUB_OUTPUT"
-          fi
-
       - name: Launch EC2 spot instance
         id: launch
         run: |
           # c7i.48xlarge: 192 vCPUs, 384 GiB RAM
           # InstanceInitiatedShutdownBehavior=terminate ensures the cloud-init
           # safety timer (shutdown -P +120) destroys the instance entirely.
-          # root volume: standard AMI root, sized for OS + build tools.
-          # data volume: /dev/sdf, optionally restored from a snapshot for
-          # incremental builds.  mounted at /data by cloud-init; the runner
-          # work directory points here directly.
-          SNAP_ID="${{ steps.snapshot.outputs.snapshot_id }}"
-          if [ -n "$SNAP_ID" ]; then
-            echo "Using snapshot ${SNAP_ID} for data volume"
-            BDM="[{\"DeviceName\":\"/dev/sdf\",\"Ebs\":{\"SnapshotId\":\"${SNAP_ID}\",\"VolumeSize\":500,\"VolumeType\":\"gp3\",\"Iops\":16000,\"Throughput\":1000,\"DeleteOnTermination\":true}}]"
-          else
-            echo "No snapshot — fresh data volume"
-            BDM="[{\"DeviceName\":\"/dev/sdf\",\"Ebs\":{\"VolumeSize\":500,\"VolumeType\":\"gp3\",\"Iops\":16000,\"Throughput\":1000,\"DeleteOnTermination\":true}}]"
-          fi
-          # retry across all subnets until one succeeds.  keeps retrying
-          # indefinitely — common transient failures include vCPU quota
-          # limits (old instance still terminating) and snapshots that
-          # haven't finished creating yet.
+          # no data volume in BDM — the persistent volume is attached after
+          # launch so it can be reused across builds.
           IFS=',' read -ra SUBNETS <<< "${{ secrets.AWS_SUBNET_IDS }}"
           INSTANCE_ID=""
           ATTEMPT=0
@@ -167,7 +130,6 @@ jobs:
             for SUBNET in "${SUBNETS[@]}"; do
               echo "Attempt ${ATTEMPT}: trying subnet ${SUBNET}..."
               INSTANCE_ID=$(aws ec2 run-instances \
-                --block-device-mappings "${BDM}" \
                 --image-id "${{ steps.ami.outputs.ami_id }}" \
                 --instance-initiated-shutdown-behavior terminate \
                 --instance-market-options '{"MarketType":"spot","SpotOptions":{"SpotInstanceType":"one-time","InstanceInterruptionBehavior":"terminate"}}' \
@@ -200,6 +162,60 @@ jobs:
           aws ec2 wait instance-running \
             --instance-ids "${{ steps.launch.outputs.instance_id }}"
           echo "Instance is running"
+
+      - name: Attach persistent data volume
+        run: |
+          INSTANCE_ID="${{ steps.launch.outputs.instance_id }}"
+
+          # find the AZ the instance launched in
+          AZ=$(aws ec2 describe-instances \
+            --instance-ids "$INSTANCE_ID" \
+            --query 'Reservations[0].Instances[0].Placement.AvailabilityZone' \
+            --output text)
+          echo "Instance AZ: ${AZ}"
+
+          # find existing persistent volume in this AZ
+          VOL_ID=$(aws ec2 describe-volumes \
+            --filters \
+              "Name=tag:Project,Values=treble-grapheneos" \
+              "Name=tag:Role,Values=build-data" \
+              "Name=availability-zone,Values=${AZ}" \
+            --query 'Volumes[0].VolumeId' \
+            --output text 2>/dev/null || echo "None")
+
+          if [ "$VOL_ID" = "None" ] || [ -z "$VOL_ID" ]; then
+            echo "No existing volume in ${AZ} — creating one..."
+            VOL_ID=$(aws ec2 create-volume \
+              --availability-zone "$AZ" \
+              --size 500 \
+              --volume-type gp3 \
+              --iops 16000 \
+              --throughput 1000 \
+              --tag-specifications 'ResourceType=volume,Tags=[{Key=Project,Value=treble-grapheneos},{Key=Role,Value=build-data},{Key=Name,Value=gsi-build-data}]' \
+              --query 'VolumeId' \
+              --output text)
+            echo "Created volume: ${VOL_ID}"
+            aws ec2 wait volume-available --volume-ids "$VOL_ID"
+          else
+            echo "Found existing volume: ${VOL_ID}"
+            # if still attached to a dead instance, wait for it to detach
+            VOL_STATE=$(aws ec2 describe-volumes \
+              --volume-ids "$VOL_ID" \
+              --query 'Volumes[0].State' \
+              --output text)
+            if [ "$VOL_STATE" != "available" ]; then
+              echo "Volume is ${VOL_STATE} — waiting for it to become available..."
+              aws ec2 wait volume-available --volume-ids "$VOL_ID"
+            fi
+          fi
+
+          echo "Attaching ${VOL_ID} to ${INSTANCE_ID} as /dev/sdf..."
+          aws ec2 attach-volume \
+            --volume-id "$VOL_ID" \
+            --instance-id "$INSTANCE_ID" \
+            --device /dev/sdf
+          aws ec2 wait volume-in-use --volume-ids "$VOL_ID"
+          echo "Volume attached"
 
       - name: Wait for runner to register with GitHub Actions
         run: |
@@ -426,12 +442,6 @@ jobs:
             ./*.img.xz
 
 
-      - name: Sync data volume for snapshot
-        if: always()
-        run: |
-          sync
-          sudo umount /data 2>/dev/null || true
-
   # ---------------------------------------------------------------------------
   # job 3: teardown
   # always runs - terminates the EC2 instance and removes the runner.
@@ -450,59 +460,6 @@ jobs:
           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: eu-west-2
-
-      - name: Snapshot build volume
-        continue-on-error: true
-        env:
-          INSTANCE_ID: ${{ needs.provision.outputs.instance_id }}
-        run: |
-          if [ -z "${INSTANCE_ID}" ] || [ "${INSTANCE_ID}" = "" ]; then
-            echo "No instance was launched — preserving existing snapshots"
-            exit 0
-          fi
-
-          # find the data volume (/dev/sdf)
-          VOL_ID=$(aws ec2 describe-instances \
-            --instance-ids "${INSTANCE_ID}" \
-            --query 'Reservations[0].Instances[0].BlockDeviceMappings[?DeviceName==`/dev/sdf`].Ebs.VolumeId | [0]' \
-            --output text 2>/dev/null || echo "None")
-
-          if [ "$VOL_ID" = "None" ] || [ -z "$VOL_ID" ]; then
-            echo "WARNING: could not find data volume — preserving existing snapshots"
-            exit 0
-          fi
-
-          # create new snapshot FIRST — never delete the old one until the
-          # new one exists, so we always maintain at least one valid snapshot.
-          echo "Creating snapshot of volume ${VOL_ID}..."
-          NEW_SNAP=$(aws ec2 create-snapshot \
-            --volume-id "$VOL_ID" \
-            --description "treble_grapheneos build cache $(date -u +%Y-%m-%dT%H:%M:%SZ)" \
-            --tag-specifications 'ResourceType=snapshot,Tags=[{Key=Project,Value=treble-grapheneos},{Key=Ephemeral,Value=true}]' \
-            --query 'SnapshotId' \
-            --output text)
-
-          if [ -z "$NEW_SNAP" ] || [ "$NEW_SNAP" = "None" ]; then
-            echo "WARNING: failed to create snapshot — preserving existing snapshots"
-            exit 0
-          fi
-
-          echo "Created snapshot: ${NEW_SNAP} — waiting for completion..."
-          aws ec2 wait snapshot-completed --snapshot-ids "$NEW_SNAP"
-          echo "Snapshot ${NEW_SNAP} is ready"
-
-          # now safe to clean up old snapshots (excluding the one we just created)
-          echo "Cleaning old snapshots..."
-          OLD_SNAPS=$(aws ec2 describe-snapshots \
-            --owner-ids self \
-            --filters "Name=tag:Project,Values=treble-grapheneos" \
-            --query 'Snapshots[].SnapshotId' \
-            --output text 2>/dev/null || true)
-          for SNAP in $OLD_SNAPS; do
-            [ "$SNAP" = "$NEW_SNAP" ] && continue
-            echo "  deleting old snapshot: ${SNAP}"
-            aws ec2 delete-snapshot --snapshot-id "$SNAP" 2>/dev/null || true
-          done
 
       - name: Terminate instance
         env:
