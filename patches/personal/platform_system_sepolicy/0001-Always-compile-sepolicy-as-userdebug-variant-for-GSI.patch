@@ -1,0 +1,44 @@
+From 700f5dbf27f4d20373a99a87e62ded535e9c7c7e Mon Sep 17 00:00:00 2001
+From: "Christopher A. Williamson" <contact@chrisaw.io>
+Date: Sun, 29 Mar 2026 22:14:39 +0100
+Subject: [PATCH] Always compile sepolicy as userdebug variant for GSI compat
+
+Override buildVariant() to always return "userdebug" regardless of the
+actual build variant. GSI builds use the user variant for everything
+else (no debug compile flags, no debug packages, no verbose logging)
+but need the userdebug SELinux policy because TrebleDroid compat
+patches and many vendor partitions depend on rules inside
+userdebug_or_eng() blocks.
+
+Without this, a user-variant build strips all userdebug_or_eng()
+policy blocks, which can cause SELinux denials for PHH overlay
+operations and vendor HAL interactions.
+---
+ build/soong/policy.go | 11 ++++-------
+ 1 file changed, 4 insertions(+), 7 deletions(-)
+
+diff --git a/build/soong/policy.go b/build/soong/policy.go
+index 78f9992..312488e 100644
+--- a/build/soong/policy.go
++++ b/build/soong/policy.go
+@@ -157,13 +157,10 @@ func (c *policyConf) buildVariant(ctx android.ModuleContext) string {
+ 	if variant := proptools.String(c.properties.Build_variant); variant != "" {
+ 		return variant
+ 	}
+-	if ctx.Config().Eng() {
+-		return "eng"
+-	}
+-	if ctx.Config().Debuggable() {
+-		return "userdebug"
+-	}
+-	return "user"
++	// always compile sepolicy as userdebug regardless of the actual build
++	// variant. GSI builds need the userdebug_or_eng() policy blocks for
++	// TrebleDroid compat with vendor partitions that expect them.
++	return "userdebug"
+ }
+ 
+ func (c *policyConf) cts() bool {
+-- 
+2.53.0
+

@@ -385,7 +385,11 @@ jobs:
             bash generate.sh grapheneos
           popd
           . build/envsetup.sh
-          lunch "treble_arm64_bvN-${ANDROID_VERSION_TAG_VAL}-userdebug"
+          BUILD_VARIANT="user"
+          if [ "${DEBUG_BUILD}" = "true" ]; then
+            BUILD_VARIANT="userdebug"
+          fi
+          lunch "treble_arm64_bvN-${ANDROID_VERSION_TAG_VAL}-${BUILD_VARIANT}"
           make systemimage -j"$(nproc --all)"
           make target-files-package otatools -j"$(nproc --all)"
 
@@ -397,7 +401,11 @@ jobs:
           mkdir -p "$TMPDIR"
           ANDROID_VERSION_TAG_VAL=$(cat ../tmp/.android_version_tag)
           . build/envsetup.sh
-          lunch "treble_arm64_bvN-${ANDROID_VERSION_TAG_VAL}-userdebug"
+          BUILD_VARIANT="user"
+          if [ "${DEBUG_BUILD}" = "true" ]; then
+            BUILD_VARIANT="userdebug"
+          fi
+          lunch "treble_arm64_bvN-${ANDROID_VERSION_TAG_VAL}-${BUILD_VARIANT}"
           bash vendor/cawilliamson-priv/keys/sign.sh
           rm --force --verbose "${OUT}/system.img"
           unzip -joq "${OUT}/signed-target_files.zip" IMAGES/system.img -d "${OUT}/"
