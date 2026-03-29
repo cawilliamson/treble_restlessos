@@ -1,6 +1,6 @@
-From 3da507fb1e54bd12833b78cba66e8a07ea0073d1 Mon Sep 17 00:00:00 2001
+From 2913862697434b464dea2fe48f14c1fa65392750 Mon Sep 17 00:00:00 2001
 From: "Christopher A. Williamson" <contact@chrisaw.io>
-Date: Sat, 28 Mar 2026 17:28:32 +0000
+Date: Sun, 29 Mar 2026 16:32:18 +0100
 Subject: [PATCH] SurfaceFlinger: add GSI_DISP debug logging for display
  power-on sequence
 
@@ -13,19 +13,19 @@ and power management paths.  covers:
   OFF/ON sequencing with power mode before/after
 - SurfaceFlinger::setPhysicalDisplayPowerMode(): current vs requested
   mode, early-return on same-mode, isInternal, feature flag values,
-  optimization policy, HWC setPowerMode call/return, vsync routing
-  (hardware vs synthetic), resync, scheduler notification, final state
+  optimization policy, scheduler notification, HWC setPowerMode
+  call/return, vsync routing, final state
 
 all lines use the GSI_DISP tag prefix for easy filtering:
   adb logcat -s SurfaceFlinger:I | grep GSI_DISP
 
 debug-only patch -- not for release builds.
 ---
- services/surfaceflinger/SurfaceFlinger.cpp | 56 +++++++++++++++++++++-
- 1 file changed, 54 insertions(+), 2 deletions(-)
+ services/surfaceflinger/SurfaceFlinger.cpp | 52 +++++++++++++++++++++-
+ 1 file changed, 50 insertions(+), 2 deletions(-)
 
 diff --git a/services/surfaceflinger/SurfaceFlinger.cpp b/services/surfaceflinger/SurfaceFlinger.cpp
-index 24dd344d49..85ca3cfa8f 100644
+index eb481b1e1c..a77d326bf1 100644
 --- a/services/surfaceflinger/SurfaceFlinger.cpp
 +++ b/services/surfaceflinger/SurfaceFlinger.cpp
 @@ -944,6 +944,7 @@ renderengine::RenderEngine::BlurAlgorithm chooseBlurAlgorithm(bool supportsBlur)
@@ -154,7 +154,7 @@ index 24dd344d49..85ca3cfa8f 100644
  
      if (couldRefresh && !canRefresh) {
          decRefreshableDisplays();
-@@ -6110,8 +6140,16 @@ void SurfaceFlinger::setPhysicalDisplayPowerMode(const sp<DisplayDevice>& displa
+@@ -6110,12 +6140,23 @@ void SurfaceFlinger::setPhysicalDisplayPowerMode(const sp<DisplayDevice>& displa
      const bool shouldApplyOptimizationPolicy =
              FlagManager::getInstance().disable_synthetic_vsync_for_performance() &&
              FlagManager::getInstance().correct_virtual_display_power_state();
@@ -171,7 +171,14 @@ index 24dd344d49..85ca3cfa8f 100644
          applyOptimizationPolicy(__func__);
      }
  
-@@ -6135,22 +6173,30 @@ void SurfaceFlinger::setPhysicalDisplayPowerMode(const sp<DisplayDevice>& displa
++    ALOGI("GSI_DISP: setPowerMode: notifying scheduler of power mode %d",
++          static_cast<int>(mode));
+     if (mScheduler->setDisplayPowerMode(displayId, mode)) {
++        ALOGI("GSI_DISP: setPowerMode: pacesetter display changed");
+         onNewPacesetterDisplay();
+     }
+ 
+@@ -6139,10 +6180,14 @@ void SurfaceFlinger::setPhysicalDisplayPowerMode(const sp<DisplayDevice>& displa
                                       OptimizationPolicy::optimizeForPerformance);
          }
  
@@ -186,31 +193,8 @@ index 24dd344d49..85ca3cfa8f 100644
              requestHardwareVsync(displayId, enable);
  
              if (displayId == mFrontInternalDisplayId && !shouldApplyOptimizationPolicy) {
-+                ALOGI("GSI_DISP: setPowerMode OFF->ON: disabling synthetic vsync");
-                 mScheduler->enableSyntheticVsync(false);
-             }
- 
-             constexpr bool kAllowToEnable = true;
-+            ALOGI("GSI_DISP: setPowerMode OFF->ON: resync to hw vsync, fps=%s",
-+                  to_string(activeMode->getPeakFps()).c_str());
-             mScheduler->resyncToHardwareVsync(displayId, kAllowToEnable, activeMode.get());
-         }
- 
-         mVisibleRegionsDirty = true;
-         scheduleComposite(FrameHint::kActive);
-+        ALOGI("GSI_DISP: setPowerMode OFF->ON: composite scheduled");
-     } else if (mode == hal::PowerMode::OFF) {
-         const bool currentModeNotDozeSuspend = (currentMode != hal::PowerMode::DOZE_SUSPEND);
-         // Turn off the display
-@@ -6225,10 +6271,16 @@ void SurfaceFlinger::setPhysicalDisplayPowerMode(const sp<DisplayDevice>& displa
-     // notify scheduler after the HWC power mode has been committed so that
-     // vsync and pacesetter state reflect the actual hardware state rather
-     // than racing ahead of it -- matches QPR1 call-site ordering
-+    ALOGI("GSI_DISP: setPowerMode: notifying scheduler of power mode %d",
-+          static_cast<int>(mode));
-     if (mScheduler->setDisplayPowerMode(displayId, mode)) {
-+        ALOGI("GSI_DISP: setPowerMode: pacesetter display changed");
-         onNewPacesetterDisplay();
+@@ -6226,6 +6271,9 @@ void SurfaceFlinger::setPhysicalDisplayPowerMode(const sp<DisplayDevice>& displa
+         mScheduler->setActiveDisplayPowerModeForRefreshRateStats(mode);
      }
  
 +    ALOGI("GSI_DISP: setPowerMode: finished, display %s now powerMode=%d isPoweredOn=%d",
