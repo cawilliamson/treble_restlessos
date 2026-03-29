@@ -362,15 +362,14 @@ jobs:
       - name: Apply patches
         working-directory: src/
         run: |
-          cp --recursive --verbose ../patches .
-          patches/apply.sh . trebledroid
-          patches/apply.sh . trebledroid-staging
-          patches/apply.sh . legacy-devices
-          patches/apply.sh . grapheneos
-          patches/apply.sh . personal
+          ../patches/apply.sh . trebledroid
+          ../patches/apply.sh . trebledroid-staging
+          ../patches/apply.sh . legacy-devices
+          ../patches/apply.sh . grapheneos
+          ../patches/apply.sh . personal
           if [ "${DEBUG_BUILD}" = "true" ]; then
             echo "*** DEBUG BUILD: applying debug patches ***"
-            patches/apply.sh . debug
+            ../patches/apply.sh . debug
           fi
 
       - name: Build TrebleApp
