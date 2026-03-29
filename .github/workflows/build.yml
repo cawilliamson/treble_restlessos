@@ -161,7 +161,8 @@ jobs:
           IFS=',' read -ra SUBNETS <<< "${{ secrets.AWS_SUBNET_IDS }}"
           INSTANCE_ID=""
           ATTEMPT=0
-          while [ -z "$INSTANCE_ID" ]; do
+          DEADLINE=$((SECONDS + 3600))
+          while [ -z "$INSTANCE_ID" ] && [ "$SECONDS" -lt "$DEADLINE" ]; do
             ATTEMPT=$((ATTEMPT + 1))
             for SUBNET in "${SUBNETS[@]}"; do
               echo "Attempt ${ATTEMPT}: trying subnet ${SUBNET}..."
@@ -180,9 +181,15 @@ jobs:
               echo "  failed: ${INSTANCE_ID}"
               INSTANCE_ID=""
             done
-            echo "All subnets failed — retrying in 30s..."
+            REMAINING=$(( (DEADLINE - SECONDS) / 60 ))
+            echo "All subnets failed — retrying in 30s (${REMAINING}m remaining)..."
             sleep 30
           done
+
+          if [ -z "$INSTANCE_ID" ]; then
+            echo "ERROR: failed to launch spot instance after 1 hour"
+            exit 1
+          fi
 
           echo "instance_id=${INSTANCE_ID}" >> "$GITHUB_OUTPUT"
           echo "Launched spot instance: ${INSTANCE_ID} (c7i.48xlarge in eu-west-2)"
