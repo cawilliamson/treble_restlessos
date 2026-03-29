@@ -1,6 +1,6 @@
-From 068c9a677011671b815e96d6bc94841436908440 Mon Sep 17 00:00:00 2001
+From f651106c6179885ad4542a93de8fc99abf6738eb Mon Sep 17 00:00:00 2001
 From: "Christopher A. Williamson" <contact@chrisaw.io>
-Date: Sun, 29 Mar 2026 22:14:39 +0100
+Date: Sun, 29 Mar 2026 23:31:31 +0100
 Subject: [PATCH] Always compile sepolicy as userdebug variant for GSI compat
 
 Override buildVariant() to always return "userdebug" regardless of the
@@ -14,15 +14,14 @@ Without this, a user-variant build strips all userdebug_or_eng()
 policy blocks, which can cause SELinux denials for PHH overlay
 operations and vendor HAL interactions.
 
-Allow the su domain to remain permissive in the plat_precompiled_sepolicy
-binary. The su domain is declared permissive inside a userdebug_or_eng()
-block in private/su.te; because we force userdebug policy compilation,
-the block is active and the build system's permissive domain check
-would otherwise reject the policy on user builds.
+Remove the permissive declaration from the su domain. The su binary is
+not included in GSI builds (treble_arm64_bvN = no su) so the domain
+is never entered, and permissive domains are rejected by the build
+system in user builds.
 ---
  build/soong/policy.go | 11 ++++-------
- contexts/Android.bp   |  5 +++++
- 2 files changed, 9 insertions(+), 7 deletions(-)
+ private/su.te         |  5 +++--
+ 2 files changed, 7 insertions(+), 9 deletions(-)
 
 diff --git a/build/soong/policy.go b/build/soong/policy.go
 index 78f9992..312488e 100644
@@ -46,21 +45,21 @@ index 78f9992..312488e 100644
  }
  
  func (c *policyConf) cts() bool {
-diff --git a/contexts/Android.bp b/contexts/Android.bp
-index 842e318..e15be0f 100644
---- a/contexts/Android.bp
-+++ b/contexts/Android.bp
-@@ -433,6 +433,11 @@ keystore2_key_contexts {
- se_policy_binary {
-     name: "plat_precompiled_sepolicy",
-     srcs: [":plat_sepolicy.cil"],
-+    // the su domain is declared permissive inside a userdebug_or_eng() block
-+    // in private/su.te. because we force sepolicy to compile as userdebug for
-+    // GSI compat, this block is active even on user builds. allow it here so
-+    // the permissive domain check does not reject the policy.
-+    permissive_domains_on_user_builds: ["su"],
-     installable: false,
- }
+diff --git a/private/su.te b/private/su.te
+index fae9b98..9521a74 100644
+--- a/private/su.te
++++ b/private/su.te
+@@ -23,8 +23,9 @@ userdebug_or_eng(`
+   # own domain.
+   virtualizationservice_use(su)
+ 
+-  # su is also permissive to permit setenforce.
+-  permissive su;
++  # do not declare su as permissive. the su binary is not included in GSI
++  # builds (treble_arm64_bvN = no su) so the domain is never entered, and
++  # permissive domains are rejected by the build system in user builds.
+ 
+   app_domain(su)
  
 -- 
 2.53.0

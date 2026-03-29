@@ -4,9 +4,9 @@ Date: Sun, 29 Mar 2026 13:48:06 +0100
 Subject: [PATCH] re-add su binary to PRODUCT_PACKAGES_DEBUG
 
 the grapheneos tier removes su from debug packages since it is
-managed via magisk in release builds. for debug builds we want
+not included in release builds. for debug builds we want
 the built-in su binary available for root shell access without
-needing magisk.
+needing a separate root solution.
 ---
  target/product/base_system.mk | 1 +
  1 file changed, 1 insertion(+)
