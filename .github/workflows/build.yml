@@ -21,7 +21,7 @@ on:
         type: boolean
         default: false
       clean_build:
-        description: 'wipe persistent data volume and start fresh'
+        description: 'wipe data volume contents and build from scratch'
         required: false
         type: boolean
         default: false
@@ -300,11 +300,15 @@ jobs:
           fi
 
       - name: Clean stale build artifacts
+        env:
+          CLEAN_BUILD: ${{ github.event.inputs.clean_build || 'false' }}
         run: |
-          # remove stale locks, product output, and intermediates that
-          # break incremental builds when running from a snapshot.
-          # the soong intermediates cache is the main incremental win;
-          # target/product/ and the final images must be rebuilt anyway.
+          if [ "$CLEAN_BUILD" = "true" ]; then
+            echo "Clean build requested — wiping /data contents"
+            rm -rf src/ out/ tmp/
+          fi
+          # remove stale locks and product output that break incremental builds.
+          # soong intermediates cache is preserved for incremental wins.
           rm -rfv src/out/.lock 2>/dev/null || true
           rm -rfv src/out/target/ 2>/dev/null || true
           rm -fv tmp/*.img* out/*.img* 2>/dev/null || true

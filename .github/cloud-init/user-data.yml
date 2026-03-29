@@ -47,22 +47,6 @@ packages:
   - zlib1g-dev
   - zsync
 
-# format data volume only if it has no filesystem (fresh volume).
-# snapshot-restored volumes already have ext4 and are left as-is.
-# note: /dev/sdf appears as /dev/nvme1n1 on nitro instances.
-disk_setup:
-  /dev/nvme1n1:
-    table_type: none
-
-fs_setup:
-  - device: /dev/nvme1n1
-    filesystem: ext4
-    label: builddata
-    overwrite: false
-
-mounts:
-  - [ /dev/nvme1n1, /data, ext4, "defaults,nofail", "0", "2" ]
-
 users:
   - default
   - name: github
@@ -102,10 +86,28 @@ runcmd:
   - "shutdown -P +120 'SAFETY: 2-hour maximum build time reached. self-destructing.'"
 
   # -------------------------------------------------------------------------
-  # DATA VOLUME - mounted at /data by cloud-init disk_setup/fs_setup/mounts
-  # above.  just ensure ownership is correct for the runner.
+  # DATA VOLUME - attached by the GHA workflow while cloud-init runs.
+  # wait for it to appear, format if needed, mount at /data.
+  # this MUST complete before the runner is installed, since --work=/data.
   # -------------------------------------------------------------------------
-  - chown github:github /data
+  - |
+    echo "Waiting for data volume (/dev/nvme1n1)..."
+    for i in $(seq 1 120); do
+      [ -b /dev/nvme1n1 ] && break
+      sleep 5
+    done
+    if [ ! -b /dev/nvme1n1 ]; then
+      echo "ERROR: /dev/nvme1n1 did not appear after 10 minutes"
+      exit 1
+    fi
+    if ! blkid -s TYPE -o value /dev/nvme1n1 2>/dev/null | grep -q ext4; then
+      echo "Formatting /dev/nvme1n1..."
+      mkfs.ext4 -m 0 -L builddata /dev/nvme1n1
+    fi
+    mkdir -p /data
+    mount /dev/nvme1n1 /data
+    chown github:github /data
+    echo "Mounted /dev/nvme1n1 at /data ($(df -h /data | tail -1 | awk '{print $2}'))"
 
   # -------------------------------------------------------------------------
   # SSH key + config — created here because write_files runs before users
