@@ -1,4 +1,4 @@
-From 4177730421e2864fd72e7184060173eecb885c5b Mon Sep 17 00:00:00 2001
+From f40c8f823af6850b71702778d7b5db059b709d21 Mon Sep 17 00:00:00 2001
 From: "Christopher A. Williamson" <contact@chrisaw.io>
 Date: Tue, 17 Mar 2026 23:24:50 +0000
 Subject: [PATCH] Configure build for GrapheneOS GSI apps and packages
@@ -12,21 +12,20 @@ Adapt the AOSP build configuration for GrapheneOS GSI:
 - Remove packages that are not useful or not desired in GSI builds:
   Calendar (deprecated, CalendarProvider kept), MusicFX, Auditor
   (requires hardware attestation), PdfViewerGOS, InfoApp,
-  DeviceDiagnostics, EasterEgg, HardeningTestApp, su (managed via
-  Magisk), mtectrl/misctrl (Pixel-specific, can interfere with
-  vendor TEE)
+  DeviceDiagnostics, EasterEgg, HardeningTestApp,
+  mtectrl/misctrl (Pixel-specific, can interfere with vendor TEE)
 - Add LiveWallpapersPicker to enable live wallpaper support for
   third-party live wallpapers (e.g. from F-Droid or sideloaded)
 ---
- target/product/base_system.mk      | 4 ----
+ target/product/base_system.mk      | 3 ---
  target/product/generic/Android.bp  | 3 +--
  target/product/gsi/Android.bp      | 9 ++++-----
  target/product/handheld_product.mk | 4 ----
  target/product/handheld_system.mk  | 3 ---
- 5 files changed, 5 insertions(+), 18 deletions(-)
+ 5 files changed, 5 insertions(+), 17 deletions(-)
 
 diff --git a/target/product/base_system.mk b/target/product/base_system.mk
-index 35a3c2f..755e8ec 100644
+index 35a3c2f..7338a68 100644
 --- a/target/product/base_system.mk
 +++ b/target/product/base_system.mk
 @@ -229,8 +229,6 @@ PRODUCT_PACKAGES += \
@@ -38,20 +37,12 @@ index 35a3c2f..755e8ec 100644
      ndc \
      netd \
      NetworkStack \
-@@ -564,7 +562,6 @@ PRODUCT_PACKAGES_DEBUG := \
-     ss \
-     start_with_lockagent \
-     strace \
--    su \
-     sanitizer-status \
-     tracepath \
-     tracepath6 \
-@@ -572,7 +569,6 @@ PRODUCT_PACKAGES_DEBUG := \
+@@ -572,7 +570,6 @@ PRODUCT_PACKAGES_DEBUG := \
      unwind_info \
      unwind_reg_info \
      unwind_symbols \
 -    HardeningTestApp \
-
+ 
  # The set of packages whose code can be loaded by the system server.
  PRODUCT_SYSTEM_SERVER_APPS += \
 diff --git a/target/product/generic/Android.bp b/target/product/generic/Android.bp
@@ -64,7 +55,7 @@ index 5a609aa..aeb06aa 100644
          ///////////////////////////////////////////
 -        "webview",
 +        "TrichromeWebView",
-
+ 
          ///////////////////////////////////////////
          // base_product
 @@ -817,7 +817,6 @@ system_image_defaults {
@@ -95,7 +86,7 @@ index 2fee93e..a61d544 100644
          "frameworks-base-overlays",
      ],
 @@ -179,13 +179,12 @@ android_system_image {
-
+ 
          // handheld_product
          "AvatarPicker",
 -        "Calendar",
@@ -108,7 +99,7 @@ index 2fee93e..a61d544 100644
 -        "QuickSearchBox",
          "SettingsIntelligence",
          "frameworks-base-overlays",
-
+ 
 diff --git a/target/product/handheld_product.mk b/target/product/handheld_product.mk
 index dde952e..6686eee 100644
 --- a/target/product/handheld_product.mk
