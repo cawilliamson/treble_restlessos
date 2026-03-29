@@ -273,9 +273,23 @@ jobs:
       - name: Verify gh CLI authentication
         run: gh auth status
 
+      - name: Clean stale build artifacts
+        env:
+          CLEAN_BUILD: ${{ github.event.inputs.clean_build || 'false' }}
+        run: |
+          if [ "$CLEAN_BUILD" = "true" ]; then
+            echo "Clean build requested — wiping /data contents"
+            rm -rf out/ src/ tmp/
+          fi
+          # remove stale locks and product output that break incremental builds.
+          # soong intermediates cache is preserved for incremental wins.
+          rm -rfv src/out/.lock 2>/dev/null || true
+          rm -rfv src/out/target/ 2>/dev/null || true
+          rm -fv tmp/*.img* out/*.img* 2>/dev/null || true
+          rm -rfv out/zsync/ 2>/dev/null || true
+
       - name: Resolve GrapheneOS tag
         run: |
-          mkdir --parents tmp/ out/ src/
           BUILD_DATETIME=$(date "+%s")
           BUILD_NUMBER=$(date "+%Y%m%d%H%M")
           echo "${BUILD_DATETIME}" > tmp/.build_datetime
@@ -303,20 +317,8 @@ jobs:
             echo "${TAG}" > tmp/.grapheneos_tag
           fi
 
-      - name: Clean stale build artifacts
-        env:
-          CLEAN_BUILD: ${{ github.event.inputs.clean_build || 'false' }}
-        run: |
-          if [ "$CLEAN_BUILD" = "true" ]; then
-            echo "Clean build requested — wiping /data contents"
-            rm -rf src/ out/ tmp/
-          fi
-          # remove stale locks and product output that break incremental builds.
-          # soong intermediates cache is preserved for incremental wins.
-          rm -rfv src/out/.lock 2>/dev/null || true
-          rm -rfv src/out/target/ 2>/dev/null || true
-          rm -fv tmp/*.img* out/*.img* 2>/dev/null || true
-          rm -rfv out/zsync/ 2>/dev/null || true
+      - name: Ensure working directories exist
+        run: mkdir --parents out/ src/ tmp/
 
       - name: Sync GrapheneOS sources
         working-directory: src/
