@@ -357,7 +357,10 @@ jobs:
 
       - name: Sign ROM image
         working-directory: src/
+        env:
+          TMPDIR: /data/tmp
         run: |
+          mkdir -p "$TMPDIR"
           ANDROID_VERSION_TAG_VAL=$(cat ../tmp/.android_version_tag)
           . build/envsetup.sh
           lunch "treble_arm64_bvN-${ANDROID_VERSION_TAG_VAL}-userdebug"
