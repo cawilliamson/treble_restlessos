@@ -487,7 +487,9 @@ jobs:
             exit 0
           fi
 
-          echo "Created snapshot: ${NEW_SNAP}"
+          echo "Created snapshot: ${NEW_SNAP} — waiting for completion..."
+          aws ec2 wait snapshot-completed --snapshot-ids "$NEW_SNAP"
+          echo "Snapshot ${NEW_SNAP} is ready"
 
           # now safe to clean up old snapshots (excluding the one we just created)
           echo "Cleaning old snapshots..."
