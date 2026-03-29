@@ -1,0 +1,28 @@
+From 38857b8dd5bde1869f7d7470da0a3cc8529f5aa0 Mon Sep 17 00:00:00 2001
+From: "Christopher A. Williamson" <contact@chrisaw.io>
+Date: Sun, 29 Mar 2026 13:48:06 +0100
+Subject: [PATCH] re-add su binary to PRODUCT_PACKAGES_DEBUG
+
+the grapheneos tier removes su from debug packages since it is
+managed via magisk in release builds. for debug builds we want
+the built-in su binary available for root shell access without
+needing magisk.
+---
+ target/product/base_system.mk | 1 +
+ 1 file changed, 1 insertion(+)
+
+diff --git a/target/product/base_system.mk b/target/product/base_system.mk
+index 755e8ec..7338a68 100644
+--- a/target/product/base_system.mk
++++ b/target/product/base_system.mk
+@@ -562,6 +562,7 @@ PRODUCT_PACKAGES_DEBUG := \
+     ss \
+     start_with_lockagent \
+     strace \
++    su \
+     sanitizer-status \
+     tracepath \
+     tracepath6 \
+-- 
+2.53.0
+
