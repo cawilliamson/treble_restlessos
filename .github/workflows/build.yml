@@ -52,6 +52,8 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v6
+        with:
+          clean: false
 
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v6
@@ -265,6 +267,8 @@ jobs:
     steps:
       - name: Checkout build scripts
         uses: actions/checkout@v6
+        with:
+          clean: false
 
       - name: Verify gh CLI authentication
         run: gh auth status
