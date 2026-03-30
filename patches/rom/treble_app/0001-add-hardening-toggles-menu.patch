@@ -1,46 +1,46 @@
-From f742c03ed8d53dd90fe13ba14d05511168f631ef Mon Sep 17 00:00:00 2001
+From b352b1d8b95158b8455f4c23e988ce0a932f4d6b Mon Sep 17 00:00:00 2001
 From: "Christopher A. Williamson" <contact@chrisaw.io>
 Date: Mon, 23 Feb 2026 10:27:17 +0000
-Subject: [PATCH] Add GrapheneOS hardening toggles menu
+Subject: [PATCH] add hardening toggles menu
 
-Add a new 'GrapheneOS features' submenu to TrebleApp with toggles
-for GrapheneOS security hardening features that may cause vendor
-compatibility issues on GSI builds:
+add a 'Hardening' submenu to TrebleApp with toggles for security
+hardening features that may cause vendor compatibility issues on
+GSI builds:
 
-- Memory tagging for vendor processes (persist.sys.phh.gos.mte_vendor)
-- Hardened thread stacks (persist.sys.phh.gos.stack_hardening)
+- memory tagging for vendor processes (persist.sys.phh.gos.mte_vendor)
+- hardened thread stacks (persist.sys.phh.gos.stack_hardening)
 
-All toggles default to OFF for maximum compatibility. Each requires
+all toggles default to off for maximum compatibility. each requires
 a reboot to take effect.
 ---
  .../java/me/phh/treble/app/EntryService.kt    |  1 +
- .../main/java/me/phh/treble/app/GrapheneOS.kt | 32 +++++++++++++++++++
- .../me/phh/treble/app/GrapheneOSSettings.kt   | 12 +++++++
+ .../main/java/me/phh/treble/app/Hardening.kt  | 32 +++++++++++++++++++
+ .../me/phh/treble/app/HardeningSettings.kt    | 12 +++++++
  .../me/phh/treble/app/SettingsActivity.kt     |  3 ++
- app/src/main/res/xml/pref_grapheneos.xml      | 15 +++++++++
+ app/src/main/res/xml/pref_hardening.xml       | 15 +++++++++
  app/src/main/res/xml/pref_headers.xml         |  3 ++
  6 files changed, 66 insertions(+)
- create mode 100644 app/src/main/java/me/phh/treble/app/GrapheneOS.kt
- create mode 100644 app/src/main/java/me/phh/treble/app/GrapheneOSSettings.kt
- create mode 100644 app/src/main/res/xml/pref_grapheneos.xml
+ create mode 100644 app/src/main/java/me/phh/treble/app/Hardening.kt
+ create mode 100644 app/src/main/java/me/phh/treble/app/HardeningSettings.kt
+ create mode 100644 app/src/main/res/xml/pref_hardening.xml
 
 diff --git a/app/src/main/java/me/phh/treble/app/EntryService.kt b/app/src/main/java/me/phh/treble/app/EntryService.kt
-index f6c501b..971f354 100644
+index f6c501b..277fb7f 100644
 --- a/app/src/main/java/me/phh/treble/app/EntryService.kt
 +++ b/app/src/main/java/me/phh/treble/app/EntryService.kt
 @@ -55,6 +55,7 @@ class EntryService: Service() {
              tryC { Nubia.startup(this) }
              tryC { Ims.startup(this) }
              tryC { Custom.startup(this) }
-+            tryC { GrapheneOS.startup(this) }
++            tryC { Hardening.startup(this) }
              tryC { Hct.startup(this) }
-
+ 
              tryC { Desktop.startup(this) }
-diff --git a/app/src/main/java/me/phh/treble/app/GrapheneOS.kt b/app/src/main/java/me/phh/treble/app/GrapheneOS.kt
+diff --git a/app/src/main/java/me/phh/treble/app/Hardening.kt b/app/src/main/java/me/phh/treble/app/Hardening.kt
 new file mode 100644
-index 0000000..d4ade1e
+index 0000000..08340ce
 --- /dev/null
-+++ b/app/src/main/java/me/phh/treble/app/GrapheneOS.kt
++++ b/app/src/main/java/me/phh/treble/app/Hardening.kt
 @@ -0,0 +1,32 @@
 +package me.phh.treble.app
 +
@@ -50,14 +50,14 @@ index 0000000..d4ade1e
 +import android.util.Log
 +import androidx.preference.PreferenceManager
 +
-+object GrapheneOS : EntryStartup {
++object Hardening : EntryStartup {
 +    val spListener = SharedPreferences.OnSharedPreferenceChangeListener { sp, key ->
 +        when (key) {
-+            GrapheneOSSettings.mteVendor -> {
++            HardeningSettings.mteVendor -> {
 +                val value = sp.getBoolean(key, false)
 +                Misc.safeSetprop("persist.sys.phh.gos.mte_vendor", if (value) "true" else "false")
 +            }
-+            GrapheneOSSettings.stackHardening -> {
++            HardeningSettings.stackHardening -> {
 +                val value = sp.getBoolean(key, false)
 +                Misc.safeSetprop("persist.sys.phh.gos.stack_hardening", if (value) "true" else "false")
 +            }
@@ -65,43 +65,43 @@ index 0000000..d4ade1e
 +    }
 +
 +    override fun startup(ctxt: Context) {
-+        if (!GrapheneOSSettings.enabled()) return
++        if (!HardeningSettings.enabled()) return
 +        val sp = PreferenceManager.getDefaultSharedPreferences(ctxt)
 +        sp.registerOnSharedPreferenceChangeListener(spListener)
 +
 +        // Re-apply on boot
-+        spListener.onSharedPreferenceChanged(sp, GrapheneOSSettings.mteVendor)
-+        spListener.onSharedPreferenceChanged(sp, GrapheneOSSettings.stackHardening)
++        spListener.onSharedPreferenceChanged(sp, HardeningSettings.mteVendor)
++        spListener.onSharedPreferenceChanged(sp, HardeningSettings.stackHardening)
 +    }
 +}
-diff --git a/app/src/main/java/me/phh/treble/app/GrapheneOSSettings.kt b/app/src/main/java/me/phh/treble/app/GrapheneOSSettings.kt
+diff --git a/app/src/main/java/me/phh/treble/app/HardeningSettings.kt b/app/src/main/java/me/phh/treble/app/HardeningSettings.kt
 new file mode 100644
-index 0000000..ce79f0a
+index 0000000..c923ec3
 --- /dev/null
-+++ b/app/src/main/java/me/phh/treble/app/GrapheneOSSettings.kt
++++ b/app/src/main/java/me/phh/treble/app/HardeningSettings.kt
 @@ -0,0 +1,12 @@
 +package me.phh.treble.app
 +
-+object GrapheneOSSettings : Settings {
++object HardeningSettings : Settings {
 +    val mteVendor = "key_grapheneos_mte_vendor"
 +    val stackHardening = "key_grapheneos_stack_hardening"
 +
 +    override fun enabled() = true
 +}
 +
-+class GrapheneOSSettingsFragment : SettingsFragment() {
-+    override val preferencesResId = R.xml.pref_grapheneos
++class HardeningSettingsFragment : SettingsFragment() {
++    override val preferencesResId = R.xml.pref_hardening
 +}
 diff --git a/app/src/main/java/me/phh/treble/app/SettingsActivity.kt b/app/src/main/java/me/phh/treble/app/SettingsActivity.kt
-index 547c579..02832b0 100644
+index 547c579..108fd2b 100644
 --- a/app/src/main/java/me/phh/treble/app/SettingsActivity.kt
 +++ b/app/src/main/java/me/phh/treble/app/SettingsActivity.kt
 @@ -77,6 +77,8 @@ class SettingsActivity : PreferenceActivity() {
              target.removeIf { it.fragment == ImsSettingsFragment::class.java.name }
          if (!CustomSettings.enabled())
              target.removeIf { it.fragment == CustomSettingsFragment::class.java.name }
-+        if (!GrapheneOSSettings.enabled())
-+            target.removeIf { it.fragment == GrapheneOSSettingsFragment::class.java.name }
++        if (!HardeningSettings.enabled())
++            target.removeIf { it.fragment == HardeningSettingsFragment::class.java.name }
          val p = SystemProperties.get("ro.system.ota.json_url", "")
          if (p.trim() == "")
              target.removeIf { it.id.compareTo(R.id.updater) == 0 }
@@ -109,19 +109,19 @@ index 547c579..02832b0 100644
                  || ImsSettingsFragment::class.java.name == fragmentName
                  || CustomSettingsFragment::class.java.name == fragmentName
                  || AudioEffectsFragment::class.java.name == fragmentName
-+                || GrapheneOSSettingsFragment::class.java.name == fragmentName
++                || HardeningSettingsFragment::class.java.name == fragmentName
      }
-
+ 
      companion object {
-diff --git a/app/src/main/res/xml/pref_grapheneos.xml b/app/src/main/res/xml/pref_grapheneos.xml
+diff --git a/app/src/main/res/xml/pref_hardening.xml b/app/src/main/res/xml/pref_hardening.xml
 new file mode 100644
-index 0000000..69279cc
+index 0000000..bb51232
 --- /dev/null
-+++ b/app/src/main/res/xml/pref_grapheneos.xml
++++ b/app/src/main/res/xml/pref_hardening.xml
 @@ -0,0 +1,15 @@
 +<?xml version="1.0" encoding="utf-8"?>
 +<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android">
-+    <PreferenceCategory android:title="GrapheneOS hardening">
++    <PreferenceCategory android:title="Hardening">
 +        <SwitchPreference
 +            android:defaultValue="false"
 +            android:key="key_grapheneos_mte_vendor"
@@ -135,7 +135,7 @@ index 0000000..69279cc
 +    </PreferenceCategory>
 +</PreferenceScreen>
 diff --git a/app/src/main/res/xml/pref_headers.xml b/app/src/main/res/xml/pref_headers.xml
-index ed5fb55..a2e7404 100644
+index ed5fb55..0f38a7f 100644
 --- a/app/src/main/res/xml/pref_headers.xml
 +++ b/app/src/main/res/xml/pref_headers.xml
 @@ -38,6 +38,9 @@
@@ -143,8 +143,8 @@ index ed5fb55..a2e7404 100644
          android:fragment="me.phh.treble.app.DozeSettingsFragment"
          android:title="Doze features" />
 +    <header
-+        android:fragment="me.phh.treble.app.GrapheneOSSettingsFragment"
-+        android:title="GrapheneOS features" />
++        android:fragment="me.phh.treble.app.HardeningSettingsFragment"
++        android:title="Hardening" />
      <header
          android:fragment="me.phh.treble.app.MiscSettingsFragment"
          android:title="Misc features" />
