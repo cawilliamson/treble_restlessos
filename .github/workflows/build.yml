@@ -273,9 +273,6 @@ jobs:
       - name: Verify gh CLI authentication
         run: gh auth status
 
-      - name: Ensure working directories exist
-        run: mkdir --parents out/ src/ tmp/
-
       - name: Clean stale build artifacts
         env:
           CLEAN_BUILD: ${{ github.event.inputs.clean_build || 'false' }}
@@ -290,6 +287,9 @@ jobs:
           rm -rfv src/out/target/ 2>/dev/null || true
           rm -fv tmp/*.img* out/*.img* 2>/dev/null || true
           rm -rfv out/zsync/ 2>/dev/null || true
+
+      - name: Ensure working directories exist
+        run: mkdir --parents out/ src/ tmp/
 
       - name: Resolve GrapheneOS tag
         run: |
