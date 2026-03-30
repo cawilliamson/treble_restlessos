@@ -1,0 +1,28 @@
+From 2f2d4f2cd35f74c7dae3cbf165425c5be1a6871e Mon Sep 17 00:00:00 2001
+From: "Christopher A. Williamson" <contact@chrisaw.io>
+Date: Mon, 30 Mar 2026 08:57:46 +0100
+Subject: [PATCH 6/6] rebrand system_server notification label to GraphiteOS
+
+change the hardcoded system_server label from "GrapheneOS" to
+"GraphiteOS". this label is shown in the header of notifications
+posted from system_server.
+---
+ core/res/AndroidManifest.xml | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/core/res/AndroidManifest.xml b/core/res/AndroidManifest.xml
+index 89a74baa9..f739f72f9 100644
+--- a/core/res/AndroidManifest.xml
++++ b/core/res/AndroidManifest.xml
+@@ -9554,7 +9554,7 @@
+     <application android:process="system"
+                  android:persistent="true"
+                  android:hasCode="false"
+-                 android:label="GrapheneOS"
++                 android:label="GraphiteOS"
+                  android:allowClearUserData="false"
+                  android:backupAgent="com.android.server.backup.SystemBackupAgent"
+                  android:killAfterRestore="false"
+-- 
+2.53.0
+
