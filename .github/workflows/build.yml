@@ -273,6 +273,9 @@ jobs:
       - name: Verify gh CLI authentication
         run: gh auth status
 
+      - name: Ensure working directories exist
+        run: mkdir --parents out/ src/ tmp/
+
       - name: Clean stale build artifacts
         env:
           CLEAN_BUILD: ${{ github.event.inputs.clean_build || 'false' }}
@@ -316,9 +319,6 @@ jobs:
             echo "Resolved latest ${GRAPHENEOS_RELEASE_CHANNEL} tag: ${TAG}"
             echo "${TAG}" > tmp/.grapheneos_tag
           fi
-
-      - name: Ensure working directories exist
-        run: mkdir --parents out/ src/ tmp/
 
       - name: Sync GrapheneOS sources
         working-directory: src/
