@@ -1,7 +1,7 @@
 From 83ea15c05044692344fee4cf5b593528ad54e101 Mon Sep 17 00:00:00 2001
 From: "Christopher A. Williamson" <contact@chrisaw.io>
 Date: Wed, 18 Mar 2026 12:18:21 +0000
-Subject: [PATCH 2/3] libprocessgroup: fall back to v1 memcg for lmkd compatibility
+Subject: [PATCH 3/4] libprocessgroup: fall back to v1 memcg for lmkd compatibility
  on GSI
 
 lmkd requires the memory cgroup controller in the v1 hierarchy when

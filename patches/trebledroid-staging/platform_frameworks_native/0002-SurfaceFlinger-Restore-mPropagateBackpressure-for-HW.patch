@@ -1,7 +1,7 @@
 From 005373ead1f17593cba61924cd82fcc336c719d9 Mon Sep 17 00:00:00 2001
 From: "Christopher A. Williamson" <contact@chrisaw.io>
 Date: Thu, 19 Mar 2026 16:56:39 +0000
-Subject: [PATCH 2/2] SurfaceFlinger: Restore mPropagateBackpressure for HWC
+Subject: [PATCH 2/5] SurfaceFlinger: Restore mPropagateBackpressure for HWC
  backpressure control
 
 Restore the mPropagateBackpressure member variable that existed in

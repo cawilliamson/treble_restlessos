@@ -1,7 +1,7 @@
 From 8c8d73364dac148aa611d1c77a0b12c2de36f626 Mon Sep 17 00:00:00 2001
 From: "Christopher A. Williamson" <contact@chrisaw.io>
 Date: Fri, 27 Mar 2026 08:09:42 +0000
-Subject: [PATCH 4/5] rw-system.sh: move codec fix to vndk.rc property trigger
+Subject: [PATCH 16/17] rw-system.sh: move codec fix to vndk.rc property trigger
 
 move the codec fix (persist.sys.phh.prefer_sw_codecs) from rw-system.sh
 to an init property trigger in vndk.rc using resetprop_phh -n.

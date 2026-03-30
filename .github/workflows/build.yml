@@ -366,8 +366,7 @@ jobs:
         run: |
           ../patches/apply.sh . trebledroid
           ../patches/apply.sh . trebledroid-staging
-          ../patches/apply.sh . legacy-devices
-          ../patches/apply.sh . graphiteos
+          ../patches/apply.sh . rom
           ../patches/apply.sh . personal
           if [ "${DEBUG_BUILD}" = "true" ]; then
             echo "*** DEBUG BUILD: applying debug patches ***"
