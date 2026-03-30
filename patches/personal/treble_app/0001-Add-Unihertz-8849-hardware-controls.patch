@@ -1,4 +1,4 @@
-From 43b5cfcf9beb9fc700c2bc44f9c471e9d5957bb0 Mon Sep 17 00:00:00 2001
+From 7d1bcdcceee6ed05b2f8032740a7b263821a8959 Mon Sep 17 00:00:00 2001
 From: "Christopher A. Williamson" <contact@chrisaw.io>
 Date: Thu, 26 Feb 2026 11:23:00 +0000
 Subject: [PATCH] Add Unihertz 8849 hardware controls
@@ -454,7 +454,7 @@ z9W=6nu=K4mC6*G3JLDP<)EPk7yGfH$d$9*Ea)E`K6`t!+U?a>jRyL3q_!#&Ym{=JY
 IW*LHb07h}=KL7v#
 
 diff --git a/app/src/main/java/me/phh/treble/app/EntryService.kt b/app/src/main/java/me/phh/treble/app/EntryService.kt
-index 971f354..8f96ca6 100644
+index 277fb7f..fdf30bf 100644
 --- a/app/src/main/java/me/phh/treble/app/EntryService.kt
 +++ b/app/src/main/java/me/phh/treble/app/EntryService.kt
 @@ -53,6 +53,7 @@ class EntryService: Service() {
@@ -464,15 +464,15 @@ index 971f354..8f96ca6 100644
 +            tryC { Unihertz8849.startup(this) }
              tryC { Ims.startup(this) }
              tryC { Custom.startup(this) }
-             tryC { GrapheneOS.startup(this) }
+             tryC { Hardening.startup(this) }
 diff --git a/app/src/main/java/me/phh/treble/app/SettingsActivity.kt b/app/src/main/java/me/phh/treble/app/SettingsActivity.kt
-index 02832b0..27a7118 100644
+index 108fd2b..0772be0 100644
 --- a/app/src/main/java/me/phh/treble/app/SettingsActivity.kt
 +++ b/app/src/main/java/me/phh/treble/app/SettingsActivity.kt
 @@ -79,6 +79,8 @@ class SettingsActivity : PreferenceActivity() {
              target.removeIf { it.fragment == CustomSettingsFragment::class.java.name }
-         if (!GrapheneOSSettings.enabled())
-             target.removeIf { it.fragment == GrapheneOSSettingsFragment::class.java.name }
+         if (!HardeningSettings.enabled())
+             target.removeIf { it.fragment == HardeningSettingsFragment::class.java.name }
 +        if (!Unihertz8849Settings.enabled())
 +            target.removeIf { it.fragment == Unihertz8849SettingsFragment::class.java.name }
          val p = SystemProperties.get("ro.system.ota.json_url", "")
@@ -481,10 +481,10 @@ index 02832b0..27a7118 100644
 @@ -108,6 +110,7 @@ class SettingsActivity : PreferenceActivity() {
                  || CustomSettingsFragment::class.java.name == fragmentName
                  || AudioEffectsFragment::class.java.name == fragmentName
-                 || GrapheneOSSettingsFragment::class.java.name == fragmentName
+                 || HardeningSettingsFragment::class.java.name == fragmentName
 +                || Unihertz8849SettingsFragment::class.java.name == fragmentName
      }
-
+ 
      companion object {
 diff --git a/app/src/main/java/me/phh/treble/app/Unihertz8849.kt b/app/src/main/java/me/phh/treble/app/Unihertz8849.kt
 new file mode 100644
@@ -1345,13 +1345,13 @@ index 0000000..5f4e785
 +    </string-array>
 +</resources>
 diff --git a/app/src/main/res/xml/pref_headers.xml b/app/src/main/res/xml/pref_headers.xml
-index a2e7404..5d019f4 100644
+index 0f38a7f..3b21199 100644
 --- a/app/src/main/res/xml/pref_headers.xml
 +++ b/app/src/main/res/xml/pref_headers.xml
 @@ -41,6 +41,9 @@
      <header
-         android:fragment="me.phh.treble.app.GrapheneOSSettingsFragment"
-         android:title="GrapheneOS features" />
+         android:fragment="me.phh.treble.app.HardeningSettingsFragment"
+         android:title="Hardening" />
 +    <header
 +        android:fragment="me.phh.treble.app.Unihertz8849SettingsFragment"
 +        android:title="Unihertz 8849" />
