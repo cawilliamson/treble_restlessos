@@ -8,5 +8,5 @@ variable "region" {
 variable "project_tag" {
   description = "tag value used to identify build instances"
   type        = string
-  default     = "treble-graphiteos"
+  default     = "gsi-build"
 }
