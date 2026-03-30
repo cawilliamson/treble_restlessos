@@ -15,52 +15,22 @@ made optional to avoid boot loops, crashes, or broken vendor drivers.
 
 ### Features removed
 
-| feature | reason |
-|---|---|
-| **hardened_malloc** | requires 3 TiB virtual address reservation; exceeds the 512 GiB userspace limit on 39-bit VA kernels, causing immediate boot loops. replaced with AOSP Scudo. |
-| **Auditor** | relies on hardware attestation that will never pass on a GSI |
-| **SELinux flags kernel notification** | GSI doesn't ship a GrapheneOS-patched kernel; the notification is always shown and not actionable |
-| **mtectrl / misctrl** | Pixel-specific; can interfere with vendor TEE drivers |
-| **hardened malloc settings UI** | hidden since the toggle is a no-op when using Scudo |
+- **hardened_malloc** — causes boot loops on devices with 39-bit virtual address space. replaced with AOSP Scudo.
+- **Auditor** — requires hardware attestation which doesn't work on GSI
+- **mtectrl / misctrl** — Pixel-specific memory tagging control; breaks vendor TEE drivers
 
-### Features disabled by default (togglable)
+### Features disabled by default
 
-These can be re-enabled in **TrebleApp → Hardening** or **Settings → Security → Exploit protection**.
+These can be re-enabled in **TrebleApp → Hardening** or **Settings → Exploit protection**.
 
-| feature | property / setting | why disabled |
-|---|---|---|
-| **MTE/TBI for vendor processes** | `persist.sys.phh.hardening.mte_vendor` | forced memory tagging causes EINVAL failures in vendor TEE drivers (e.g. TrustKernel tkcore) |
-| **hardened thread stacks** | `persist.sys.phh.hardening.stack_hardening` | 8 MB stacks with random PROT_NONE gaps break vendor TEE kernel drivers |
-| **secure (exec-based) app spawning** | Settings → Exploit protection | re-exec'ing app_process breaks root solutions (Magisk / KernelSU) |
+- **MTE/TBI for vendor processes** — memory tagging breaks some vendor drivers
+- **hardened thread stacks** — non-standard memory layout breaks some vendor drivers
+- **secure (exec-based) app spawning** — breaks root solutions (Magisk / KernelSU)
 
-### Apps removed from build
+### Apps removed
 
-Calendar (deprecated; CalendarProvider kept), DeviceDiagnostics, EasterEgg,
-HardeningTestApp, InfoApp, MusicFX, PdfViewerGOS, QuickSearchBox.
-
-### Apps added
-
-| app | reason |
-|---|---|
-| **LiveWallpapersPicker** | enables third-party live wallpaper support |
-
-### Functional changes for GSI compatibility
-
-| change | detail |
-|---|---|
-| **Vanadium WebView injection** | force-injects Vanadium into the WebView provider list after overlay resolution, since vendor RRO overlays can remove it |
-| **multiArch ABI forceMatch skip** | skips the SDK 35+ check for system apps so 64-bit-only Vanadium works on devices advertising 32-bit ABI |
-| **OEM unlock prompts suppressed** | setup wizard skips all OEM unlock warnings since GSI requires an unlocked bootloader |
-| **biometric enrollment skip** | gracefully skips enrolment in setup wizard when no biometric hardware is detected |
-| **permissive SELinux domains** | allowlists ueventd, tkcore, phhsu_daemon as permissive in user builds for vendor compat |
-| **auto_reboot timer fallback** | falls back to CLOCK_BOOTTIME when CLOCK_BOOTTIME_ALARM is unavailable on vendor kernels |
-| **VNDK v30** | added to PRODUCT_EXTRA_VNDK_VERSIONS for older vendor images |
-| **SUPL server** | default changed from supl.google.com to supl.grapheneos.org |
-
-### Branding
-
-- boot logo replaced with GraphiteOS logo
-- system_server notification label changed to "GraphiteOS"
+Calendar, DeviceDiagnostics, EasterEgg, HardeningTestApp, InfoApp,
+MusicFX, PdfViewerGOS, QuickSearchBox.
 
 ## Delta Updates with zsync2
 
