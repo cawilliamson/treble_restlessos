@@ -1,8 +1,11 @@
-# GrapheneOS GSI
+# GraphiteOS GSI
 
-GrapheneOS as a Generic System Image (GSI) for Project Treble devices.
+GraphiteOS is an **unofficial**, **unaffiliated** fork of
+[GrapheneOS](https://grapheneos.org) packaged as a Generic System Image (GSI)
+for Project Treble devices. It is not endorsed by, sponsored by, or in any way
+connected to the GrapheneOS project or its developers.
 
-For discussion and support, join the Telegram group: https://t.me/grapheneosgsi
+For discussion and support, join the Telegram group: https://t.me/graphiteosgsi
 
 ## Delta Updates with zsync2
 
@@ -18,8 +21,8 @@ zsync2 <url to .zsync file> -i <full path to previous .img file>
 For example:
 
 ```sh
-zsync2 https://build.chrisaw.io/GrapheneOS-ab-16-202603261200/zsync/GrapheneOS-arm64-ab-16-202603261200.img.zsync \
-    -i ~/Downloads/GrapheneOS-arm64-ab-16-202603201400.img
+zsync2 https://build.chrisaw.io/GraphiteOS-ab-16-202603261200/zsync/GraphiteOS-arm64-ab-16-202603261200.img.zsync \
+    -i ~/Downloads/GraphiteOS-arm64-ab-16-202603201400.img
 ```
 
 > **Note:** point `-i` at the uncompressed `.img` file, not the `.img.xz`
@@ -36,7 +39,7 @@ an incorrect bounds check to `array_map_update_elem` which silently
 skips the `memcpy`, causing BPF map writes to be dropped without error.
 
 This affects Android's BPF-based networking stack, including the firewall
-and GrapheneOS's per-app network permission. Symptoms include apps
+and GraphiteOS's per-app network permission. Symptoms include apps
 appearing to have no internet access despite being allowed, or firewall
 rules not taking effect.
 

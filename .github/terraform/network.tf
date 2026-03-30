@@ -45,7 +45,7 @@ resource "aws_security_group" "build" {
   vpc_id      = aws_vpc.build.id
   tags        = { Name = "gsi-build", Project = var.project_tag }
 
-  # all outbound (github, grapheneos repos, build.chrisaw.io rsync)
+  # all outbound (github, upstream repos, build.chrisaw.io rsync)
   egress {
     from_port   = 0
     to_port     = 0

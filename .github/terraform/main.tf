@@ -1,4 +1,4 @@
-# grapheneos GSI build infrastructure
+# graphiteos GSI build infrastructure
 #
 # manages the persistent AWS resources (VPC, IAM) needed by the
 # github actions workflow to launch ephemeral EC2 spot instances.

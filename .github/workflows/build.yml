@@ -1,14 +1,14 @@
-name: Build GrapheneOS GSI
+name: Build GraphiteOS GSI
 
 on:
   workflow_dispatch:
     inputs:
-      grapheneos_tag:
-        description: 'grapheneos tag to build (blank = auto-detect latest stable)'
+      graphiteos_tag:
+        description: 'graphiteos tag to build (blank = auto-detect latest stable)'
         required: false
         default: ''
-      grapheneos_branch:
-        description: 'grapheneos branch to build from HEAD (ignored if tag is set)'
+      graphiteos_branch:
+        description: 'graphiteos branch to build from HEAD (ignored if tag is set)'
         required: false
         default: ''
       release_channel:
@@ -140,7 +140,7 @@ jobs:
                 --query 'Instances[0].InstanceId' \
                 --security-group-ids "${{ secrets.AWS_SECURITY_GROUP_ID }}" \
                 --subnet-id "${SUBNET}" \
-                --tag-specifications "ResourceType=instance,Tags=[{Key=Name,Value=gsi-build-${{ github.run_id }}},{Key=Project,Value=treble-grapheneos},{Key=Ephemeral,Value=true}]" \
+                --tag-specifications "ResourceType=instance,Tags=[{Key=Name,Value=gsi-build-${{ github.run_id }}},{Key=Project,Value=treble-graphiteos},{Key=Ephemeral,Value=true}]" \
                 --user-data "file:///tmp/user-data.yml" 2>&1) && break 2
               echo "  failed: ${INSTANCE_ID}"
               INSTANCE_ID=""
@@ -179,7 +179,7 @@ jobs:
           # find existing persistent volume in this AZ
           VOL_ID=$(aws ec2 describe-volumes \
             --filters \
-              "Name=tag:Project,Values=treble-grapheneos" \
+              "Name=tag:Project,Values=treble-graphiteos" \
               "Name=tag:Role,Values=build-data" \
               "Name=availability-zone,Values=${AZ}" \
             --query 'Volumes[0].VolumeId' \
@@ -193,7 +193,7 @@ jobs:
               --volume-type gp3 \
               --iops 16000 \
               --throughput 1000 \
-              --tag-specifications 'ResourceType=volume,Tags=[{Key=Project,Value=treble-grapheneos},{Key=Role,Value=build-data},{Key=Name,Value=gsi-build-data}]' \
+              --tag-specifications 'ResourceType=volume,Tags=[{Key=Project,Value=treble-graphiteos},{Key=Role,Value=build-data},{Key=Name,Value=gsi-build-data}]' \
               --query 'VolumeId' \
               --output text)
             echo "Created volume: ${VOL_ID}"
@@ -258,9 +258,9 @@ jobs:
     env:
       GH_TOKEN: ${{ github.token }}
       DEBUG_BUILD: ${{ github.event.inputs.debug_build || 'false' }}
-      GRAPHENEOS_TAG: ${{ github.event.inputs.grapheneos_tag }}
-      GRAPHENEOS_BRANCH: ${{ github.event.inputs.grapheneos_branch }}
-      GRAPHENEOS_RELEASE_CHANNEL: ${{ github.event.inputs.release_channel || 'stable' }}
+      GRAPHITEOS_TAG: ${{ github.event.inputs.graphiteos_tag }}
+      GRAPHITEOS_BRANCH: ${{ github.event.inputs.graphiteos_branch }}
+      GRAPHITEOS_RELEASE_CHANNEL: ${{ github.event.inputs.release_channel || 'stable' }}
       WEB_DIR: /var/www/build.chrisaw.io
       REPO_PATH: ${{ github.repository }}
 
@@ -291,49 +291,49 @@ jobs:
       - name: Ensure working directories exist
         run: mkdir --parents out/ src/ tmp/
 
-      - name: Resolve GrapheneOS tag
+      - name: Resolve GraphiteOS tag
         run: |
           BUILD_DATETIME=$(date "+%s")
           BUILD_NUMBER=$(date "+%Y%m%d%H%M")
           echo "${BUILD_DATETIME}" > tmp/.build_datetime
           echo "${BUILD_NUMBER}" > tmp/.build_number
 
-          if [ -n "${GRAPHENEOS_TAG}" ]; then
-            echo "Using manually specified tag: ${GRAPHENEOS_TAG}"
-            echo "${GRAPHENEOS_TAG}" > tmp/.grapheneos_tag
+          if [ -n "${GRAPHITEOS_TAG}" ]; then
+            echo "Using manually specified tag: ${GRAPHITEOS_TAG}"
+            echo "${GRAPHITEOS_TAG}" > tmp/.graphiteos_tag
 
-          elif [ -n "${GRAPHENEOS_BRANCH}" ]; then
-            echo "WARNING: building from branch '${GRAPHENEOS_BRANCH}' (HEAD) - not a stable release!"
-            echo "${GRAPHENEOS_BRANCH}" > tmp/.grapheneos_branch
+          elif [ -n "${GRAPHITEOS_BRANCH}" ]; then
+            echo "WARNING: building from branch '${GRAPHITEOS_BRANCH}' (HEAD) - not a stable release!"
+            echo "${GRAPHITEOS_BRANCH}" > tmp/.graphiteos_branch
 
           else
-            echo "Fetching latest ${GRAPHENEOS_RELEASE_CHANNEL} tag from grapheneos.org/releases..."
+            echo "Fetching latest ${GRAPHITEOS_RELEASE_CHANNEL} tag from grapheneos.org/releases..."
             RELEASES_HTML=$(curl --fail --silent "https://grapheneos.org/releases")
             TAG=$(echo "${RELEASES_HTML}" \
-              | grep --only-matching --perl-regexp "id=[a-z]+-${GRAPHENEOS_RELEASE_CHANNEL}><td>[^<]+</td><td><a href=#\K[0-9]{10}" \
+              | grep --only-matching --perl-regexp "id=[a-z]+-${GRAPHITEOS_RELEASE_CHANNEL}><td>[^<]+</td><td><a href=#\K[0-9]{10}" \
               | sort --numeric-sort --reverse | head --lines=1)
             if [ -z "${TAG}" ]; then
-              echo "ERROR: failed to extract a valid ${GRAPHENEOS_RELEASE_CHANNEL} tag"
+              echo "ERROR: failed to extract a valid ${GRAPHITEOS_RELEASE_CHANNEL} tag"
               exit 1
             fi
-            echo "Resolved latest ${GRAPHENEOS_RELEASE_CHANNEL} tag: ${TAG}"
-            echo "${TAG}" > tmp/.grapheneos_tag
+            echo "Resolved latest ${GRAPHITEOS_RELEASE_CHANNEL} tag: ${TAG}"
+            echo "${TAG}" > tmp/.graphiteos_tag
           fi
 
-      - name: Sync GrapheneOS sources
+      - name: Sync sources
         working-directory: src/
         run: |
-          GRAPHENEOS_TAG=$(cat ../tmp/.grapheneos_tag 2>/dev/null || true)
-          GRAPHENEOS_BRANCH=$(cat ../tmp/.grapheneos_branch 2>/dev/null || true)
-          if [ -n "${GRAPHENEOS_TAG}" ]; then
-            echo "Initialising from tag: ${GRAPHENEOS_TAG}"
+          GRAPHITEOS_TAG=$(cat ../tmp/.graphiteos_tag 2>/dev/null || true)
+          GRAPHITEOS_BRANCH=$(cat ../tmp/.graphiteos_branch 2>/dev/null || true)
+          if [ -n "${GRAPHITEOS_TAG}" ]; then
+            echo "Initialising from tag: ${GRAPHITEOS_TAG}"
             repo init --depth=1 --git-lfs \
-              --manifest-branch "refs/tags/${GRAPHENEOS_TAG}" \
+              --manifest-branch "refs/tags/${GRAPHITEOS_TAG}" \
               --manifest-url https://github.com/GrapheneOS/platform_manifest.git
-          elif [ -n "${GRAPHENEOS_BRANCH}" ]; then
-            echo "Initialising from branch: ${GRAPHENEOS_BRANCH}"
+          elif [ -n "${GRAPHITEOS_BRANCH}" ]; then
+            echo "Initialising from branch: ${GRAPHITEOS_BRANCH}"
             repo init --depth=1 --git-lfs \
-              --manifest-branch "${GRAPHENEOS_BRANCH}" \
+              --manifest-branch "${GRAPHITEOS_BRANCH}" \
               --manifest-url https://github.com/GrapheneOS/platform_manifest.git
           else
             echo "ERROR: no tag or branch resolved"
@@ -367,7 +367,7 @@ jobs:
           ../patches/apply.sh . trebledroid
           ../patches/apply.sh . trebledroid-staging
           ../patches/apply.sh . legacy-devices
-          ../patches/apply.sh . grapheneos
+          ../patches/apply.sh . graphiteos
           ../patches/apply.sh . personal
           if [ "${DEBUG_BUILD}" = "true" ]; then
             echo "*** DEBUG BUILD: applying debug patches ***"
@@ -383,8 +383,8 @@ jobs:
         run: |
           ANDROID_VERSION_TAG_VAL=$(cat ../tmp/.android_version_tag)
           pushd device/phh/treble
-            cp --force --verbose ../../../../configs/rom/grapheneos.mk .
-            bash generate.sh grapheneos
+            cp --force --verbose ../../../../configs/rom/graphiteos.mk .
+            bash generate.sh graphiteos
           popd
           . build/envsetup.sh
           BUILD_VARIANT="user"
@@ -424,7 +424,7 @@ jobs:
             VERSION_TAG="${VERSION_TAG}-debug"
           fi
           cd tmp/
-          img="GrapheneOS-arm64-ab-${VERSION_TAG}.img"
+          img="GraphiteOS-arm64-ab-${VERSION_TAG}.img"
           mv --verbose system.img "${img}"
           mkdir --parents ../out/zsync
           zsyncmake -o "../out/zsync/${img}.zsync" -u "${img}" -v "${img}"
@@ -432,7 +432,7 @@ jobs:
           xz -9 --compress --memlimit-compress=0 --threads=0 --verbose "${img}"
           cp --force --verbose "${img}.xz" ../out/
           echo "version_tag=${VERSION_TAG}" >> "$GITHUB_OUTPUT"
-          echo "release_name=GrapheneOS-ab-${VERSION_TAG}" >> "$GITHUB_OUTPUT"
+          echo "release_name=GraphiteOS-ab-${VERSION_TAG}" >> "$GITHUB_OUTPUT"
 
       - name: Upload artifacts to build.chrisaw.io
         run: |
@@ -454,7 +454,7 @@ jobs:
           gh release create \
             --draft \
             --notes "${RELEASE_DESCRIPTION}" \
-            --title "GrapheneOS ${VERSION_TAG}" \
+            --title "GraphiteOS ${VERSION_TAG}" \
             "${VERSION_TAG}" \
             ./*.img.xz
 
