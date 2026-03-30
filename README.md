@@ -27,10 +27,6 @@ These can be re-enabled in **TrebleApp → Hardening** or **Settings → Exploit
 - **hardened thread stacks** — non-standard memory layout breaks some vendor drivers
 - **secure (exec-based) app spawning** — breaks root solutions (Magisk / KernelSU)
 
-### Apps removed
-
-Calendar, DeviceDiagnostics, EasterEgg, HardeningTestApp, InfoApp,
-MusicFX, PdfViewerGOS, QuickSearchBox.
 
 ## Delta Updates with zsync2
 
