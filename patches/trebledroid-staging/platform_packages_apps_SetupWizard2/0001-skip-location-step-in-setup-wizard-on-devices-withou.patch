@@ -1,0 +1,83 @@
+From bae1b7d9b5502c5d2ada34b96dcd5041285d97cf Mon Sep 17 00:00:00 2001
+From: "Christopher A. Williamson" <contact@chrisaw.io>
+Date: Mon, 30 Mar 2026 04:24:41 +0100
+Subject: [PATCH] skip location step in setup wizard on devices without
+ location hardware
+
+on GSI builds flashed to tablets or devices that lack GPS/location
+hardware, the location setup wizard step can get stuck because the
+underlying location services are unavailable.  check for
+FEATURE_LOCATION and skip LocationActivity when it is absent.
+---
+ .../setupwizard/action/SetupWizard.kt         | 45 +++++++++++--------
+ 1 file changed, 27 insertions(+), 18 deletions(-)
+
+diff --git a/java/app/grapheneos/setupwizard/action/SetupWizard.kt b/java/app/grapheneos/setupwizard/action/SetupWizard.kt
+index 4c543c0..c6895b0 100644
+--- a/java/app/grapheneos/setupwizard/action/SetupWizard.kt
++++ b/java/app/grapheneos/setupwizard/action/SetupWizard.kt
+@@ -4,6 +4,7 @@ import android.app.Activity
+ import android.app.ActivityOptions
+ import android.app.StatusBarManager
+ import android.content.Intent
++import android.content.pm.PackageManager
+ import android.os.UserManager
+ import androidx.annotation.StyleRes
+ import com.google.android.setupcompat.partnerconfig.PartnerConfigHelper
+@@ -24,27 +25,35 @@ import app.grapheneos.setupwizard.view.activity.WifiActivity
+ 
+ object SetupWizard {
+ 
++    private val hasLocation: Boolean by lazy {
++        appContext.packageManager.hasSystemFeature(PackageManager.FEATURE_LOCATION)
++    }
++
+     // it is assumed that activities are unrelated from each other
+     // which means current activity has no info to pass to next activity
+     // which means the launching of next activity will be a pure function
+-    private val primaryUserActivities = listOf<Class<out Activity>>(
+-        WelcomeActivity::class.java,
+-        WifiActivity::class.java,
+-        DateTimeActivity::class.java,
+-        LocationActivity::class.java,
+-        SecurityActivity::class.java,
+-        UpdaterSecurityPreviewActivity::class.java,
+-        MigrationActivity::class.java,
+-        GesturesActivity::class.java,
+-        FinishActivity::class.java
+-    )
+-    private val secondaryUserActivities = listOf<Class<out Activity>>(
+-        WelcomeActivity::class.java,
+-        LocationActivity::class.java,
+-        SecurityActivity::class.java,
+-        MigrationActivity::class.java,
+-        FinishActivity::class.java
+-    )
++    private val primaryUserActivities: List<Class<out Activity>> by lazy {
++        buildList {
++            add(WelcomeActivity::class.java)
++            add(WifiActivity::class.java)
++            add(DateTimeActivity::class.java)
++            if (hasLocation) add(LocationActivity::class.java)
++            add(SecurityActivity::class.java)
++            add(UpdaterSecurityPreviewActivity::class.java)
++            add(MigrationActivity::class.java)
++            add(GesturesActivity::class.java)
++            add(FinishActivity::class.java)
++        }
++    }
++    private val secondaryUserActivities: List<Class<out Activity>> by lazy {
++        buildList {
++            add(WelcomeActivity::class.java)
++            if (hasLocation) add(LocationActivity::class.java)
++            add(SecurityActivity::class.java)
++            add(MigrationActivity::class.java)
++            add(FinishActivity::class.java)
++        }
++    }
+ 
+     // launch next step
+     fun next(current: Activity) {
+-- 
+2.53.0
+
