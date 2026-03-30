@@ -3,14 +3,6 @@ name: Build GraphiteOS GSI
 on:
   workflow_dispatch:
     inputs:
-      graphiteos_tag:
-        description: 'graphiteos tag to build (blank = auto-detect latest stable)'
-        required: false
-        default: ''
-      graphiteos_branch:
-        description: 'graphiteos branch to build from HEAD (ignored if tag is set)'
-        required: false
-        default: ''
       release_channel:
         description: 'release channel for auto-detection (stable/beta/alpha)'
         required: false
@@ -258,9 +250,7 @@ jobs:
     env:
       GH_TOKEN: ${{ github.token }}
       DEBUG_BUILD: ${{ github.event.inputs.debug_build || 'false' }}
-      GRAPHITEOS_TAG: ${{ github.event.inputs.graphiteos_tag }}
-      GRAPHITEOS_BRANCH: ${{ github.event.inputs.graphiteos_branch }}
-      GRAPHITEOS_RELEASE_CHANNEL: ${{ github.event.inputs.release_channel || 'stable' }}
+      GRAPHENEOS_RELEASE_CHANNEL: ${{ github.event.inputs.release_channel || 'stable' }}
       WEB_DIR: /var/www/build.chrisaw.io
       REPO_PATH: ${{ github.repository }}
 
@@ -298,47 +288,26 @@ jobs:
           echo "${BUILD_DATETIME}" > tmp/.build_datetime
           echo "${BUILD_NUMBER}" > tmp/.build_number
 
-          if [ -n "${GRAPHITEOS_TAG}" ]; then
-            echo "Using manually specified tag: ${GRAPHITEOS_TAG}"
-            echo "${GRAPHITEOS_TAG}" > tmp/.graphiteos_tag
-
-          elif [ -n "${GRAPHITEOS_BRANCH}" ]; then
-            echo "WARNING: building from branch '${GRAPHITEOS_BRANCH}' (HEAD) - not a stable release!"
-            echo "${GRAPHITEOS_BRANCH}" > tmp/.graphiteos_branch
-
-          else
-            echo "Fetching latest ${GRAPHITEOS_RELEASE_CHANNEL} tag from grapheneos.org/releases..."
-            RELEASES_HTML=$(curl --fail --silent "https://grapheneos.org/releases")
-            TAG=$(echo "${RELEASES_HTML}" \
-              | grep --only-matching --perl-regexp "id=[a-z]+-${GRAPHITEOS_RELEASE_CHANNEL}><td>[^<]+</td><td><a href=#\K[0-9]{10}" \
-              | sort --numeric-sort --reverse | head --lines=1)
-            if [ -z "${TAG}" ]; then
-              echo "ERROR: failed to extract a valid ${GRAPHITEOS_RELEASE_CHANNEL} tag"
-              exit 1
-            fi
-            echo "Resolved latest ${GRAPHITEOS_RELEASE_CHANNEL} tag: ${TAG}"
-            echo "${TAG}" > tmp/.graphiteos_tag
+          echo "Fetching latest ${GRAPHENEOS_RELEASE_CHANNEL} tag from grapheneos.org/releases..."
+          RELEASES_HTML=$(curl --fail --silent "https://grapheneos.org/releases")
+          TAG=$(echo "${RELEASES_HTML}" \
+            | grep --only-matching --perl-regexp "id=[a-z]+-${GRAPHENEOS_RELEASE_CHANNEL}><td>[^<]+</td><td><a href=#\K[0-9]{10}" \
+            | sort --numeric-sort --reverse | head --lines=1)
+          if [ -z "${TAG}" ]; then
+            echo "ERROR: failed to extract a valid ${GRAPHENEOS_RELEASE_CHANNEL} tag"
+            exit 1
           fi
+          echo "Resolved latest ${GRAPHENEOS_RELEASE_CHANNEL} tag: ${TAG}"
+          echo "${TAG}" > tmp/.grapheneos_tag
 
       - name: Sync sources
         working-directory: src/
         run: |
-          GRAPHITEOS_TAG=$(cat ../tmp/.graphiteos_tag 2>/dev/null || true)
-          GRAPHITEOS_BRANCH=$(cat ../tmp/.graphiteos_branch 2>/dev/null || true)
-          if [ -n "${GRAPHITEOS_TAG}" ]; then
-            echo "Initialising from tag: ${GRAPHITEOS_TAG}"
-            repo init --depth=1 --git-lfs \
-              --manifest-branch "refs/tags/${GRAPHITEOS_TAG}" \
-              --manifest-url https://github.com/GrapheneOS/platform_manifest.git
-          elif [ -n "${GRAPHITEOS_BRANCH}" ]; then
-            echo "Initialising from branch: ${GRAPHITEOS_BRANCH}"
-            repo init --depth=1 --git-lfs \
-              --manifest-branch "${GRAPHITEOS_BRANCH}" \
-              --manifest-url https://github.com/GrapheneOS/platform_manifest.git
-          else
-            echo "ERROR: no tag or branch resolved"
-            exit 1
-          fi
+          GRAPHENEOS_TAG=$(cat ../tmp/.grapheneos_tag)
+          echo "Initialising from tag: ${GRAPHENEOS_TAG}"
+          repo init --depth=1 --git-lfs \
+            --manifest-branch "refs/tags/${GRAPHENEOS_TAG}" \
+            --manifest-url https://github.com/GrapheneOS/platform_manifest.git
           mkdir --parents .repo/local_manifests
           cp --verbose ../configs/manifests/*.xml .repo/local_manifests/
           SYNC_JOBS=$(( $(nproc --all) > 100 ? 100 : $(nproc --all) ))
