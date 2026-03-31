@@ -17,6 +17,10 @@ on:
         required: false
         type: boolean
         default: false
+      _retry_attempt:
+        description: 'internal: spot retry counter (do not set manually)'
+        required: false
+        default: '0'
 
 permissions:
   actions: write
@@ -437,6 +441,8 @@ jobs:
     needs: [ provision, build ]
     runs-on: ubuntu-latest
     if: always()
+    outputs:
+      spot_interrupted: ${{ steps.check_spot.outputs.spot_interrupted }}
 
     steps:
       - name: Configure AWS credentials
@@ -445,6 +451,42 @@ jobs:
           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: eu-west-2
+
+      - name: Check for spot interruption
+        id: check_spot
+        env:
+          INSTANCE_ID: ${{ needs.provision.outputs.instance_id }}
+          BUILD_RESULT: ${{ needs.build.result }}
+        run: |
+          echo "spot_interrupted=false" >> "$GITHUB_OUTPUT"
+
+          if [ -z "${INSTANCE_ID}" ] || [ "${BUILD_RESULT}" != "failure" ]; then
+            echo "Build did not fail or no instance — skipping spot check"
+            exit 0
+          fi
+
+          # check if the instance was terminated before we got to it
+          STATE=$(aws ec2 describe-instances \
+            --instance-ids "${INSTANCE_ID}" \
+            --query 'Reservations[0].Instances[0].State.Name' \
+            --output text 2>/dev/null || echo "unknown")
+
+          REASON=$(aws ec2 describe-instances \
+            --instance-ids "${INSTANCE_ID}" \
+            --query 'Reservations[0].Instances[0].StateReason.Code' \
+            --output text 2>/dev/null || echo "unknown")
+
+          echo "Instance state: ${STATE}, reason: ${REASON}"
+
+          if [ "${REASON}" = "Server.SpotInstanceTermination" ]; then
+            echo "::warning::Spot instance was reclaimed by AWS"
+            echo "spot_interrupted=true" >> "$GITHUB_OUTPUT"
+          elif [ "${STATE}" = "terminated" ] || [ "${STATE}" = "shutting-down" ]; then
+            # instance already dead before our teardown — likely spot reclamation
+            # even if the reason code doesn't match exactly
+            echo "::warning::Instance was terminated externally (probable spot reclamation)"
+            echo "spot_interrupted=true" >> "$GITHUB_OUTPUT"
+          fi
 
       - name: Terminate instance
         env:
@@ -511,15 +553,60 @@ jobs:
         if: always()
         run: |
           BUILD_RESULT="${{ needs.build.result }}"
+          SPOT_HIT="${{ steps.check_spot.outputs.spot_interrupted }}"
+          ATTEMPT="${{ github.event.inputs._retry_attempt || '0' }}"
           {
             echo "## Build Summary"
             echo ""
             echo "| Item | Value |"
             echo "|------|-------|"
             echo "| Build result | ${BUILD_RESULT} |"
+            echo "| Spot interrupted | ${SPOT_HIT} |"
+            echo "| Attempt | $((ATTEMPT + 1)) of 5 |"
             echo "| Instance ID | ${{ needs.provision.outputs.instance_id }} |"
             echo "| Instance type | c7i.48xlarge (192 vCPUs) |"
             echo "| Region | eu-west-2 (London) |"
             echo "| Runner label | ${{ needs.provision.outputs.runner_label }} |"
             echo "| Instance terminated | yes |"
           } >> "$GITHUB_STEP_SUMMARY"
+
+  # ---------------------------------------------------------------------------
+  # job 4: retry on spot interruption
+  # if the build failed because AWS reclaimed the spot instance, re-trigger
+  # the workflow automatically (up to 5 attempts).
+  # ---------------------------------------------------------------------------
+  retry:
+    name: Retry on Spot Interruption
+    needs: [ teardown ]
+    runs-on: ubuntu-latest
+    if: always() && needs.teardown.outputs.spot_interrupted == 'true'
+
+    steps:
+      - name: Check retry budget
+        id: budget
+        run: |
+          ATTEMPT="${{ github.event.inputs._retry_attempt || '0' }}"
+          NEXT=$((ATTEMPT + 1))
+          echo "Current attempt: $((ATTEMPT + 1)), next would be: $((NEXT + 1))"
+          if [ "${NEXT}" -ge 5 ]; then
+            echo "::error::Spot retry budget exhausted (5 attempts). Giving up."
+            echo "has_budget=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "has_budget=true" >> "$GITHUB_OUTPUT"
+            echo "next_attempt=${NEXT}" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Re-trigger workflow
+        if: steps.budget.outputs.has_budget == 'true'
+        env:
+          GH_TOKEN: ${{ secrets.GH_PAT }}
+        run: |
+          NEXT="${{ steps.budget.outputs.next_attempt }}"
+          echo "::warning::Spot instance was reclaimed — retrying (attempt $((NEXT + 1)) of 5)..."
+          gh workflow run build.yml \
+            --repo "${{ github.repository }}" \
+            --ref "${{ github.ref }}" \
+            --field release_channel="${{ github.event.inputs.release_channel || 'stable' }}" \
+            --field debug_build="${{ github.event.inputs.debug_build || 'false' }}" \
+            --field clean_build=false \
+            --field _retry_attempt="${NEXT}"
