@@ -63,6 +63,9 @@
   <remove-project name="platform/tools/test/mobly_snippets" />
   <remove-project name="platform/tools/test/openhst" />
 
+  <!-- setup wizard: causes issues on GSI builds -->
+  <remove-project name="platform_packages_apps_SetupWizard2" />
+
   <!-- tv -->
   <remove-project name="platform/packages/apps/TvFeedbackConsent" />
 </manifest>
