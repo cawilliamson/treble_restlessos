@@ -80,4 +80,4 @@ for more information and discussion.
 - **GrapheneOS team** — for creating the ROM in the first place
 - **@Nullvalue** — for providing the inspiration to start working on this in the first place
 - **@Gero** — for the idea of the name GraphiteOS
-- **@CriednagaZz** — for the new GraphiteOS logo
+- **[@Ziednaga](https://github.com/Ziednaga)** — for the GraphiteOS logo and boot animation artwork
