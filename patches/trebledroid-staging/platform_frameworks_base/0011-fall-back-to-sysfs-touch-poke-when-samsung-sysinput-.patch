@@ -1,0 +1,67 @@
+From 11033da436bbff2d5a39acffe6bd42be6058c747 Mon Sep 17 00:00:00 2001
+From: "Christopher A. Williamson" <contact@chrisaw.io>
+Date: Tue, 31 Mar 2026 23:39:37 +0100
+Subject: [PATCH 11/11] fall back to sysfs touch poke when samsung sysinput HAL is
+ missing
+
+on samsung devices where the sysinput HIDL HAL
+(vendor.samsung.hardware.sysinput@1.1) is not declared in the VINTF
+manifest, the existing setTspEnable() call silently no-ops.  this
+leaves the novatek (and other sec_input) touch controller stuck in
+its suspended state after a display power cycle, permanently killing
+touch input until reboot.
+
+when the HAL lookup fails, fall back to writing 'check_connection'
+to /sys/class/sec/tsp/cmd on display wake (STATE_ON).  this forces
+the touch driver to re-establish communication with the touch IC,
+which is the same mechanism used by standalone workarounds (magisk
+modules) for exynos 850 GSI builds.
+
+the sysfs node is guarded by an existence check and the write is
+wrapped in a try/catch, so this is a no-op on non-samsung devices
+or devices where the HAL works normally.
+
+rw-system.sh already chowns /sys/class/sec/tsp/cmd to system and
+relabels it to sysfs_ss_writable on samsung devices.
+---
+ .../server/display/LocalDisplayAdapter.java   | 24 +++++++++++++++++++
+ 1 file changed, 24 insertions(+)
+
+diff --git a/services/core/java/com/android/server/display/LocalDisplayAdapter.java b/services/core/java/com/android/server/display/LocalDisplayAdapter.java
+index 6865a23a7..3c4c68d6e 100644
+--- a/services/core/java/com/android/server/display/LocalDisplayAdapter.java
++++ b/services/core/java/com/android/server/display/LocalDisplayAdapter.java
+@@ -1004,6 +1004,30 @@ final class LocalDisplayAdapter extends DisplayAdapter {
+                             }
+                         }
+ 
++                        // fallback: when the samsung sysinput HAL is missing (not
++                        // declared in the device VINTF manifest), poke the touch
++                        // controller via sysfs to re-establish communication after
++                        // waking from suspend.  without this, touch input dies
++                        // permanently on exynos 850 and similar samsung SoCs.
++                        if (samsungSysinput == null
++                                && state == Display.STATE_ON
++                                && triedSamsungHal) {
++                            try {
++                                java.io.File tspCmd =
++                                        new java.io.File("/sys/class/sec/tsp/cmd");
++                                if (tspCmd.exists()) {
++                                    java.io.FileOutputStream fos =
++                                            new java.io.FileOutputStream(tspCmd);
++                                    fos.write("check_connection".getBytes());
++                                    fos.close();
++                                    Log.d("PHH", "Sent check_connection to "
++                                            + "sec/tsp/cmd (sysinput HAL unavailable)");
++                                }
++                            } catch (Throwable t) {
++                                Log.d("PHH", "Failed to poke sec/tsp/cmd", t);
++                            }
++                        }
++
+                         setCommittedState(state);
+ 
+                         // If we're entering a suspended (but not OFF) power state and we
+-- 
+2.53.0
+
