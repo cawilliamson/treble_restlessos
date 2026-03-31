@@ -1,0 +1,39 @@
+From e6b90ba51e1daa8030f1cf2e7ac1ddcccc313cf6 Mon Sep 17 00:00:00 2001
+From: "Christopher A. Williamson" <contact@chrisaw.io>
+Date: Tue, 31 Mar 2026 23:40:18 +0100
+Subject: [PATCH 19/19] allow system_server to write samsung touch sysfs on wake
+
+when the samsung sysinput HAL is missing from the VINTF manifest
+(common on budget exynos devices like the A15/exynos 850), the
+framework falls back to writing 'check_connection' directly to
+/sys/class/sec/tsp/cmd.  rw-system.sh already relabels that node
+to sysfs_ss_writable and chowns it to system, but system_server
+needs an explicit SELinux allow rule for the write.
+
+define the sysfs_ss_writable type in system policy (samsung vendor
+policy also defines it; the merged policy handles both) and grant
+system_server write access to it.
+---
+ sepolicy/samsung.te | 6 ++++++
+ 1 file changed, 6 insertions(+)
+
+diff --git a/sepolicy/samsung.te b/sepolicy/samsung.te
+index 168e533..d4fd24e 100644
+--- a/sepolicy/samsung.te
++++ b/sepolicy/samsung.te
+@@ -9,6 +9,12 @@ type hal_graphics_composer_default, domain;
+ type hal_sec_inputdev_default, domain;
+ allow hal_sec_inputdev_default system_prop:file { getattr map open read };
+ 
++# allow system_server to write to samsung touch sysfs for the
++# check_connection fallback when the sysinput HAL is missing.
++# rw-system.sh relabels /sys/class/sec/tsp/cmd to this type.
++type sysfs_ss_writable, file_type, sysfs_type;
++allow system_server sysfs_ss_writable:file { getattr open write };
++
+ # allow USB HAL to read system properties on samsung exynos devices
+ # (the coral USB HAL used by TrebleDroid is denied access to system_prop,
+ # which breaks USB port role switching on devices like the galaxy M33)
+-- 
+2.53.0
+
