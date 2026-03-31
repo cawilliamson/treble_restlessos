@@ -73,3 +73,11 @@ risk). See the [XDA thread](https://xdaforums.com/t/mtk-4-14-kernel-bpf-patching
 for more information and discussion.
 
 [ALPS05247589]: https://gist.github.com/R0rt1z2/8af7735c6c3802148fa4da61b3cba506
+
+## Credits
+
+- **TrebleDroid team** — for all of their hard work in making all of this possible
+- **GrapheneOS team** — for creating the ROM in the first place
+- **@Nullvalue** — for providing the inspiration to start working on this in the first place
+- **@Gero** — for the idea of the name GraphiteOS
+- **@CriednagaZz** — for the new GraphiteOS logo
