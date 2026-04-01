@@ -406,11 +406,32 @@ jobs:
           echo "version_tag=${VERSION_TAG}" >> "$GITHUB_OUTPUT"
           echo "release_name=GraphiteOS-ab-${VERSION_TAG}" >> "$GITHUB_OUTPUT"
 
+      - name: Generate changelog
+        id: changelog
+        run: |
+          VERSION_TAG="${{ steps.compress.outputs.version_tag }}"
+          PREV_TAG=$(git tag --sort=-version:refname | head -1)
+          if [ -n "${PREV_TAG}" ]; then
+            RANGE="${PREV_TAG}..HEAD"
+            HEADER="Changes since ${PREV_TAG}"
+          else
+            RANGE="HEAD"
+            HEADER="Initial release"
+          fi
+          {
+            echo "# GraphiteOS ${VERSION_TAG}"
+            echo ""
+            echo "## ${HEADER}"
+            echo ""
+            git log --format='- %s' --no-merges "${RANGE}"
+          } > out/CHANGELOG.md
+          cat out/CHANGELOG.md
+
       - name: Upload artifacts to build.chrisaw.io
         run: |
           RELEASE_NAME="${{ steps.compress.outputs.release_name }}"
           rsync --archive --compress --mkpath --verbose \
-            out/*.img.xz \
+            out/*.img.xz out/CHANGELOG.md \
             "build.chrisaw.io:/var/www/build.chrisaw.io/${RELEASE_NAME}/"
           rsync --archive --compress --mkpath --verbose \
             out/zsync/ \
@@ -421,7 +442,10 @@ jobs:
         run: |
           VERSION_TAG="${{ steps.compress.outputs.version_tag }}"
           RELEASE_NAME="${{ steps.compress.outputs.release_name }}"
-          RELEASE_DESCRIPTION="Download mirror: https://build.chrisaw.io/${RELEASE_NAME}/"
+          CHANGELOG=$(cat out/CHANGELOG.md)
+          RELEASE_DESCRIPTION="Download mirror: https://build.chrisaw.io/${RELEASE_NAME}/
+
+${CHANGELOG}"
           cd out/
           gh release create \
             --draft \
