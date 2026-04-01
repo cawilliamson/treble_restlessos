@@ -448,7 +448,6 @@ jobs:
 ${CHANGELOG}"
           cd out/
           gh release create \
-            --draft \
             --notes "${RELEASE_DESCRIPTION}" \
             --title "GraphiteOS ${VERSION_TAG}" \
             "${VERSION_TAG}" \
