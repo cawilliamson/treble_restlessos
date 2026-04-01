@@ -443,9 +443,7 @@ jobs:
           VERSION_TAG="${{ steps.compress.outputs.version_tag }}"
           RELEASE_NAME="${{ steps.compress.outputs.release_name }}"
           CHANGELOG=$(cat out/CHANGELOG.md)
-          RELEASE_DESCRIPTION="Download mirror: https://build.chrisaw.io/${RELEASE_NAME}/
-
-${CHANGELOG}"
+          printf -v RELEASE_DESCRIPTION 'Download mirror: https://build.chrisaw.io/%s/\n\n%s' "${RELEASE_NAME}" "${CHANGELOG}"
           cd out/
           gh release create \
             --notes "${RELEASE_DESCRIPTION}" \
