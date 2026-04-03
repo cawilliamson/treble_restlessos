@@ -1,7 +1,7 @@
 From ea1d15954b5171092ba068cfa257c39d1f655578 Mon Sep 17 00:00:00 2001
 From: "Christopher A. Williamson" <contact@chrisaw.io>
 Date: Fri, 3 Apr 2026 00:30:15 +0100
-Subject: [PATCH 6/6] force HWC power-off during display init to fix MTK
+Subject: [PATCH 6/7] force HWC power-off during display init to fix MTK
  boot-black-screen
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
