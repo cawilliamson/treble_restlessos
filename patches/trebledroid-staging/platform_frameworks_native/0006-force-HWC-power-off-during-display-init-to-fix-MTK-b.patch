@@ -1,11 +1,8 @@
-From ea1d15954b5171092ba068cfa257c39d1f655578 Mon Sep 17 00:00:00 2001
+From c56c75277b8d02bb18831851d42e2e759760b728 Mon Sep 17 00:00:00 2001
 From: "Christopher A. Williamson" <contact@chrisaw.io>
-Date: Fri, 3 Apr 2026 00:30:15 +0100
-Subject: [PATCH 6/7] force HWC power-off during display init to fix MTK
+Date: Fri, 3 Apr 2026 08:46:53 +0100
+Subject: [PATCH 6/6] force HWC power-off during display init to fix MTK
  boot-black-screen
-MIME-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
-Content-Transfer-Encoding: 8bit
 
 on MTK devices like the blackview shark 8 (MT6789), the bootloader
 leaves the display powered on (HWC mode 2).  the kernel's
@@ -13,43 +10,44 @@ disable_unused clock framework then kills the DSI and display clocks
 before userspace starts.  the hardware is off but the HWC's internal
 state still says mode 2.
 
-during initializeDisplays(), SurfaceFlinger tries to power-cycle
-displays through OFF then ON.  however the OFF request is skipped
-because SF's own internal state already reads OFF (its default).
-the subsequent ON request reaches HWC, which sees current=2 and
-requested=2, takes a shortcut 'already on' path that does a DRM
-atomic commit (fails with -EINVAL because clocks are dead) and an
-fb0 fallback (fails because /dev/fb0 doesn't exist).
+during initializeDisplays(), the OFF request is skipped because SF's
+internal state already reads OFF.  force the DisplayDevice state to
+ON first so setPhysicalDisplayPowerMode(OFF) runs through the full
+power-off path including scheduler notification, pacesetter update,
+and vsync teardown.  without this, the scheduler and HWC have
+inconsistent views of the display state, which prevents frame
+composition after the subsequent power-on.
 
-fix by sending the OFF directly to HWC during the init OFF loop,
-bypassing SF's redundant state check.  this resets HWC's internal
-state from 2 to 0, so the following ON request triggers a proper
-full 0→2 power-on sequence through the DRM/KMS path.
+the ON request then runs a proper full OFF->ON transition through
+the DRM/KMS path, re-enabling the display clocks and DSI output.
 ---
- services/surfaceflinger/SurfaceFlinger.cpp | 12 +++++++++++-
- 1 file changed, 11 insertions(+), 1 deletion(-)
+ services/surfaceflinger/SurfaceFlinger.cpp | 15 ++++++++++++++-
+ 1 file changed, 14 insertions(+), 1 deletion(-)
 
 diff --git a/services/surfaceflinger/SurfaceFlinger.cpp b/services/surfaceflinger/SurfaceFlinger.cpp
-index eb481b1e1c..0bfb590b27 100644
+index eb481b1e1c..1cb4ef231e 100644
 --- a/services/surfaceflinger/SurfaceFlinger.cpp
 +++ b/services/surfaceflinger/SurfaceFlinger.cpp
-@@ -6060,8 +6060,18 @@ void SurfaceFlinger::initializeDisplays() {
+@@ -6060,8 +6060,21 @@ void SurfaceFlinger::initializeDisplays() {
          ftl::FakeGuard guard(mStateLock);
  
          // In case of a restart, ensure all displays are off.
 +        // on some MTK devices the bootloader leaves the display on and the
 +        // kernel's disable_unused clock framework kills the DSI clocks
 +        // before userspace starts.  the HWC still thinks the display is
-+        // powered (mode 2) while the hardware is actually off.  if we
-+        // only call setPhysicalDisplayPowerMode(OFF) it gets skipped
-+        // because SF's internal state already says OFF.  send the OFF
-+        // directly to HWC so it resets its internal state, then the
-+        // subsequent ON request does a proper full power-on sequence.
++        // powered (mode 2) while the hardware is actually off.  the
++        // setPhysicalDisplayPowerMode(OFF) call below would normally be
++        // skipped because SF's internal state already reads OFF.  force
++        // the display state to ON first so the OFF request runs through
++        // the full power-off path including scheduler and vsync teardown,
++        // then the subsequent ON does a proper full power-on sequence.
          for (const auto& [id, display] : mPhysicalDisplays) {
 -            setPhysicalDisplayPowerMode(getDisplayDeviceLocked(id), hal::PowerMode::OFF);
 +            const auto dev = getDisplayDeviceLocked(id);
-+            getHwComposer().setPowerMode(id, hal::PowerMode::OFF);
-+            dev->setPowerMode(hal::PowerMode::OFF);
++            if (dev->getPowerMode() == hal::PowerMode::OFF) {
++                dev->setPowerMode(hal::PowerMode::ON);
++            }
++            setPhysicalDisplayPowerMode(dev, hal::PowerMode::OFF);
          }
  
          // Power on all displays. The primary display is first, so becomes the active display. Also,
