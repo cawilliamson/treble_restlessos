@@ -1,32 +1,18 @@
-From 2369fccdc22289a6998fd6f15c5678316cf7760b Mon Sep 17 00:00:00 2001
+From 3ff88cb91ff151cd37db4a62031b4b07ed94bc4f Mon Sep 17 00:00:00 2001
 From: "Christopher A. Williamson" <contact@chrisaw.io>
-Date: Fri, 3 Apr 2026 17:47:09 +0100
+Date: Fri, 3 Apr 2026 17:52:37 +0100
 Subject: [PATCH] SurfaceFlinger: add GSI_DISP debug logging for display
  power-on sequence
 
 add verbose ALOGI traces tagged GSI_DISP to the display initialisation
-and power management paths.  covers:
-
-SurfaceFlinger.cpp:
-- init(): pid, HWC creation, callback registration, configureLocked
-- initializeDisplays(): display count, per-display OFF/ON sequencing
-- setPhysicalDisplayPowerMode(): current vs requested mode, early-return
-  on same-mode, isInternal, feature flag values, optimization policy,
-  scheduler notification, HWC setPowerMode call/return, vsync routing,
-  final state
-
-HWComposer.cpp:
-- setPowerMode(): entry with display id and mode, per-branch hwc call
-  entry/return with error code, doze support query result
-
-all lines use the GSI_DISP tag prefix for easy filtering:
-  adb logcat -s SurfaceFlinger:I | grep GSI_DISP
+and power management paths.  covers init(), initializeDisplays(),
+setPhysicalDisplayPowerMode(), and HWComposer::setPowerMode().
 
 debug-only patch -- not for release builds.
 ---
- .../DisplayHardware/HWComposer.cpp            | 10 ++++++++++
- services/surfaceflinger/SurfaceFlinger.cpp    | 20 +++++++++++++++++++
- 2 files changed, 30 insertions(+)
+ .../DisplayHardware/HWComposer.cpp             | 10 ++++++++++
+ services/surfaceflinger/SurfaceFlinger.cpp     | 18 ++++++++++++++++++
+ 2 files changed, 28 insertions(+)
 
 diff --git a/services/surfaceflinger/DisplayHardware/HWComposer.cpp b/services/surfaceflinger/DisplayHardware/HWComposer.cpp
 index f732d25d64..9e8866cc3f 100644
@@ -66,7 +52,7 @@ index f732d25d64..9e8866cc3f 100644
                      LOG_HWC_ERROR(("setPowerMode(" + to_string(mode) + ")").c_str(), error,
                                    displayId);
 diff --git a/services/surfaceflinger/SurfaceFlinger.cpp b/services/surfaceflinger/SurfaceFlinger.cpp
-index 0639ced8b0..e398295f79 100644
+index 0639ced8b0..f5afafa11e 100644
 --- a/services/surfaceflinger/SurfaceFlinger.cpp
 +++ b/services/surfaceflinger/SurfaceFlinger.cpp
 @@ -944,6 +944,7 @@ renderengine::RenderEngine::BlurAlgorithm chooseBlurAlgorithm(bool supportsBlur)
@@ -93,20 +79,7 @@ index 0639ced8b0..e398295f79 100644
  
      ClientCache::getInstance().setRenderEngine(&getRenderEngine());
  
-@@ -996,10 +1000,12 @@ void SurfaceFlinger::init() FTL_FAKE_GUARD(kMainThreadContext) {
-     }
- 
-     // Process hotplug for displays connected at boot.
-+    ALOGI("GSI_DISP: calling configureLocked() for initial hotplug");
-     LOG_ALWAYS_FATAL_IF(!configureLocked(),
-                         "Initial display configuration failed: HWC did not hotplug");
- 
-     mFrontInternalDisplayId = getPrimaryDisplayIdLocked();
-+    ALOGI("GSI_DISP: primary display id=%s", to_string(mFrontInternalDisplayId).c_str());
- 
-     // Commit primary display.
-     sp<const DisplayDevice> display;
-@@ -6032,6 +6038,8 @@ void SurfaceFlinger::onHandleDestroyed(sp<Layer>& layer, uint32_t layerId) {
+@@ -6032,6 +6036,8 @@ void SurfaceFlinger::onHandleDestroyed(sp<Layer>& layer, uint32_t layerId) {
  }
  
  void SurfaceFlinger::initializeDisplays() {
@@ -115,7 +88,7 @@ index 0639ced8b0..e398295f79 100644
      QueuedTransactionState state;
      state.inputWindowCommands = mInputWindowCommands;
      const nsecs_t now = systemTime();
-@@ -6097,7 +6105,12 @@ void SurfaceFlinger::setPhysicalDisplayPowerMode(const sp<DisplayDevice>& displa
+@@ -6097,7 +6103,12 @@ void SurfaceFlinger::setPhysicalDisplayPowerMode(const sp<DisplayDevice>& displa
      ALOGD("Setting power mode %d on physical display %s", mode, to_string(displayId).c_str());
  
      const auto currentMode = display->getPowerMode();
@@ -128,7 +101,7 @@ index 0639ced8b0..e398295f79 100644
          return;
      }
  
-@@ -6148,10 +6161,14 @@ void SurfaceFlinger::setPhysicalDisplayPowerMode(const sp<DisplayDevice>& displa
+@@ -6148,10 +6159,14 @@ void SurfaceFlinger::setPhysicalDisplayPowerMode(const sp<DisplayDevice>& displa
                                       OptimizationPolicy::optimizeForPerformance);
          }
  
@@ -143,7 +116,7 @@ index 0639ced8b0..e398295f79 100644
              requestHardwareVsync(displayId, enable);
  
              if (displayId == mFrontInternalDisplayId && !shouldApplyOptimizationPolicy) {
-@@ -6245,6 +6262,9 @@ void SurfaceFlinger::setPhysicalDisplayPowerMode(const sp<DisplayDevice>& displa
+@@ -6245,6 +6260,9 @@ void SurfaceFlinger::setPhysicalDisplayPowerMode(const sp<DisplayDevice>& displa
          mScheduler->setActiveDisplayPowerModeForRefreshRateStats(mode);
      }
  
