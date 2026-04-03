@@ -1,7 +1,7 @@
 From 2694c50f9cc2fcf4af33e027abc13a047a464c4d Mon Sep 17 00:00:00 2001
 From: Doze-off <viniciussadxxx@gmail.com>
 Date: Wed, 25 Mar 2026 09:34:00 +0000
-Subject: [PATCH 5/7] SurfaceFlinger: add treble app toggles for latch unsignaled
+Subject: [PATCH 5/6] SurfaceFlinger: add treble app toggles for latch unsignaled
  and backpressure
 
 add support for the three new PHH treble app display toggles:
