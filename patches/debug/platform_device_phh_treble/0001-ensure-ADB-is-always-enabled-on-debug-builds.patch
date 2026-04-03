@@ -1,31 +1,26 @@
-From fd69f7394c31aa4f6196e1bbace7acad14b54282 Mon Sep 17 00:00:00 2001
+From 09476ce9ff51cd0d02d4b8d46e112f5c8dde0c54 Mon Sep 17 00:00:00 2001
 From: "Christopher A. Williamson" <contact@chrisaw.io>
-Date: Sat, 28 Mar 2026 18:57:26 +0000
-Subject: [PATCH 2/2] add early-init ADB poller for reliable USB debugging
+Date: Fri, 3 Apr 2026 13:27:41 +0100
+Subject: [PATCH] ensure ADB is always enabled on debug builds
 
-many vendor init scripts either never set sys.usb.controller or set
-it after AOSP's init.usb.configfs.rc property triggers have already
-fired and failed silently.  on these devices ADB never comes up
-because the UDC wasn't registered when the triggers ran.
+remove the phh-on-boot.sh block that deletes ro.adb.secure and stops
+adbd at boot_completed, and set persist.sys.usb.config=adb in base.mk
+so unauthenticated ADB remains available across all boots.
 
-add a background service that starts at early-init (the earliest
-possible phase from the system partition) and tight-polls /sys/class/udc
-at 100ms intervals.  once a USB controller appears it:
+add an early-init poller (phh-early-adb.sh) that detects the USB
+controller the instant it appears in sysfs and re-triggers AOSP's USB
+property flow.  this covers devices where vendor init never sets
+sys.usb.controller or sets it after AOSP's triggers have already fired.
+the poller bails out immediately if ADB is already functional, avoiding
+a race where re-triggering sys.usb.config tears down a working session.
 
-  - sets sys.usb.controller to the detected UDC
-  - ensures sys.usb.configfs=1 and configfs is mounted
-  - creates the gadget structure AOSP expects if vendor hasn't
-  - re-triggers sys.usb.config to fire AOSP's USB flow again
-
-this replaces the need for PHH's /cache/phh-adb manual gadget
-teardown approach.  unlike that method, this is non-destructive
-(doesn't fight with vendor USB HAL), uses AOSP's expected configfs
-layout and google VID/PID, and lets init manage adbd properly.
+debug-only patch -- must not be shipped in release builds.
 ---
- 00-early-adb.rc  | 14 +++++++++++++
- base.mk          |  2 ++
- phh-early-adb.sh | 54 ++++++++++++++++++++++++++++++++++++++++++++++++
- 3 files changed, 70 insertions(+)
+ 00-early-adb.rc  | 14 ++++++++++
+ base.mk          |  5 +++-
+ phh-early-adb.sh | 68 ++++++++++++++++++++++++++++++++++++++++++++++++
+ phh-on-boot.sh   |  8 ++----
+ 4 files changed, 88 insertions(+), 7 deletions(-)
  create mode 100644 00-early-adb.rc
  create mode 100755 phh-early-adb.sh
 
@@ -50,26 +45,37 @@ index 0000000..cb743e5
 +    disabled
 +    seclabel u:r:phhsu_daemon:s0
 diff --git a/base.mk b/base.mk
-index fda86c1..e75ce34 100644
+index 2462c9b..8f9164c 100644
 --- a/base.mk
 +++ b/base.mk
-@@ -154,8 +154,10 @@ PRODUCT_PACKAGES += \
+@@ -42,6 +42,7 @@ PRODUCT_SYSTEM_DEFAULT_PROPERTIES += \
+ 
+ # Huawei HiSuite (also other OEM custom programs I guess) it's of no use in AOSP builds
+ PRODUCT_SYSTEM_DEFAULT_PROPERTIES += \
++    persist.sys.usb.config=adb \
+     ro.cust.cdrom=/dev/null
+ 
+ # VNDK config files
+@@ -153,10 +154,12 @@ PRODUCT_PACKAGES += \
  
  PRODUCT_COPY_FILES += \
      device/phh/treble/files/adbd.rc:system/etc/init/adbd.rc \
 +    device/phh/treble/00-early-adb.rc:system/etc/init/00-early-adb.rc \
      device/phh/treble/00-fix-metadata.rc:system/etc/init/00-fix-metadata.rc \
      device/phh/treble/00-fix-metadata.sh:system/etc/00-fix-metadata.sh \
-+    device/phh/treble/phh-early-adb.sh:system/etc/phh-early-adb.sh \
      device/phh/treble/8849-proinfo.rc:system/etc/init/8849-proinfo.rc \
-     device/phh/treble/8849-proinfo.sh:system/etc/8849-proinfo.sh
+-    device/phh/treble/8849-proinfo.sh:system/etc/8849-proinfo.sh
++    device/phh/treble/8849-proinfo.sh:system/etc/8849-proinfo.sh \
++    device/phh/treble/phh-early-adb.sh:system/etc/phh-early-adb.sh
  
+ # MTK incoming SMS fix
+ PRODUCT_PACKAGES += \
 diff --git a/phh-early-adb.sh b/phh-early-adb.sh
 new file mode 100755
-index 0000000..2f78cdd
+index 0000000..6f45cb2
 --- /dev/null
 +++ b/phh-early-adb.sh
-@@ -0,0 +1,54 @@
+@@ -0,0 +1,68 @@
 +#!/system/bin/sh
 +# early ADB: poll for a USB controller and ensure AOSP's USB triggers
 +# can fire successfully.  starts at early-init so it runs concurrently
@@ -81,15 +87,29 @@ index 0000000..2f78cdd
 +#   - AOSP triggers fired before UDC registered → "No such device"
 +#   - gadget structure missing when triggers fire
 +
++# bail out if ADB is already functional
++if getprop sys.usb.state | grep -q adb; then
++    exit 0
++fi
++
 +# poll for UDC — 100ms intervals, 60s timeout
 +i=0
 +while [ $i -lt 600 ]; do
++    # re-check each iteration in case ADB came up via normal boot flow
++    if getprop sys.usb.state | grep -q adb; then
++        exit 0
++    fi
 +    udc="$(ls /sys/class/udc 2>/dev/null | head -1)"
 +    [ -n "$udc" ] && break
 +    sleep 0.1
 +    i=$((i + 1))
 +done
 +[ -z "$udc" ] && exit 1
++
++# final check before touching anything — ADB may have come up while polling
++if getprop sys.usb.state | grep -q adb; then
++    exit 0
++fi
 +
 +# ensure configfs is mounted
 +mountpoint -q /config || mount -t configfs none /config 2>/dev/null
@@ -124,6 +144,25 @@ index 0000000..2f78cdd
 +setprop sys.usb.config none
 +sleep 0.2
 +setprop sys.usb.config "$config"
+diff --git a/phh-on-boot.sh b/phh-on-boot.sh
+index 0b5f179..b04e5af 100644
+--- a/phh-on-boot.sh
++++ b/phh-on-boot.sh
+@@ -36,12 +36,8 @@ if [ ! -f /metadata/securize_disable ]; then
+   resetprop_phh -n init.svc.flash_recovery stopped
+ fi
+ 
+-# End first-boot debug ADB window.
+-if [ "$(getprop ro.adb.secure)" = "0" ]; then
+-    resetprop_phh --delete ro.adb.secure
+-    resetprop_phh --delete persist.sys.usb.config
+-    stop adbd
+-fi
++# debug build: keep unauthenticated ADB open permanently
++# (the cleanup block that disables ADB at boot_completed is removed)
+ 
+ vndk="$(getprop persist.sys.vndk)"
+ [ -z "$vndk" ] && vndk="$(getprop ro.vndk.version |grep -oE '^[0-9]+')"
 -- 
 2.53.0
 
