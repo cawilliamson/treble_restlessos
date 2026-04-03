@@ -1,7 +1,7 @@
 From 655d7dfe13f378653eb31c25eedfa2532fd94dd6 Mon Sep 17 00:00:00 2001
 From: "Christopher A. Williamson" <contact@chrisaw.io>
 Date: Fri, 3 Apr 2026 13:50:44 +0100
-Subject: [PATCH 6/6] fix MTK boot-black-screen: reset HWC power state directly
+Subject: [PATCH 6/7] fix MTK boot-black-screen: reset HWC power state directly
 
 on MTK devices the bootloader leaves the display powered (HWC mode 2)
 but the kernel's disable_unused clock framework kills the DSI clocks

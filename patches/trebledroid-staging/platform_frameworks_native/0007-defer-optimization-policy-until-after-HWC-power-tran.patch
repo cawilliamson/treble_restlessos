@@ -1,0 +1,66 @@
+From a20c730028e21790abe1d77f78ad8e8658e6f7d6 Mon Sep 17 00:00:00 2001
+From: "Christopher A. Williamson" <contact@chrisaw.io>
+Date: Fri, 3 Apr 2026 17:46:15 +0100
+Subject: [PATCH 7/7] defer optimization policy until after HWC power transition
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+applyOptimizationPolicy() disables synthetic vsync when it detects a
+powered-on display.  in the current code it runs BEFORE the HWC
+setPowerMode call, killing synthetic vsync while the hardware is still
+physically off.  on fast HWCs (qualcomm, <10ms) this is harmless, but
+MTK HWCs take 300-500ms to complete setPowerMode(ON).  during that
+gap the scheduler has no vsync source, composition stalls, and the
+display stays blank after wake from sleep.
+
+move applyOptimizationPolicy to after all power transition branches
+so synthetic vsync remains available as a fallback during the HWC
+power-on.  for the OFF branch this means synthetic vsync is enabled
+after HWC is off (correct — it's needed for housekeeping).  for the
+ON branch it means synthetic vsync is disabled after hardware vsync
+has been requested (correct — seamless handoff).
+---
+ services/surfaceflinger/SurfaceFlinger.cpp | 19 +++++++++++++++----
+ 1 file changed, 15 insertions(+), 4 deletions(-)
+
+diff --git a/services/surfaceflinger/SurfaceFlinger.cpp b/services/surfaceflinger/SurfaceFlinger.cpp
+index 77fab5e5fb..0639ced8b0 100644
+--- a/services/surfaceflinger/SurfaceFlinger.cpp
++++ b/services/surfaceflinger/SurfaceFlinger.cpp
+@@ -6118,10 +6118,11 @@ void SurfaceFlinger::setPhysicalDisplayPowerMode(const sp<DisplayDevice>& displa
+     const bool shouldApplyOptimizationPolicy =
+             FlagManager::getInstance().disable_synthetic_vsync_for_performance() &&
+             FlagManager::getInstance().correct_virtual_display_power_state();
+-    if ((isInternalDisplay || FlagManager::getInstance().pacesetter_selection()) &&
+-        shouldApplyOptimizationPolicy) {
+-        applyOptimizationPolicy(__func__);
+-    }
++    // defer applyOptimizationPolicy until after the HWC power transition
++    // completes.  calling it here kills synthetic vsync before HWC has
++    // physically powered on, creating a vsync gap on slow HWCs (MTK
++    // takes 300-500ms) that stalls the scheduler and leaves the display
++    // blank after wake.
+ 
+     if (mScheduler->setDisplayPowerMode(displayId, mode)) {
+         onNewPacesetterDisplay();
+@@ -6229,6 +6230,16 @@ void SurfaceFlinger::setPhysicalDisplayPowerMode(const sp<DisplayDevice>& displa
+         getHwComposer().setPowerMode(displayId, mode);
+     }
+ 
++    // apply optimization policy after the HWC power transition so that
++    // synthetic vsync remains available as a fallback during the (potentially
++    // slow) HWC setPowerMode call.  this is safe for all branches: OFF gets
++    // synthetic vsync enabled after HWC is off, ON gets it disabled after
++    // hardware vsync has been requested.
++    if ((isInternalDisplay || FlagManager::getInstance().pacesetter_selection()) &&
++        shouldApplyOptimizationPolicy) {
++        applyOptimizationPolicy(__func__);
++    }
++
+     if (displayId == mFrontInternalDisplayId) {
+         mTimeStats->setPowerMode(mode);
+         mScheduler->setActiveDisplayPowerModeForRefreshRateStats(mode);
+-- 
+2.53.0
+
