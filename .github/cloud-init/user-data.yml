@@ -106,6 +106,8 @@ runcmd:
     fi
     mkdir -p /data
     mount /dev/nvme1n1 /data
+    # grow the filesystem if the ebs volume was resized since the last boot.
+    resize2fs /dev/nvme1n1 || true
     chown github:github /data
     echo "Mounted /dev/nvme1n1 at /data ($(df -h /data | tail -1 | awk '{print $2}'))"
 
