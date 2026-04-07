@@ -1,11 +1,11 @@
-# GraphiteOS
+# RestlessOS
 
-GraphiteOS is an **unofficial**, **unaffiliated** fork of
+RestlessOS is an **unofficial**, **unaffiliated** fork of
 [GrapheneOS](https://grapheneos.org) packaged as a Generic System Image (GSI)
 for Project Treble devices. It is not endorsed by, sponsored by, or in any way
 connected to the GrapheneOS project or its developers.
 
-For discussion and support, join the Telegram group: https://t.me/graphiteosgsi
+For discussion and support, join the Telegram group: https://t.me/restlessosgsi
 
 ## Changes from GrapheneOS
 
@@ -42,8 +42,8 @@ zsync2 <url to .zsync file> -i <full path to previous .img file>
 For example:
 
 ```sh
-zsync2 https://build.chrisaw.io/GraphiteOS-ab-16-202603261200/zsync/GraphiteOS-arm64-ab-16-202603261200.img.zsync \
-    -i ~/Downloads/GraphiteOS-arm64-ab-16-202603201400.img
+zsync2 https://build.chrisaw.io/RestlessOS-ab-16-202603261200/zsync/RestlessOS-arm64-ab-16-202603261200.img.zsync \
+    -i ~/Downloads/RestlessOS-arm64-ab-16-202603201400.img
 ```
 
 > **Note:** point `-i` at the uncompressed `.img` file, not the `.img.xz`
@@ -60,7 +60,7 @@ an incorrect bounds check to `array_map_update_elem` which silently
 skips the `memcpy`, causing BPF map writes to be dropped without error.
 
 This affects Android's BPF-based networking stack, including the firewall
-and GraphiteOS's per-app network permission. Symptoms include apps
+and RestlessOS's per-app network permission. Symptoms include apps
 appearing to have no internet access despite being allowed, or firewall
 rules not taking effect.
 
@@ -79,5 +79,5 @@ for more information and discussion.
 - **TrebleDroid team** — for all of their hard work in making all of this possible
 - **GrapheneOS team** — for creating the ROM in the first place
 - **@Nullvalue** — for providing the inspiration to start working on this in the first place
-- **@Gero** — for the idea of the name GraphiteOS
-- **[@Ziednaga](https://github.com/Ziednaga)** — for the GraphiteOS logo and boot animation artwork
+- **@Gero** — for the idea of the previous name
+- **[@Ziednaga](https://github.com/Ziednaga)** — for the RestlessOS logo and boot animation artwork
