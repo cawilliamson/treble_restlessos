@@ -13,16 +13,28 @@ GrapheneOS targets Pixel devices with known hardware. A GSI must run on
 arbitrary vendor partitions, so several hardening features are disabled or
 made optional to avoid boot loops, crashes, or broken vendor drivers.
 
-### Features removed
+### Not included — inherent GSI limitations
 
+A GSI ships only a system image; device-specific components come from the
+vendor partition. The following GrapheneOS features cannot be provided by
+any GSI:
+
+- **firmware updates** — GrapheneOS ships firmware updates for Pixels alongside OS updates; RestlessOS uses whatever firmware the vendor partition provides
+- **kernel updates** — GrapheneOS ships patched kernels for Pixels; RestlessOS boots the vendor kernel
+- **driver and userspace HAL updates** — device-specific binaries cannot be bundled in a generic system image
+- **GrapheneOS kernel hardening** — GrapheneOS's kernel patches target Pixel kernels specifically and cannot be applied to arbitrary vendor kernels
+
+### Features removed
 - **hardened_malloc** — causes boot loops on devices with 39-bit virtual address space. replaced with AOSP Scudo.
 - **Auditor** — requires hardware attestation which doesn't work on GSI
 - **mtectrl / misctrl** — Pixel-specific memory tagging control; breaks vendor TEE drivers
+- **USB protection** — the low-level USB port controls rely on Pixel-specific hardware and are non-functional on other devices
+- **dynamic code loading protections** — not ported; relies on assumptions about the system image that don't hold on arbitrary vendor partitions
+- **native debugging protection** — not ported; breaks compatibility with root solutions and vendor debugging tools
 
 ### Features disabled by default
 
 These can be re-enabled in **TrebleApp → Hardening** or **Settings → Exploit protection**.
-
 - **MTE/TBI for vendor processes** — memory tagging breaks some vendor drivers
 - **hardened thread stacks** — non-standard memory layout breaks some vendor drivers
 - **secure (exec-based) app spawning** — breaks root solutions (Magisk / KernelSU)
