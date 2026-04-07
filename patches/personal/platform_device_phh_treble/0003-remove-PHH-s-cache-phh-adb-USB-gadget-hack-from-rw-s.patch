@@ -1,7 +1,8 @@
-From ce39d7184194d055740139cecc38e6cb920724dc Mon Sep 17 00:00:00 2001
+From 935574f3b413e9a4a73d8f43b37741ab89f178bb Mon Sep 17 00:00:00 2001
 From: "Christopher A. Williamson" <contact@chrisaw.io>
 Date: Sat, 28 Mar 2026 19:00:33 +0000
-Subject: [PATCH 5/5] remove PHH's /cache/phh-adb USB gadget hack from rw-system.sh
+Subject: [PATCH 3/3] remove PHH's /cache/phh-adb USB gadget hack from
+ rw-system.sh
 
 the /cache/phh-adb block tears down the entire USB gadget and
 rebuilds it from scratch with hardcoded huawei VID/PID, spawns
@@ -14,7 +15,7 @@ runs.  remove it from release builds entirely.
  1 file changed, 42 deletions(-)
 
 diff --git a/rw-system.sh b/rw-system.sh
-index fd6565a..3810126 100644
+index 6e6337c..c99e327 100644
 --- a/rw-system.sh
 +++ b/rw-system.sh
 @@ -10,48 +10,6 @@ else

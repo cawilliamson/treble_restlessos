@@ -1,0 +1,47 @@
+From 1376585c0d034911daab5496bcf73bbe5bed79fc Mon Sep 17 00:00:00 2001
+From: "Christopher A. Williamson" <contact@chrisaw.io>
+Date: Tue, 7 Apr 2026 22:17:27 +0100
+Subject: [PATCH] neutralise upstream phh securize debuggability spoofing for
+ debug builds
+
+upstream phh rw-system.sh unconditionally resetprops ro.debuggable=0,
+ro.secure=1, ro.*.build.type=user and ro.adb.secure=1 inside the
+securize block so the device masquerades as a locked production
+build at runtime. that is exactly what a release build wants but
+makes 'adb root' refuse with 'cannot run as root in production
+builds' and forces adbd back into auth-required mode, both of
+which defeat the purpose of a debug build.
+
+delete those resetprop lines so debug builds keep the userdebug
+ro.debuggable=1, ro.build.type=userdebug and ro.adb.secure=0 that
+the build variant already provides. everything else in the
+securize block (fingerprint, vbmeta, warranty, veritymode, flash
+lock state) is left intact.
+---
+ rw-system.sh | 8 --------
+ 1 file changed, 8 deletions(-)
+
+diff --git a/rw-system.sh b/rw-system.sh
+index c99e327..78e519d 100644
+--- a/rw-system.sh
++++ b/rw-system.sh
+@@ -801,16 +801,8 @@ if [ -f /system/phh/secure ] || [ -f /metadata/phh/secure ];then
+     resetprop_phh ro.boot.veritymode enforcing
+     resetprop_phh ro.boot.warranty_bit 0
+     resetprop_phh ro.warranty_bit 0
+-    resetprop_phh ro.debuggable 0
+-    resetprop_phh ro.secure 1
+-    resetprop_phh ro.build.type user
+-    resetprop_phh ro.product.build.type user
+-    resetprop_phh ro.system.build.type user
+-    resetprop_phh ro.system_ext.build.type user
+-    resetprop_phh ro.vendor.build.type user
+     resetprop_phh --delete ro.build.selinux
+ 
+-    resetprop_phh ro.adb.secure 1
+ 
+     # Hide system/xbin/su
+     mount /mnt/phh/empty_dir /system/xbin
+-- 
+2.53.0
+
