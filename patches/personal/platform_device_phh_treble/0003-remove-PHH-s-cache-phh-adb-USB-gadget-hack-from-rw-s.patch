@@ -1,7 +1,7 @@
 From 935574f3b413e9a4a73d8f43b37741ab89f178bb Mon Sep 17 00:00:00 2001
 From: "Christopher A. Williamson" <contact@chrisaw.io>
 Date: Sat, 28 Mar 2026 19:00:33 +0000
-Subject: [PATCH 3/3] remove PHH's /cache/phh-adb USB gadget hack from
+Subject: [PATCH 3/4] remove PHH's /cache/phh-adb USB gadget hack from
  rw-system.sh
 
 the /cache/phh-adb block tears down the entire USB gadget and
