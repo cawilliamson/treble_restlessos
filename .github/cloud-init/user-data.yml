@@ -158,14 +158,12 @@ runcmd:
     chown -R github:github /opt/actions-runner
 
   - |
-    sudo -u github mkdir -p /home/github/work
     cd /opt/actions-runner
     sudo -u github ./config.sh \
       --url "__REPO_URL__" \
       --token "__RUNNER_TOKEN__" \
       --name "aws-gsi-build-$(hostname)" \
       --labels "__RUNNER_LABELS__" \
-      --work /home/github/work \
       --unattended \
       --ephemeral
 
