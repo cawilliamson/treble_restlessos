@@ -114,17 +114,22 @@ jobs:
           # safety timer (shutdown -P +120) destroys the instance entirely.
           # ephemeral root volume sized for the full build; instance terminates
           # at the end of the job and the volume is deleted with it.
-          # resolve each subnet to its AZ and sort preferred-AZ first.
-          # eu-west-2c is observed to get interrupted least, 2a the most.
-          IFS=',' read -ra RAW_SUBNETS <<< "${{ secrets.AWS_SUBNET_IDS }}"
+          # discover all build subnets via the project tag and sort preferred-AZ
+          # first. eu-west-2c is observed to get interrupted least, 2a the most.
           declare -a SUBNETS=()
           for az in eu-west-2c eu-west-2b eu-west-2a; do
-            for s in "${RAW_SUBNETS[@]}"; do
-              subnet_az=$(aws ec2 describe-subnets --subnet-ids "$s" \
-                --query 'Subnets[0].AvailabilityZone' --output text)
-              [ "$subnet_az" = "$az" ] && SUBNETS+=("$s")
+            mapfile -t found < <(aws ec2 describe-subnets \
+              --filters "Name=tag:Project,Values=gsi-build" \
+                        "Name=availability-zone,Values=${az}" \
+              --query 'Subnets[].SubnetId' --output text | tr '\t' '\n')
+            for s in "${found[@]}"; do
+              [ -n "$s" ] && SUBNETS+=("$s")
             done
           done
+          if [ "${#SUBNETS[@]}" -eq 0 ]; then
+            echo "ERROR: no subnets tagged Project=gsi-build found in this region"
+            exit 1
+          fi
           echo "Subnet preference order: ${SUBNETS[*]}"
           INSTANCE_ID=""
           ATTEMPT=0
