@@ -1,0 +1,31 @@
+From e54574fe411cef97fdfbbbae7cde61f458943f24 Mon Sep 17 00:00:00 2001
+From: "Christopher A. Williamson" <contact@chrisaw.io>
+Date: Tue, 7 Apr 2026 16:45:21 +0100
+Subject: [PATCH] default usb into adb mode on debug builds
+
+set persist.sys.usb.config=adb so the usb gadget comes up in adb
+mode at boot on debug images. authentication is disabled in the
+debug-tier adbd patch, so this is sufficient to get a working
+adb connection on the first plug-in.
+---
+ base.mk | 4 ++++
+ 1 file changed, 4 insertions(+)
+
+diff --git a/base.mk b/base.mk
+index 2462c9b..14e77e7 100644
+--- a/base.mk
++++ b/base.mk
+@@ -44,6 +44,10 @@ PRODUCT_SYSTEM_DEFAULT_PROPERTIES += \
+ PRODUCT_SYSTEM_DEFAULT_PROPERTIES += \
+     ro.cust.cdrom=/dev/null
+ 
++# debug builds: default usb into adb mode so the phone is reachable from first boot.
++PRODUCT_SYSTEM_DEFAULT_PROPERTIES += \
++    persist.sys.usb.config=adb
++
+ # VNDK config files
+ PRODUCT_COPY_FILES += \
+     device/phh/treble/vndk-detect:system/bin/vndk-detect \
+-- 
+2.53.0
+
