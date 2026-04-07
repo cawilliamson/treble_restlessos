@@ -1,0 +1,27 @@
+From f17f6f1b5d1e20cdbc8f031d40fb512542b49770 Mon Sep 17 00:00:00 2001
+From: "Christopher A. Williamson" <contact@chrisaw.io>
+Date: Tue, 7 Apr 2026 19:44:39 +0100
+Subject: [PATCH 7/7] rebrand to RestlessOS: notification label
+
+change the system_server notification label from GrapheneOS to
+RestlessOS.
+---
+ core/res/AndroidManifest.xml | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/core/res/AndroidManifest.xml b/core/res/AndroidManifest.xml
+index 89a74baa9..2f704c687 100644
+--- a/core/res/AndroidManifest.xml
++++ b/core/res/AndroidManifest.xml
+@@ -9554,7 +9554,7 @@
+     <application android:process="system"
+                  android:persistent="true"
+                  android:hasCode="false"
+-                 android:label="GrapheneOS"
++                 android:label="RestlessOS"
+                  android:allowClearUserData="false"
+                  android:backupAgent="com.android.server.backup.SystemBackupAgent"
+                  android:killAfterRestore="false"
+-- 
+2.53.0
+
