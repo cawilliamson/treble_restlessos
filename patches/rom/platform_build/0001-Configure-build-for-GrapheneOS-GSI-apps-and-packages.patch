@@ -1,7 +1,7 @@
 From 66a65ebc62dcd8d0b4c88323dae4fdd76bdd9d86 Mon Sep 17 00:00:00 2001
 From: "Christopher A. Williamson" <contact@chrisaw.io>
 Date: Tue, 17 Mar 2026 23:24:50 +0000
-Subject: [PATCH] Configure build for GrapheneOS GSI apps and packages
+Subject: [PATCH 1/2] Configure build for GrapheneOS GSI apps and packages
 
 Adapt the AOSP build configuration for GrapheneOS GSI:
 

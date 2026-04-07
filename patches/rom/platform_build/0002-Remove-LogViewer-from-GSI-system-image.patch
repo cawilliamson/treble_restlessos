@@ -1,0 +1,30 @@
+From 39839020808bcb2b126099639c82a11c5ba9ef08 Mon Sep 17 00:00:00 2001
+From: "Christopher A. Williamson" <contact@chrisaw.io>
+Date: Tue, 7 Apr 2026 08:09:07 +0100
+Subject: [PATCH 2/2] Remove LogViewer from GSI system image
+
+LogViewer (app.grapheneos.logviewer) provides an interface for submitting
+crash reports and logcat output to GrapheneOS servers. This is undesirable
+in a GSI context where the upstream relationship is absent and where user
+telemetry to a third-party server should not be shipped by default.
+
+Remove the package from PRODUCT_PACKAGES and exclude the repo from sync.
+---
+ target/product/handheld_system.mk | 1 -
+ 1 file changed, 1 deletion(-)
+
+diff --git a/target/product/handheld_system.mk b/target/product/handheld_system.mk
+index 1cbcfea..12bd096 100644
+--- a/target/product/handheld_system.mk
++++ b/target/product/handheld_system.mk
+@@ -55,7 +55,6 @@ PRODUCT_PACKAGES += \
+     InputDevices \
+     KeyChain \
+     librs_jni \
+-    LogViewer \
+     ManagedProvisioning \
+     MmsService \
+     MtpService \
+-- 
+2.53.0
+
