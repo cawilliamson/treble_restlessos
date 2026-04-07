@@ -1,8 +1,8 @@
-From 21c2679416501cc4d15aa970a47ed804a2c2c261 Mon Sep 17 00:00:00 2001
+From 631e482f17e693f1cc8fda88b35f3ad0c2385edd Mon Sep 17 00:00:00 2001
 From: "Christopher A. Williamson" <contact@chrisaw.io>
 Date: Fri, 27 Mar 2026 11:48:26 +0000
-Subject: [PATCH 2/5] rework securize to property-based toggle with GSI fingerprint
- tracking
+Subject: [PATCH 1/2] rework securize to property-based toggle with GSI
+ fingerprint tracking
 
 replace /system/phh/secure file check with persist.sys.phh.securize property
 and /metadata/securize_disable sentinel. remove phh-securize.sh.
@@ -27,10 +27,10 @@ all services have started.
  5 files changed, 133 insertions(+), 45 deletions(-)
 
 diff --git a/base.mk b/base.mk
-index 87bb372..a88edfc 100644
+index 38790d3..fda86c1 100644
 --- a/base.mk
 +++ b/base.mk
-@@ -173,7 +173,6 @@ PRODUCT_PACKAGES += \
+@@ -175,7 +175,6 @@ PRODUCT_PACKAGES += \
      resetprop_phh
  
  PRODUCT_COPY_FILES += \
@@ -97,10 +97,10 @@ index cae90d6..199f054 100644
      if [[ "$prop_value" != "0" && "$prop_value" != "1" ]]; then
          exit 1
 diff --git a/rw-system.sh b/rw-system.sh
-index 6e6337c..d3f513e 100644
+index c99e327..56317b1 100644
 --- a/rw-system.sh
 +++ b/rw-system.sh
-@@ -591,7 +591,6 @@ if grep -qF 'PowerVR Rogue GE8100' /vendor/lib/egl/GLESv1_CM_mtk.so ||
+@@ -549,7 +549,6 @@ if grep -qF 'PowerVR Rogue GE8100' /vendor/lib/egl/GLESv1_CM_mtk.so ||
      setprop ro.skia.ignore_swizzle true
      if [ -n "$vndk" ] && { [ "$vndk" = 26 ] || [ "$vndk" = 27 ]; }; then
         setprop debug.hwui.use_buffer_age false
@@ -108,7 +108,7 @@ index 6e6337c..d3f513e 100644
      fi
  fi
  
-@@ -800,74 +799,127 @@ copyprop() {
+@@ -758,74 +757,127 @@ copyprop() {
          resetprop_phh "$1" "$(getprop "$2")"
      fi
  }
@@ -277,7 +277,7 @@ index 6e6337c..d3f513e 100644
  fi
  
  for abi in "" 64;do
-@@ -1047,7 +1099,6 @@ if getprop ro.build.overlay.deviceid |grep -iq -e RMX2185 -e RMX1941 -e RMX1945
+@@ -1005,7 +1057,6 @@ if getprop ro.build.overlay.deviceid |grep -iq -e RMX2185 -e RMX1941 -e RMX1945
      setprop persist.sys.overlay.devinputjack true
  fi
  
@@ -285,7 +285,7 @@ index 6e6337c..d3f513e 100644
  board="$(getprop ro.board.platform)"
  
  if [ "$board" = atoll ] || [ "$board" = sm6250 ]; then
-@@ -1095,7 +1146,6 @@ if getprop ro.bionic.cpu_variant |grep -q kryo300;then
+@@ -1053,7 +1104,6 @@ if getprop ro.bionic.cpu_variant |grep -q kryo300;then
      setprop dalvik.vm.isa.arm64.features runtime
  fi
  

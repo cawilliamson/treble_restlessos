@@ -274,8 +274,11 @@ jobs:
           ../patches/apply.sh . rom
           ../patches/apply.sh . personal
           if [ "${DEBUG_BUILD}" = "true" ]; then
-            echo "*** DEBUG BUILD: applying debug patches ***"
-            ../patches/apply.sh . debug
+            echo "*** DEBUG BUILD: applying debug-builds tier ***"
+            ../patches/apply.sh . debug-builds
+          else
+            echo "*** RELEASE BUILD: applying release-builds tier ***"
+            ../patches/apply.sh . release-builds
           fi
 
       - name: Build TrebleApp

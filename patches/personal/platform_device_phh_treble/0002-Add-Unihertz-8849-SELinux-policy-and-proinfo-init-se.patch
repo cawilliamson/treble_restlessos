@@ -1,7 +1,7 @@
-From fa6f1e3c91144422fb6b105c64f19df5395581b1 Mon Sep 17 00:00:00 2001
+From 55ca15f93f646357f5f1873c8f898f3fb6595a9b Mon Sep 17 00:00:00 2001
 From: "Christopher A. Williamson" <contact@chrisaw.io>
 Date: Tue, 24 Mar 2026 12:44:06 +0000
-Subject: [PATCH 4/5] Add Unihertz 8849 SELinux policy and proinfo init service
+Subject: [PATCH 2/3] Add Unihertz 8849 SELinux policy and proinfo init service
 
 - SELinux: label FPGA SPI and NDS03 sysfs nodes, allow system_app
   read/write access for projector controls and laser rangefinder
@@ -59,10 +59,10 @@ index 0000000..364ae14
 +    setprop sys.phh.8849.other_cal "$other"
 +fi
 diff --git a/base.mk b/base.mk
-index 76b1c4d..2462c9b 100644
+index 87bb372..38790d3 100644
 --- a/base.mk
 +++ b/base.mk
-@@ -154,7 +154,9 @@ PRODUCT_PACKAGES += \
+@@ -155,7 +155,9 @@ PRODUCT_PACKAGES += \
  PRODUCT_COPY_FILES += \
      device/phh/treble/files/adbd.rc:system/etc/init/adbd.rc \
      device/phh/treble/00-fix-metadata.rc:system/etc/init/00-fix-metadata.rc \
