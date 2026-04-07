@@ -1,30 +1,32 @@
-From 631e482f17e693f1cc8fda88b35f3ad0c2385edd Mon Sep 17 00:00:00 2001
+From 8311326b49809b3a166d582f0c4f519d43f4cf51 Mon Sep 17 00:00:00 2001
 From: "Christopher A. Williamson" <contact@chrisaw.io>
-Date: Fri, 27 Mar 2026 11:48:26 +0000
-Subject: [PATCH 1/2] rework securize to property-based toggle with GSI
- fingerprint tracking
+Date: Tue, 7 Apr 2026 22:29:26 +0100
+Subject: [PATCH] rework securize to property-based toggle with GSI fingerprint
+ tracking
 
-replace /system/phh/secure file check with persist.sys.phh.securize property
-and /metadata/securize_disable sentinel. remove phh-securize.sh.
+Replace the file-based /system/phh/secure gate with an inverted
+property-based /metadata/securize_disable gate. Add GSI fingerprint
+change detection so PackageManagerService sees mIsUpgrade=true on
+real GSI upgrades by setting persist.pm.mock-upgrade, which PMS ORs
+into isDeviceUpgrading().
 
-add GSI fingerprint change detection: compare ro.system.build.fingerprint
-against a persisted value to detect upgrades and signal PMS via
-persist.pm.mock-upgrade. enable first-boot debug ADB window on upgrade.
+Re-assert the production debuggability spoofing (ro.debuggable=0,
+ro.secure=1) inside the securize block now that the shared personal
+tier strips them from upstream. Without this, release builds would
+ship with ro.debuggable=1 and root detection would trivially flag
+the device.
 
-expand copyprop to cover system_ext and product partitions for thorough
-identity spoofing. fix name-to-device copyprop bugs. update USB gadget
-strings so the device reports correct product and manufacturer.
-
-move build tags, verified boot state, warranty bits, oem_unlock, and
-adbd hiding to post-boot in phh-on-boot.sh so they are reinforced after
-all services have started.
+Drop the remaining ro.*.build.type and ro.adb.secure=1 spoofing
+lines, the Hide system/xbin/su mount trick, and the phh-securize.sh
+product copy. Add model/manufacturer updates to the usb gadget
+strings so lsusb reports the spoofed identity.
 ---
  base.mk             |   1 -
  phh-on-boot.sh      |  25 ++++++++
  phh-prop-handler.sh |  11 ++++
- rw-system.sh        | 138 ++++++++++++++++++++++++++++++--------------
+ rw-system.sh        | 144 ++++++++++++++++++++++++++++++--------------
  vndk.rc             |   3 +
- 5 files changed, 133 insertions(+), 45 deletions(-)
+ 5 files changed, 137 insertions(+), 47 deletions(-)
 
 diff --git a/base.mk b/base.mk
 index 38790d3..fda86c1 100644
@@ -97,7 +99,7 @@ index cae90d6..199f054 100644
      if [[ "$prop_value" != "0" && "$prop_value" != "1" ]]; then
          exit 1
 diff --git a/rw-system.sh b/rw-system.sh
-index c99e327..56317b1 100644
+index 085edf7..56317b1 100644
 --- a/rw-system.sh
 +++ b/rw-system.sh
 @@ -549,7 +549,6 @@ if grep -qF 'PowerVR Rogue GE8100' /vendor/lib/egl/GLESv1_CM_mtk.so ||
@@ -108,7 +110,7 @@ index c99e327..56317b1 100644
      fi
  fi
  
-@@ -758,74 +757,127 @@ copyprop() {
+@@ -758,72 +757,127 @@ copyprop() {
          resetprop_phh "$1" "$(getprop "$2")"
      fi
  }
@@ -218,10 +220,7 @@ index c99e327..56317b1 100644
 -    (getprop ro.vendor.build.security_patch; getprop ro.keymaster.xxx.security_patch) |sort |tail -n 1 |while read v;do
 -        [ -n "$v" ] && resetprop_phh ro.build.version.security_patch "$v"
 -    done
-+    copyprop ro.product.system.manufacturer ro.product.vendor.manufacturer
-+    copyprop ro.product.product.manufacturer ro.product.vendor.manufacturer
-+    copyprop ro.product.system_ext.manufacturer ro.product.vendor.manufacturer
- 
+-
 -    resetprop_phh ro.build.user nobody
 -    resetprop_phh ro.build.host android-build
 -    resetprop_phh ro.build.tags release-keys
@@ -235,10 +234,6 @@ index c99e327..56317b1 100644
 -    resetprop_phh ro.boot.veritymode enforcing
 -    resetprop_phh ro.boot.warranty_bit 0
 -    resetprop_phh ro.warranty_bit 0
-+    # spoof security-sensitive props early so root detection apps cannot read
-+    # the real values before phh-on-boot.sh reinforces them post-boot
-     resetprop_phh ro.debuggable 0
-     resetprop_phh ro.secure 1
 -    resetprop_phh ro.build.type user
 -    resetprop_phh ro.product.build.type user
 -    resetprop_phh ro.system.build.type user
@@ -260,8 +255,17 @@ index c99e327..56317b1 100644
 -    #phh-su will bind over this empty file to make a real su
 -    touch /mnt/phh/xbin/su
 -    chcon u:object_r:system_file:s0 /mnt/phh/xbin/su
- 
+-
 -    mount -o bind /mnt/phh/xbin /system/xbin
++    copyprop ro.product.system.manufacturer ro.product.vendor.manufacturer
++    copyprop ro.product.product.manufacturer ro.product.vendor.manufacturer
++    copyprop ro.product.system_ext.manufacturer ro.product.vendor.manufacturer
++
++    # spoof security-sensitive props early so root detection apps cannot read
++    # the real values before phh-on-boot.sh reinforces them post-boot
++    resetprop_phh ro.debuggable 0
++    resetprop_phh ro.secure 1
++
 +    # update usb gadget strings so the device appears correctly when connected
 +    model="$(getprop ro.product.model)"
 +    manufacturer="$(getprop ro.product.manufacturer)"
@@ -277,7 +281,7 @@ index c99e327..56317b1 100644
  fi
  
  for abi in "" 64;do
-@@ -1005,7 +1057,6 @@ if getprop ro.build.overlay.deviceid |grep -iq -e RMX2185 -e RMX1941 -e RMX1945
+@@ -1003,7 +1057,6 @@ if getprop ro.build.overlay.deviceid |grep -iq -e RMX2185 -e RMX1941 -e RMX1945
      setprop persist.sys.overlay.devinputjack true
  fi
  
@@ -285,7 +289,7 @@ index c99e327..56317b1 100644
  board="$(getprop ro.board.platform)"
  
  if [ "$board" = atoll ] || [ "$board" = sm6250 ]; then
-@@ -1053,7 +1104,6 @@ if getprop ro.bionic.cpu_variant |grep -q kryo300;then
+@@ -1051,7 +1104,6 @@ if getprop ro.bionic.cpu_variant |grep -q kryo300;then
      setprop dalvik.vm.isa.arm64.features runtime
  fi
  
