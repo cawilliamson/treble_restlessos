@@ -185,7 +185,7 @@ jobs:
             echo "No existing volume in ${AZ} — creating one..."
             VOL_ID=$(aws ec2 create-volume \
               --availability-zone "$AZ" \
-              --size 500 \
+              --size 600 \
               --volume-type gp3 \
               --iops 16000 \
               --throughput 1000 \
