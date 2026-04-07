@@ -114,7 +114,18 @@ jobs:
           # safety timer (shutdown -P +120) destroys the instance entirely.
           # ephemeral root volume sized for the full build; instance terminates
           # at the end of the job and the volume is deleted with it.
-          IFS=',' read -ra SUBNETS <<< "${{ secrets.AWS_SUBNET_IDS }}"
+          # resolve each subnet to its AZ and sort preferred-AZ first.
+          # eu-west-2c is observed to get interrupted least, 2a the most.
+          IFS=',' read -ra RAW_SUBNETS <<< "${{ secrets.AWS_SUBNET_IDS }}"
+          declare -a SUBNETS=()
+          for az in eu-west-2c eu-west-2b eu-west-2a; do
+            for s in "${RAW_SUBNETS[@]}"; do
+              subnet_az=$(aws ec2 describe-subnets --subnet-ids "$s" \
+                --query 'Subnets[0].AvailabilityZone' --output text)
+              [ "$subnet_az" = "$az" ] && SUBNETS+=("$s")
+            done
+          done
+          echo "Subnet preference order: ${SUBNETS[*]}"
           INSTANCE_ID=""
           ATTEMPT=0
           DEADLINE=$((SECONDS + 3600))
