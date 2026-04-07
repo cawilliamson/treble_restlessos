@@ -1,11 +1,11 @@
 From 14159d20dc371860c00b7d8ef8444b3dc37025e5 Mon Sep 17 00:00:00 2001
 From: "Christopher A. Williamson" <contact@chrisaw.io>
 Date: Tue, 31 Mar 2026 20:11:57 +0100
-Subject: [PATCH 6/6] rebrand to GraphiteOS: notification label and boot logo
+Subject: [PATCH 6/6] rebrand to RestlessOS: notification label and boot logo
 
 change the system_server notification label from "GrapheneOS" to
-"GraphiteOS" and replace the boot logo mask and shine with custom
-GraphiteOS branding.
+"RestlessOS" and replace the boot logo mask and shine with custom
+RestlessOS branding.
 
 boot logo artwork by Ziednaga.
 ---
@@ -23,7 +23,7 @@ index 89a74baa9..f739f72f9 100644
                   android:persistent="true"
                   android:hasCode="false"
 -                 android:label="GrapheneOS"
-+                 android:label="GraphiteOS"
++                 android:label="RestlessOS"
                   android:allowClearUserData="false"
                   android:backupAgent="com.android.server.backup.SystemBackupAgent"
                   android:killAfterRestore="false"

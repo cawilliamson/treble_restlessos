@@ -1,6 +1,6 @@
 #cloud-config
 #
-# graphiteos GSI - ephemeral github actions runner bootstrap (AWS EC2)
+# restlessos GSI - ephemeral github actions runner bootstrap (AWS EC2)
 #
 # placeholders replaced by the GHA "provision" job before sending to EC2:
 #   __RUNNER_TOKEN__   - one-time GHA runner registration token
