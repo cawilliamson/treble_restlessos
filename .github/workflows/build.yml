@@ -255,12 +255,6 @@ jobs:
           echo "Detected ANDROID_VERSION_TAG: ${ANDROID_VERSION_TAG}"
           echo "${ANDROID_VERSION_TAG}" > ../tmp/.android_version_tag
 
-      - name: Reset repos to upstream
-        working-directory: src/
-        run: |
-          # abort any in-progress git am from a previous interrupted build
-          repo forall -c 'git am --abort' 2>/dev/null || true
-
       - name: Apply patches
         working-directory: src/
         run: |
@@ -296,10 +290,7 @@ jobs:
 
       - name: Sign ROM image
         working-directory: src/
-        env:
-          TMPDIR: /data/tmp
         run: |
-          mkdir -p "$TMPDIR"
           ANDROID_VERSION_TAG_VAL=$(cat ../tmp/.android_version_tag)
           . build/envsetup.sh
           BUILD_VARIANT="user"

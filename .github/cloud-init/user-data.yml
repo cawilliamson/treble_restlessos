@@ -86,15 +86,6 @@ runcmd:
   - "shutdown -P +120 'SAFETY: 2-hour maximum build time reached. self-destructing.'"
 
   # -------------------------------------------------------------------------
-  # DATA DIR - plain directory on the ephemeral root volume.
-  # the root ebs volume is sized for the full build by the workflow.
-  # -------------------------------------------------------------------------
-  - |
-    mkdir -p /data
-    chown github:github /data
-    echo "Created /data ($(df -h /data | tail -1 | awk '{print $2}'))"
-
-  # -------------------------------------------------------------------------
   # SSH key + config — created here because write_files runs before users
   # -------------------------------------------------------------------------
   - |
@@ -155,33 +146,26 @@ runcmd:
 
   # -------------------------------------------------------------------------
   # github actions runner - install, configure, start via systemd
-  #
-  # when booting from a snapshot-based volume, the runner binaries and old
-  # config may already exist.  clean stale state so config.sh runs fresh.
   # -------------------------------------------------------------------------
   - |
-    rm -rf /opt/actions-runner/.runner /opt/actions-runner/.credentials* /opt/actions-runner/_diag
-    systemctl stop actions-runner.service 2>/dev/null || true
     RUNNER_VERSION=$(curl -sf https://api.github.com/repos/actions/runner/releases/latest \
       | jq -r '.tag_name' | sed 's/^v//')
-    INSTALLED_VERSION=$(/opt/actions-runner/run.sh --version 2>/dev/null || echo none)
-    if [ ! -f /opt/actions-runner/run.sh ] || [ "$INSTALLED_VERSION" != "$RUNNER_VERSION" ]; then
-      mkdir -p /opt/actions-runner
-      curl -sf -L \
-        "https://github.com/actions/runner/releases/download/v${RUNNER_VERSION}/actions-runner-linux-x64-${RUNNER_VERSION}.tar.gz" \
-        | tar -xz -C /opt/actions-runner
-      /opt/actions-runner/bin/installdependencies.sh
-    fi
+    mkdir -p /opt/actions-runner
+    curl -sf -L \
+      "https://github.com/actions/runner/releases/download/v${RUNNER_VERSION}/actions-runner-linux-x64-${RUNNER_VERSION}.tar.gz" \
+      | tar -xz -C /opt/actions-runner
+    /opt/actions-runner/bin/installdependencies.sh
     chown -R github:github /opt/actions-runner
 
   - |
+    sudo -u github mkdir -p /home/github/work
     cd /opt/actions-runner
     sudo -u github ./config.sh \
       --url "__REPO_URL__" \
       --token "__RUNNER_TOKEN__" \
       --name "aws-gsi-build-$(hostname)" \
       --labels "__RUNNER_LABELS__" \
-      --work /data \
+      --work /home/github/work \
       --unattended \
       --ephemeral
 
