@@ -1,7 +1,7 @@
 From f1ea90d6da16f0ccbbe2c62e501f2ac9f14e4350 Mon Sep 17 00:00:00 2001
 From: "Christopher A. Williamson" <contact@chrisaw.io>
 Date: Wed, 25 Mar 2026 21:50:04 +0000
-Subject: [PATCH 2/2] make property area init failures non-fatal for old vendors
+Subject: [PATCH 2/3] make property area init failures non-fatal for old vendors
 
 on old vendor kernels (e.g. 4.14 with VNDK 30) fsetxattr on tmpfs
 fails with ENOTSUP for property area files because the SELinux
