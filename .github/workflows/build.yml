@@ -12,11 +12,6 @@ on:
         required: false
         type: boolean
         default: false
-      clean_build:
-        description: 'wipe data volume contents and build from scratch'
-        required: false
-        type: boolean
-        default: false
       _retry_attempt:
         description: 'internal: spot retry counter (do not set manually)'
         required: false
@@ -117,8 +112,8 @@ jobs:
           # c7i.48xlarge: 192 vCPUs, 384 GiB RAM
           # InstanceInitiatedShutdownBehavior=terminate ensures the cloud-init
           # safety timer (shutdown -P +120) destroys the instance entirely.
-          # no data volume in BDM — the persistent volume is attached after
-          # launch so it can be reused across builds.
+          # ephemeral root volume sized for the full build; instance terminates
+          # at the end of the job and the volume is deleted with it.
           IFS=',' read -ra SUBNETS <<< "${{ secrets.AWS_SUBNET_IDS }}"
           INSTANCE_ID=""
           ATTEMPT=0
@@ -137,6 +132,7 @@ jobs:
                 --security-group-ids "${{ secrets.AWS_SECURITY_GROUP_ID }}" \
                 --subnet-id "${SUBNET}" \
                 --tag-specifications "ResourceType=instance,Tags=[{Key=Name,Value=gsi-build-${{ github.run_id }}},{Key=Project,Value=gsi-build},{Key=Ephemeral,Value=true}]" \
+                --block-device-mappings 'DeviceName=/dev/sda1,Ebs={VolumeSize=600,VolumeType=gp3,Iops=16000,Throughput=1000,DeleteOnTermination=true}' \
                 --user-data "file:///tmp/user-data.yml" 2>&1) && break 2
               echo "  failed: ${INSTANCE_ID}"
               INSTANCE_ID=""
@@ -160,60 +156,6 @@ jobs:
           aws ec2 wait instance-running \
             --instance-ids "${{ steps.launch.outputs.instance_id }}"
           echo "Instance is running"
-
-      - name: Attach persistent data volume
-        run: |
-          INSTANCE_ID="${{ steps.launch.outputs.instance_id }}"
-
-          # find the AZ the instance launched in
-          AZ=$(aws ec2 describe-instances \
-            --instance-ids "$INSTANCE_ID" \
-            --query 'Reservations[0].Instances[0].Placement.AvailabilityZone' \
-            --output text)
-          echo "Instance AZ: ${AZ}"
-
-          # find existing persistent volume in this AZ
-          VOL_ID=$(aws ec2 describe-volumes \
-            --filters \
-              "Name=tag:Project,Values=gsi-build" \
-              "Name=tag:Role,Values=build-data" \
-              "Name=availability-zone,Values=${AZ}" \
-            --query 'Volumes[0].VolumeId' \
-            --output text 2>/dev/null || echo "None")
-
-          if [ "$VOL_ID" = "None" ] || [ -z "$VOL_ID" ]; then
-            echo "No existing volume in ${AZ} — creating one..."
-            VOL_ID=$(aws ec2 create-volume \
-              --availability-zone "$AZ" \
-              --size 600 \
-              --volume-type gp3 \
-              --iops 16000 \
-              --throughput 1000 \
-              --tag-specifications 'ResourceType=volume,Tags=[{Key=Project,Value=gsi-build},{Key=Role,Value=build-data},{Key=Name,Value=gsi-build-data}]' \
-              --query 'VolumeId' \
-              --output text)
-            echo "Created volume: ${VOL_ID}"
-            aws ec2 wait volume-available --volume-ids "$VOL_ID"
-          else
-            echo "Found existing volume: ${VOL_ID}"
-            # if still attached to a dead instance, wait for it to detach
-            VOL_STATE=$(aws ec2 describe-volumes \
-              --volume-ids "$VOL_ID" \
-              --query 'Volumes[0].State' \
-              --output text)
-            if [ "$VOL_STATE" != "available" ]; then
-              echo "Volume is ${VOL_STATE} — waiting for it to become available..."
-              aws ec2 wait volume-available --volume-ids "$VOL_ID"
-            fi
-          fi
-
-          echo "Attaching ${VOL_ID} to ${INSTANCE_ID} as /dev/sdf..."
-          aws ec2 attach-volume \
-            --volume-id "$VOL_ID" \
-            --instance-id "$INSTANCE_ID" \
-            --device /dev/sdf
-          aws ec2 wait volume-in-use --volume-ids "$VOL_ID"
-          echo "Volume attached"
 
       - name: Wait for runner to register with GitHub Actions
         run: |
@@ -266,21 +208,6 @@ jobs:
 
       - name: Verify gh CLI authentication
         run: gh auth status
-
-      - name: Clean stale build artifacts
-        env:
-          CLEAN_BUILD: ${{ github.event.inputs.clean_build || 'false' }}
-        run: |
-          if [ "$CLEAN_BUILD" = "true" ]; then
-            echo "Clean build requested — wiping /data contents"
-            rm -rf out/ src/ tmp/
-          fi
-          # remove stale locks and product output that break incremental builds.
-          # soong intermediates cache is preserved for incremental wins.
-          rm -rfv src/out/.lock 2>/dev/null || true
-          rm -rfv src/out/target/ 2>/dev/null || true
-          rm -fv tmp/*.img* out/*.img* 2>/dev/null || true
-          rm -rfv out/zsync/ 2>/dev/null || true
 
       - name: Ensure working directories exist
         run: mkdir --parents out/ src/ tmp/
@@ -629,5 +556,4 @@ jobs:
             --ref "${{ github.ref }}" \
             --field release_channel="${{ github.event.inputs.release_channel || 'stable' }}" \
             --field debug_build="${{ github.event.inputs.debug_build || 'false' }}" \
-            --field clean_build=false \
             --field _retry_attempt="${NEXT}"
