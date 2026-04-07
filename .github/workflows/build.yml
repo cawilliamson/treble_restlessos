@@ -132,7 +132,7 @@ jobs:
                 --security-group-ids "${{ secrets.AWS_SECURITY_GROUP_ID }}" \
                 --subnet-id "${SUBNET}" \
                 --tag-specifications "ResourceType=instance,Tags=[{Key=Name,Value=gsi-build-${{ github.run_id }}},{Key=Project,Value=gsi-build},{Key=Ephemeral,Value=true}]" \
-                --block-device-mappings 'DeviceName=/dev/sda1,Ebs={VolumeSize=600,VolumeType=gp3,Iops=16000,Throughput=1000,DeleteOnTermination=true}' \
+                --block-device-mappings 'DeviceName=/dev/sda1,Ebs={VolumeSize=1000,VolumeType=gp3,Iops=16000,Throughput=1000,DeleteOnTermination=true}' \
                 --user-data "file:///tmp/user-data.yml" 2>&1) && break 2
               echo "  failed: ${INSTANCE_ID}"
               INSTANCE_ID=""
