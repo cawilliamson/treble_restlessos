@@ -538,7 +538,7 @@ jobs:
       - name: Re-trigger workflow
         if: steps.budget.outputs.has_budget == 'true'
         env:
-          GH_TOKEN: ${{ secrets.GH_PAT }}
+          GH_TOKEN: ${{ github.token }}
         run: |
           NEXT="${{ steps.budget.outputs.next_attempt }}"
           echo "::warning::Spot instance was reclaimed — retrying (attempt $((NEXT + 1)) of 5)..."
