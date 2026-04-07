@@ -86,30 +86,13 @@ runcmd:
   - "shutdown -P +120 'SAFETY: 2-hour maximum build time reached. self-destructing.'"
 
   # -------------------------------------------------------------------------
-  # DATA VOLUME - attached by the GHA workflow while cloud-init runs.
-  # wait for it to appear, format if needed, mount at /data.
-  # this MUST complete before the runner is installed, since --work=/data.
+  # DATA DIR - plain directory on the ephemeral root volume.
+  # the root ebs volume is sized for the full build by the workflow.
   # -------------------------------------------------------------------------
   - |
-    echo "Waiting for data volume (/dev/nvme1n1)..."
-    for i in $(seq 1 120); do
-      [ -b /dev/nvme1n1 ] && break
-      sleep 5
-    done
-    if [ ! -b /dev/nvme1n1 ]; then
-      echo "ERROR: /dev/nvme1n1 did not appear after 10 minutes"
-      exit 1
-    fi
-    if ! blkid -s TYPE -o value /dev/nvme1n1 2>/dev/null | grep -q ext4; then
-      echo "Formatting /dev/nvme1n1..."
-      mkfs.ext4 -m 0 -L builddata /dev/nvme1n1
-    fi
     mkdir -p /data
-    mount /dev/nvme1n1 /data
-    # grow the filesystem if the ebs volume was resized since the last boot.
-    resize2fs /dev/nvme1n1 || true
     chown github:github /data
-    echo "Mounted /dev/nvme1n1 at /data ($(df -h /data | tail -1 | awk '{print $2}'))"
+    echo "Created /data ($(df -h /data | tail -1 | awk '{print $2}'))"
 
   # -------------------------------------------------------------------------
   # SSH key + config — created here because write_files runs before users
