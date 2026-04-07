@@ -1,28 +1,17 @@
-From 33b796a97b718ea489361df4e46917a627ebec69 Mon Sep 17 00:00:00 2001
+From a2b2d81284d7d1a8211f1a56c3ac4007a2df56da Mon Sep 17 00:00:00 2001
 From: "Christopher A. Williamson" <contact@chrisaw.io>
-Date: Tue, 7 Apr 2026 16:15:47 +0100
+Date: Tue, 7 Apr 2026 16:39:11 +0100
 Subject: [PATCH] force unauthenticated adb and adb root on debug builds
 
 debug builds must have open, unauthenticated adb with adb root
-available for the entire lifetime of every boot, not just a
-first-boot window.
-
-- base.mk: bake ro.adb.secure=0, ro.debuggable=1 and
-  persist.sys.usb.config=adb into the default system properties
-  so the values are set from init and survive a resetprop delete.
-- rw-system.sh: re-assert ro.adb.secure=0, ro.debuggable=1 and
-  persist.sys.usb.config=adb on every boot, independent of the
-  fingerprint-change gate, so they are not left stale after the
-  first boot of an unchanged image.
-- phh-on-boot.sh: drop the boot_completed cleanup block that
-  deleted ro.adb.secure / persist.sys.usb.config and stopped
-  adbd. That cleanup is exactly what breaks adb on subsequent
-  boots of the same image.
+available for the entire lifetime of every boot. bake
+ro.adb.secure=0, ro.debuggable=1 and persist.sys.usb.config=adb
+into the default system properties and re-assert them on every
+boot in rw-system.sh, independent of release-build gates.
 ---
- base.mk        | 6 ++++++
- phh-on-boot.sh | 7 -------
- rw-system.sh   | 5 +++++
- 3 files changed, 11 insertions(+), 7 deletions(-)
+ base.mk      | 6 ++++++
+ rw-system.sh | 5 +++++
+ 2 files changed, 11 insertions(+)
 
 diff --git a/base.mk b/base.mk
 index 2462c9b..3e7056e 100644
@@ -41,29 +30,11 @@ index 2462c9b..3e7056e 100644
  # VNDK config files
  PRODUCT_COPY_FILES += \
      device/phh/treble/vndk-detect:system/bin/vndk-detect \
-diff --git a/phh-on-boot.sh b/phh-on-boot.sh
-index 0b5f179..5bd395a 100644
---- a/phh-on-boot.sh
-+++ b/phh-on-boot.sh
-@@ -36,13 +36,6 @@ if [ ! -f /metadata/securize_disable ]; then
-   resetprop_phh -n init.svc.flash_recovery stopped
- fi
- 
--# End first-boot debug ADB window.
--if [ "$(getprop ro.adb.secure)" = "0" ]; then
--    resetprop_phh --delete ro.adb.secure
--    resetprop_phh --delete persist.sys.usb.config
--    stop adbd
--fi
--
- vndk="$(getprop persist.sys.vndk)"
- [ -z "$vndk" ] && vndk="$(getprop ro.vndk.version |grep -oE '^[0-9]+')"
- 
 diff --git a/rw-system.sh b/rw-system.sh
-index 3810126..b8dd8f3 100644
+index 56317b1..e10a14f 100644
 --- a/rw-system.sh
 +++ b/rw-system.sh
-@@ -812,6 +812,11 @@ else
+@@ -806,6 +806,11 @@ else
      resetprop_phh -n persist.pm.mock-upgrade false
  fi
  

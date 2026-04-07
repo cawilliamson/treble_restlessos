@@ -1,4 +1,4 @@
-From 46678add10e5eb42175fbac055bae33267e412fb Mon Sep 17 00:00:00 2001
+From 21c2679416501cc4d15aa970a47ed804a2c2c261 Mon Sep 17 00:00:00 2001
 From: "Christopher A. Williamson" <contact@chrisaw.io>
 Date: Fri, 27 Mar 2026 11:48:26 +0000
 Subject: [PATCH 2/5] rework securize to property-based toggle with GSI fingerprint
@@ -22,9 +22,9 @@ all services have started.
  base.mk             |   1 -
  phh-on-boot.sh      |  25 ++++++++
  phh-prop-handler.sh |  11 ++++
- rw-system.sh        | 144 ++++++++++++++++++++++++++++++--------------
+ rw-system.sh        | 138 ++++++++++++++++++++++++++++++--------------
  vndk.rc             |   3 +
- 5 files changed, 139 insertions(+), 45 deletions(-)
+ 5 files changed, 133 insertions(+), 45 deletions(-)
 
 diff --git a/base.mk b/base.mk
 index 87bb372..a88edfc 100644
@@ -39,7 +39,7 @@ index 87bb372..a88edfc 100644
  
  PRODUCT_COPY_FILES += \
 diff --git a/phh-on-boot.sh b/phh-on-boot.sh
-index 678fef1..13b7cc9 100644
+index c8cd1fd..5bd395a 100644
 --- a/phh-on-boot.sh
 +++ b/phh-on-boot.sh
 @@ -11,6 +11,31 @@ if [ ! -e /sys/fs/bpf/netd_shared/map_netd_uid_owner_map ]; then
@@ -97,7 +97,7 @@ index cae90d6..199f054 100644
      if [[ "$prop_value" != "0" && "$prop_value" != "1" ]]; then
          exit 1
 diff --git a/rw-system.sh b/rw-system.sh
-index 3b13fc7..d37deae 100644
+index 6e6337c..d3f513e 100644
 --- a/rw-system.sh
 +++ b/rw-system.sh
 @@ -591,7 +591,6 @@ if grep -qF 'PowerVR Rogue GE8100' /vendor/lib/egl/GLESv1_CM_mtk.so ||
@@ -108,7 +108,7 @@ index 3b13fc7..d37deae 100644
      fi
  fi
  
-@@ -800,74 +799,133 @@ copyprop() {
+@@ -800,74 +799,127 @@ copyprop() {
          resetprop_phh "$1" "$(getprop "$2")"
      fi
  }
@@ -123,7 +123,7 @@ index 3b13fc7..d37deae 100644
 +# To work around this we compare the original (pre-securize) system fingerprint
 +# against a persisted value and, when they differ, set persist.pm.mock-upgrade=true
 +# which PMS ORs into isDeviceUpgrading(). The same comparison gates the
-+# first-boot debug ADB window.
++# (no longer used for adb; release builds keep adb fully disabled.)
 +#
 +# Storage selection: neither /cache nor /metadata is universally available
 +# at the time rw-system.sh runs.
@@ -153,16 +153,10 @@ index 3b13fc7..d37deae 100644
 +    [ -n "$gsi_fp_file" ] && echo "$gsi_fp" > "$gsi_fp_file"
 +    # signal PMS to run post-upgrade steps.
 +    resetprop_phh -n persist.pm.mock-upgrade true
-+    # enable first-boot debug ADB window for this upgrade.
-+    resetprop_phh ro.adb.secure 0
-+    resetprop_phh -n persist.sys.usb.config adb
 +elif [ -n "$gsi_fp" ] && [ -z "$prev_gsi_fp" ]; then
 +    # no prior fingerprint: fresh flash, factory reset, or no persistent storage.
 +    [ -n "$gsi_fp_file" ] && echo "$gsi_fp" > "$gsi_fp_file"
 +    resetprop_phh -n persist.pm.mock-upgrade false
-+    # enable first-boot debug ADB window.
-+    resetprop_phh ro.adb.secure 0
-+    resetprop_phh -n persist.sys.usb.config adb
 +else
 +    # same build as last boot: clear upgrade flag.
 +    resetprop_phh -n persist.pm.mock-upgrade false
@@ -283,7 +277,7 @@ index 3b13fc7..d37deae 100644
  fi
  
  for abi in "" 64;do
-@@ -1047,7 +1105,6 @@ if getprop ro.build.overlay.deviceid |grep -iq -e RMX2185 -e RMX1941 -e RMX1945
+@@ -1047,7 +1099,6 @@ if getprop ro.build.overlay.deviceid |grep -iq -e RMX2185 -e RMX1941 -e RMX1945
      setprop persist.sys.overlay.devinputjack true
  fi
  
@@ -291,7 +285,7 @@ index 3b13fc7..d37deae 100644
  board="$(getprop ro.board.platform)"
  
  if [ "$board" = atoll ] || [ "$board" = sm6250 ]; then
-@@ -1109,7 +1166,6 @@ if getprop ro.bionic.cpu_variant |grep -q kryo300;then
+@@ -1095,7 +1146,6 @@ if getprop ro.bionic.cpu_variant |grep -q kryo300;then
      setprop dalvik.vm.isa.arm64.features runtime
  fi
  
@@ -300,10 +294,10 @@ index 3b13fc7..d37deae 100644
      if [ -n "$vndk" ] && [ "$vndk" -le 29 ]; then
          mount /system/etc/seccomp_policy/mediacodec.policy /vendor/etc/seccomp_policy/codec2.vendor.base.policy
 diff --git a/vndk.rc b/vndk.rc
-index cef80af..908336a 100644
+index 7942b02..ecbe65c 100644
 --- a/vndk.rc
 +++ b/vndk.rc
-@@ -50,6 +50,9 @@ on property:persist.sys.phh.oppo.gaming_mode=*
+@@ -39,6 +39,9 @@ on property:persist.sys.phh.oppo.gaming_mode=*
  on property:sys.phh.oplus.fppress=*
      exec u:r:phhsu_daemon:s0 root -- /system/bin/phh-prop-handler.sh "sys.phh.oplus.fppress"
  
