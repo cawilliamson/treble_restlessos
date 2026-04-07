@@ -355,8 +355,8 @@ jobs:
         run: |
           ANDROID_VERSION_TAG_VAL=$(cat ../tmp/.android_version_tag)
           pushd device/phh/treble
-            cp --force --verbose ../../../../configs/rom/rom.mk ./restlessos.mk
-            bash generate.sh restlessos
+            cp --force --verbose ../../../../configs/rom/rom.mk .
+            bash generate.sh rom
           popd
           . build/envsetup.sh
           BUILD_VARIANT="user"
