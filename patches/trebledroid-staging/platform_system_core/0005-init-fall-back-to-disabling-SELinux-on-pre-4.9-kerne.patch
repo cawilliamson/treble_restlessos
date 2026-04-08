@@ -1,0 +1,113 @@
+From 4a78cdc0ec94b21f66361032e7dc072cb15d6b09 Mon Sep 17 00:00:00 2001
+From: "Christopher A. Williamson" <contact@chrisaw.io>
+Date: Thu, 9 Apr 2026 00:26:33 +0100
+Subject: [PATCH 5/5] init: fall back to disabling SELinux on pre-4.9 kernels
+
+Android sepolicy uses 164 allowxperm / auditallowxperm /
+dontauditxperm statements that emit AVTAB_XPERMS_ALLOWED entries in
+the compiled policy binary. Kernel ioctl extended-permission (xperms)
+support was added upstream in 4.9; Android's 4.4 kernel tree backported
+it selectively but many OEM 4.4 forks never picked it up. On those
+kernels security_load_policy() fails with -EINVAL and the kernel logs:
+
+  SELinux:  Android master kernel running Android M policy in compatibility mode.
+  SELinux: avtab: invalid type or class
+
+init then FATALs and the device reboots to recovery. This makes the
+GSI unusable on every legacy-kernel device shipped with such a fork,
+even though the rest of the system would boot fine in permissive mode
+or with SELinux disabled entirely.
+
+Add a narrowly-scoped fallback. When security_load_policy() fails, if
+and only if:
+
+  1. uname() reports a kernel strictly older than 4.9, AND
+  2. /sys/fs/selinux/disable exists and is writable (which requires
+     CONFIG_SECURITY_SELINUX_DISABLE=y, compiled out on 5.x+ kernels)
+
+then write '1' to /sys/fs/selinux/disable, log a loud warning, and
+continue boot without a loaded policy. Modern kernels (5.x+) have
+neither the version match nor the disable file, so they still hit the
+original PLOG(FATAL) exactly as before. Release builds on current
+Pixels see zero behaviour change.
+
+This trades SELinux enforcement on legacy devices for the device
+actually booting. Those devices are out of vendor support and running
+a GSI explicitly to side-step that, so the trade-off is consistent
+with the rest of the TrebleDroid compatibility stack.
+---
+ init/selinux.cpp | 46 ++++++++++++++++++++++++++++++++++++++++++++++
+ 1 file changed, 46 insertions(+)
+
+diff --git a/init/selinux.cpp b/init/selinux.cpp
+index 972efcf..2e5937e 100644
+--- a/init/selinux.cpp
++++ b/init/selinux.cpp
+@@ -58,6 +58,7 @@
+ #include <stdlib.h>
+ #include <sys/mount.h>
+ #include <sys/wait.h>
++#include <sys/utsname.h>
+ #include <unistd.h>
+ #include <fcntl.h>
+ #include <strings.h>
+@@ -646,11 +647,56 @@ void MountMissingSystemPartitions() {
+     }
+ }
+ 
++// Detect kernel major.minor. Returns true if strictly below the requested
++// version. Used to scope the SELinux-disable fallback to legacy kernels that
++// predate the ioctl extended-permission (xperms) backport (upstream Linux 4.9)
++// and the AVTAB_XPERMS_ALLOWED handling that kernel 4.4 lacks. On any parse
++// failure we return false, keeping the strict FATAL path for modern kernels.
++static bool KernelOlderThan(unsigned want_major, unsigned want_minor) {
++    struct utsname u;
++    if (uname(&u) != 0) return false;
++    unsigned major = 0, minor = 0;
++    if (sscanf(u.release, "%u.%u", &major, &minor) != 2) return false;
++    if (major < want_major) return true;
++    if (major == want_major && minor < want_minor) return true;
++    return false;
++}
++
++// Disable SELinux entirely via /sys/fs/selinux/disable. Only works on kernels
++// built with CONFIG_SECURITY_SELINUX_DISABLE=y and only before any policy has
++// been loaded. Modern Android kernels (5.x+) do not compile this in, so the
++// file does not exist and this function safely returns false, leaving the
++// caller to FATAL as before. Returns true only if SELinux was actually
++// disabled and boot can proceed without a loaded policy.
++static bool DisableSelinuxRuntime() {
++    static constexpr const char kDisablePath[] = "/sys/fs/selinux/disable";
++    android::base::unique_fd fd(open(kDisablePath, O_WRONLY | O_CLOEXEC));
++    if (fd < 0) return false;
++    if (write(fd, "1", 1) != 1) return false;
++    return true;
++}
++
+ static void LoadSelinuxPolicy(std::string& policy) {
+     LOG(INFO) << "Loading SELinux policy";
+ 
+     set_selinuxmnt("/sys/fs/selinux");
+     if (security_load_policy(policy.data(), policy.size()) < 0) {
++        // Scope: kernels older than 4.9 lack the ioctl extended-permission
++        // (xperms) backport that Android sepolicy depends on. Policies
++        // produced by modern secilc reference AVTAB_XPERMS_ALLOWED entries
++        // these kernels cannot parse, so security_load_policy() fails with
++        // EINVAL (logged by the kernel as "avtab: invalid type or class").
++        // On such kernels CONFIG_SECURITY_SELINUX_DISABLE is typically still
++        // compiled in, so fall back to disabling SELinux entirely so the
++        // device at least boots. Modern kernels do not have the disable file
++        // and will still FATAL as before.
++        if (KernelOlderThan(4, 9) && DisableSelinuxRuntime()) {
++            LOG(WARNING) << "SELinux: policy load failed on legacy kernel ("
++                         << "< 4.9, no xperms support); SELinux has been"
++                         << " DISABLED via /sys/fs/selinux/disable. The"
++                         << " device will boot without SELinux enforcement.";
++            return;
++        }
+         PLOG(FATAL) << "SELinux:  Could not load policy";
+     }
+ }
+-- 
+2.53.0
+
