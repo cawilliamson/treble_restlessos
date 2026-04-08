@@ -1,7 +1,7 @@
 From ae523a2d8262aee255702f3046fe59529a89f2ef Mon Sep 17 00:00:00 2001
 From: "Christopher A. Williamson" <contact@chrisaw.io>
 Date: Tue, 17 Feb 2026 14:44:55 +0000
-Subject: [PATCH 2/9] Disable secure app spawning by default
+Subject: [PATCH 2/7] Disable secure app spawning by default
 
 Exec-based app spawning breaks root access by re-exec'ing app processes
 into a fresh app_process binary, which loses the modified Zygote
