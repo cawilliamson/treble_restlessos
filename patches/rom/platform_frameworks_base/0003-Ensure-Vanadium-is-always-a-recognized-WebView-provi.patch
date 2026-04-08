@@ -1,7 +1,7 @@
 From e0256bfdb5774759729dee34a2d72e629a991bbd Mon Sep 17 00:00:00 2001
 From: "Christopher A. Williamson" <contact@chrisaw.io>
 Date: Wed, 18 Feb 2026 07:19:05 +0000
-Subject: [PATCH 3/8] Ensure Vanadium is always a recognized WebView provider
+Subject: [PATCH 3/9] Ensure Vanadium is always a recognized WebView provider
 
 Various RRO overlays from TrebleDroid and vendor partitions can
 override config_webview_packages.xml at runtime, removing Vanadium

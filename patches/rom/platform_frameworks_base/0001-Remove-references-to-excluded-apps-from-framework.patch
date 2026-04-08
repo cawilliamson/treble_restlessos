@@ -1,7 +1,7 @@
 From 55d312e6a3d9c5bdf5ae20bb1e2bad98edc38f03 Mon Sep 17 00:00:00 2001
 From: "Christopher A. Williamson" <contact@chrisaw.io>
 Date: Wed, 18 Mar 2026 04:28:35 +0000
-Subject: [PATCH 1/8] Remove references to excluded apps from framework
+Subject: [PATCH 1/9] Remove references to excluded apps from framework
 
 Remove Auditor references:
 - Remove app.attestation.auditor from GmcPackageManager HIDDEN_PACKAGES

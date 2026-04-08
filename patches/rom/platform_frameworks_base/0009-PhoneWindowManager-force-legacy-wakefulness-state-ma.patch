@@ -1,0 +1,141 @@
+From e7b1250c9c3ce9580cf0b8708358475bf789ee5e Mon Sep 17 00:00:00 2001
+From: "Christopher A. Williamson" <contact@chrisaw.io>
+Date: Wed, 8 Apr 2026 09:27:39 +0100
+Subject: [PATCH 9/9] PhoneWindowManager: force legacy wakefulness state machine
+ for default display
+
+QPR2 added a device_config-gated code path in isReadyToSignalWakeup
+and shouldFinishWakingUp that depends on PowerGroup wakefulness
+being already AWAKE by the time startedWakingUp runs. on phones the
+separate_timeouts aconfig flag (namespace lse_desktop_experience) is
+enabled by default in the QPR2 release config, activating this
+path.
+
+during boot, Notifier.handleEarlyInteractiveChange posts
+startedWakingUp to the handler thread before the PowerGroup's
+wakefulness has committed to AWAKE. by the time the handler runs,
+the new code path calls mPowerManagerInternal.isGroupInteractive(0)
+which reads the PowerGroup wakefulness under a race and returns
+false. startedWakingUp early-returns. setAwake(true) is never called.
+mAwake stays false forever. WindowManagerPolicy keeps every window
+hidden. SurfaceFlinger composes zero layers. the panel shows black
+despite the backlight being on.
+
+on QPR0 there is no flag and no new code path: the check is
+unconditionally 'displayGroupId == DEFAULT_DISPLAY_GROUP' which
+always returns true for the default display, so setAwake(true)
+fires, WM reports awake, windows become visible, composition happens,
+the user sees the launcher.
+
+we cannot toggle the flag at runtime because the
+lse_desktop_experience namespace is allowlist-protected and shell
+cannot write it. patch the three gated predicates
+(isReadyToSignalWakeup, shouldFinishWakingUp, shouldFinishGoingToSleep)
+to unconditionally use the legacy path for the default display
+group. side-effect: non-default power groups on foldables/desktops
+lose their separate_timeouts behavior, but we do not target those
+form factors.
+---
+ .../server/policy/PhoneWindowManager.java     | 73 +++++--------------
+ 1 file changed, 20 insertions(+), 53 deletions(-)
+
+diff --git a/services/core/java/com/android/server/policy/PhoneWindowManager.java b/services/core/java/com/android/server/policy/PhoneWindowManager.java
+index f6efb1b19..933acb513 100644
+--- a/services/core/java/com/android/server/policy/PhoneWindowManager.java
++++ b/services/core/java/com/android/server/policy/PhoneWindowManager.java
+@@ -5308,50 +5308,20 @@ public class PhoneWindowManager implements WindowManagerPolicy {
+ 
+     // Both the default and default adjacent groups should be non interactive
+     private boolean isReadyToSignalSleep(int displayGroupId) {
+-        if (!com.android.server.display.feature.flags.Flags.separateTimeouts()) {
+-            return displayGroupId == Display.DEFAULT_DISPLAY_GROUP;
+-        }
+-
+-        // We only care about default and default-adjacent groups
+-        if (displayGroupId != Display.DEFAULT_DISPLAY_GROUP
+-                && !mPowerManagerInternal.isDefaultGroupAdjacent(displayGroupId)) {
+-            if (com.android.server.power.feature.flags.Flags.extraLoggingSeparateTimeout()) {
+-                Slog.i(TAG, "Not signalling isReadyToSignalSleep because it's a non default "
+-                        + "adjacent group " + displayGroupId);
+-            }
+-            return false;
+-        }
+-
+-        boolean areAllDefaultAdjacentGroupsNonInteractive =
+-                !mPowerManagerInternal.isAnyDefaultAdjacentGroupInteractive();
+-        boolean isDefaultGroupNonInteractive =
+-                !mPowerManagerInternal.isGroupInteractive(Display.DEFAULT_DISPLAY_GROUP);
+-        if (com.android.server.power.feature.flags.Flags.extraLoggingSeparateTimeout()) {
+-            Slog.i(TAG, "Started going to sleep check status for group " + displayGroupId
+-                    + " : "
+-                    + (areAllDefaultAdjacentGroupsNonInteractive && isDefaultGroupNonInteractive)
+-                    + " areAllDefaultAdjacentGroupsNonInteractive "
+-                    + areAllDefaultAdjacentGroupsNonInteractive
+-                    + " isDefaultGroupNonInteractive "
+-                    + isDefaultGroupNonInteractive);
+-        }
+-        return areAllDefaultAdjacentGroupsNonInteractive && isDefaultGroupNonInteractive;
++        // See isReadyToSignalWakeup: we force the legacy path for all
++        // separate_timeouts gated predicates on this GSI build.
++        return displayGroupId == Display.DEFAULT_DISPLAY_GROUP;
+     }
+ 
+     private boolean shouldFinishSleeping(int displayGroupId) {
+-        if (!com.android.server.display.feature.flags.Flags.separateTimeouts()) {
+-            return displayGroupId == Display.DEFAULT_DISPLAY_GROUP;
+-        }
+-
+-        return mPendingSleepingGroup == displayGroupId;
++        // See isReadyToSignalWakeup: we force the legacy path for all
++        // separate_timeouts gated predicates on this GSI build.
++        return displayGroupId == Display.DEFAULT_DISPLAY_GROUP;
+     }
+ 
+     private boolean shouldFinishWakingUp(int displayGroupId) {
+-        if (!com.android.server.display.feature.flags.Flags.separateTimeouts()) {
+-            return displayGroupId == Display.DEFAULT_DISPLAY_GROUP;
+-        }
+-
+-        return mPendingWakeupGroup == displayGroupId;
++        // See isReadyToSignalWakeup above: we force the legacy path.
++        return displayGroupId == Display.DEFAULT_DISPLAY_GROUP;
+     }
+ 
+     private void setPendingSleepingGroup(int displayGroupId) {
+@@ -5374,21 +5344,18 @@ public class PhoneWindowManager implements WindowManagerPolicy {
+ 
+     // Either of the default or default adjacent groups should be interactive
+     private boolean isReadyToSignalWakeup(int displayGroupId) {
+-        if (!com.android.server.display.feature.flags.Flags.separateTimeouts()) {
+-            return displayGroupId == Display.DEFAULT_DISPLAY_GROUP;
+-        }
+-
+-        // We only care about default and default-adjacent groups
+-        if (displayGroupId != Display.DEFAULT_DISPLAY_GROUP
+-                && !mPowerManagerInternal.isDefaultGroupAdjacent(displayGroupId)) {
+-            return false;
+-        }
+-
+-        boolean isAnyDefaultAdjacentGroupInteractive =
+-                mPowerManagerInternal.isAnyDefaultAdjacentGroupInteractive();
+-        boolean isDefaultGroupInteractive = mPowerManagerInternal
+-                .isGroupInteractive(DEFAULT_DISPLAY);
+-        return isAnyDefaultAdjacentGroupInteractive || isDefaultGroupInteractive;
++        // Force the legacy (flag-off) behavior regardless of the
++        // separate_timeouts aconfig flag. With the flag enabled on phones,
++        // isGroupInteractive(DEFAULT_DISPLAY) races the PowerGroup wakefulness
++        // transition during boot and often returns false before the group
++        // becomes AWAKE. That causes startedWakingUp to early-return, which
++        // means setAwake(true) is never called, mAwake stays false forever,
++        // WindowManagerPolicy keeps every window hidden, SurfaceFlinger
++        // composes zero layers, and the panel shows black despite the
++        // backlight being on. QPR0 did not have this flag and worked fine;
++        // QPR2 enables it by default and breaks phones. Fall back to the
++        // legacy "default display group is always ready" rule.
++        return displayGroupId == Display.DEFAULT_DISPLAY_GROUP;
+     }
+ 
+     // Called on the PowerManager's Notifier thread.
+-- 
+2.53.0
+
