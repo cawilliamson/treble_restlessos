@@ -1,7 +1,7 @@
 From 252544bd37a055888b93e1c7ece7d9f14b043551 Mon Sep 17 00:00:00 2001
 From: "Christopher A. Williamson" <contact@chrisaw.io>
 Date: Tue, 7 Apr 2026 19:44:39 +0100
-Subject: [PATCH 6/8] Revert GrapheneOS boot logo mask and shine to stock AOSP
+Subject: [PATCH 6/9] Revert GrapheneOS boot logo mask and shine to stock AOSP
 
 Restore the stock AOSP android-logo-mask.png and android-logo-shine.png
 assets.
