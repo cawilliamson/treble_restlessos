@@ -1,7 +1,7 @@
 From 160a6b5774d1293ac446fd3e50f2f3f7c6ee987a Mon Sep 17 00:00:00 2001
 From: "Christopher A. Williamson" <contact@chrisaw.io>
 Date: Tue, 24 Mar 2026 12:44:06 +0000
-Subject: [PATCH 2/3] base.mk: add VNDK v30 to PRODUCT_EXTRA_VNDK_VERSIONS
+Subject: [PATCH 2/2] base.mk: add VNDK v30 to PRODUCT_EXTRA_VNDK_VERSIONS
 
 add VNDK v30 so devices shipping with VNDK 30 vendor images find
 matching libraries at runtime. this complements the VNDK v30 apex
