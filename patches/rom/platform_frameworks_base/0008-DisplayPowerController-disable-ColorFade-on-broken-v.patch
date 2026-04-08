@@ -1,4 +1,4 @@
-From aa16185a81b57d6419bdd2bcefb98ac730004bf8 Mon Sep 17 00:00:00 2001
+From a6d594364e8ef9c2324fc4edd9935bed20125ccf Mon Sep 17 00:00:00 2001
 From: "Christopher A. Williamson" <contact@chrisaw.io>
 Date: Tue, 7 Apr 2026 22:51:36 +0100
 Subject: [PATCH 8/8] DisplayPowerController: disable ColorFade on broken vendor
@@ -39,11 +39,11 @@ keep their fade animation unchanged.
 the only user-visible loss on affected devices is the brief
 fade-in/out when the screen turns on or off.
 ---
- .../server/display/DisplayPowerController.java        | 11 ++++++++++-
- 1 file changed, 10 insertions(+), 1 deletion(-)
+ .../server/display/DisplayPowerController.java  | 17 ++++++++++++++---
+ 1 file changed, 14 insertions(+), 3 deletions(-)
 
 diff --git a/services/core/java/com/android/server/display/DisplayPowerController.java b/services/core/java/com/android/server/display/DisplayPowerController.java
-index 54d2cd7cc..8b9849b30 100644
+index 54d2cd7cc..8dd9fafd8 100644
 --- a/services/core/java/com/android/server/display/DisplayPowerController.java
 +++ b/services/core/java/com/android/server/display/DisplayPowerController.java
 @@ -680,9 +680,18 @@ final class DisplayPowerController implements AutomaticBrightnessController.Call
@@ -66,6 +66,26 @@ index 54d2cd7cc..8b9849b30 100644
          mColorFadeFadesConfig = resources.getBoolean(
                  R.bool.config_animateScreenLights);
  
+@@ -2351,7 +2360,8 @@ final class DisplayPowerController implements AutomaticBrightnessController.Call
+             mPendingScreenOff = false;
+         }
+ 
+-        if (mFlags.isEnsureColorFadeWhenTurningOnEnabled()
++        if (mColorFadeEnabled
++                && mFlags.isEnsureColorFadeWhenTurningOnEnabled()
+                 && ((mPowerState.getScreenState() == Display.STATE_OFF)
+                 && target != Display.STATE_OFF)) {
+             // ensure ColorFade is present.
+@@ -2360,7 +2370,8 @@ final class DisplayPowerController implements AutomaticBrightnessController.Call
+                     mColorFadeFadesConfig ? ColorFade.MODE_FADE : ColorFade.MODE_WARM_UP);
+         }
+ 
+-        if (mDisplayBlanksAfterDozeConfig
++        if (mColorFadeEnabled
++                && mDisplayBlanksAfterDozeConfig
+                 && Display.isDozeState(mPowerState.getScreenState())
+                 && !Display.isDozeState(target)) {
+             // Skip the screen off animation and add a black surface to hide the
 -- 
 2.53.0
 
