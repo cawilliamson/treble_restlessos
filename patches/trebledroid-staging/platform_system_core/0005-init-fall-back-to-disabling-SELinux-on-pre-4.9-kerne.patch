@@ -1,6 +1,6 @@
-From 4a78cdc0ec94b21f66361032e7dc072cb15d6b09 Mon Sep 17 00:00:00 2001
+From 9384535b627e65c6b69792a023611586a54593dc Mon Sep 17 00:00:00 2001
 From: "Christopher A. Williamson" <contact@chrisaw.io>
-Date: Thu, 9 Apr 2026 00:26:33 +0100
+Date: Thu, 9 Apr 2026 06:43:35 +0100
 Subject: [PATCH 5/5] init: fall back to disabling SELinux on pre-4.9 kernels
 
 Android sepolicy uses 164 allowxperm / auditallowxperm /
@@ -40,7 +40,7 @@ with the rest of the TrebleDroid compatibility stack.
  1 file changed, 46 insertions(+)
 
 diff --git a/init/selinux.cpp b/init/selinux.cpp
-index 972efcf..2e5937e 100644
+index 972efcf..155b266 100644
 --- a/init/selinux.cpp
 +++ b/init/selinux.cpp
 @@ -58,6 +58,7 @@
@@ -80,7 +80,7 @@ index 972efcf..2e5937e 100644
 +    static constexpr const char kDisablePath[] = "/sys/fs/selinux/disable";
 +    android::base::unique_fd fd(open(kDisablePath, O_WRONLY | O_CLOEXEC));
 +    if (fd < 0) return false;
-+    if (write(fd, "1", 1) != 1) return false;
++    if (write(fd.get(), "1", 1) != 1) return false;
 +    return true;
 +}
 +
