@@ -7,9 +7,8 @@ replace the per-mode EXPENSIVE_RENDERING property check with a generic
 mechanism.  two-layer suppression:
 
 1. persist.sys.phh.blocked_power_modes (comma-separated mode IDs) --
-   populated automatically by power-mode-monitor.sh which watches
-   logcat for vendor HALs logging "unknown type" errors.  parsed once
-   at first setPowerMode call and cached for the process lifetime.
+   logcat for vendor HALs logging "unknown type" errors.  re-read on
+   each call until the property becomes non-empty, then cached.
 
 2. runtime isUnsupported() cache -- catches HIDL HALs that correctly
    report unsupported modes via the PowerHalWrapper layer.
@@ -17,8 +16,8 @@ mechanism.  two-layer suppression:
 this eliminates repeated binder IPC to vendor HALs for modes they
 don't handle, reducing overhead and log spam.
 ---
- ...droid_server_power_PowerManagerService.cpp | 36 +++++++++++++++++++
- 1 file changed, 36 insertions(+)
+ ...droid_server_power_PowerManagerService.cpp | 39 +++++++++++++++++++
+ 1 file changed, 39 insertions(+)
 
 diff --git a/services/core/jni/com_android_server_power_PowerManagerService.cpp b/services/core/jni/com_android_server_power_PowerManagerService.cpp
 index a11b40ea4..eede96e6d 100644
@@ -34,30 +33,33 @@ index a11b40ea4..eede96e6d 100644
  #include <nativehelper/JNIHelp.h>
  #include <nativehelper/ScopedUtfChars.h>
  #include <powermanager/PowerHalController.h>
-@@ -83,13 +86,46 @@ static void setPowerBoost(Boost boost, int32_t durationMs) {
+@@ -83,13 +86,49 @@ static void setPowerBoost(Boost boost, int32_t durationMs) {
      SurfaceComposerClient::notifyPowerBoost(static_cast<int32_t>(boost));
  }
  
 +static const std::unordered_set<int>& getBlockedPowerModes() {
-+    // parsed once from persist property, populated by the logcat monitor
-+    // script that detects vendor HALs logging "unknown type" errors.
-+    static const std::unordered_set<int> sModes = [] {
-+        std::unordered_set<int> modes;
-+        std::string val = android::base::GetProperty("persist.sys.phh.blocked_power_modes", "");
-+        std::istringstream ss(val);
-+        std::string token;
-+        while (std::getline(ss, token, ',')) {
-+            if (!token.empty()) {
-+                modes.insert(std::stoi(token));
-+            }
++    // re-read property when it changes. the property is populated
++    // incrementally by power-mode-monitor.sh after boot -- new mode IDs
++    // may be appended over the first ~90 seconds.
++    static std::unordered_set<int> sModes;
++    static std::string sLastVal;
++    std::string val = android::base::GetProperty("persist.sys.phh.blocked_power_modes", "");
++    if (val == sLastVal) return sModes;
++    sLastVal = val;
++    sModes.clear();
++    std::istringstream ss(val);
++    std::string token;
++    while (std::getline(ss, token, ',')) {
++        if (!token.empty()) {
++            sModes.insert(std::stoi(token));
 +        }
-+        if (!modes.empty()) {
-+            ALOGI("blocked power modes from property: %s", val.c_str());
-+        }
-+        return modes;
-+    }();
++    }
++    if (!sModes.empty()) {
++        ALOGI("blocked power modes from property: %s", val.c_str());
++    }
 +    return sModes;
 +}
++
  static bool setPowerMode(Mode mode, bool enabled) {
 +    // skip modes that the vendor HAL doesn't support.
 +    // two-layer cache: persist property (for buggy AIDL HALs that lie about
