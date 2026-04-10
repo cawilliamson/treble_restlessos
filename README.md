@@ -5,7 +5,7 @@ RestlessOS is an **unofficial**, **unaffiliated** fork of
 for Project Treble devices. It is not endorsed by, sponsored by, or in any way
 connected to the GrapheneOS project or its developers.
 
-For discussion and support, join the Telegram group: https://t.me/restlessosgsi
+For discussion and support, join the Telegram group: https://t.me/restlessos
 
 ## Changes from GrapheneOS
 
