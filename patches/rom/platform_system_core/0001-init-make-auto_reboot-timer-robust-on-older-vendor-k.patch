@@ -1,0 +1,106 @@
+From 3c21fc991bb4f5871e59b90f3e7fa66c22993fe7 Mon Sep 17 00:00:00 2001
+From: "Christopher A. Williamson" <contact@chrisaw.io>
+Date: Wed, 25 Mar 2026 09:01:11 +0000
+Subject: [PATCH] init: make auto_reboot timer robust on older vendor kernels
+
+GrapheneOS's auto-reboot feature uses CLOCK_BOOTTIME_ALARM which may not
+be available on some vendor kernels. Fall back to CLOCK_BOOTTIME which
+still counts elapsed time including suspend but won't wake the device
+from deep sleep -- the timer fires on the next natural wakeup instead.
+
+Some vendor kernels (e.g. Exynos 9810 with kernel 4.9) accept
+CLOCK_BOOTTIME_ALARM timer creation but silently mishandle the timeout,
+firing the callback almost immediately regardless of the requested
+duration. Detect this at init by arming a 600-second probe timer and
+checking the remaining time with timer_gettime -- if it reports less
+than half the expected value, the alarm timer implementation is broken.
+Delete it and fall back to CLOCK_BOOTTIME.
+
+If both clocks fail, mark the timer as invalid so that subsequent
+timer_settime calls are skipped entirely.
+---
+ init/property_service.cpp | 49 +++++++++++++++++++++++++++++++++++++--
+ 1 file changed, 47 insertions(+), 2 deletions(-)
+
+diff --git a/init/property_service.cpp b/init/property_service.cpp
+index 2ed1578..b38df30 100644
+--- a/init/property_service.cpp
++++ b/init/property_service.cpp
+@@ -532,6 +532,7 @@ uint32_t CheckPermissions(const std::string& name, const std::string& value,
+ }
+ 
+ static timer_t auto_reboot_timer;
++static bool auto_reboot_timer_valid;
+ static bool device_unlocked_at_least_once;
+ static bool is_auto_reboot_timer_started;
+ 
+@@ -548,12 +549,56 @@ static void auto_reboot_timer_init() {
+     sev.sigev_notify = SIGEV_THREAD;
+     sev.sigev_notify_function = auto_reboot_timer_callback;
+ 
++    bool need_fallback = false;
++
+     if (int r = timer_create(CLOCK_BOOTTIME_ALARM, &sev, &auto_reboot_timer); r != 0) {
+-        LOG(FATAL) << "auto_reboot: timer_create failed: " << strerror(errno);
++        need_fallback = true;
++        LOG(WARNING) << "auto_reboot: CLOCK_BOOTTIME_ALARM timer_create failed (" << strerror(errno)
++                     << "), falling back to CLOCK_BOOTTIME";
++    } else {
++        // some vendor kernels (e.g. exynos with kernel 4.9) accept
++        // CLOCK_BOOTTIME_ALARM timer creation but fire the timer almost
++        // immediately regardless of the requested duration. detect this by
++        // arming a probe and checking the remaining time.
++        const time_t probe_sec = 600;
++        struct itimerspec ts_probe = {};
++        ts_probe.it_value.tv_sec = probe_sec;
++        if (timer_settime(auto_reboot_timer, 0, &ts_probe, nullptr) == 0) {
++            struct itimerspec ts_remaining = {};
++            if (timer_gettime(auto_reboot_timer, &ts_remaining) == 0) {
++                time_t remaining = ts_remaining.it_value.tv_sec;
++                if (remaining < probe_sec / 2) {
++                    LOG(WARNING) << "auto_reboot: CLOCK_BOOTTIME_ALARM probe failed"
++                                 << " (set " << probe_sec << "s, got " << remaining
++                                 << "s remaining), falling back to CLOCK_BOOTTIME";
++                    need_fallback = true;
++                }
++            }
++        }
++        // disarm the probe (or prepare for deletion if falling back)
++        struct itimerspec ts_disarm = {};
++        timer_settime(auto_reboot_timer, 0, &ts_disarm, nullptr);
++
++        if (need_fallback) {
++            timer_delete(auto_reboot_timer);
++        }
++    }
++
++    if (need_fallback) {
++        // CLOCK_BOOTTIME still counts elapsed time including suspend but won't
++        // wake the device from deep sleep -- the timer fires on the next
++        // natural wakeup instead.
++        if (int r2 = timer_create(CLOCK_BOOTTIME, &sev, &auto_reboot_timer); r2 != 0) {
++            LOG(ERROR) << "auto_reboot: CLOCK_BOOTTIME also failed: " << strerror(errno)
++                       << " -- auto-reboot feature will be disabled";
++            return;
++        }
+     }
++    auto_reboot_timer_valid = true;
+ }
+ 
+ static void auto_reboot_timer_set(time_t duration_sec) {
++    if (!auto_reboot_timer_valid) return;
+     const time_t min_duration = 20;
+     if (duration_sec != 0 && duration_sec < min_duration) {
+         LOG(WARNING) << "auto_reboot: raised timer duration from " << duration_sec << " to " << min_duration << " seconds";
+@@ -564,7 +609,7 @@ static void auto_reboot_timer_set(time_t duration_sec) {
+     struct itimerspec ts_prev = {};
+     int flags = 0;
+     if (int r = timer_settime(auto_reboot_timer, flags, &ts_dur, &ts_prev); r != 0) {
+-        LOG(FATAL) << "auto_reboot: timer_settime failed: " << strerror(errno);
++        LOG(ERROR) << "auto_reboot: timer_settime failed: " << strerror(errno);
+     }
+     if (duration_sec > 0) {
+         LOG(INFO) << "auto_reboot: started timer for " << duration_sec << " seconds";
+-- 
+2.53.0
+
