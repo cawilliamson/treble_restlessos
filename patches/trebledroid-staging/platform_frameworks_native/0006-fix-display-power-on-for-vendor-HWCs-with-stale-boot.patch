@@ -1,7 +1,7 @@
 From ad933f43024c1a0f98ee5ccabc13df1c3f4d01c8 Mon Sep 17 00:00:00 2001
 From: "Christopher A. Williamson" <contact@chrisaw.io>
 Date: Fri, 3 Apr 2026 19:40:09 +0100
-Subject: [PATCH 6/7] fix display power-on for vendor HWCs with stale bootloader
+Subject: [PATCH 06/7] fix display power-on for vendor HWCs with stale bootloader
  state
 
 on GSI builds, vendor HWCs (notably MTK) are left in a powered-on

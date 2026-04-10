@@ -1,7 +1,7 @@
 From 73a4bd0d4e96fcb16c3caf687ce63bcbf185c64d Mon Sep 17 00:00:00 2001
 From: "Christopher A. Williamson" <contact@chrisaw.io>
 Date: Wed, 8 Apr 2026 14:13:17 +0100
-Subject: [PATCH 7/7] BLASTBufferQueue: avoid recursive mMutex during initialize
+Subject: [PATCH 07/7] BLASTBufferQueue: avoid recursive mMutex during initialize
 
 setMaxDequeuedBufferCount(2) is currently called inside initialize()
 while BLASTBufferQueue::mMutex is held by std::lock_guard. The call
