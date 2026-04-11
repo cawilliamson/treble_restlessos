@@ -1,0 +1,76 @@
+From dde4c52ef98195710e4ba17a0e31816ab81fecad Mon Sep 17 00:00:00 2001
+From: "Christopher A. Williamson" <contact@chrisaw.io>
+Date: Sat, 11 Apr 2026 08:29:23 +0100
+Subject: [PATCH 2/2] init: guard auto_reboot callback against spurious timer
+ delivery
+
+On kernel 4.9 (Samsung Exynos 9810), CLOCK_BOOTTIME_ALARM timers with
+SIGEV_THREAD can fire spuriously during timer_create or immediately
+after timer_settime, before the probe in auto_reboot_timer_init has a
+chance to detect the broken implementation and fall back.
+
+Guard the callback with is_auto_reboot_timer_started so that spurious
+firings are logged and ignored instead of triggering a reboot. Change
+the flag to std::atomic<bool> since it is read from the timer callback
+thread and written from the property service thread.
+---
+ init/property_service.cpp | 15 ++++++++++-----
+ 1 file changed, 10 insertions(+), 5 deletions(-)
+
+diff --git a/init/property_service.cpp b/init/property_service.cpp
+index b38df30..7cbf908 100644
+--- a/init/property_service.cpp
++++ b/init/property_service.cpp
+@@ -37,6 +37,7 @@
+ #include <unistd.h>
+ #include <wchar.h>
+ 
++#include <atomic>
+ #include <map>
+ #include <memory>
+ #include <mutex>
+@@ -534,9 +535,13 @@ uint32_t CheckPermissions(const std::string& name, const std::string& value,
+ static timer_t auto_reboot_timer;
+ static bool auto_reboot_timer_valid;
+ static bool device_unlocked_at_least_once;
+-static bool is_auto_reboot_timer_started;
++static std::atomic<bool> is_auto_reboot_timer_started;
+ 
+ static void auto_reboot_timer_callback(union sigval) {
++    if (!is_auto_reboot_timer_started.load(std::memory_order_acquire)) {
++        LOG(WARNING) << "auto_reboot: spurious timer callback, ignoring";
++        return;
++    }
+     LOG(INFO) << "auto_reboot: received timer callback, rebooting";
+     trigger_shutdown("reboot");
+ }
+@@ -621,9 +626,9 @@ static int auto_reboot_handle_property_set(const std::string& value) {
+     LOG(DEBUG) << "auto_reboot: handle_property_set: " << value;
+     if (value == "on_device_unlocked") {
+         device_unlocked_at_least_once = true;
+-        if (is_auto_reboot_timer_started) {
++        if (is_auto_reboot_timer_started.load(std::memory_order_acquire)) {
+             auto_reboot_timer_set(0);
+-            is_auto_reboot_timer_started = false;
++            is_auto_reboot_timer_started.store(false, std::memory_order_release);
+             LOG(INFO) << "auto_reboot: on_device_unlocked: stopped timer";
+         } else {
+             LOG(INFO) << "auto_reboot: on_device_unlocked: no started timer";
+@@ -638,12 +643,12 @@ static int auto_reboot_handle_property_set(const std::string& value) {
+     }
+ 
+     if (device_unlocked_at_least_once) {
+-        if (is_auto_reboot_timer_started) {
++        if (is_auto_reboot_timer_started.load(std::memory_order_relaxed)) {
+             LOG(INFO) << "auto_reboot: timer is already started, ignored request to restart it;"
+                 << " requested timer duration: " << value << " seconds";
+         } else {
+             auto_reboot_timer_set((time_t) duration_sec);
+-            is_auto_reboot_timer_started = true;
++            is_auto_reboot_timer_started.store(true, std::memory_order_release);
+         }
+     } else {
+         LOG(INFO) << "auto_reboot: device was never unlocked, skipped setting timer";
+-- 
+2.53.0
+
