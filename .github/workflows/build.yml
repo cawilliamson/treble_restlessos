@@ -418,33 +418,45 @@ jobs:
         run: |
           echo "spot_interrupted=false" >> "$GITHUB_OUTPUT"
 
-          if [ -z "${INSTANCE_ID}" ] || [ "${BUILD_RESULT}" != "failure" ]; then
-            echo "Build did not fail or no instance — skipping spot check"
+          if [ -z "${INSTANCE_ID}" ] || { [ "${BUILD_RESULT}" != "failure" ] && [ "${BUILD_RESULT}" != "cancelled" ]; }; then
+            echo "Build did not fail (result=${BUILD_RESULT}) or no instance — skipping spot check"
             exit 0
           fi
 
-          # check if the instance was terminated before we got to it
-          STATE=$(aws ec2 describe-instances \
-            --instance-ids "${INSTANCE_ID}" \
-            --query 'Reservations[0].Instances[0].State.Name' \
-            --output text 2>/dev/null || echo "unknown")
+          # spot termination is asynchronous: the runner process dies immediately
+          # but the EC2 instance can stay in "running" state for up to 2 minutes
+          # before AWS transitions it to shutting-down/terminated. poll for up
+          # to 120 seconds to catch the state transition.
+          echo "Build failed — checking if spot instance was reclaimed..."
+          for i in $(seq 1 12); do
+            STATE=$(aws ec2 describe-instances \
+              --instance-ids "${INSTANCE_ID}" \
+              --query 'Reservations[0].Instances[0].State.Name' \
+              --output text 2>/dev/null || echo "unknown")
 
-          REASON=$(aws ec2 describe-instances \
-            --instance-ids "${INSTANCE_ID}" \
-            --query 'Reservations[0].Instances[0].StateReason.Code' \
-            --output text 2>/dev/null || echo "unknown")
+            REASON=$(aws ec2 describe-instances \
+              --instance-ids "${INSTANCE_ID}" \
+              --query 'Reservations[0].Instances[0].StateReason.Code' \
+              --output text 2>/dev/null || echo "unknown")
 
-          echo "Instance state: ${STATE}, reason: ${REASON}"
+            echo "  poll ${i}/12: state=${STATE} reason=${REASON}"
 
-          if [ "${REASON}" = "Server.SpotInstanceTermination" ]; then
-            echo "::warning::Spot instance was reclaimed by AWS"
-            echo "spot_interrupted=true" >> "$GITHUB_OUTPUT"
-          elif [ "${STATE}" = "terminated" ] || [ "${STATE}" = "shutting-down" ]; then
-            # instance already dead before our teardown — likely spot reclamation
-            # even if the reason code doesn't match exactly
-            echo "::warning::Instance was terminated externally (probable spot reclamation)"
-            echo "spot_interrupted=true" >> "$GITHUB_OUTPUT"
-          fi
+            if [ "${REASON}" = "Server.SpotInstanceTermination" ]; then
+              echo "::warning::Spot instance was reclaimed by AWS"
+              echo "spot_interrupted=true" >> "$GITHUB_OUTPUT"
+              exit 0
+            elif [ "${STATE}" = "terminated" ] || [ "${STATE}" = "shutting-down" ]; then
+              echo "::warning::Instance was terminated externally (probable spot reclamation)"
+              echo "spot_interrupted=true" >> "$GITHUB_OUTPUT"
+              exit 0
+            fi
+
+            sleep 10
+          done
+
+          # instance is still running after 120 seconds — not a spot interruption
+          echo "Instance still running after 2 minutes — not a spot interruption"
+          echo "Final state: ${STATE}, reason: ${REASON}"
 
       - name: Terminate instance
         env:
