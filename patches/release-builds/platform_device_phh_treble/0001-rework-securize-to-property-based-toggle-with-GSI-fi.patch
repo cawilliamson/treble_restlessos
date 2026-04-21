@@ -1,6 +1,6 @@
-From 4c2fb7d2872e910828cd3cdc7b71686f1bf94c94 Mon Sep 17 00:00:00 2001
+From 6506e703a220f64ce11fa1a0e573e6adc3b4d75d Mon Sep 17 00:00:00 2001
 From: "Christopher A. Williamson" <contact@chrisaw.io>
-Date: Tue, 7 Apr 2026 22:29:26 +0100
+Date: Tue, 21 Apr 2026 22:23:27 +0100
 Subject: [PATCH] rework securize to property-based toggle with GSI fingerprint
  tracking
 
@@ -21,73 +21,14 @@ lines, the Hide system/xbin/su mount trick, and the phh-securize.sh
 product copy. Add model/manufacturer updates to the usb gadget
 strings so lsusb reports the spoofed identity.
 ---
- ...-on-devices-whose-kernels-lack-fuse-.patch | 51 +++++++++++++++++++
- phh-on-boot.sh                                | 25 +++++++++
- 2 files changed, 76 insertions(+)
- create mode 100644 0001-Disable-FUSE-BPF-on-devices-whose-kernels-lack-fuse-.patch
+ phh-on-boot.sh | 24 ++++++++++++++++++++++++
+ 1 file changed, 24 insertions(+)
 
-diff --git a/0001-Disable-FUSE-BPF-on-devices-whose-kernels-lack-fuse-.patch b/0001-Disable-FUSE-BPF-on-devices-whose-kernels-lack-fuse-.patch
-new file mode 100644
-index 0000000..fe02cc4
---- /dev/null
-+++ b/0001-Disable-FUSE-BPF-on-devices-whose-kernels-lack-fuse-.patch
-@@ -0,0 +1,51 @@
-+From f76ce00e18feae2416cf6806dbf9b816f12c0f0b Mon Sep 17 00:00:00 2001
-+From: "Christopher A. Williamson" <contact@chrisaw.io>
-+Date: Mon, 20 Apr 2026 17:24:44 +0100
-+Subject: [PATCH] Disable FUSE BPF on devices whose kernels lack fuse-bpf
-+ support
-+
-+Android 16 enables FUSE BPF by default, which requires kernel
-+support for the fuse-bpf program type and the fuseMedia.bpf BPF
-+program. On older kernels (< 5.4 without backport), fuseMedia.bpf
-+fails to load and the FuseDaemon falls back to legacy mode, but
-+the legacy FUSE path may not work correctly on QPR2+.
-+
-+Setting persist.sys.fuse.bpf.override=false tells the FuseDaemon
-+and vold to use the legacy FUSE path from the start, avoiding
-+the failed BPF load and ensuring bind-mounts for Android/data
-+and Android/obb are set up correctly by vold.
-+
-+The kernel exposes fuse-bpf support at /sys/fs/fuse/features/fuse_bpf.
-+If this file does not exist, the kernel does not support FUSE BPF.
-+---
-+ phh-on-boot.sh | 14 ++++++++++++++
-+ 1 file changed, 14 insertions(+)
-+
-+diff --git a/phh-on-boot.sh b/phh-on-boot.sh
-+index c8cd1fd..ac9cf86 100644
-+--- a/phh-on-boot.sh
-++++ b/phh-on-boot.sh
-+@@ -11,6 +11,20 @@ if [ ! -e /sys/fs/bpf/netd_shared/map_netd_uid_owner_map ]; then
-+     log -t phh-on-boot "Disabled restricted_networking_mode (BPF uid_owner_map absent)"
-+ fi
-+ 
-++# Disable FUSE BPF on devices whose kernels lack fuse-bpf support.
-++# Android 16 enables FUSE BPF by default, which requires kernel support for
-++# the fuse-bpf program type. On older kernels (< 5.4 without backport),
-++# fuseMedia.bpf fails to load and the FuseDaemon falls back to legacy mode
-++# but the legacy FUSE path may not work correctly on QPR2+. Setting
-++# persist.sys.fuse.bpf.override=false tells the FuseDaemon and vold to
-++# use the legacy FUSE path from the start, avoiding the failed BPF load
-++# and ensuring bind-mounts for Android/data and Android/obb are set up
-++# correctly by vold.
-++if [ ! -f /sys/fs/fuse/features/fuse_bpf ]; then
-++    setprop persist.sys.fuse.bpf.override false
-++    log -t phh-on-boot "Disabled FUSE BPF (kernel fuse_bpf feature absent)"
-++fi
-++
-+ vndk="$(getprop persist.sys.vndk)"
-+ [ -z "$vndk" ] && vndk="$(getprop ro.vndk.version |grep -oE '^[0-9]+')"
-+ 
-+-- 
-+2.53.0
-+
 diff --git a/phh-on-boot.sh b/phh-on-boot.sh
-index ac9cf86..aabf293 100644
+index ac9cf86..23b4987 100644
 --- a/phh-on-boot.sh
 +++ b/phh-on-boot.sh
-@@ -25,6 +25,31 @@ if [ ! -f /sys/fs/fuse/features/fuse_bpf ]; then
+@@ -25,6 +25,30 @@ if [ ! -f /sys/fs/fuse/features/fuse_bpf ]; then
      log -t phh-on-boot "Disabled FUSE BPF (kernel fuse_bpf feature absent)"
  fi
  
@@ -108,7 +49,6 @@ index ac9cf86..aabf293 100644
 +  resetprop_phh ro.boot.flash.locked 1
 +  resetprop_phh ro.boot.veritymode enforcing
 +  resetprop_phh ro.boot.warranty_bit 0
-+  resetprop_phh ro.vendor.warranty_bit 0
 +  resetprop_phh ro.warranty_bit 0
 +  resetprop_phh --delete ro.build.selinux
 +  resetprop_phh -n sys.oem_unlock_allowed 0
