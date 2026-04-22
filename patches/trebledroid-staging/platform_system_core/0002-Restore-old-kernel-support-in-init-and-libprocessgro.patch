@@ -1,7 +1,7 @@
 From 4f6e36357a2f2db7c754b1cb872d394a6a46fec8 Mon Sep 17 00:00:00 2001
 From: "Christopher A. Williamson" <contact@chrisaw.io>
 Date: Tue, 17 Mar 2026 23:27:35 +0000
-Subject: [PATCH 2/6] Restore old kernel support in init and libprocessgroup
+Subject: [PATCH 2/7] Restore old kernel support in init and libprocessgroup
 
 Revert removal of 4.9/4.14 kernel support in init.rc:
 Re-add bootreceiver.enable 0 triggers for kernel versions 4.9 and
