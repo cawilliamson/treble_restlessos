@@ -1,4 +1,4 @@
-From fee6899c704b2e6fbd404ffcae3055383a983a61 Mon Sep 17 00:00:00 2001
+From 8f94baf5e261e9bb5562f4499b4ace5136d6881d Mon Sep 17 00:00:00 2001
 From: "Christopher A. Williamson" <contact@chrisaw.io>
 Date: Tue, 24 Mar 2026 12:44:06 +0000
 Subject: [PATCH 2/3] remove persist.sys.usb.config=adb default from base.mk
@@ -11,10 +11,10 @@ re-enable it via the debug tier.
  1 file changed, 1 deletion(-)
 
 diff --git a/base.mk b/base.mk
-index fda86c1..2462c9b 100644
+index 4bc643c..414347e 100644
 --- a/base.mk
 +++ b/base.mk
-@@ -42,7 +42,6 @@ PRODUCT_SYSTEM_DEFAULT_PROPERTIES += \
+@@ -43,7 +43,6 @@ PRODUCT_SYSTEM_DEFAULT_PROPERTIES += \
  
  # Huawei HiSuite (also other OEM custom programs I guess) it's of no use in AOSP builds
  PRODUCT_SYSTEM_DEFAULT_PROPERTIES += \
