@@ -1,6 +1,6 @@
-From 7568bef2e6a2ddb9228fb38ccf2d0715ad62324b Mon Sep 17 00:00:00 2001
+From d54ac17d764e6731c9918744763584790b655ad7 Mon Sep 17 00:00:00 2001
 From: "Christopher A. Williamson" <contact@chrisaw.io>
-Date: Fri, 24 Apr 2026 20:51:15 +0100
+Date: Fri, 24 Apr 2026 22:46:47 +0100
 Subject: [PATCH] Tethering: fall back to modern DNS resolver when dnsmasq is
  unavailable
 
