@@ -1,0 +1,26 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: "Christopher A. Williamson" <contact@chrisaw.io>
+Date: Thu, 24 Apr 2025 00:00:00 +0100
+Subject: [PATCH] product: Exclude AOSP sample APN list from GSI product config
+
+Remove the PRODUCT_COPY_FILES directive that copies the AOSP sample
+APN database into the GSI product partition. Our build already
+installs a comprehensive merged APN database via device/phh/treble/base.mk
+that supersedes this sample file.
+
+Change-Id: I0000000000000000000000000000000000000099
+---
+ gsi_product.mk | 4 ----
+ 1 file changed, 4 deletions(-)
+
+diff --git a/gsi_product.mk b/gsi_product.mk
+index 383cd3e..bcfeee2 100644
+--- a/gsi_product.mk
++++ b/gsi_product.mk
+@@ -33,7 +33,3 @@ PRODUCT_PRODUCT_PROPERTIES += \
+     ro.config.ringtone?=Ring_Synth_04.ogg \
+     ro.config.notification_sound?=pixiedust.ogg \
+     ro.com.android.dataroaming?=true \
+-
+-PRODUCT_COPY_FILES += \
+-    device/sample/etc/apns-full-conf.xml:$(TARGET_COPY_OUT_PRODUCT)/etc/apns-conf.xml
