@@ -23,13 +23,13 @@ vendor kernels withoutfuse_bpf support.
 
 Fixes: #28, #33
 ---
- EmulatedVolume.cpp | 12 ++++++++++++
+ model/EmulatedVolume.cpp | 12 ++++++++++++
  1 file changed, 12 insertions(+)
 
-diff --git a/EmulatedVolume.cpp b/EmulatedVolume.cpp
+diff --git a/model/EmulatedVolume.cpp b/model/EmulatedVolume.cpp
 index 2df35cb..5ea7e57 100644
---- a/EmulatedVolume.cpp
-+++ b/EmulatedVolume.cpp
+--- a/model/EmulatedVolume.cpp
++++ b/model/EmulatedVolume.cpp
 @@ -54,6 +54,14 @@ EmulatedVolume::EmulatedVolume(const std::string& rawPath, int userId)
      mLabel = "emulated";
      mFuseMounted = false;
