@@ -32,6 +32,8 @@ resource "aws_iam_user_policy" "gha_ec2" {
           "ec2:DescribeImages",
           "ec2:DescribeInstanceStatus",
           "ec2:DescribeInstances",
+          "ec2:DescribeSecurityGroups",
+          "ec2:DescribeSpotPriceHistory",
           "ec2:DescribeSubnets",
           "ec2:DescribeVolumes",
           "ec2:DetachVolume",

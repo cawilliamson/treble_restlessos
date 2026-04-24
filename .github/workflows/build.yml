@@ -39,6 +39,7 @@ jobs:
     outputs:
       instance_id: ${{ steps.launch.outputs.instance_id }}
       runner_label: ${{ steps.runner_label.outputs.label }}
+      region: ${{ steps.launch.outputs.region }}
 
     steps:
       - name: Checkout
@@ -93,19 +94,6 @@ jobs:
 
           echo "user-data rendered: $(wc --bytes < /tmp/user-data.yml) bytes"
 
-      - name: Find latest Ubuntu 24.04 AMI
-        id: ami
-        run: |
-          AMI_ID=$(aws ec2 describe-images \
-            --filters \
-              "Name=name,Values=ubuntu/images/hvm-ssd-gp3/ubuntu-noble-24.04-amd64-server-*" \
-              "Name=state,Values=available" \
-            --output text \
-            --owners 099720109477 \
-            --query 'Images | sort_by(@, &CreationDate) | [-1].ImageId')
-          echo "ami_id=${AMI_ID}" >> "$GITHUB_OUTPUT"
-          echo "Using AMI: ${AMI_ID}"
-
       - name: Launch EC2 spot instance
         id: launch
         run: |
@@ -114,62 +102,161 @@ jobs:
           # safety timer (shutdown -P +120) destroys the instance entirely.
           # ephemeral root volume sized for the full build; instance terminates
           # at the end of the job and the volume is deleted with it.
-          # discover all build subnets via the project tag and sort preferred-AZ
-          # first. eu-west-2c is observed to get interrupted least, 2a the most.
-          declare -a SUBNETS=()
-          for az in eu-west-2c eu-west-2b eu-west-2a; do
-            mapfile -t found < <(aws ec2 describe-subnets \
-              --filters "Name=tag:Project,Values=gsi-build" \
-                        "Name=availability-zone,Values=${az}" \
-              --query 'Subnets[].SubnetId' --output text | tr '\t' '\n')
-            for s in "${found[@]}"; do
-              [ -n "$s" ] && SUBNETS+=("$s")
-            done
+
+          # Regions to try. Ordered dynamically below by spot price —
+          # cheaper region is assumed quieter / more reliable for spot.
+          CANDIDATE_REGIONS="eu-west-2 eu-west-1"
+
+          # ------------------------------------------------------------------
+          # Phase 0: rank candidate regions by current spot price
+          # Lower price ⟹ less demand ⟹ more reliable spot availability
+          # ------------------------------------------------------------------
+          declare -A REGION_PRICE=()
+          for REGION in ${CANDIDATE_REGIONS}; do
+            PRICE=$(aws ec2 describe-spot-price-history --region "${REGION}" \
+              --instance-types c7i.48xlarge \
+              --product-descriptions "Linux/UNIX" \
+              --start-time "$(date -u -d '1 hour ago' +%Y-%m-%dT%H:%M:%S)" \
+              --query 'SpotPriceHistory[0].SpotPrice' \
+              --output text 2>/dev/null) || true
+
+            if [ -n "${PRICE}" ] && [ "${PRICE}" != "None" ]; then
+              REGION_PRICE["${REGION}"]="${PRICE}"
+              echo "  ${REGION} spot price: ${PRICE}"
+            else
+              REGION_PRICE["${REGION}"]="99.99"
+              echo "  ${REGION} spot price: unavailable (deprioritised)"
+            fi
           done
-          if [ "${#SUBNETS[@]}" -eq 0 ]; then
-            echo "ERROR: no subnets tagged Project=gsi-build found in this region"
+
+          REGIONS=$(for r in ${CANDIDATE_REGIONS}; do
+            echo "${REGION_PRICE[$r]:-99.99} ${r}"
+          done | sort -g | awk '{print $2}')
+          echo "Region priority (cheapest spot first): ${REGIONS}"
+
+          # ------------------------------------------------------------------
+          # Phase 1: discover per-region resources (AMI, SG, subnets)
+          # ------------------------------------------------------------------
+          declare -A REGION_AMI=()
+          declare -A REGION_SG=()
+          declare -A REGION_SUBNETS=()
+
+          for REGION in ${REGIONS}; do
+            echo "=== Discovering resources in ${REGION} ==="
+
+            AMI_ID=$(aws ec2 describe-images --region "${REGION}" \
+              --filters \
+                "Name=name,Values=ubuntu/images/hvm-ssd-gp3/ubuntu-noble-24.04-amd64-server-*" \
+                "Name=state,Values=available" \
+              --output text \
+              --owners 099720109477 \
+              --query 'Images | sort_by(@, &CreationDate) | [-1].ImageId')
+
+            if [ -z "${AMI_ID}" ]; then
+              echo "  No AMI found, skipping region"
+              continue
+            fi
+            echo "  AMI: ${AMI_ID}"
+            REGION_AMI["${REGION}"]="${AMI_ID}"
+
+            SG_ID=$(aws ec2 describe-security-groups --region "${REGION}" \
+              --filters "Name=group-name,Values=gsi-build" "Name=tag:Project,Values=gsi-build" \
+              --query 'SecurityGroups[0].GroupId' --output text 2>/dev/null) || true
+
+            if [ -z "${SG_ID}" ] || [ "${SG_ID}" = "None" ]; then
+              echo "  Security group gsi-build not found, skipping region"
+              continue
+            fi
+            echo "  Security group: ${SG_ID}"
+            REGION_SG["${REGION}"]="${SG_ID}"
+
+            SUBNET_LIST=""
+            while IFS= read -r s; do
+              [ -n "$s" ] && SUBNET_LIST="${SUBNET_LIST}${s} "
+            done < <(aws ec2 describe-subnets --region "${REGION}" \
+              --filters "Name=tag:Project,Values=gsi-build" \
+              --query 'Subnets[].SubnetId' --output text | tr '\t' '\n')
+
+            if [ -z "${SUBNET_LIST}" ]; then
+              echo "  No subnets found, skipping region"
+              continue
+            fi
+            echo "  Subnets: ${SUBNET_LIST}"
+            REGION_SUBNETS["${REGION}"]="${SUBNET_LIST}"
+          done
+
+          # Build ordered list of region:subnet pairs for launch attempts.
+          # No AZ preference — any subnet in any region is fine.
+          declare -a LAUNCH_PAIRS=()
+          for REGION in ${REGIONS}; do
+            if [ -n "${REGION_AMI[${REGION}]:-}" ]; then
+              for SUBNET in ${REGION_SUBNETS[${REGION}]}; do
+                LAUNCH_PAIRS+=("${REGION}:${SUBNET}")
+              done
+            fi
+          done
+
+          if [ "${#LAUNCH_PAIRS[@]}" -eq 0 ]; then
+            echo "ERROR: no usable regions found (missing AMI, SG, or subnets)"
             exit 1
           fi
-          echo "Subnet preference order: ${SUBNETS[*]}"
+          echo "Launch attempt order: ${LAUNCH_PAIRS[*]}"
+
+          # ------------------------------------------------------------------
+          # Phase 2: try to launch a spot instance across all region/subnet
+          # ------------------------------------------------------------------
           INSTANCE_ID=""
+          LAUNCHED_REGION=""
           ATTEMPT=0
           DEADLINE=$((SECONDS + 3600))
+
           while [ -z "$INSTANCE_ID" ] && [ "$SECONDS" -lt "$DEADLINE" ]; do
             ATTEMPT=$((ATTEMPT + 1))
-            for SUBNET in "${SUBNETS[@]}"; do
-              echo "Attempt ${ATTEMPT}: trying subnet ${SUBNET}..."
-              INSTANCE_ID=$(aws ec2 run-instances \
-                --image-id "${{ steps.ami.outputs.ami_id }}" \
+            for PAIR in "${LAUNCH_PAIRS[@]}"; do
+              REGION="${PAIR%%:*}"
+              SUBNET="${PAIR##*:}"
+              AMI_ID="${REGION_AMI[${REGION}]}"
+              SG_ID="${REGION_SG[${REGION}]}"
+
+              echo "Attempt ${ATTEMPT}: trying ${REGION} subnet ${SUBNET}..."
+              INSTANCE_ID=$(aws ec2 run-instances --region "${REGION}" \
+                --image-id "${AMI_ID}" \
                 --instance-initiated-shutdown-behavior terminate \
                 --instance-market-options '{"MarketType":"spot","SpotOptions":{"SpotInstanceType":"one-time","InstanceInterruptionBehavior":"terminate"}}' \
                 --instance-type c7i.48xlarge \
                 --output text \
                 --query 'Instances[0].InstanceId' \
-                --security-group-ids "${{ secrets.AWS_SECURITY_GROUP_ID }}" \
+                --security-group-ids "${SG_ID}" \
                 --subnet-id "${SUBNET}" \
                 --tag-specifications "ResourceType=instance,Tags=[{Key=Name,Value=gsi-build-${{ github.run_id }}},{Key=Project,Value=gsi-build},{Key=Ephemeral,Value=true}]" \
                 --block-device-mappings 'DeviceName=/dev/sda1,Ebs={VolumeSize=1000,VolumeType=gp3,Iops=16000,Throughput=1000,DeleteOnTermination=true}' \
-                --user-data "file:///tmp/user-data.yml" 2>&1) && break 2
+                --user-data "file:///tmp/user-data.yml" 2>&1) && {
+                  LAUNCHED_REGION="${REGION}"
+                  break 2
+                }
               echo "  failed: ${INSTANCE_ID}"
               INSTANCE_ID=""
             done
+
             REMAINING=$(( (DEADLINE - SECONDS) / 60 ))
-            echo "All subnets failed — retrying in 30s (${REMAINING}m remaining)..."
+            echo "All region/subnet combos failed — retrying in 30s (${REMAINING}m remaining)..."
             sleep 30
           done
 
-          if [ -z "$INSTANCE_ID" ]; then
-            echo "ERROR: failed to launch spot instance after 1 hour"
+          if [ -z "${INSTANCE_ID}" ]; then
+            echo "ERROR: failed to launch spot instance in any region after 1 hour"
             exit 1
           fi
 
           echo "instance_id=${INSTANCE_ID}" >> "$GITHUB_OUTPUT"
-          echo "Launched spot instance: ${INSTANCE_ID} (c7i.48xlarge in eu-west-2)"
+          echo "region=${LAUNCHED_REGION}" >> "$GITHUB_OUTPUT"
+          echo "Launched spot instance: ${INSTANCE_ID} (c7i.48xlarge in ${LAUNCHED_REGION})"
 
       - name: Wait for instance to reach running state
         run: |
           echo "Waiting for instance ${{ steps.launch.outputs.instance_id }} to start..."
           aws ec2 wait instance-running \
+            --region "${{ steps.launch.outputs.region }}" \
             --instance-ids "${{ steps.launch.outputs.instance_id }}"
           echo "Instance is running"
 
@@ -408,7 +495,7 @@ jobs:
         with:
           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          aws-region: eu-west-2
+          aws-region: ${{ needs.provision.outputs.region || 'eu-west-2' }}
 
       - name: Check for spot interruption
         id: check_spot
@@ -430,11 +517,13 @@ jobs:
           echo "Build failed — checking if spot instance was reclaimed..."
           for i in $(seq 1 12); do
             STATE=$(aws ec2 describe-instances \
+              --region "${{ needs.provision.outputs.region || 'eu-west-2' }}" \
               --instance-ids "${INSTANCE_ID}" \
               --query 'Reservations[0].Instances[0].State.Name' \
               --output text 2>/dev/null || echo "unknown")
 
             REASON=$(aws ec2 describe-instances \
+              --region "${{ needs.provision.outputs.region || 'eu-west-2' }}" \
               --instance-ids "${INSTANCE_ID}" \
               --query 'Reservations[0].Instances[0].StateReason.Code' \
               --output text 2>/dev/null || echo "unknown")
@@ -468,7 +557,7 @@ jobs:
           fi
 
           echo "Terminating instance ${INSTANCE_ID}..."
-          aws ec2 terminate-instances --instance-ids "${INSTANCE_ID}"
+          aws ec2 terminate-instances --region "${{ needs.provision.outputs.region || 'eu-west-2' }}" --instance-ids "${INSTANCE_ID}"
           echo "Terminate request sent"
 
       - name: Wait for instance termination
@@ -481,10 +570,12 @@ jobs:
 
           echo "Waiting for instance ${INSTANCE_ID} to terminate..."
           aws ec2 wait instance-terminated \
+            --region "${{ needs.provision.outputs.region || 'eu-west-2' }}" \
             --instance-ids "${INSTANCE_ID}" \
             || echo "WARNING: wait timed out, instance may still be terminating"
 
           STATE=$(aws ec2 describe-instances \
+            --region "${{ needs.provision.outputs.region || 'eu-west-2' }}" \
             --instance-ids "${INSTANCE_ID}" \
             --query 'Reservations[0].Instances[0].State.Name' \
             --output text 2>/dev/null || echo "unknown")
@@ -493,7 +584,7 @@ jobs:
             echo "Confirmed: instance ${INSTANCE_ID} is ${STATE}"
           else
             echo "::error::Instance ${INSTANCE_ID} is in state '${STATE}' - may still be running!"
-            echo "::error::MANUAL ACTION REQUIRED: https://eu-west-2.console.aws.amazon.com/ec2"
+            echo "::error::MANUAL ACTION REQUIRED: https://${{ needs.provision.outputs.region || 'eu-west-2' }}.console.aws.amazon.com/ec2"
             exit 1
           fi
 
@@ -535,7 +626,7 @@ jobs:
             echo "| Attempt | $((ATTEMPT + 1)) of 5 |"
             echo "| Instance ID | ${{ needs.provision.outputs.instance_id }} |"
             echo "| Instance type | c7i.48xlarge (192 vCPUs) |"
-            echo "| Region | eu-west-2 (London) |"
+            echo "| Region | ${{ needs.provision.outputs.region || 'eu-west-2' }} |"
             echo "| Runner label | ${{ needs.provision.outputs.runner_label }} |"
             echo "| Instance terminated | yes |"
           } >> "$GITHUB_STEP_SUMMARY"
