@@ -20,27 +20,27 @@ vendor fingerprint HAL service so it can re-establish its connections
 cleanly. This is a no-op on devices where USB works normally and the
 fingerprint HAL is already running properly.
 
-Issue: #31
+Fixes: #31
 ---
  phh-on-boot.sh | 6 ++++++
  1 file changed, 6 insertions(+)
 
 diff --git a/phh-on-boot.sh b/phh-on-boot.sh
-index ac9cf86..d5f2a3e 100644
+index 1be78a2..d5f2a3e 100644
 --- a/phh-on-boot.sh
 +++ b/phh-on-boot.sh
-@@ -27,6 +27,12 @@ if [ -z "$udc_state" ] || [ "$udc_state" = "none" ]; then
-         setprop sys.usb.config "$usb_cfg"
+@@ -25,6 +25,12 @@ if [ -z "$udc_state" ] || [ "$udc_state" = "none" ]; then
      fi
  fi
-+
+ 
 +# After USB gadget recovery, restart the fingerprint HAL. On some devices
 +# (notably Unihertz Jelly Max), the USB gadget teardown/rebuild disrupts
 +# the fingerprint HAL's connection to the TEE/secure element.
 +setprop ctl.restart vendor.fps_hal 2>/dev/null
 +setprop ctl.restart vendor.biometrics-hal-1 2>/dev/null
- 
++
  setprop ctl.start media.swcodec
  
+ for i in wpa p2p;do
 -- 
 2.53.0
