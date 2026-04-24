@@ -1,46 +1,44 @@
-From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From f465f691c0fdd3bdd691d5856283e9c1f277a766 Mon Sep 17 00:00:00 2001
 From: "Christopher A. Williamson" <contact@chrisaw.io>
-Date: Fri, 25 Apr 2026 00:00:00 +0100
+Date: Fri, 24 Apr 2026 20:54:18 +0100
 Subject: [PATCH] phh-on-boot: restart fingerprint HAL after USB gadget
  recovery
 
-On some devices (notably Unihertz Jelly Max), the fingerprint sensor
-stops working after a reboot when a USB cable is connected. The user
-discovered that toggling the "treat virtual sensors as real" setting
-in the TrebleApp while the USB cable is connected restores
-functionality.
+The USB gadget recovery code above cycles sys.usb.config to force the
+vendor USB init to tear down and rebuild the gadget.  On some devices
+(e.g. Samsung Galaxy M33, Exynos 1280), this also disconnects the
+biometrics HAL's session with the Trusted Execution Environment,
+causing fingerprint enrollment and authentication to fail with a
+generic hardware error.
 
-This suggests the USB gadget teardown/rebuild cycle (triggered by
-cable state changes during boot) disrupts the fingerprint HAL's
-connection to the secure element or TEE. When the USB gadget is
-reconfigured, the fingerprint HAL's IPC handles may become stale.
-
-After performing USB gadget recovery in phh-on-boot.sh, restart the
-vendor fingerprint HAL service so it can re-establish its connections
-cleanly. This is a no-op on devices where USB works normally and the
-fingerprint HAL is already running properly.
+Restart vendor.fps_hal and vendor.biometrics-hal-1 when USB gadget
+recovery was performed so they re-establish their TEE connections.
 
 Fixes: #31
 ---
- phh-on-boot.sh | 6 ++++++
- 1 file changed, 6 insertions(+)
+ phh-on-boot.sh | 9 +++++++++
+ 1 file changed, 9 insertions(+)
 
 diff --git a/phh-on-boot.sh b/phh-on-boot.sh
-index 1be78a2..d5f2a3e 100644
+index 1be78a2..85524c7 100644
 --- a/phh-on-boot.sh
 +++ b/phh-on-boot.sh
-@@ -25,6 +25,12 @@ if [ -z "$udc_state" ] || [ "$udc_state" = "none" ]; then
+@@ -22,6 +22,15 @@ if [ -z "$udc_state" ] || [ "$udc_state" = "none" ]; then
      fi
  fi
  
-+# After USB gadget recovery, restart the fingerprint HAL. On some devices
-+# (notably Unihertz Jelly Max), the USB gadget teardown/rebuild disrupts
-+# the fingerprint HAL's connection to the TEE/secure element.
-+setprop ctl.restart vendor.fps_hal 2>/dev/null
-+setprop ctl.restart vendor.biometrics-hal-1 2>/dev/null
++# Restart fingerprint HAL after USB gadget recovery. The USB gadget reset
++# can disconnect the biometrics HAL's connection to the TEE (trusted
++# execution environment), causing fingerprint enrollment/auth to fail
++# with a generic error. Restarting the HAL re-establishes the TEE session.
++if [ -z "$udc_state" ] || [ "$udc_state" = "none" ]; then
++    setprop ctl.restart vendor.fps_hal
++    setprop ctl.restart vendor.biometrics-hal-1
++fi
 +
  setprop ctl.start media.swcodec
  
  for i in wpa p2p;do
 -- 
 2.53.0
+

@@ -1,8 +1,8 @@
-From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From c5ea3d4fc5cbda218cc5d9aeafc2d26fb31356dc Mon Sep 17 00:00:00 2001
 From: "Christopher A. Williamson" <contact@chrisaw.io>
-Date: Fri, 25 Apr 2026 00:00:00 +0100
-Subject: [PATCH] Harden OPPO/Realme root detection bypass with warranty_bit
- and service stop
+Date: Sat, 25 Apr 2026 00:00:00 +0100
+Subject: [PATCH 2/2] Harden OPPO/Realme root detection bypass with
+ warranty_bit and service stop
 
 The existing OPPO/Realme bypass (patch 0023) only sets
 ro.boot.flash.locked, ro.boot.vbmeta.device_state and
@@ -31,11 +31,10 @@ Fixes: #38
  1 file changed, 6 insertions(+)
 
 diff --git a/rw-system.sh b/rw-system.sh
-index 086e147..c3d8f5e 100644
+index e13f397..e295b70 100644
 --- a/rw-system.sh
 +++ b/rw-system.sh
-@@ -812,6 +812,12 @@ brand="$(getprop ro.product.vendor.brand)"
- if [ "$brand" = OPPO ] || [ "$brand" = realme ]; then
+@@ -812,6 +812,12 @@ if [ "$brand" = OPPO ] || [ "$brand" = realme ]; then
      resetprop_phh ro.boot.flash.locked 1
      resetprop_phh ro.boot.vbmeta.device_state locked
      resetprop_phh ro.boot.verifiedbootstate green
@@ -50,3 +49,4 @@ index 086e147..c3d8f5e 100644
  if [ -f /system/phh/secure ] || [ -f /metadata/phh/secure ];then
 -- 
 2.53.0
+
