@@ -1,22 +1,22 @@
-From 8739d2053e327670dca9598e1fce9c4ac2194a7d Mon Sep 17 00:00:00 2001
+From ac11802363814e3efbf4114d4b2b5706529b41d5 Mon Sep 17 00:00:00 2001
 From: "Christopher A. Williamson" <contact@chrisaw.io>
-Date: Wed, 22 Apr 2026 19:20:04 +0100
+Date: Sat, 25 Apr 2026 17:43:47 +0100
 Subject: [PATCH] rework securize to property-based toggle with GSI fingerprint
  tracking
 
 ---
  base.mk             |   1 -
- phh-on-boot.sh      |  25 ++++++++
- phh-prop-handler.sh |  11 ++++
- rw-system.sh        | 142 ++++++++++++++++++++++++++++++--------------
- vndk.rc             |   3 +
- 5 files changed, 138 insertions(+), 44 deletions(-)
+ phh-on-boot.sh      |  24 +++++++++
+ phh-prop-handler.sh |  12 +++++
+ rw-system.sh        | 126 ++++++++++++++++++++++++++++++++++----------
+ vndk.rc             |   3 ++
+ 5 files changed, 137 insertions(+), 29 deletions(-)
 
 diff --git a/base.mk b/base.mk
-index 7a6d528..550c34c 100644
+index f5177f0..fc6268e 100644
 --- a/base.mk
 +++ b/base.mk
-@@ -176,7 +176,6 @@ PRODUCT_PACKAGES += \
+@@ -174,7 +174,6 @@ PRODUCT_PACKAGES += \
      resetprop_phh
  
  PRODUCT_COPY_FILES += \
@@ -25,13 +25,13 @@ index 7a6d528..550c34c 100644
  
  PRODUCT_COPY_FILES += \
 diff --git a/phh-on-boot.sh b/phh-on-boot.sh
-index ac9cf86..aabf293 100644
+index 5f26430..a362d1d 100644
 --- a/phh-on-boot.sh
 +++ b/phh-on-boot.sh
-@@ -25,6 +25,31 @@ if [ ! -f /sys/fs/fuse/features/fuse_bpf ]; then
+@@ -24,6 +24,30 @@ if [ ! -f /sys/fs/fuse/features/fuse_bpf ]; then
+     setprop persist.sys.fuse.bpf.override false
      log -t phh-on-boot "Disabled FUSE BPF (kernel fuse_bpf feature absent)"
  fi
- 
 +# spoof post-boot props
 +# should be applied after boot complete to prevent breaking device features
 +if [ ! -f /metadata/securize_disable ]; then
@@ -56,15 +56,14 @@ index ac9cf86..aabf293 100644
 +  resetprop_phh -n init.svc.adbd stopped
 +  resetprop_phh -n init.svc.flash_recovery stopped
 +fi
-+
+ 
  vndk="$(getprop persist.sys.vndk)"
  [ -z "$vndk" ] && vndk="$(getprop ro.vndk.version |grep -oE '^[0-9]+')"
- 
 diff --git a/phh-prop-handler.sh b/phh-prop-handler.sh
-index cae90d6..d698b6a 100644
+index cae90d6..84dc85d 100644
 --- a/phh-prop-handler.sh
 +++ b/phh-prop-handler.sh
-@@ -146,6 +146,17 @@ if [ "$1" == "persist.sys.phh.oppo.usbotg" ]; then
+@@ -134,6 +134,18 @@ if [ "$1" == "sys.phh.oplus.fppress" ]; then
      exit
  fi
  
@@ -79,15 +78,16 @@ index cae90d6..d698b6a 100644
 +        touch /metadata/securize_disable
 +    fi
 +fi
- if [ "$1" == "persist.sys.phh.transsion.usbotg" ]; then
++
+ if [ "$1" == "persist.sys.phh.oppo.usbotg" ]; then
      if [[ "$prop_value" != "0" && "$prop_value" != "1" ]]; then
          exit 1
 diff --git a/rw-system.sh b/rw-system.sh
-index 835d5ab..abc5007 100644
+index d4f8cb6..018e168 100644
 --- a/rw-system.sh
 +++ b/rw-system.sh
-@@ -772,74 +772,130 @@ if [ "$brand" = OPPO ] || [ "$brand" = realme ]; then
-     resetprop_phh ro.boot.verifiedbootstate green
+@@ -789,57 +789,127 @@ if [ "$brand" = OPPO ] || [ "$brand" = realme ]; then
+     setprop ctl.stop oppo_root_check 2>/dev/null
  fi
  
 -if [ -f /system/phh/secure ] || [ -f /metadata/phh/secure ];then
@@ -218,21 +218,6 @@ index 835d5ab..abc5007 100644
 -    resetprop_phh --delete ro.build.selinux
 -
 -    resetprop_phh ro.adb.secure 1
--
--    # Hide system/xbin/su
--    mount /mnt/phh/empty_dir /system/xbin
--    mount /mnt/phh/empty_dir /system/app/me.phh.superuser
--    mount /mnt/phh/empty /system/xbin/phh-su
--else
--    mkdir /mnt/phh/xbin
--    chmod 0755 /mnt/phh/xbin
--    chcon u:object_r:system_file:s0 /mnt/phh/xbin
--
--    #phh-su will bind over this empty file to make a real su
--    touch /mnt/phh/xbin/su
--    chcon u:object_r:system_file:s0 /mnt/phh/xbin/su
--
--    mount -o bind /mnt/phh/xbin /system/xbin
 +    copyprop ro.product.system.manufacturer ro.product.vendor.manufacturer
 +    copyprop ro.product.product.manufacturer ro.product.vendor.manufacturer
 +    copyprop ro.product.system_ext.manufacturer ro.product.vendor.manufacturer
@@ -254,12 +239,9 @@ index 835d5ab..abc5007 100644
 +        [ -n "$model" ] && echo "$model" > "$legacy_usb/iProduct"
 +        [ -n "$manufacturer" ] && echo "$manufacturer" > "$legacy_usb/iManufacturer"
 +    fi
- fi
  
-+
- for abi in "" 64;do
-     f=/vendor/lib$abi/libstagefright_foundation.so
-     if [ -f "$f" ];then
+     # Hide system/xbin/su
+     mount /mnt/phh/empty_dir /system/xbin
 diff --git a/vndk.rc b/vndk.rc
 index 2bd6b35..a807273 100644
 --- a/vndk.rc
