@@ -1,4 +1,9 @@
 repos:
+- repo: https://github.com/pre-commit/pre-commit-hooks
+  rev: v5.0.0
+  hooks:
+  - id: check-merge-conflict
+
 - repo: local
   hooks:
   - id: patch-mbox-footer
@@ -10,11 +15,29 @@ repos:
       EXIT=0
       for f in "$@"; do
         if ! tail -c 20 "$f" | grep -q -- '^-- $'; then
-          echo "[BLOCKED] missing '-- ' mbox footer: $f"
+          echo "[BLOCKED] missing \"-- \" mbox footer: $f"
           EXIT=1
         fi
         if [ "$(tail -c1 "$f" | wc -l)" -eq 0 ]; then
           echo "[BLOCKED] missing trailing newline: $f"
+          EXIT=1
+        fi
+      done
+      exit "$EXIT"
+    language: system
+    files: '\.patch$'
+
+  - id: patch-creates-patch
+    name: detect patches that create other patches
+    entry: bash
+    args:
+    - -c
+    - |
+      EXIT=0
+      for f in "$@"; do
+        if grep -q '^diff --git a/.*\.patch ' "$f"; then
+          echo "[BLOCKED] patch creates or modifies another .patch file: $f"
+          echo "        patches must not generate .patch files in the source tree"
           EXIT=1
         fi
       done
@@ -42,7 +65,6 @@ repos:
         printf '%s' "$path"
       }
       EXIT=0
-      # only run if src/ looks synced
       if [ ! -d "src" ] || ! find src -maxdepth 2 -name ".git" -type d | head -1 | grep -q .; then
         exit 0
       fi
@@ -68,7 +90,6 @@ repos:
     language: system
     files: '\.patch$'
     pass_filenames: true
-    always_run: false
 
   - id: patch-diff-path-check
     name: patch diff path sanity check
@@ -115,4 +136,3 @@ repos:
       exit "$EXIT"
     language: system
     files: '\.patch$'
-
