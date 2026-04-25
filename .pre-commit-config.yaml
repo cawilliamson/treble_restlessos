@@ -22,6 +22,54 @@ repos:
     language: system
     files: '\.patch$'
 
+  - id: patch-apply-smoke-test
+    name: patch apply + whitespace error check against synced src/
+    entry: bash
+    args:
+    - -c
+    - |
+      map_repo() {
+        local name="$1"
+        local path
+        path=$(tr '_' '/' <<< "$name" | sed -e 's;platform/;;g')
+        case "$path" in
+          build)                   path="build/make";;
+          testing)                 path="platform_testing";;
+          treble/app)              path="treble_app";;
+          vendor/hardware/overlay) path="vendor/hardware_overlay";;
+          vendor/partner/gms)      path="vendor/partner_gms";;
+        esac
+        printf '%s' "$path"
+      }
+      EXIT=0
+      # only run if src/ looks synced
+      if [ ! -d "src" ] || ! find src -maxdepth 2 -name ".git" -type d | head -1 | grep -q .; then
+        exit 0
+      fi
+      for f in "$@"; do
+        project_dir=$(dirname "$f" | sed 's|patches/[^/]*/||')
+        src_path=$(map_repo "$project_dir")
+        src_dir="src/$src_path"
+        [ -d "$src_dir/.git" ] || continue
+        base=$(cd "$src_dir" && git rev-list --max-parents=0 HEAD | tail -1)
+        [ -z "$base" ] && continue
+        (cd "$src_dir" && git stash push -m "pre-commit-stash" --include-untracked > /dev/null 2>&1) || true
+        (cd "$src_dir" && git reset --hard "$base" > /dev/null 2>&1) || continue
+        if ! (cd "$src_dir" && git apply --check --whitespace=error "$PWD/../../$f" < /dev/null 2>&1); then
+          echo "[BLOCKED] patch does not apply cleanly or has trailing whitespace"
+          echo "          $f -> $src_dir"
+          echo "          regenerate with git format-patch on clean upstream"
+          echo "          (fix source trailing whitespace before generating)"
+          EXIT=1
+        fi
+        (cd "$src_dir" && git stash pop > /dev/null 2>&1) || true
+      done
+      exit "$EXIT"
+    language: system
+    files: '\.patch$'
+    pass_filenames: true
+    always_run: false
+
   - id: patch-diff-path-check
     name: patch diff path sanity check
     entry: bash
@@ -68,49 +116,3 @@ repos:
     language: system
     files: '\.patch$'
 
-  - id: patch-apply-smoke-test
-    name: patch apply smoke test against synced src/
-    entry: bash
-    args:
-    - -c
-    - |
-      map_repo() {
-        local name="$1"
-        local path
-        path=$(tr '_' '/' <<< "$name" | sed -e 's;platform/;;g')
-        case "$path" in
-          build)                   path="build/make";;
-          testing)                 path="platform_testing";;
-          treble/app)              path="treble_app";;
-          vendor/hardware/overlay) path="vendor/hardware_overlay";;
-          vendor/partner/gms)      path="vendor/partner_gms";;
-        esac
-        printf '%s' "$path"
-      }
-      EXIT=0
-      # only run if src/ looks synced
-      if [ ! -d "src" ] || ! find src -maxdepth 2 -name ".git" -type d | head -1 | grep -q .; then
-        exit 0
-      fi
-      for f in "$@"; do
-        project_dir=$(dirname "$f" | sed 's|patches/[^/]*/||')
-        src_path=$(map_repo "$project_dir")
-        src_dir="src/$src_path"
-        [ -d "$src_dir/.git" ] || continue
-        base=$(cd "$src_dir" && git rev-list --max-parents=0 HEAD | tail -1)
-        [ -z "$base" ] && continue
-        (cd "$src_dir" && git stash push -m "pre-commit-stash" --include-untracked > /dev/null 2>&1) || true
-        (cd "$src_dir" && git reset --hard "$base" > /dev/null 2>&1) || continue
-        if ! (cd "$src_dir" && git apply --check "$PWD/../../$f" < /dev/null 2>&1); then
-          echo "[BLOCKED] patch does not apply cleanly against upstream"
-          echo "          $f -> $src_dir"
-          echo "          regenerate with git format-patch on clean upstream"
-          EXIT=1
-        fi
-        (cd "$src_dir" && git stash pop > /dev/null 2>&1) || true
-      done
-      exit "$EXIT"
-    language: system
-    files: '\.patch$'
-    pass_filenames: true
-    always_run: false
