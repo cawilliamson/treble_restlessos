@@ -1,4 +1,4 @@
-From 3c21fc991bb4f5871e59b90f3e7fa66c22993fe7 Mon Sep 17 00:00:00 2001
+From b7a9b4acaf30226c03c3a2f14cd0664f58815409 Mon Sep 17 00:00:00 2001
 From: "Christopher A. Williamson" <contact@chrisaw.io>
 Date: Wed, 25 Mar 2026 09:01:11 +0000
 Subject: [PATCH] init: make auto_reboot timer robust on older vendor kernels
@@ -19,11 +19,11 @@ Delete it and fall back to CLOCK_BOOTTIME.
 If both clocks fail, mark the timer as invalid so that subsequent
 timer_settime calls are skipped entirely.
 ---
- init/property_service.cpp | 49 +++++++++++++++++++++++++++++++++++++--
- 1 file changed, 47 insertions(+), 2 deletions(-)
+ init/property_service.cpp | 64 +++++++++++++++++++++++++++++++++++++--
+ 1 file changed, 62 insertions(+), 2 deletions(-)
 
 diff --git a/init/property_service.cpp b/init/property_service.cpp
-index 2ed1578..b38df30 100644
+index 2ed1578..8dd5902 100644
 --- a/init/property_service.cpp
 +++ b/init/property_service.cpp
 @@ -532,6 +532,7 @@ uint32_t CheckPermissions(const std::string& name, const std::string& value,
@@ -34,7 +34,20 @@ index 2ed1578..b38df30 100644
  static bool device_unlocked_at_least_once;
  static bool is_auto_reboot_timer_started;
  
-@@ -548,12 +549,56 @@ static void auto_reboot_timer_init() {
+@@ -543,17 +544,76 @@ static void auto_reboot_timer_callback(union sigval) {
+ // all of the auto_reboot_* functions, except for auto_reboot_timer_callback, are called on the
+ // same thread
+ 
++// Detect kernel major version. Returns true when running kernel is
++// at least the requested major version (e.g. 5 for Linux 5.x).
++static bool KernelMajorAtLeast(unsigned want) {
++    struct utsname u;
++    if (uname(&u) != 0) return false;
++    unsigned major = 0;
++    return (sscanf(u.release, "%u.", &major) == 1 && major >= want);
++}
+ static void auto_reboot_timer_init() {
+     struct sigevent sev = {};
      sev.sigev_notify = SIGEV_THREAD;
      sev.sigev_notify_function = auto_reboot_timer_callback;
  
@@ -46,6 +59,13 @@ index 2ed1578..b38df30 100644
 +        LOG(WARNING) << "auto_reboot: CLOCK_BOOTTIME_ALARM timer_create failed (" << strerror(errno)
 +                     << "), falling back to CLOCK_BOOTTIME";
 +    } else {
++        // modern kernels (>= 5.0) are trusted to handle
++        // CLOCK_BOOTTIME_ALARM correctly. skip the probe to avoid
++        // timer state corruption on exynos vendors (issue #35).
++        if (KernelMajorAtLeast(5)) {
++            auto_reboot_timer_valid = true;
++            return;
++        }
 +        // some vendor kernels (e.g. exynos with kernel 4.9) accept
 +        // CLOCK_BOOTTIME_ALARM timer creation but fire the timer almost
 +        // immediately regardless of the requested duration. detect this by
@@ -92,7 +112,7 @@ index 2ed1578..b38df30 100644
      const time_t min_duration = 20;
      if (duration_sec != 0 && duration_sec < min_duration) {
          LOG(WARNING) << "auto_reboot: raised timer duration from " << duration_sec << " to " << min_duration << " seconds";
-@@ -564,7 +609,7 @@ static void auto_reboot_timer_set(time_t duration_sec) {
+@@ -564,7 +624,7 @@ static void auto_reboot_timer_set(time_t duration_sec) {
      struct itimerspec ts_prev = {};
      int flags = 0;
      if (int r = timer_settime(auto_reboot_timer, flags, &ts_dur, &ts_prev); r != 0) {
