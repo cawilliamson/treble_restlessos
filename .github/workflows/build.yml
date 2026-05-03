@@ -265,7 +265,7 @@ jobs:
           LABEL="${{ steps.runner_label.outputs.label }}"
           echo "Waiting for runner with label '${LABEL}' to register..."
 
-          for i in $(seq 1 60); do
+          for i in $(seq 1 120); do
             ONLINE=$(curl --fail --silent \
               --header "Accept: application/vnd.github+json" \
               --header "Authorization: Bearer ${{ secrets.GH_PAT }}" \
@@ -273,7 +273,7 @@ jobs:
               | jq --arg label "$LABEL" --raw-output \
                 '[.runners[] | select(.labels[].name == $label) | select(.status == "online")] | length')
 
-            echo "  attempt ${i}/60: ${ONLINE} runner(s) online with label '${LABEL}'"
+            echo "  attempt ${i}/120: ${ONLINE} runner(s) online with label '${LABEL}'"
 
             if [ "${ONLINE}" -ge 1 ] 2>/dev/null; then
               echo "Runner is online and ready"
@@ -282,7 +282,7 @@ jobs:
             sleep 15
           done
 
-          echo "ERROR: runner never came online after 15 minutes"
+          echo "ERROR: runner never came online after 30 minutes"
           exit 1
 
   # ---------------------------------------------------------------------------
@@ -336,6 +336,17 @@ jobs:
           echo "Resolved latest ${GRAPHENEOS_RELEASE_CHANNEL} tag: ${TAG}"
           echo "${TAG}" > tmp/.grapheneos_tag
 
+          # Extract device codename from the first row with this tag
+          DEVICE=$(echo "${RELEASES_HTML}" \
+            | sed 's/<tr/\n<tr/g' \
+            | grep "id=[a-z]*-${GRAPHENEOS_RELEASE_CHANNEL}" \
+            | grep "href=#${TAG}" \
+            | head -1 \
+            | sed 's/.*id=\([a-z]*\)-.*/\1/')
+          echo "Resolved device: ${DEVICE}"
+          echo "${DEVICE}" > tmp/.grapheneos_device
+
+
       - name: Sync sources
         working-directory: src/
         run: |
@@ -359,6 +370,9 @@ jobs:
             | sed "s/.*\"\([^\"]*\)\".*/\1/")
           echo "Detected ANDROID_VERSION_TAG: ${ANDROID_VERSION_TAG}"
           echo "${ANDROID_VERSION_TAG}" > ../tmp/.android_version_tag
+
+      - name: Fetch eSIM blobs
+        run: bash scripts/fetch-esim-blobs.sh "$(cat tmp/.grapheneos_device)"
 
       - name: Apply patches
         working-directory: src/

@@ -1,4 +1,4 @@
-From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From a53a5bc2cfef1e0d906d6f845f34d74cf2977f14 Mon Sep 17 00:00:00 2001
 From: "Christopher A. Williamson" <contact@chrisaw.io>
 Date: Fri, 1 May 2026 12:55:32 +0100
 Subject: [PATCH] add EuiccGoogle prebuilt APK declarations
@@ -9,22 +9,27 @@ The actual APK binary is fetched from Google Pixel factory images
 by scripts/fetch-esim-blobs.sh using adevtool, following the same
 approach GrapheneOS uses for Pixel builds.
 ---
- EuiccGoogle/Android.bp | 14 ++++++++++++++
- overlay.mk             |  2 ++
- 2 files changed, 16 insertions(+)
+ EuiccGoogle/Android.bp                            | 23 +++++++++++++++++++++++
+ EuiccGoogle/android.hardware.telephony.euicc.xml |  4 ++++
+ EuiccGoogle/privapp-permissions-EuiccGoogle.xml  | 19 +++++++++++++++++++
+ overlay.mk                                       |  3 +++
+ 4 files changed, 49 insertions(+)
  create mode 100644 EuiccGoogle/Android.bp
+ create mode 100644 EuiccGoogle/android.hardware.telephony.euicc.xml
+ create mode 100644 EuiccGoogle/privapp-permissions-EuiccGoogle.xml
 
 diff --git a/EuiccGoogle/Android.bp b/EuiccGoogle/Android.bp
 new file mode 100644
-index 0000000..bbf4833
+index 0000000..2f9c6a3
 --- /dev/null
 +++ b/EuiccGoogle/Android.bp
-@@ -0,0 +1,14 @@
+@@ -0,0 +1,23 @@
 +android_app_import {
 +    name: "EuiccGoogle",
 +    apk: "EuiccGoogle.apk",
 +    privileged: true,
 +    certificate: "platform",
++    enforce_uses_libs: false,
 +}
 +
 +prebuilt_etc {
@@ -34,15 +39,62 @@ index 0000000..bbf4833
 +    filename: "android.hardware.telephony.euicc.xml",
 +    installable: true,
 +}
++
++prebuilt_etc {
++    name: "privapp-permissions-EuiccGoogle",
++    src: "privapp-permissions-EuiccGoogle.xml",
++    sub_dir: "permissions",
++    filename: "privapp-permissions-EuiccGoogle.xml",
++    installable: true,
++}
+diff --git a/EuiccGoogle/android.hardware.telephony.euicc.xml b/EuiccGoogle/android.hardware.telephony.euicc.xml
+new file mode 100644
+index 0000000..e5aaa99
+--- /dev/null
++++ b/EuiccGoogle/android.hardware.telephony.euicc.xml
+@@ -0,0 +1,4 @@
++<?xml version="1.0" encoding="utf-8"?>
++<permissions>
++    <feature name="android.hardware.telephony.euicc" />
++</permissions>
+diff --git a/EuiccGoogle/privapp-permissions-EuiccGoogle.xml b/EuiccGoogle/privapp-permissions-EuiccGoogle.xml
+new file mode 100644
+index 0000000..7b8c8a1
+--- /dev/null
++++ b/EuiccGoogle/privapp-permissions-EuiccGoogle.xml
+@@ -0,0 +1,19 @@
++<?xml version="1.0" encoding="utf-8"?>
++<permissions>
++    <privapp-permissions package="com.google.android.euicc">
++        <permission name="android.permission.CHANGE_COMPONENT_ENABLED_STATE" />
++        <permission name="android.permission.CONNECTIVITY_USE_RESTRICTED_NETWORKS" />
++        <permission name="android.permission.MODIFY_PHONE_STATE" />
++        <permission name="android.permission.READ_NETWORK_USAGE_HISTORY" />
++        <permission name="android.permission.READ_PRIVILEGED_PHONE_STATE" />
++        <permission name="android.permission.REAL_GET_TASKS" />
++        <permission name="android.permission.REBOOT" />
++        <permission name="android.permission.START_ACTIVITIES_FROM_BACKGROUND" />
++        <permission name="android.permission.START_FOREGROUND_SERVICES_FROM_BACKGROUND" />
++        <permission name="android.permission.WRITE_SECURE_SETTINGS" />
++        <permission name="android.permission.WRITE_EMBEDDED_SUBSCRIPTIONS" />
++        <permission name="com.android.permission.INSTALL_EXISTING_PACKAGES" />
++        <permission name="com.android.permission.WRITE_EMBEDDED_SUBSCRIPTIONS" />
++        <permission name="com.google.android.permission.USE_GRIL" />
++    </privapp-permissions>
++</permissions>
 diff --git a/overlay.mk b/overlay.mk
-index 9c2c1e5..db2c3f6 100644
+index bc84489..e7b5898 100644
 --- a/overlay.mk
 +++ b/overlay.mk
-@@ -4,6 +4,8 @@ PRODUCT_PACKAGES += \
+@@ -2,6 +2,9 @@ PRODUCT_PACKAGES += \
+ 	HardwareOverlayPicker \
+ 	QtiAudio \
  	TrebleApp \
 +	android.hardware.telephony.euicc \
 +	EuiccGoogle \
++	privapp-permissions-EuiccGoogle \
  	treble-overlay-Hisense-HLTE556N \
+ 	treble-overlay-NavBar \
+ 	treble-overlay-NightMode \
 -- 
-2.47.0
-
+2.53.0

@@ -2,7 +2,8 @@
 set -euo pipefail
 
 # fetch-esim-blobs.sh — extract EuiccGoogle LPA from a Pixel factory image
-# via adevtool (same mechanism GrapheneOS uses for Pixel builds).
+# via adevtool download + manual extraction. avoids adevtool generate-all
+# which triggers a heavy internal dep build that fails in CI.
 
 SCRIPT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" &> /dev/null && pwd)"
 TOP_DIR="$(dirname "$SCRIPT_DIR")"
@@ -13,58 +14,93 @@ if [ ! -f "${SRC_DIR}/build/release/release_config_map.textproto" ]; then
     exit 1
 fi
 
-# Extract the Pixel device codename from GrapheneOS release config
-# (same logic as sync-sources.sh)
-CODENAME=$(grep --max-count=1 "target:" \
-    "${SRC_DIR}/build/release/release_config_map.textproto" \
-    | sed 's/.*"\([^"]*\)".*/\1/')
+# If device codename provided as argument, use it directly
+if [ "${1:-}" ]; then
+    DEVICE="$1"
+    echo "Device (from arg): ${DEVICE}"
+else
+    # Map build target to adevtool device codename (e.g. bp4a → rango)
+    CODENAME=$(grep --max-count=1 "target:" \
+        "${SRC_DIR}/build/release/release_config_map.textproto" \
+        | sed 's/.*"\([^"]*\)".*/\1/')
+    echo "Target device: ${CODENAME}"
 
-if [ -z "$CODENAME" ]; then
-    echo "ERROR: Could not determine Pixel device codename from release config." >&2
-    exit 1
+    if [ -f "${SRC_DIR}/vendor/adevtool/config/device/${CODENAME}.yml" ]; then
+        DEVICE="${CODENAME}"
+    else
+        DEVICE=$(grep "factory:" \
+            "${SRC_DIR}/vendor/adevtool/config/build-index/build-index-main.yml" \
+            | grep "\-${CODENAME}\." \
+            | head -1 \
+            | awk '{print $NF}' \
+            | sed 's/-.*//')
+    fi
+
+    if [ -z "${DEVICE}" ]; then
+        echo "ERROR: Could not map build target ${CODENAME} to a device config." >&2
+        exit 1
+    fi
+    echo "Device: ${DEVICE}"
 fi
-
-echo "Target device: ${CODENAME}"
 
 # Install adevtool dependencies (once)
 if [ ! -d "${SRC_DIR}/vendor/adevtool/node_modules" ]; then
     echo "Installing adevtool dependencies..."
     yarn --cwd "${SRC_DIR}/vendor/adevtool/" install
 fi
+# Download factory image using adevtool (this step works without dep build)
+echo "Downloading factory image for ${DEVICE}..."
+pushd "${SRC_DIR}" > /dev/null
+ADEVTOOL_SKIP_DEP_BUILD=1 vendor/adevtool/bin/run download -d "${DEVICE}"
+popd > /dev/null
 
-# Run adevtool to extract proprietary blobs from the Pixel factory image
-echo "Running adevtool generate-all -d ${CODENAME}..."
-"${SRC_DIR}/vendor/adevtool/node_modules/.bin/adevtool" generate-all -d "$CODENAME"
+# Find the downloaded factory zip
+FACTORY_ZIP=$(ls -1 "${SRC_DIR}/vendor/adevtool/dl/${DEVICE}"*-factory-*.zip 2>/dev/null | head -1)
+if [ -z "${FACTORY_ZIP}" ] || [ ! -f "${FACTORY_ZIP}" ]; then
+    echo "ERROR: Factory image not found in vendor/adevtool/dl/" >&2
+    exit 1
+fi
+echo "Factory image: ${FACTORY_ZIP}"
 
-# The APK now lives at:
-SKEL_DIR="${SRC_DIR}/vendor/adevtool/vendor-skels/google_devices/${CODENAME}"
-APK_SRC="${SKEL_DIR}/proprietary/product/priv-app/EuiccGoogle/EuiccGoogle.apk"
-XML_SRC="${SRC_DIR}/frameworks/native/data/etc/android.hardware.telephony.euicc.xml"
+# Extract APK manually
+TMPDIR=$(mktemp -d)
+trap 'rm -rf "${TMPDIR}"' EXIT
 
-if [ ! -f "$APK_SRC" ]; then
-    echo "ERROR: EuiccGoogle.apk not found at ${APK_SRC}" >&2
-    echo "       adevtool may not have extracted it. Check the device codename." >&2
+echo "Extracting inner image zip..."
+unzip -q "${FACTORY_ZIP}" -d "${TMPDIR}"
+
+INNER_ZIP=$(find "${TMPDIR}" -name "image-*.zip" | head -1)
+if [ -z "${INNER_ZIP}" ]; then
+    echo "ERROR: Inner image zip not found" >&2
     exit 1
 fi
 
-# Copy into vendor/hardware_overlay where the GSI build picks it up
-DEST="${SRC_DIR}/vendor/hardware_overlay/EuiccGoogle"
-mkdir -p "$DEST"
-
-cp "$APK_SRC" "${DEST}/EuiccGoogle.apk"
-
-# Use the AOSP feature XML (it's identical to stock — just declares the feature)
-if [ -f "$XML_SRC" ]; then
-    cp "$XML_SRC" "${DEST}/android.hardware.telephony.euicc.xml"
-else
-    # Fallback: create minimal feature XML
-    cat > "${DEST}/android.hardware.telephony.euicc.xml" << 'XML'
-<?xml version="1.0" encoding="utf-8"?>
-<permissions>
-    <feature name="android.hardware.telephony.euicc" />
-</permissions>
-XML
+echo "Extracting product.img..."
+if ! unzip -q -o "${INNER_ZIP}" product.img -d "${TMPDIR}" 2>/dev/null; then
+    echo "ERROR: product.img not found in factory image (dynamic partitions may use super.img instead)" >&2
+    exit 1
 fi
 
-echo "EuiccGoogle APK + feature XML copied to ${DEST}"
-echo "Done — ready for patch application and build."
+IMG="${TMPDIR}/product.img"
+DEST="${SRC_DIR}/vendor/hardware_overlay/EuiccGoogle"
+mkdir -p "${DEST}"
+
+# Detect filesystem type and extract APK
+echo "Detecting filesystem type..."
+ERofsMagic=$(python3 -c "import sys; f=open('$IMG','rb'); f.seek(0x400); print(f.read(4).hex()); f.close()")
+Ext4Magic=$(python3 -c "import sys; f=open('$IMG','rb'); f.seek(0x438); print(f.read(2).hex()); f.close()")
+
+if [ "${ERofsMagic}" = "e2e1f5e0" ]; then
+    echo "Filesystem: EROFS"
+    fsck.erofs --extract="${TMPDIR}/extracted" "${IMG}"
+    cp "${TMPDIR}/extracted/priv-app/EuiccGoogle/EuiccGoogle.apk" "${DEST}/"
+elif [ "${Ext4Magic}" = "53ef" ]; then
+    echo "Filesystem: ext4"
+    debugfs -R "cat /priv-app/EuiccGoogle/EuiccGoogle.apk" "${IMG}" > "${DEST}/EuiccGoogle.apk"
+else
+    echo "ERROR: Unknown filesystem type (erofs magic: ${ERofsMagic}, ext4 magic: ${Ext4Magic})" >&2
+    exit 1
+fi
+
+echo "EuiccGoogle APK copied to ${DEST}"
+echo "Done"
