@@ -1,0 +1,48 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: "Christopher A. Williamson" <contact@chrisaw.io>
+Date: Fri, 1 May 2026 12:55:32 +0100
+Subject: [PATCH] add EuiccGoogle prebuilt APK declarations
+
+Declares EuiccGoogle as a privileged prebuilt APK module and
+android.hardware.telephony.euicc as a prebuilt etc (feature XML).
+The actual APK binary is fetched from Google Pixel factory images
+by scripts/fetch-esim-blobs.sh using adevtool, following the same
+approach GrapheneOS uses for Pixel builds.
+---
+ EuiccGoogle/Android.bp | 14 ++++++++++++++
+ overlay.mk             |  2 ++
+ 2 files changed, 16 insertions(+)
+ create mode 100644 EuiccGoogle/Android.bp
+
+diff --git a/EuiccGoogle/Android.bp b/EuiccGoogle/Android.bp
+new file mode 100644
+index 0000000..bbf4833
+--- /dev/null
++++ b/EuiccGoogle/Android.bp
+@@ -0,0 +1,14 @@
++android_app_import {
++    name: "EuiccGoogle",
++    apk: "EuiccGoogle.apk",
++    privileged: true,
++    certificate: "platform",
++}
++
++prebuilt_etc {
++    name: "android.hardware.telephony.euicc",
++    src: "android.hardware.telephony.euicc.xml",
++    sub_dir: "permissions",
++    filename: "android.hardware.telephony.euicc.xml",
++    installable: true,
++}
+diff --git a/overlay.mk b/overlay.mk
+index 9c2c1e5..db2c3f6 100644
+--- a/overlay.mk
++++ b/overlay.mk
+@@ -4,6 +4,8 @@ PRODUCT_PACKAGES += \
+ 	TrebleApp \
++	android.hardware.telephony.euicc \
++	EuiccGoogle \
+ 	treble-overlay-Hisense-HLTE556N \
+-- 
+2.47.0
+
