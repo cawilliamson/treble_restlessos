@@ -336,6 +336,17 @@ jobs:
           echo "Resolved latest ${GRAPHENEOS_RELEASE_CHANNEL} tag: ${TAG}"
           echo "${TAG}" > tmp/.grapheneos_tag
 
+          # Extract device codename from the first row with this tag
+          DEVICE=$(echo "${RELEASES_HTML}" \
+            | sed 's/<tr/\n<tr/g' \
+            | grep "id=[a-z]*-${GRAPHENEOS_RELEASE_CHANNEL}" \
+            | grep "href=#${TAG}" \
+            | head -1 \
+            | sed 's/.*id=\([a-z]*\)-.*/\1/')
+          echo "Resolved device: ${DEVICE}"
+          echo "${DEVICE}" > tmp/.grapheneos_device
+
+
       - name: Sync sources
         working-directory: src/
         run: |
@@ -359,6 +370,9 @@ jobs:
             | sed "s/.*\"\([^\"]*\)\".*/\1/")
           echo "Detected ANDROID_VERSION_TAG: ${ANDROID_VERSION_TAG}"
           echo "${ANDROID_VERSION_TAG}" > ../tmp/.android_version_tag
+
+      - name: Fetch eSIM blobs
+        run: bash scripts/fetch-esim-blobs.sh "$(cat tmp/.grapheneos_device)"
 
       - name: Apply patches
         working-directory: src/

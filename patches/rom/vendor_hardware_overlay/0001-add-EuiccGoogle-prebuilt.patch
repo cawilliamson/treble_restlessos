@@ -1,4 +1,4 @@
-From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From a53a5bc2cfef1e0d906d6f845f34d74cf2977f14 Mon Sep 17 00:00:00 2001
 From: "Christopher A. Williamson" <contact@chrisaw.io>
 Date: Fri, 1 May 2026 12:55:32 +0100
 Subject: [PATCH] add EuiccGoogle prebuilt APK declarations
@@ -9,22 +9,23 @@ The actual APK binary is fetched from Google Pixel factory images
 by scripts/fetch-esim-blobs.sh using adevtool, following the same
 approach GrapheneOS uses for Pixel builds.
 ---
- EuiccGoogle/Android.bp | 14 ++++++++++++++
+ EuiccGoogle/Android.bp | 15 +++++++++++++++
  overlay.mk             |  2 ++
- 2 files changed, 16 insertions(+)
+ 2 files changed, 17 insertions(+)
  create mode 100644 EuiccGoogle/Android.bp
 
 diff --git a/EuiccGoogle/Android.bp b/EuiccGoogle/Android.bp
 new file mode 100644
-index 0000000..bbf4833
+index 0000000..2e17e45
 --- /dev/null
 +++ b/EuiccGoogle/Android.bp
-@@ -0,0 +1,14 @@
+@@ -0,0 +1,15 @@
 +android_app_import {
 +    name: "EuiccGoogle",
 +    apk: "EuiccGoogle.apk",
 +    privileged: true,
 +    certificate: "platform",
++    enforce_uses_libs: false,
 +}
 +
 +prebuilt_etc {
@@ -35,14 +36,17 @@ index 0000000..bbf4833
 +    installable: true,
 +}
 diff --git a/overlay.mk b/overlay.mk
-index 9c2c1e5..db2c3f6 100644
+index bc84489..485ea7d 100644
 --- a/overlay.mk
 +++ b/overlay.mk
-@@ -4,6 +4,8 @@ PRODUCT_PACKAGES += \
+@@ -2,6 +2,8 @@ PRODUCT_PACKAGES += \
+ 	HardwareOverlayPicker \
+ 	QtiAudio \
  	TrebleApp \
 +	android.hardware.telephony.euicc \
 +	EuiccGoogle \
  	treble-overlay-Hisense-HLTE556N \
+ 	treble-overlay-NavBar \
+ 	treble-overlay-NightMode \
 -- 
-2.47.0
-
+2.53.0
