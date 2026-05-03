@@ -17,6 +17,8 @@ packages:
   - build-essential
   - ccache
   - curl
+  - e2fsprogs
+  - erofs-utils
   - flex
   - g++-multilib
   - gcc-multilib
@@ -33,6 +35,7 @@ packages:
   - libxml2
   - libxml2-utils
   - lzop
+  - python3
   - openjdk-11-jdk
   - pngcrush
   - python3
@@ -124,6 +127,12 @@ runcmd:
   - |
     curl -sf -o /usr/local/bin/repo https://storage.googleapis.com/git-repo-downloads/repo
     chmod a+x /usr/local/bin/repo
+
+  - |
+    NODE_URL="https://nodejs.org/dist/v24.15.0/node-v24.15.0-linux-x64.tar.xz"
+    curl -sfL "${NODE_URL}" | tar -xJ -C /usr/local --strip-components=1
+    npm install -g yarn
+    echo "node: $(node --version), npm: $(npm --version), yarn: $(yarn --version)"
 
   # -------------------------------------------------------------------------
   # github CLI - for creating releases
