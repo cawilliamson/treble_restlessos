@@ -1,22 +1,54 @@
-From ac11802363814e3efbf4114d4b2b5706529b41d5 Mon Sep 17 00:00:00 2001
+From b56b98072de0707651cdbcdf3698be61cfcd2cea Mon Sep 17 00:00:00 2001
 From: "Christopher A. Williamson" <contact@chrisaw.io>
-Date: Sat, 25 Apr 2026 17:43:47 +0100
-Subject: [PATCH] rework securize to property-based toggle with GSI fingerprint
- tracking
+Date: Wed, 6 May 2026 23:06:48 +0100
+Subject: [PATCH] securize: rework to property-based toggle with GSI
+ fingerprint tracking
 
+remove stale property overrides from rw-system.sh and base.mk, replace
+with post-boot spoofing in phh-on-boot.sh that hides build props from
+root detection. add property handler for persist.sys.phh.securize so
+the toggle survives factory resets. gate the anti-detection spoofing on
+/metadata/securize_disable.
+
+also track GSI fingerprint changes across upgrades so
+PackageManagerService detects upgrades correctly.
+
+remove persist.sys.usb.config=adb default from base.mk -- adb is
+disabled by default on release builds; enabling it requires the usual
+developer options + usb debugging toggle. debug builds re-enable it
+via the debug tier.
+
+replace old persist.sys.phh.adb_secure=1 handler with property
+trigger that uses magisk SELinux context to hide oem_unlock_allowed
+from root detection.
+
+note: adbd status hiding removed -- spoofing init.svc.adbd caused init
+segfaults on samsung exynos devices when usb config changed. release
+builds already disable adb by default; users who enable debugging can
+hide it via magisk modules instead.
+
+verified: all release-builds patches apply cleanly
 ---
- base.mk             |   1 -
- phh-on-boot.sh      |  24 +++++++++
+ base.mk             |   2 -
+ phh-on-boot.sh      |  23 ++++++++
  phh-prop-handler.sh |  12 +++++
  rw-system.sh        | 126 ++++++++++++++++++++++++++++++++++----------
- vndk.rc             |   3 ++
- 5 files changed, 137 insertions(+), 29 deletions(-)
+ vndk.rc             |   9 ++--
+ 5 files changed, 139 insertions(+), 33 deletions(-)
 
 diff --git a/base.mk b/base.mk
-index f5177f0..fc6268e 100644
+index f5177f0..2909d5f 100644
 --- a/base.mk
 +++ b/base.mk
-@@ -174,7 +174,6 @@ PRODUCT_PACKAGES += \
+@@ -40,7 +40,6 @@ PRODUCT_SYSTEM_DEFAULT_PROPERTIES += \
+ 
+ # Huawei HiSuite (also other OEM custom programs I guess) it's of no use in AOSP builds
+ PRODUCT_SYSTEM_DEFAULT_PROPERTIES += \
+-    persist.sys.usb.config=adb \
+     ro.cust.cdrom=/dev/null
+ 
+ # VNDK config files
+@@ -174,7 +173,6 @@ PRODUCT_PACKAGES += \
      resetprop_phh
  
  PRODUCT_COPY_FILES += \
@@ -25,10 +57,10 @@ index f5177f0..fc6268e 100644
  
  PRODUCT_COPY_FILES += \
 diff --git a/phh-on-boot.sh b/phh-on-boot.sh
-index 5f26430..a362d1d 100644
+index 5f26430..f05013f 100644
 --- a/phh-on-boot.sh
 +++ b/phh-on-boot.sh
-@@ -24,6 +24,30 @@ if [ ! -f /sys/fs/fuse/features/fuse_bpf ]; then
+@@ -24,6 +24,29 @@ if [ ! -f /sys/fs/fuse/features/fuse_bpf ]; then
      setprop persist.sys.fuse.bpf.override false
      log -t phh-on-boot "Disabled FUSE BPF (kernel fuse_bpf feature absent)"
  fi
@@ -53,7 +85,6 @@ index 5f26430..a362d1d 100644
 +  resetprop_phh ro.warranty_bit 0
 +  resetprop_phh --delete ro.build.selinux
 +  resetprop_phh -n sys.oem_unlock_allowed 0
-+  resetprop_phh -n init.svc.adbd stopped
 +  resetprop_phh -n init.svc.flash_recovery stopped
 +fi
  
@@ -83,7 +114,7 @@ index cae90d6..84dc85d 100644
      if [[ "$prop_value" != "0" && "$prop_value" != "1" ]]; then
          exit 1
 diff --git a/rw-system.sh b/rw-system.sh
-index d4f8cb6..018e168 100644
+index 235d014..c4b4967 100644
 --- a/rw-system.sh
 +++ b/rw-system.sh
 @@ -789,57 +789,127 @@ if [ "$brand" = OPPO ] || [ "$brand" = realme ]; then
@@ -243,7 +274,7 @@ index d4f8cb6..018e168 100644
      # Hide system/xbin/su
      mount /mnt/phh/empty_dir /system/xbin
 diff --git a/vndk.rc b/vndk.rc
-index 2bd6b35..a807273 100644
+index 2bd6b35..e3e6d11 100644
 --- a/vndk.rc
 +++ b/vndk.rc
 @@ -44,6 +44,9 @@ on property:persist.sys.phh.oppo.gaming_mode=*
@@ -256,6 +287,16 @@ index 2bd6b35..a807273 100644
  on property:persist.sys.phh.oppo.usbotg=*
      exec u:r:phhsu_daemon:s0 root -- /system/bin/phh-prop-handler.sh "persist.sys.phh.oppo.usbotg"
  
+@@ -133,6 +136,6 @@ service watchdogd-gsi /system/bin/watchdogd 10 20
+     disabled
+     seclabel u:r:watchdogd:s0
+ 
+-on property:persist.sys.phh.adb_secure=1
+-    exec u:r:phhsu_daemon:s0 root -- /system/bin/resetprop_phh ro.adb.secure 1
+-    restart adbd
++# reset oem unlock toggle to disable
++on property:sys.oem_unlock_allowed=*
++    exec u:r:magisk:s0 root root -- /system/bin/resetprop_phh -n sys.oem_unlock_allowed 0
 -- 
 2.53.0
 
