@@ -1,7 +1,8 @@
 From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: Christopher A. Williamson <contact@chrisaw.io>
 Date: Wed, 6 May 2026 00:00:00 +0100
-Subject: [PATCH] UiccSlot: add prop to force eUICC detection for specific slots
+Subject: [PATCH 2/2] UiccSlot: add prop to force eUICC detection for specific
+ slots
 
 Some devices (notably MediaTek devices with DL2005/HCT eSIM) do not
 present a standard eUICC ATR to AOSP. Without vendor-specific boot
@@ -12,24 +13,23 @@ Add persist.sys.phh.force_euicc_slots — a comma-separated list of slot
 indices to force mIsEuicc=true regardless of ATR. For example:
   persist.sys.phh.force_euicc_slots=1
 
-Co-authored-by: treble_experimentations community
 ---
- .../internal/telephony/uicc/UiccSlot.java   | 13 +++++++++++++
- 1 file changed, 13 insertions(+)
+ .../com/android/internal/telephony/uicc/UiccSlot.java  | 10 ++++++++++
+ 1 file changed, 10 insertions(+)
 
 diff --git a/src/java/com/android/internal/telephony/uicc/UiccSlot.java b/src/java/com/android/internal/telephony/uicc/UiccSlot.java
-index 1234567..abcdefg 100644
+index 9f8c09f..b167d0c 100644
 --- a/src/java/com/android/internal/telephony/uicc/UiccSlot.java
 +++ b/src/java/com/android/internal/telephony/uicc/UiccSlot.java
-@@ -21,6 +21,7 @@ import android.annotation.NonNull;
- import android.content.Context;
- import android.os.AsyncResult;
+@@ -26,6 +26,7 @@ import android.content.DialogInterface;
+ import android.content.Intent;
+ import android.content.res.Resources;
  import android.os.Handler;
 +import android.os.SystemProperties;
- import android.telephony.RadioAccessFamily;
- import android.telephony.TelephonyManager;
- import android.util.Log;
-@@ -442,6 +443,14 @@ public class UiccSlot extends Handler {
+ import android.os.Message;
+ import android.os.PowerManager;
+ import android.os.UserHandle;
+@@ -443,6 +444,15 @@ public class UiccSlot extends Handler {
      }
  
      private void checkIsEuiccSupported() {
