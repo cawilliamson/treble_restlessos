@@ -1,0 +1,48 @@
+From 32ebc148048ede698c9dc17efe4c7bce675f4531 Mon Sep 17 00:00:00 2001
+From: "Christopher A. Williamson" <contact@chrisaw.io>
+Date: Thu, 7 May 2026 21:42:48 +0100
+Subject: [PATCH 3/3] UiccSlot: force-create EuiccCard even when card state is
+ ABSENT
+
+On devices where the modem/RIL reports ABSENT for an eSIM slot
+(e.g. MTK DL2005 without vendor card-status patches), the existing
+update() flow never instantiates EuiccCard because CARDSTATE_ABSENT
+blocks entry into the present-path branch.
+
+Without EuiccCard, loadEidAndNotifyRegistrants() never runs, so the
+EID stays empty and getEidForSlot() returns null. This causes LPA
+initialisation to fail with error 0x20009 (no EID).
+
+Add a forced EuiccCard creation branch: when mIsEuicc is true and
+mUiccCard is null, create EuiccCard regardless of card state. The
+EuiccCard constructor triggers EID loading via APDU if eid is empty.
+No EVENT_CARD_ADDED notification is sent in this path to avoid
+broadcasting a fake card-added event.
+
+verified: full patch stack applies cleanly
+---
+ .../com/android/internal/telephony/uicc/UiccSlot.java     | 8 ++++++++
+ 1 file changed, 8 insertions(+)
+
+diff --git a/src/java/com/android/internal/telephony/uicc/UiccSlot.java b/src/java/com/android/internal/telephony/uicc/UiccSlot.java
+index bb5e0cb..3a51ef0 100644
+--- a/src/java/com/android/internal/telephony/uicc/UiccSlot.java
++++ b/src/java/com/android/internal/telephony/uicc/UiccSlot.java
+@@ -193,6 +193,14 @@ public class UiccSlot extends Handler {
+                         mUiccCard.update(mContext, ci, ics, phoneId);
+                     }
+                 }
++            } else if (mIsEuicc && mUiccCard == null) {
++                // Force create EuiccCard for eUICC even when card state is ABSENT
++                // so APDU-based EID loading can run and attempt to read the EID
++                if (DBG) {
++                    log(phoneId, "update: forcing EuiccCard creation despite ABSENT state");
++                }
++                mUiccCard = new EuiccCard(mContext, ci, ics, phoneId, mLock,
++                        getSupportedMepMode());
+             } else {
+                 if (mUiccCard != null) {
+                     mUiccCard.update(mContext, ci, ics, phoneId);
+-- 
+2.53.0
+

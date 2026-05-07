@@ -1,7 +1,7 @@
 From 7b92769d53d3093248c590a3c17b225afcf9d899 Mon Sep 17 00:00:00 2001
 From: "Christopher A. Williamson" <contact@chrisaw.io>
 Date: Thu, 7 May 2026 08:55:17 +0100
-Subject: [PATCH 2/2] UiccSlot: add prop to force eUICC detection for specific
+Subject: [PATCH 2/3] UiccSlot: add prop to force eUICC detection for specific
  slots
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
