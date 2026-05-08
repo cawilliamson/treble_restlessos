@@ -1,38 +1,56 @@
-From 32ebc148048ede698c9dc17efe4c7bce675f4531 Mon Sep 17 00:00:00 2001
+From 264226e6da6b105e7c69bc49401bc90f00376e86 Mon Sep 17 00:00:00 2001
 From: "Christopher A. Williamson" <contact@chrisaw.io>
 Date: Thu, 7 May 2026 21:42:48 +0100
 Subject: [PATCH 3/3] UiccSlot: force-create EuiccCard even when card state is
  ABSENT
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
 
 On devices where the modem/RIL reports ABSENT for an eSIM slot
 (e.g. MTK DL2005 without vendor card-status patches), the existing
 update() flow never instantiates EuiccCard because CARDSTATE_ABSENT
-blocks entry into the present-path branch.
+blocks the present-path branch.
 
 Without EuiccCard, loadEidAndNotifyRegistrants() never runs, so the
-EID stays empty and getEidForSlot() returns null. This causes LPA
-initialisation to fail with error 0x20009 (no EID).
+EID stays empty and getEidForSlot() returns null. LPA then fails
+with error 0x20009 (no EID).
 
-Add a forced EuiccCard creation branch: when mIsEuicc is true and
-mUiccCard is null, create EuiccCard regardless of card state. The
-EuiccCard constructor triggers EID loading via APDU if eid is empty.
-No EVENT_CARD_ADDED notification is sent in this path to avoid
-broadcasting a fake card-added event.
+Add forced CARDSTATE_PRESENT override and EuiccCard creation when
+persist.sys.phh.force_euicc_slots is set. Both changes are gated
+behind the prop — no prop set = zero behaviour change.
+
+No EVENT_CARD_ADDED notification is sent in the forced path.
 
 verified: full patch stack applies cleanly
 ---
- .../com/android/internal/telephony/uicc/UiccSlot.java     | 8 ++++++++
- 1 file changed, 8 insertions(+)
+ .../internal/telephony/uicc/UiccSlot.java        | 16 ++++++++++++++++
+ 1 file changed, 16 insertions(+)
 
 diff --git a/src/java/com/android/internal/telephony/uicc/UiccSlot.java b/src/java/com/android/internal/telephony/uicc/UiccSlot.java
-index bb5e0cb..3a51ef0 100644
+index bb5e0cb..891b97f 100644
 --- a/src/java/com/android/internal/telephony/uicc/UiccSlot.java
 +++ b/src/java/com/android/internal/telephony/uicc/UiccSlot.java
-@@ -193,6 +193,14 @@ public class UiccSlot extends Handler {
+@@ -124,6 +124,14 @@ public class UiccSlot extends Handler {
+      */
+     public void update(CommandsInterface ci, IccCardStatus ics, int phoneId, int slotIndex) {
+         synchronized (mLock) {
++            String forceSlots = SystemProperties.get("persist.sys.phh.force_euicc_slots", "");
++
++            // Force CARDSTATE_PRESENT for eUICC slots when prop is set
++            if (!forceSlots.isEmpty() && mIsEuicc
++                    && ics.mCardState == CardState.CARDSTATE_ABSENT) {
++                log(phoneId, "update: forcing CARDSTATE_PRESENT for eUICC slot");
++                ics.mCardState = CardState.CARDSTATE_PRESENT;
++            }
+             mPortIdxToPhoneId.put(ics.mSlotPortMapping.mPortIndex, phoneId);
+             CardState oldState = mCardState.get(ics.mSlotPortMapping.mPortIndex);
+             mCardState.put(ics.mSlotPortMapping.mPortIndex, ics.mCardState);
+@@ -193,6 +201,14 @@ public class UiccSlot extends Handler {
                          mUiccCard.update(mContext, ci, ics, phoneId);
                      }
                  }
-+            } else if (mIsEuicc && mUiccCard == null) {
++            } else if (!forceSlots.isEmpty() && mIsEuicc && mUiccCard == null) {
 +                // Force create EuiccCard for eUICC even when card state is ABSENT
 +                // so APDU-based EID loading can run and attempt to read the EID
 +                if (DBG) {
