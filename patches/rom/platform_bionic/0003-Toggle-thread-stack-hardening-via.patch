@@ -16,12 +16,12 @@ gate the hardening on persist.sys.phh.hardening.stack_hardening:
 
 requires reboot to take effect.
 ---
- libc/bionic/pthread_create.cpp | 156 ++++++++++++++++++++-------------
- libc/bionic/pthread_internal.h |   7 +-
- 2 files changed, 102 insertions(+), 61 deletions(-)
+ libc/bionic/pthread_create.cpp | 167 ++++++++++++++++++++-------------
+ libc/bionic/pthread_internal.h |  12 +--
+ 2 files changed, 107 insertions(+), 72 deletions(-)
 
 diff --git a/libc/bionic/pthread_create.cpp b/libc/bionic/pthread_create.cpp
-index 72cff2e..fea93ec 100644
+index ca5da68..de26d0a 100644
 --- a/libc/bionic/pthread_create.cpp
 +++ b/libc/bionic/pthread_create.cpp
 @@ -29,8 +29,8 @@
@@ -34,10 +34,10 @@ index 72cff2e..fea93ec 100644
  #include <sys/auxv.h>
  #include <sys/mman.h>
  #include <sys/prctl.h>
-@@ -222,30 +222,49 @@ int __init_thread(pthread_internal_t* thread) {
- // struct.
- //
- // The stack_guard_size must be a multiple of the page_size().
+@@ -217,6 +217,17 @@ int __init_thread(pthread_internal_t* thread) {
+   return 0;
+ }
+ 
 +// Check once whether GrapheneOS stack hardening is enabled.
 +static bool __gos_stack_hardening_enabled() {
 +  static int cached = -1;
@@ -49,6 +49,10 @@ index 72cff2e..fea93ec 100644
 +  return cached == 1;
 +}
 +
+ // Allocate a thread's primary mapping. This mapping includes static TLS and
+ // optionally a stack. Static TLS includes ELF TLS segments and the bionic_tls
+ // struct.
+@@ -225,35 +236,40 @@ int __init_thread(pthread_internal_t* thread) {
  ThreadMapping __allocate_thread_mapping(size_t stack_size, size_t stack_guard_size) {
    const StaticTlsLayout& layout = __libc_shared_globals()->static_tls_layout;
  
@@ -68,6 +72,9 @@ index 72cff2e..fea93ec 100644
 +    // GrapheneOS hardened layout: page-aligned TLS, random gap, separate pthread_internal_t page.
 +    stack_size = __builtin_align_up(stack_size, page_size());
 +    static_tls_layout_size = __builtin_align_up(layout.size(), page_size());
++
++    // Place a randomly sized gap above the stack, up to 10% as large as the stack
++    // on 32-bit and 50% on 64-bit where virtual memory is plentiful.
  #if __LP64__
 -  size_t max_gap_size = stack_size / 2;
 +    size_t max_gap_size = stack_size / 2;
@@ -75,9 +82,19 @@ index 72cff2e..fea93ec 100644
 -  size_t max_gap_size = stack_size / 10;
 +    size_t max_gap_size = stack_size / 10;
  #endif
--  // Make sure random stack top guard size are multiples of page size.
+-  // Make sure the random stack top guard size is a multiple of the page size,
+-  // and always reserve at least one guard page between the stack and the
+-  // pthread_internal_t / static TLS region. arc4random_uniform() can return 0,
+-  // and align_up(0, page_size) is 0, which would leave no guard page at all
+-  // and let a stack overflow silently corrupt pthread_internal_t.
+-  //
+-  // For the main thread, the stack isn't in this mapping and we don't need to
+-  // add a random gap.
 -  size_t gap_size = __builtin_align_up(arc4random_uniform(max_gap_size), page_size());
+-  if (stack_size > 0 && gap_size == 0) gap_size = page_size();
++    // Make sure the random stack top guard size are multiples of page size.
 +    gap_size = __builtin_align_up(arc4random_uniform(max_gap_size), page_size());
++    if (stack_size > 0 && gap_size == 0) gap_size = page_size();
 +    thread_page_size = __builtin_align_up(sizeof(pthread_internal_t), page_size());
 +  } else {
 +    // AOSP layout: contiguous stack + TLS region.
@@ -98,7 +115,7 @@ index 72cff2e..fea93ec 100644
    if (__builtin_add_overflow(mmap_size, static_tls_layout_size, &mmap_size)) return {};
    if (__builtin_add_overflow(mmap_size, PTHREAD_GUARD_SIZE, &mmap_size)) return {};
    // Add space for the dedicated libgen buffers page(s).
-@@ -258,7 +277,7 @@ ThreadMapping __allocate_thread_mapping(size_t stack_size, size_t stack_guard_si
+@@ -266,7 +282,7 @@ ThreadMapping __allocate_thread_mapping(size_t stack_size, size_t stack_guard_si
    if (mmap_size < unaligned_size) return {};
  
    // Create a new private anonymous map. Make the entire mapping PROT_NONE, then carve out
@@ -107,7 +124,7 @@ index 72cff2e..fea93ec 100644
    const int flags = MAP_PRIVATE | MAP_ANONYMOUS | MAP_NORESERVE;
    char* const space = static_cast<char*>(mmap(nullptr, mmap_size, PROT_NONE, flags, -1, 0));
    if (space == MAP_FAILED) {
-@@ -275,42 +294,6 @@ ThreadMapping __allocate_thread_mapping(size_t stack_size, size_t stack_guard_si
+@@ -283,40 +299,6 @@ ThreadMapping __allocate_thread_mapping(size_t stack_size, size_t stack_guard_si
      prot_str = "R+W+MTE";
    }
  #endif
@@ -122,9 +139,7 @@ index 72cff2e..fea93ec 100644
 -    munmap(space, mmap_size);
 -    return {};
 -  }
--  prctl(PR_SET_VMA, PR_SET_VMA_ANON_NAME, space, stack_guard_size, "stack guard");
 -  char* const stack_top_guard = space + stack_guard_size + stack_size;
--  prctl(PR_SET_VMA, PR_SET_VMA_ANON_NAME, stack_top_guard, gap_size, "stack top guard");
 -
 -  const size_t non_stack_writeable_offset = stack_guard_size + stack_size + gap_size;
 -  const size_t non_stack_writeable_size = mmap_size - non_stack_writeable_offset - PTHREAD_GUARD_SIZE;
@@ -150,7 +165,7 @@ index 72cff2e..fea93ec 100644
  
    ThreadMapping result = {};
    result.mmap_base = space;
-@@ -318,12 +301,53 @@ ThreadMapping __allocate_thread_mapping(size_t stack_size, size_t stack_guard_si
+@@ -324,12 +306,53 @@ ThreadMapping __allocate_thread_mapping(size_t stack_size, size_t stack_guard_si
    result.mmap_base_unguarded = space + stack_guard_size;
    result.mmap_size_unguarded = mmap_size - stack_guard_size - PTHREAD_GUARD_SIZE;
    result.libgen_buffers = space + mmap_size - PTHREAD_GUARD_SIZE - libgen_buffers_padded_size;
@@ -209,7 +224,7 @@ index 72cff2e..fea93ec 100644
    return result;
  }
  
-@@ -335,6 +359,12 @@ static int __allocate_thread(pthread_attr_t* attr, bionic_tcb** tcbp, void** chi
+@@ -341,6 +364,12 @@ static int __allocate_thread(pthread_attr_t* attr, bionic_tcb** tcbp, void** chi
    if (attr->stack_base == nullptr) {
      // The caller didn't provide a stack, so allocate one.
  
@@ -222,7 +237,7 @@ index 72cff2e..fea93ec 100644
      // Make sure the guard size is a multiple of page_size().
      const size_t unaligned_guard_size = attr->guard_size;
      attr->guard_size = __builtin_align_up(attr->guard_size, page_size());
-@@ -353,8 +383,16 @@ static int __allocate_thread(pthread_attr_t* attr, bionic_tcb** tcbp, void** chi
+@@ -359,8 +388,16 @@ static int __allocate_thread(pthread_attr_t* attr, bionic_tcb** tcbp, void** chi
      stack_top = static_cast<char*>(attr->stack_base) + attr->stack_size;
    }
  
@@ -242,13 +257,18 @@ index 72cff2e..fea93ec 100644
      // If thread was not allocated by mmap(), it may not have been cleared to zero.
      // So assume the worst and zero it.
 diff --git a/libc/bionic/pthread_internal.h b/libc/bionic/pthread_internal.h
-index c10e25f..14959ef 100644
+index c10e25f..96c9ccc 100644
 --- a/libc/bionic/pthread_internal.h
 +++ b/libc/bionic/pthread_internal.h
-@@ -269,10 +269,13 @@ __LIBC_HIDDEN__ void pthread_key_clean_all(void);
- // stack overflows, we subtracted the same amount we were using there
- // from the default thread stack size. This should keep memory usage
- // roughly constant.
+@@ -264,15 +264,13 @@ __LIBC_HIDDEN__ void pthread_key_clean_all(void);
+ #define SIGNAL_STACK_SIZE_WITHOUT_GUARD (16 * 1024)
+ #endif
+ 
+-// Traditionally we gave threads a 1MiB stack. When we started
+-// allocating per-thread alternate signal stacks to ease debugging of
+-// stack overflows, we subtracted the same amount we were using there
+-// from the default thread stack size. This should keep memory usage
+-// roughly constant.
 +// Default to AOSP 1MB. GrapheneOS 8MB is applied at runtime when stack
 +// hardening is enabled via persist.sys.phh.hardening.stack_hardening.
 +#define PTHREAD_STACK_SIZE_DEFAULT ((1 * 1024 * 1024) - SIGNAL_STACK_SIZE_WITHOUT_GUARD)
