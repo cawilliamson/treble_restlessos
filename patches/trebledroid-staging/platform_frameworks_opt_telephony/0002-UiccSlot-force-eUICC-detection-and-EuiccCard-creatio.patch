@@ -35,11 +35,11 @@ no prop set = zero behaviour change.
 
 verified: full patch stack applies cleanly
 ---
- .../internal/telephony/uicc/UiccSlot.java     | 35 +++++++++++++++++--
- 1 file changed, 33 insertions(+), 2 deletions(-)
+ .../internal/telephony/uicc/UiccSlot.java     | 34 ++++++++++++++++++-
+ 1 file changed, 33 insertions(+), 1 deletion(-)
 
 diff --git a/src/java/com/android/internal/telephony/uicc/UiccSlot.java b/src/java/com/android/internal/telephony/uicc/UiccSlot.java
-index 9f8c09f..141cb1e 100644
+index 9f8c09f..2c983d8 100644
 --- a/src/java/com/android/internal/telephony/uicc/UiccSlot.java
 +++ b/src/java/com/android/internal/telephony/uicc/UiccSlot.java
 @@ -26,6 +26,7 @@ import android.content.DialogInterface;
@@ -108,11 +108,10 @@ index 9f8c09f..141cb1e 100644
              parseAtr(iss.atr);
              mEid = iss.eid;
              mIsRemovable = isSlotRemovable(slotIndex);
-@@ -442,7 +465,15 @@ public class UiccSlot extends Handler {
-         return true;
+@@ -443,6 +466,15 @@ public class UiccSlot extends Handler {
      }
  
--    private void checkIsEuiccSupported() {
+     private void checkIsEuiccSupported() {
 +        String forceSlots = SystemProperties.get("persist.sys.phh.force_euicc_slots", "");
 +        if (!forceSlots.isEmpty()) {
 +            for (String s : forceSlots.split(",")) {
