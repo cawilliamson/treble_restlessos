@@ -1,6 +1,6 @@
-From abddfe9c57fa84f0ef96ff99c52d93df047c5221 Mon Sep 17 00:00:00 2001
+From abc69217ad30c5727c4933d294f97143350ca556 Mon Sep 17 00:00:00 2001
 From: "Christopher A. Williamson" <contact@chrisaw.io>
-Date: Fri, 8 May 2026 21:34:17 +0100
+Date: Sat, 9 May 2026 01:57:05 +0100
 Subject: [PATCH 2/2] UiccSlot: force eUICC detection and EuiccCard creation for
  non-standard eSIM
 MIME-Version: 1.0
@@ -25,7 +25,7 @@ LPA fails with error 0x20009 (no EID).
 When the force prop is set on an eUICC slot with ABSENT state:
 - override CARDSTATE_ABSENT → CARDSTATE_PRESENT before mCardState.put()
 - ensure mSlotIndex is assigned BEFORE parseAtr() so that
-checkIsEuiccSupported() reads the correct slot index
+  checkIsEuiccSupported() reads the correct slot index
 - force-create EuiccCard if mUiccCard is null (safety net for the
   present-path when the override fires)
 
@@ -35,11 +35,11 @@ no prop set = zero behaviour change.
 
 verified: full patch stack applies cleanly
 ---
- .../internal/telephony/uicc/UiccSlot.java     | 36 +++++++++++++++++--
- 1 file changed, 34 insertions(+), 2 deletions(-)
+ .../internal/telephony/uicc/UiccSlot.java     | 35 +++++++++++++++++--
+ 1 file changed, 33 insertions(+), 2 deletions(-)
 
 diff --git a/src/java/com/android/internal/telephony/uicc/UiccSlot.java b/src/java/com/android/internal/telephony/uicc/UiccSlot.java
-index 9f8c09f..b60e7a6 100644
+index 9f8c09f..141cb1e 100644
 --- a/src/java/com/android/internal/telephony/uicc/UiccSlot.java
 +++ b/src/java/com/android/internal/telephony/uicc/UiccSlot.java
 @@ -26,6 +26,7 @@ import android.content.DialogInterface;
@@ -58,16 +58,15 @@ index 9f8c09f..b60e7a6 100644
  
      // Map each available portIdx to phoneId
      private HashMap<Integer, Integer> mPortIdxToPhoneId = new HashMap<>();
-@@ -122,12 +124,25 @@ public class UiccSlot extends Handler {
+@@ -122,12 +124,24 @@ public class UiccSlot extends Handler {
       */
      public void update(CommandsInterface ci, IccCardStatus ics, int phoneId, int slotIndex) {
          synchronized (mLock) {
 +            String forceSlots = SystemProperties.get("persist.sys.phh.force_euicc_slots", "");
-+
-+            mSlotIndex = slotIndex;
              mPortIdxToPhoneId.put(ics.mSlotPortMapping.mPortIndex, phoneId);
              CardState oldState = mCardState.get(ics.mSlotPortMapping.mPortIndex);
 -            mCardState.put(ics.mSlotPortMapping.mPortIndex, ics.mCardState);
++            mSlotIndex = slotIndex;
              mIccIds.put(ics.mSlotPortMapping.mPortIndex, ics.iccid);
              parseAtr(ics.atr);
              mIsRemovable = isSlotRemovable(slotIndex);
@@ -85,34 +84,35 @@ index 9f8c09f..b60e7a6 100644
              // Update supported MEP mode in IccCardStatus if the CardState is present.
              if (ics.mCardState.isCardPresent()) {
                  updateSupportedMepMode(ics.mSupportedMepMode);
-@@ -190,6 +205,14 @@ public class UiccSlot extends Handler {
+@@ -189,7 +203,15 @@ public class UiccSlot extends Handler {
+                         // UiccPort initialization is handled inside UiccCard.
                          mUiccCard.update(mContext, ci, ics, phoneId);
                      }
-                 }
 +            } else if (!forceSlots.isEmpty() && mIsEuicc && mUiccCard == null) {
 +                // Force create EuiccCard for eUICC even when card state is ABSENT
 +                // so APDU-based EID loading can run and attempt to read the EID
 +                if (DBG) {
-+                    log(phoneId, "update: forcing EuiccCard creation despite ABSENT state");
-+                }
++                    log(phoneId,
++                            "update: forcing EuiccCard creation despite ABSENT state");
+                 }
 +                mUiccCard = new EuiccCard(mContext, ci, ics, phoneId, mLock,
 +                        getSupportedMepMode());
              } else {
                  if (mUiccCard != null) {
                      mUiccCard.update(mContext, ci, ics, phoneId);
-@@ -204,7 +227,7 @@ public class UiccSlot extends Handler {
-      */
+@@ -205,6 +227,7 @@ public class UiccSlot extends Handler {
      public void update(CommandsInterface[] ci, IccSlotStatus iss, int slotIndex) {
          synchronized (mLock) {
--            IccSimPortInfo[] simPortInfos = iss.mSimPortInfos;
+             IccSimPortInfo[] simPortInfos = iss.mSimPortInfos;
 +            mSlotIndex = slotIndex;
              parseAtr(iss.atr);
              mEid = iss.eid;
              mIsRemovable = isSlotRemovable(slotIndex);
-@@ -443,6 +466,15 @@ public class UiccSlot extends Handler {
+@@ -442,7 +465,15 @@ public class UiccSlot extends Handler {
+         return true;
      }
  
-     private void checkIsEuiccSupported() {
+-    private void checkIsEuiccSupported() {
 +        String forceSlots = SystemProperties.get("persist.sys.phh.force_euicc_slots", "");
 +        if (!forceSlots.isEmpty()) {
 +            for (String s : forceSlots.split(",")) {
