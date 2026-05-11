@@ -39,17 +39,17 @@ verified: full patch stack applies cleanly
  1 file changed, 33 insertions(+), 1 deletion(-)
 
 diff --git a/src/java/com/android/internal/telephony/uicc/UiccSlot.java b/src/java/com/android/internal/telephony/uicc/UiccSlot.java
-index 9f8c09f..3efa403 100644
+index 9f8c09f..27d5141 100644
 --- a/src/java/com/android/internal/telephony/uicc/UiccSlot.java
 +++ b/src/java/com/android/internal/telephony/uicc/UiccSlot.java
-@@ -26,6 +26,7 @@ import android.content.DialogInterface;
- import android.content.Intent;
- import android.content.res.Resources;
+@@ -28,6 +28,7 @@ import android.content.res.Resources;
  import android.os.Handler;
-+import android.os.SystemProperties;
  import android.os.Message;
  import android.os.PowerManager;
++import android.os.SystemProperties;
  import android.os.UserHandle;
+ import android.telephony.SubscriptionInfo;
+ import android.telephony.SubscriptionManager;
 @@ -94,6 +95,7 @@ public class UiccSlot extends Handler {
      private AnswerToReset mAtr;
      private boolean mIsRemovable;
