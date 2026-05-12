@@ -1,7 +1,7 @@
 From e78a106f7dc5b5c3b50661785de4288d7cc795ff Mon Sep 17 00:00:00 2001
 From: "Christopher A. Williamson" <contact@chrisaw.io>
 Date: Sun, 26 Apr 2026 16:07:16 +0100
-Subject: [PATCH 6/6] tethering: default to modern DNS resolver instead of dnsmasq
+Subject: [PATCH 6/7] tethering: default to modern DNS resolver instead of dnsmasq
 
 On GSI builds dnsmasq may not start or communicate properly with the
 vendor kernel/tethering stack. The modern NetworkStackService DNS
