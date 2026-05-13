@@ -1,7 +1,7 @@
 From b22409d74e82297a56009ce2886abf545bbf51ce Mon Sep 17 00:00:00 2001
 From: dozeoff <dozeoff@dozeoff>
 Date: Sun, 10 May 2026 23:54:28 +0000
-Subject: [PATCH 7/7] net: Gracefully fallback when eBPF firewall/maps are
+Subject: [PATCH] net: Gracefully fallback when eBPF firewall/maps are
  unavailable
 
 Many devices running GSIs or legacy/vendor-modified kernels do not
