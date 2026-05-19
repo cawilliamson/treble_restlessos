@@ -7,6 +7,10 @@
   <remote name="ponces" fetch="https://github.com/ponces/" />
   <remote name="trebledroid" fetch="https://github.com/TrebleDroid/" />
   <remote name="lineage" fetch="https://github.com/LineageOS/" />
+  <remote name="gitlab" fetch="https://gitlab.com/" />
+
+  <!-- pixel: google sans fonts -->
+  <project path="vendor/pixel/gsans" name="PixelOS-AOSP/proprietary_vendor_pixel_gsans" remote="gitlab" revision="sixteen-qpr2" clone-depth="1" />
 
   <!-- andycgyan: qcrilam -->
   <project path="packages/apps/QcRilAm" name="android_packages_apps_QcRilAm" remote="andycgyan" revision="master" clone-depth="1" />

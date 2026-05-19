@@ -1,47 +1,57 @@
-From 6c570128cd9e64642d09c6212659fa7a30a13442 Mon Sep 17 00:00:00 2001
+From 11cefcd61afb1ff1862ac565be3032f07fb03d6d Mon Sep 17 00:00:00 2001
 From: "Christopher A. Williamson" <contact@chrisaw.io>
-Date: Wed, 22 Apr 2026 18:11:15 +0100
-Subject: [PATCH 23/23] Block OPPO/Realme root detection reboot on GSI boot
+Date: Tue, 19 May 2026 11:25:25 +0100
+Subject: [PATCH 23/25] Block OPPO/Realme root detection reboot on GSI boot
 
 OPPO and Realme devices with MediaTek vendor kernels include an
-oppo_root_check kernel module that detects an unlocked bootloader
-and forces a reboot to recovery. This makes the GSI completely
-unbootable on these devices.
+oppo_root_check kernel module or init service that detects an unlocked
+bootloader and forces a reboot to recovery.
 
 Set ro.boot.flash.locked, ro.boot.vbmeta.device_state and
 ro.boot.verifiedbootstate to locked/green in rw-system.sh during
-on post-fs, before vendor init services run. Use
-ro.product.vendor.brand (not ro.product.brand) to detect the
-device because the GSI system image overrides ro.product.brand
-early in boot, before any init property triggers can fire.
+post-fs, before vendor init services run. Also spoof warranty_bit
+properties and attempt to stop the oppo_root_check init service.
 
-Note: this may not prevent the kernel-level fuse check on all
-devices; additional handling may be needed for full coverage on
-devices where the kernel module reads fuses directly.
+Importantly, only apply the bypass when the vendor partition actually
+contains an oppo_root_check init service. Custom ROM vendors often
+remove this service, and the property spoofing causes a ~100s boot
+delay on those devices. Gating on the service presence makes this
+change truly device-generic.
+
+Fixes: #38, #69
 ---
- rw-system.sh | 14 ++++++++++++++
- 1 file changed, 14 insertions(+)
+ rw-system.sh | 23 +++++++++++++++++++++++
+ 1 file changed, 23 insertions(+)
 
 diff --git a/rw-system.sh b/rw-system.sh
-index b487c60..086e147 100644
+index b487c60..b67647a 100644
 --- a/rw-system.sh
 +++ b/rw-system.sh
-@@ -800,6 +800,20 @@ copyprop() {
+@@ -800,6 +800,29 @@ copyprop() {
          resetprop_phh "$1" "$(getprop "$2")"
      fi
  }
 +
 +# OPPO/Realme devices with MTK vendor kernels include an oppo_root_check
-+# kernel module that detects an unlocked bootloader and forces a reboot to
-+# recovery.  set the boot-state properties to "locked" so any userspace
-+# component of the check sees a locked device.  use ro.product.vendor.brand
-+# (not ro.product.brand) because the GSI system image overrides
-+# ro.product.brand early in boot, before this script runs.
++# kernel module or init service that detects an unlocked bootloader and forces
++# a reboot to recovery.  set the boot-state properties to "locked" so any
++# userspace component of the check sees a locked device.
++#
++# only apply the bypass if the vendor actually contains the root-check
++# service. custom ROM vendors (e.g. InfinityX) often remove this service,
++# and the property spoofing causes a ~100s boot delay on those devices.
 +brand="$(getprop ro.product.vendor.brand)"
 +if [ "$brand" = OPPO ] || [ "$brand" = realme ]; then
-+    resetprop_phh ro.boot.flash.locked 1
-+    resetprop_phh ro.boot.vbmeta.device_state locked
-+    resetprop_phh ro.boot.verifiedbootstate green
++    if grep -r -q "oppo_root_check" /vendor/etc/init/ 2>>/dev/null; then
++        resetprop_phh ro.boot.flash.locked 1
++        resetprop_phh ro.boot.vbmeta.device_state locked
++        resetprop_phh ro.boot.verifiedbootstate green
++        resetprop_phh ro.boot.warranty_bit 0
++        resetprop_phh ro.vendor.warranty_bit 0
++        resetprop_phh ro.warranty_bit 0
++        resetprop_phh -n sys.oem_unlock_allowed 0
++        setprop ctl.stop oppo_root_check 2>>/dev/null
++    fi
 +fi
 +
  if [ -f /system/phh/secure ] || [ -f /metadata/phh/secure ];then

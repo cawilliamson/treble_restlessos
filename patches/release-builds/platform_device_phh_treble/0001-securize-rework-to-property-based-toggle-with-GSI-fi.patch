@@ -1,33 +1,9 @@
-From b56b98072de0707651cdbcdf3698be61cfcd2cea Mon Sep 17 00:00:00 2001
+From f2e1b223e40f6d95d62b37b114b374be12acd5ba Mon Sep 17 00:00:00 2001
 From: "Christopher A. Williamson" <contact@chrisaw.io>
-Date: Wed, 6 May 2026 23:06:48 +0100
+Date: Tue, 19 May 2026 21:20:21 +0100
 Subject: [PATCH] securize: rework to property-based toggle with GSI
  fingerprint tracking
 
-remove stale property overrides from rw-system.sh and base.mk, replace
-with post-boot spoofing in phh-on-boot.sh that hides build props from
-root detection. add property handler for persist.sys.phh.securize so
-the toggle survives factory resets. gate the anti-detection spoofing on
-/metadata/securize_disable.
-
-also track GSI fingerprint changes across upgrades so
-PackageManagerService detects upgrades correctly.
-
-remove persist.sys.usb.config=adb default from base.mk -- adb is
-disabled by default on release builds; enabling it requires the usual
-developer options + usb debugging toggle. debug builds re-enable it
-via the debug tier.
-
-replace old persist.sys.phh.adb_secure=1 handler with property
-trigger that uses magisk SELinux context to hide oem_unlock_allowed
-from root detection.
-
-note: adbd status hiding removed -- spoofing init.svc.adbd caused init
-segfaults on samsung exynos devices when usb config changed. release
-builds already disable adb by default; users who enable debugging can
-hide it via magisk modules instead.
-
-verified: all release-builds patches apply cleanly
 ---
  base.mk             |   2 -
  phh-on-boot.sh      |  23 ++++++++
@@ -114,11 +90,11 @@ index cae90d6..84dc85d 100644
      if [[ "$prop_value" != "0" && "$prop_value" != "1" ]]; then
          exit 1
 diff --git a/rw-system.sh b/rw-system.sh
-index 235d014..c4b4967 100644
+index e04d256..45da31d 100644
 --- a/rw-system.sh
 +++ b/rw-system.sh
-@@ -789,57 +789,127 @@ if [ "$brand" = OPPO ] || [ "$brand" = realme ]; then
-     setprop ctl.stop oppo_root_check 2>/dev/null
+@@ -792,57 +792,127 @@ if [ "$brand" = OPPO ] || [ "$brand" = realme ]; then
+     fi
  fi
  
 -if [ -f /system/phh/secure ] || [ -f /metadata/phh/secure ];then

@@ -1,7 +1,7 @@
 From ffd644a0d2373eb47645a19229850657762af763 Mon Sep 17 00:00:00 2001
 From: ChonDoit <thphantomblog@gmail.com>
 Date: Wed, 13 Aug 2025 16:13:20 +0100
-Subject: [PATCH 05/8] Add status bar and QS padding options
+Subject: [PATCH 05/9] Add status bar and QS padding options
 
 Add EditTextPreference fields for status bar padding (top, start, end,
 bottom) and Quick Settings clock padding (left, right) to the Treble app
