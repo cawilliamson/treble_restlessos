@@ -29,7 +29,6 @@ any GSI:
 - **Auditor** — requires hardware attestation which doesn't work on GSI
 - **mtectrl / misctrl** — Pixel-specific memory tagging control; breaks vendor TEE drivers
 - **USB protection** — the low-level USB port controls rely on Pixel-specific hardware and are non-functional on other devices
-- **dynamic code loading protections** — not ported; relies on assumptions about the system image that don't hold on arbitrary vendor partitions
 - **native debugging protection** — not ported; breaks compatibility with root solutions and vendor debugging tools
 
 ### Features disabled by default

@@ -1,0 +1,126 @@
+From 7931ddeb64f63efb3d3ea6c14acc6e5c3f116423 Mon Sep 17 00:00:00 2001
+From: "Christopher A. Williamson" <contact@chrisaw.io>
+Date: Sat, 23 May 2026 17:19:00 +0100
+Subject: [PATCH 7/7] appswitch: allow dcl restriction toggle for all apps
+ including system apps
+
+grapheneos hardening greyed out the 'allow dynamic code loading' toggle
+for system apps by returning a hardcoded immutable value of 'true'
+(restricted) in getimmutablevalue(). this prevented users from enabling
+dcl for system apps like systemui and settings, which is required for
+lsposed framework modules (e.g. iconify, aospmods) to function.
+
+change getimmutablevalue() to return null for all system apps across the
+three dcl appswitch classes (memory, storage, webview). the default value
+logic is preserved: system apps still default to restricted unless they
+are in the allowlist, but users can now manually toggle them.
+
+issue: #71
+---
+ .../app/AswRestrictMemoryDynCodeLoading.java       | 14 ++++----------
+ .../app/AswRestrictStorageDynCodeLoading.java      | 14 ++++----------
+ .../app/AswRestrictWebViewDynCodeLoading.java      | 14 ++++----------
+ 3 files changed, 12 insertions(+), 30 deletions(-)
+
+diff --git a/core/java/android/ext/settings/app/AswRestrictMemoryDynCodeLoading.java b/core/java/android/ext/settings/app/AswRestrictMemoryDynCodeLoading.java
+index 2dd6e8da6..ab7e998e2 100644
+--- a/core/java/android/ext/settings/app/AswRestrictMemoryDynCodeLoading.java
++++ b/core/java/android/ext/settings/app/AswRestrictMemoryDynCodeLoading.java
+@@ -8,7 +8,6 @@ import android.ext.settings.ExtSettings;
+ import android.util.ArraySet;
+ 
+ import com.android.internal.R;
+-import com.android.internal.os.SELinuxFlags;
+ import com.android.server.os.nano.AppCompatProtos;
+ 
+ /** @hide */
+@@ -37,16 +36,11 @@ public class AswRestrictMemoryDynCodeLoading extends AppSwitch {
+     @Override
+     public Boolean getImmutableValue(Context ctx, int userId, ApplicationInfo appInfo,
+                                      GosPackageState ps, StateInfo si) {
++        // allow dcl restriction toggle for all apps, including system apps.
++        // default value logic still applies (system apps default to restricted
++        // unless they are in the allowlist).
+         if (appInfo.isSystemApp()) {
+-            if (shouldAllowByDefaultToSystemPkg(ctx, appInfo.packageName)) {
+-                // allow manual restriction
+-                return null;
+-            }
+-            if (SELinuxFlags.isSystemAppSepolicyWeakeningAllowed()) {
+-                return null;
+-            }
+-            si.immutabilityReason = IR_IS_SYSTEM_APP;
+-            return true;
++            return null;
+         }
+ 
+         if (ps.hasFlag(GosPackageStateFlag.ENABLE_EXPLOIT_PROTECTION_COMPAT_MODE)) {
+diff --git a/core/java/android/ext/settings/app/AswRestrictStorageDynCodeLoading.java b/core/java/android/ext/settings/app/AswRestrictStorageDynCodeLoading.java
+index 31417bf42..a93269690 100644
+--- a/core/java/android/ext/settings/app/AswRestrictStorageDynCodeLoading.java
++++ b/core/java/android/ext/settings/app/AswRestrictStorageDynCodeLoading.java
+@@ -11,7 +11,6 @@ import android.ext.settings.ExtSettings;
+ import android.util.ArraySet;
+ 
+ import com.android.internal.R;
+-import com.android.internal.os.SELinuxFlags;
+ import com.android.server.os.nano.AppCompatProtos;
+ 
+ /** @hide */
+@@ -40,16 +39,11 @@ public class AswRestrictStorageDynCodeLoading extends AppSwitch {
+     @Override
+     public Boolean getImmutableValue(Context ctx, int userId, ApplicationInfo appInfo,
+                                      GosPackageState ps, StateInfo si) {
++        // allow dcl restriction toggle for all apps, including system apps.
++        // default value logic still applies (system apps default to restricted
++        // unless they are in the allowlist).
+         if (appInfo.isSystemApp()) {
+-            if (shouldAllowByDefaultToSystemPkg(ctx, appInfo.packageName)) {
+-                // allow manual restriction
+-                return null;
+-            }
+-            if (SELinuxFlags.isSystemAppSepolicyWeakeningAllowed()) {
+-                return null;
+-            }
+-            si.immutabilityReason = IR_IS_SYSTEM_APP;
+-            return true;
++            return null;
+         }
+ 
+         if (ps.hasFlag(GosPackageStateFlag.ENABLE_EXPLOIT_PROTECTION_COMPAT_MODE)) {
+diff --git a/core/java/android/ext/settings/app/AswRestrictWebViewDynCodeLoading.java b/core/java/android/ext/settings/app/AswRestrictWebViewDynCodeLoading.java
+index 8ef413de9..69b2d0e8d 100644
+--- a/core/java/android/ext/settings/app/AswRestrictWebViewDynCodeLoading.java
++++ b/core/java/android/ext/settings/app/AswRestrictWebViewDynCodeLoading.java
+@@ -8,7 +8,6 @@ import android.ext.settings.ExtSettings;
+ import android.util.ArraySet;
+ 
+ import com.android.internal.R;
+-import com.android.internal.os.SELinuxFlags;
+ 
+ /** @hide */
+ public class AswRestrictWebViewDynCodeLoading extends AppSwitch {
+@@ -34,16 +33,11 @@ public class AswRestrictWebViewDynCodeLoading extends AppSwitch {
+     @Override
+     public Boolean getImmutableValue(Context ctx, int userId, ApplicationInfo appInfo,
+                                      GosPackageState ps, StateInfo si) {
++        // allow dcl restriction toggle for all apps, including system apps.
++        // default value logic still applies (system apps default to restricted
++        // unless they are in the allowlist).
+         if (appInfo.isSystemApp()) {
+-            if (shouldAllowByDefaultToSystemPackage(ctx, appInfo.packageName)) {
+-                // allow manual restriction
+-                return null;
+-            } else {
+-                if (SELinuxFlags.isSystemAppSepolicyWeakeningAllowed()) {
+-                    return null;
+-                }
+-                return true;
+-            }
++            return null;
+         }
+ 
+         return null;
+-- 
+2.53.0
+
