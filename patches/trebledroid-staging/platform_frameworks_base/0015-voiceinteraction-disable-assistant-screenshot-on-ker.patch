@@ -1,6 +1,6 @@
-From 16ac025039e6af0c1b47ee1ef53e66b0ea2d7c8e Mon Sep 17 00:00:00 2001
+From 3df666f6d3eb64f9c27fd337c8f1312849702aa3 Mon Sep 17 00:00:00 2001
 From: "Christopher A. Williamson" <contact@chrisaw.io>
-Date: Tue, 19 May 2026 09:59:04 +0100
+Date: Sat, 23 May 2026 18:16:06 +0100
 Subject: [PATCH 15/15] voiceinteraction: disable assistant screenshot on kernels
  below 4.14
 
@@ -24,7 +24,7 @@ Issue: #54, #67
  1 file changed, 24 insertions(+)
 
 diff --git a/services/voiceinteraction/java/com/android/server/voiceinteraction/VoiceInteractionSessionConnection.java b/services/voiceinteraction/java/com/android/server/voiceinteraction/VoiceInteractionSessionConnection.java
-index 59f4d87a5..1e30f7d7f 100644
+index 59f4d87a5..fa28adcd0 100644
 --- a/services/voiceinteraction/java/com/android/server/voiceinteraction/VoiceInteractionSessionConnection.java
 +++ b/services/voiceinteraction/java/com/android/server/voiceinteraction/VoiceInteractionSessionConnection.java
 @@ -277,9 +277,33 @@ final class VoiceInteractionSessionConnection implements ServiceConnection,
@@ -36,7 +36,7 @@ index 59f4d87a5..1e30f7d7f 100644
 +        // Taking a screenshot on these kernels causes a GPU driver panic that
 +        // kills system_server. Force-disable the screenshot context.
 +        if (isLegacyKernel()) {
-+            flags |= VoiceInteractionSession.SHOW_WITH_SCREENSHOT;
++            flags &= ~VoiceInteractionSession.SHOW_WITH_SCREENSHOT;
 +        }
          return flags;
      }
