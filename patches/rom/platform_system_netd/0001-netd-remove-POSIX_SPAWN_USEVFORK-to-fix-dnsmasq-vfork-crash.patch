@@ -1,0 +1,40 @@
+From 3f8e2b1c9d4e5a6b7c8d9e0f1a2b3c4d5e6f7a8 Mon Sep 17 00:00:00 2001
+From: "Christopher A. Williamson" <contact@chrisaw.io>
+Date: Tue, 27 May 2026 15:00:00 +0100
+Subject: [PATCH] netd: remove POSIX_SPAWN_USEVFORK to fix dnsmasq crash on some devices
+
+On certain devices the dnsmasq child spawned by TetherController via
+posix_spawn with POSIX_SPAWN_USEVFORK dies before exec() completes.
+Because the child never writes to the error pipe, posix_spawn returns 0
+to the parent yet the child is already a zombie. This leaves mDaemonPid
+pointing to a dead process and hotspot clients without DNS.
+
+The surviving zombie retains the parent binder thread name
+(e.g. "binder:1641_4") because exec() never ran, confirming the failure
+path. No tombstones, avc denials, or logcat output from dnsmasq appear.
+
+Switching to plain fork() (by dropping POSIX_SPAWN_USEVFORK) avoids the
+problem entirely: the child gets its own address space and binder state,
+survives to exec() /system/bin/dnsmasq, and starts normally.
+
+Issue: #14
+Change-Id: I3f8e2b1c9d4e5a6b7c8d9e0f1a2b3c4d5e6f7a8
+---
+ server/TetherController.cpp | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/server/TetherController.cpp b/server/TetherController.cpp
+index 2ee70af..a730012 100644
+--- a/server/TetherController.cpp
++++ b/server/TetherController.cpp
+@@ -291,7 +291,7 @@ int TetherController::startTethering(bool usingLegacyDnsProxy, int num_addrs, ch
+         return -res;
+     }
+     const android::base::ScopeGuard attrGuard = [&] { posix_spawnattr_destroy(&attr); };
+-    res = posix_spawnattr_setflags(&attr, POSIX_SPAWN_USEVFORK | POSIX_SPAWN_CLOEXEC_DEFAULT);
++    res = posix_spawnattr_setflags(&attr, POSIX_SPAWN_CLOEXEC_DEFAULT);
+     if (res) {
+         ALOGE("posix_spawnattr_setflags failed (%s)", strerror(res));
+         return -res;
+-- 
+2.54.0
