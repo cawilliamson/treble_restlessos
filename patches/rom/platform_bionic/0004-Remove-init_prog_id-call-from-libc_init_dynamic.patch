@@ -1,0 +1,24 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: "Christopher A. Williamson" <contact@chrisaw.io>
+Date: Wed, 28 May 2026 00:00:00 +0000
+Subject: [PATCH] Remove init_prog_id call from libc_init_dynamic
+
+Upstream GrapheneOS added a call to init_prog_id(globals) inside
+__libc_preinit_impl() in a newer revision. Our Scudo patch removes
+the init_prog_id function definition but missed the new call site.
+This separate patch removes the dangling call so the build compiles.
+---
+ libc/bionic/libc_init_dynamic.cpp | 1 -
+ 1 file changed, 1 deletion(-)
+diff --git a/libc/bionic/libc_init_dynamic.cpp b/libc/bionic/libc_init_dynamic.cpp
+index 43bb243..a3f960c 100644
+--- a/libc/bionic/libc_init_dynamic.cpp
++++ b/libc/bionic/libc_init_dynamic.cpp
+@@ -111,7 +111,6 @@ static void __libc_preinit_impl() {
+ 
+   // Hooks for various libraries to let them know that we're starting up.
+   __libc_globals.mutate([](libc_globals* globals) {
+-    init_prog_id(globals);
+     __libc_init_malloc(globals);
+ 
+     // save the default SIGABRT handler to support restoring it with mallopt(M_BIONIC_RESTORE_DEFAULT_SIGABRT_HANDLER)
