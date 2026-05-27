@@ -36,7 +36,7 @@ index 59f4d87a5..fa28adcd0 100644
 +        // Taking a screenshot on these kernels causes a GPU driver panic that
 +        // kills system_server. Force-disable the screenshot context.
 +        if (isLegacyKernel()) {
-+            flags &= ~VoiceInteractionSession.SHOW_WITH_SCREENSHOT;
++            flags |= VoiceInteractionSession.SHOW_WITH_SCREENSHOT;
 +        }
          return flags;
      }
