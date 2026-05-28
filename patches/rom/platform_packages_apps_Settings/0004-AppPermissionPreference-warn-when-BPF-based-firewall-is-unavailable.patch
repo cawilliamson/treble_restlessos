@@ -1,0 +1,70 @@
+From eadca6367dc4c0157060bdbb91c3493baa7f218f Mon Sep 17 00:00:00 2001
+From: "Christopher A. Williamson" <contact@chrisaw.io>
+Date: Thu, 28 May 2026 10:32:32 +0100
+Subject: [PATCH] AppPermissionPreference: warn when BPF-based firewall is
+ unavailable
+
+Many GSI/legacy kernels lack full eBPF support. When our fallback
+patch detects broken BPF maps, set a system property and append a
+visible warning banner to every App Info > Permissions summary:
+
+  \u26a0 Device does not support BPF-based firewall:
+  per-app network blocking will not work.
+
+This appears on both the legacy AppPermissionPreference and the SPA
+AppPermissionSummary paths so users are aware the per-app INTERNET
+toggle cannot function even when shown.
+---
+ .../appinfo/AppPermissionPreferenceController.java          | 4 ++++
+ .../settings/spa/app/appinfo/AppPermissionSummary.kt        | 6 ++++++
+ 2 files changed, 10 insertions(+)
+
+diff --git a/src/com/android/settings/applications/appinfo/AppPermissionPreferenceController.java b/src/com/android/settings/applications/appinfo/AppPermissionPreferenceController.java
+index 6ba4e46..31fdfbc 100644
+--- a/src/com/android/settings/applications/appinfo/AppPermissionPreferenceController.java
++++ b/src/com/android/settings/applications/appinfo/AppPermissionPreferenceController.java
+@@ -24,6 +24,7 @@ import android.content.pm.PackageManager;
+ import android.content.res.Resources;
+ import android.icu.text.ListFormatter;
+ import android.icu.text.MessageFormat;
++import android.os.SystemProperties;
+ import android.util.Log;
+ 
+ import androidx.annotation.VisibleForTesting;
+@@ -89,6 +90,9 @@ public class AppPermissionPreferenceController extends AppInfoPreferenceControll
+                 }
+                 mPreference.setEnabled(true);
+             }
++            if ("true".equals(SystemProperties.get("persist.sys.phh.bpf_broken", ""))) {
++                summary = summary + "\n\u26a0 Device does not support BPF-based firewall: per-app network blocking will not work.";
++            }
+             mPreference.setSummary(summary);
+         }
+     };
+diff --git a/src/com/android/settings/spa/app/appinfo/AppPermissionSummary.kt b/src/com/android/settings/spa/app/appinfo/AppPermissionSummary.kt
+index d0bdd6b..efcccd1 100644
+--- a/src/com/android/settings/spa/app/appinfo/AppPermissionSummary.kt
++++ b/src/com/android/settings/spa/app/appinfo/AppPermissionSummary.kt
+@@ -19,6 +19,7 @@ package com.android.settings.spa.app.appinfo
+ import android.content.Context
+ import android.content.pm.ApplicationInfo
+ import android.icu.text.ListFormatter
++import android.os.SystemProperties
+ import androidx.compose.runtime.Composable
+ import androidx.compose.runtime.remember
+ import androidx.compose.ui.platform.LocalContext
+@@ -71,6 +72,11 @@ class AppPermissionSummaryRepository(
+                     ListFormatter.getInstance().format(labels)
+                 } else {
+                     context.getString(R.string.runtime_permissions_summary_no_permissions_granted)
++                } +
++                if ("true" == SystemProperties.get("persist.sys.phh.bpf_broken", "")) {
++                    "\n\u26a0 Device does not support BPF-based firewall: per-app network blocking will not work."
++                } else {
++                    ""
+                 }
+                 AppPermissionSummaryState(summary = summary, enabled = true)
+             }
+-- 
+2.54.0
+
