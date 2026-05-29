@@ -1,0 +1,78 @@
+From 3e746e253dfb97926a1836402070e8345803c245 Mon Sep 17 00:00:00 2001
+From: "Christopher A. Williamson" <contact@chrisaw.io>
+Date: Fri, 29 May 2026 22:48:46 +0100
+Subject: [PATCH] Bitmap: scale down bitmaps in writeToParcel on legacy kernels
+ (< 4.14)
+
+On kernel < 4.14 devices, the binder transaction buffer is limited to
+~1MB. Large bitmaps (album art, video thumbnails) parceled by media
+apps exceed this limit, causing a native crash with:
+
+  Could not copy bitmap to parcel blob.
+  at android.graphics.Bitmap.nativeWriteToParcel(Native Method)
+
+Scale down bitmaps over 256px to fit within the legacy binder budget.
+Cached result to avoid repeated property reads.
+
+Affects: #73 (Samsung Music, YouTube, Chrome, all media apps)
+
+Note: this is a last-resort workaround. The proper fix is an updated
+vendor kernel with a larger binder buffer (Linux 4.14+).
+---
+ graphics/java/android/graphics/Bitmap.java | 33 +++++++++++++++++++++-
+ 1 file changed, 32 insertions(+), 1 deletion(-)
+
+diff --git a/graphics/java/android/graphics/Bitmap.java b/graphics/java/android/graphics/Bitmap.java
+index d52b5c2d8..045bebacf 100644
+--- a/graphics/java/android/graphics/Bitmap.java
++++ b/graphics/java/android/graphics/Bitmap.java
+@@ -2492,7 +2492,19 @@ public final class Bitmap implements Parcelable {
+     public void writeToParcel(@NonNull Parcel p, int flags) {
+         checkRecycled("Can't parcel a recycled bitmap");
+         noteHardwareBitmapSlowCall();
+-        if (!nativeWriteToParcel(mNativePtr, mDensity, p)) {
++        // On legacy kernels (< 4.14) the binder transaction buffer is limited to ~1MB.
++        // Large bitmaps (album art, thumbnails) exceed this and cause a native crash.
++        // Scale down bitmaps over 256px to keep the parcel under the binder limit.
++        if (isLegacyKernel() && (getWidth() > 256 || getHeight() > 256)) {
++            float scale = 256f / Math.max(getWidth(), getHeight());
++            Bitmap scaled = Bitmap.createScaledBitmap(this,
++                    (int) (getWidth() * scale), (int) (getHeight() * scale), true);
++            scaled.noteHardwareBitmapSlowCall();
++            if (!nativeWriteToParcel(scaled.mNativePtr, scaled.mDensity, p)) {
++                throw new RuntimeException("native writeToParcel failed");
++            }
++            scaled.recycle();
++        } else if (!nativeWriteToParcel(mNativePtr, mDensity, p)) {
+             throw new RuntimeException("native writeToParcel failed");
+         }
+         if (hasGainmap()) {
+@@ -2503,6 +2515,25 @@ public final class Bitmap implements Parcelable {
+         }
+     }
+ 
++    private static volatile Boolean sIsLegacyKernel;
++
++    private static boolean isLegacyKernel() {
++        if (sIsLegacyKernel != null) return sIsLegacyKernel;
++        String kv = System.getProperty("os.version");
++        if (kv == null || kv.isEmpty()) return sIsLegacyKernel = false;
++        try {
++            int firstDot = kv.indexOf('.');
++            if (firstDot < 0) return sIsLegacyKernel = false;
++            int major = Integer.parseInt(kv.substring(0, firstDot));
++            int secondDot = kv.indexOf('.', firstDot + 1);
++            String minorStr = (secondDot < 0) ? kv.substring(firstDot + 1) : kv.substring(firstDot + 1, secondDot);
++            int minor = Integer.parseInt(minorStr);
++            return sIsLegacyKernel = (major < 4 || (major == 4 && minor < 14));
++        } catch (NumberFormatException e) {
++            return sIsLegacyKernel = false;
++        }
++    }
++
+     /**
+      * Returns a new bitmap that captures the alpha values of the original.
+      * This may be drawn with Canvas.drawBitmap(), where the color(s) will be
+-- 
+2.54.0
+
