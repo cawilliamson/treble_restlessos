@@ -1,0 +1,69 @@
+From 0e0a59a2a2470fced01533a3441a28839db41843 Mon Sep 17 00:00:00 2001
+From: "Christopher A. Williamson" <contact@chrisaw.io>
+Date: Sat, 30 May 2026 00:59:27 +0100
+Subject: [PATCH] AssistScreenshot: show legacy kernel warning when feature is
+ unavailable
+
+On kernel < 4.14 devices, the GPU-based screenshot capture path
+requires sync-fence / dma-buf primitives not available in the vendor
+kernel. Instead of silently showing a toggle that does nothing,
+disable the toggle and show a summary explaining why.
+
+addresses #67
+---
+ res/values/strings.xml                        |  1 +
+ .../AssistScreenshotPreferenceController.java | 26 +++++++++++++++++++
+ 2 files changed, 27 insertions(+)
+
+diff --git a/res/values/strings.xml b/res/values/strings.xml
+index ab0fe3d..e7ea2ba 100644
+--- a/res/values/strings.xml
++++ b/res/values/strings.xml
+@@ -11107,6 +11107,7 @@
+ 
+     <!-- Summary for the "screenshot" preference to determine whether assist can access the screenshot of your screen [CHAR LIMIT=NONE] -->
+     <string name="assist_access_screenshot_summary">Allow the assist app to access an image of the screen</string>
++    <string name="assist_screenshot_legacy_kernel_summary">Screenshot unavailable — device kernel does not support required graphics features</string>
+ 
+     <!-- Title for the "flash" preference to determine whether a flash is shown on screen when an assistant accesses the contents of the screeen. [CHAR LIMIT=40] -->
+     <string name="assist_flash_title">Flash screen</string>
+diff --git a/src/com/android/settings/applications/assist/AssistScreenshotPreferenceController.java b/src/com/android/settings/applications/assist/AssistScreenshotPreferenceController.java
+index 5947943..03d98c9 100644
+--- a/src/com/android/settings/applications/assist/AssistScreenshotPreferenceController.java
++++ b/src/com/android/settings/applications/assist/AssistScreenshotPreferenceController.java
+@@ -116,6 +116,32 @@ public class AssistScreenshotPreferenceController extends AbstractPreferenceCont
+         final boolean contextChecked = Settings.Secure.getInt(mContext.getContentResolver(),
+                 Settings.Secure.ASSIST_STRUCTURE_ENABLED, 1) != 0;
+         mPreference.setEnabled(contextChecked);
++
++        // Kernels below 4.14 do not implement sync-fence / dma-buf semantics required
++        // by GPU-based screenshot capture. Show a warning and disable the toggle.
++        if (isLegacyKernel()) {
++            mPreference.setEnabled(false);
++            mPreference.setSummary(R.string.assist_screenshot_legacy_kernel_summary);
++        }
++    }
++
++    private static volatile Boolean sIsLegacyKernel;
++
++    private static boolean isLegacyKernel() {
++        if (sIsLegacyKernel != null) return sIsLegacyKernel;
++        String kv = System.getProperty("os.version");
++        if (kv == null || kv.isEmpty()) return sIsLegacyKernel = false;
++        try {
++            int firstDot = kv.indexOf('.');
++            if (firstDot < 0) return sIsLegacyKernel = false;
++            int major = Integer.parseInt(kv.substring(0, firstDot));
++            int secondDot = kv.indexOf('.', firstDot + 1);
++            String minorStr = (secondDot < 0) ? kv.substring(firstDot + 1) : kv.substring(firstDot + 1, secondDot);
++            int minor = Integer.parseInt(minorStr);
++            return sIsLegacyKernel = (major < 4 || (major == 4 && minor < 14));
++        } catch (NumberFormatException e) {
++            return sIsLegacyKernel = false;
++        }
+     }
+ 
+     class SettingObserver extends AssistSettingObserver {
+-- 
+2.54.0
+
