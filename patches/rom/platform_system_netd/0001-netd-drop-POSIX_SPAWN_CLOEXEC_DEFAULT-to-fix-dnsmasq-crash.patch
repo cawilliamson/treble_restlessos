@@ -1,0 +1,58 @@
+From dfd49a3adb34ddcdb864c35ad02e523d20feee2b Mon Sep 17 00:00:00 2001
+From: "Christopher A. Williamson" <contact@chrisaw.io>
+Date: Fri, 29 May 2026 19:14:12 +0100
+Subject: [PATCH] netd: drop POSIX_SPAWN_CLOEXEC_DEFAULT to fix dnsmasq crash
+ on some devices
+
+On certain devices the dnsmasq child spawned by TetherController via
+posix_spawn dies before exec() completes. Because the child never
+writes to the error pipe, posix_spawn returns 0 to the parent yet the
+child is already a zombie. This leaves mDaemonPid pointing to a dead
+process and hotspot clients without DNS.
+
+The surviving zombie retains the parent binder thread name
+(e.g. "binder:1754_4") because exec() never ran, confirming the
+failure path. No tombstones, avc denials, or logcat output from
+dnsmasq appear.
+
+Root cause
+==========
+
+POSIX_SPAWN_CLOEXEC_DEFAULT triggers bionic's posix_spawn child to
+call close_range(3, ~0U, CLOSE_RANGE_CLOEXEC). On certain vendor
+kernels the CLOSE_RANGE_CLOEXEC flag is not supported (it requires
+Linux 5.11+ or a backported ACK), causing the child to _exit(127)
+silently.
+
+This flag was added by Google in Android 16. VoltageOS 5.9 (Android
+15, branch 15) uses POSIX_SPAWN_USEVFORK without CLOEXEC_DEFAULT and
+works correctly on the same device, confirming the diagnosis.
+
+Fix
+===
+
+Remove POSIX_SPAWN_CLOEXEC_DEFAULT from the spawn flags. Keep
+POSIX_SPAWN_USEVFORK for performance (matching the vfork path that
+works on all tested devices).
+
+Issue: #14
+---
+ server/TetherController.cpp | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/server/TetherController.cpp b/server/TetherController.cpp
+index 2ee70af..5611b89 100644
+--- a/server/TetherController.cpp
++++ b/server/TetherController.cpp
+@@ -291,7 +291,7 @@ int TetherController::startTethering(bool usingLegacyDnsProxy, int num_addrs, ch
+         return -res;
+     }
+     const android::base::ScopeGuard attrGuard = [&] { posix_spawnattr_destroy(&attr); };
+-    res = posix_spawnattr_setflags(&attr, POSIX_SPAWN_USEVFORK | POSIX_SPAWN_CLOEXEC_DEFAULT);
++    res = posix_spawnattr_setflags(&attr, POSIX_SPAWN_USEVFORK);
+     if (res) {
+         ALOGE("posix_spawnattr_setflags failed (%s)", strerror(res));
+         return -res;
+-- 
+2.54.0
+
