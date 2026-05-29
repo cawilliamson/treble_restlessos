@@ -1,0 +1,66 @@
+From 5bf291eaca40ef487552a70ad64cf34e78231599 Mon Sep 17 00:00:00 2001
+From: "Christopher A. Williamson" <contact@chrisaw.io>
+Date: Fri, 29 May 2026 22:39:11 +0100
+Subject: [PATCH] Notification: scale down large bitmap icons on legacy kernels
+ (< 4.14)
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+On kernel 4.9 devices, large notification bitmaps (contact photos,
+message previews) exceed the binder transaction buffer size, causing
+silent delivery failure. Notifications with image previews simply
+never appear.
+
+Reuse the existing isLowRam scaling paths (which already downscale
+notification icons and RemoteViews bitmaps) by also triggering them
+when the kernel version is below 4.14. This caps bitmap sizes at
+the low-RAM dimensions, preventing binder transaction failures.
+
+No effect on devices with kernel >= 4.14 — the isLowRam check now
+includes an OR with the new isLegacyKernel() helper.
+
+Issue: #67
+---
+ core/java/android/app/Notification.java | 18 +++++++++++++++++-
+ 1 file changed, 17 insertions(+), 1 deletion(-)
+
+diff --git a/core/java/android/app/Notification.java b/core/java/android/app/Notification.java
+index cd3c8225f..65f8846c1 100644
+--- a/core/java/android/app/Notification.java
++++ b/core/java/android/app/Notification.java
+@@ -8209,7 +8209,7 @@ public class Notification implements Parcelable
+         if (extras.getBoolean(EXTRA_REDUCED_IMAGES)) {
+             return;
+         }
+-        boolean isLowRam = ActivityManager.isLowRamDeviceStatic();
++        boolean isLowRam = ActivityManager.isLowRamDeviceStatic() || isLegacyKernel();
+ 
+         if (mSmallIcon != null
+                 // Only bitmap icons can be downscaled.
+@@ -8240,6 +8240,22 @@ public class Notification implements Parcelable
+         extras.putBoolean(EXTRA_REDUCED_IMAGES, true);
+     }
+ 
++    private static boolean isLegacyKernel() {
++        String kv = System.getProperty("os.version");
++        if (kv == null || kv.isEmpty()) return false;
++        try {
++            int firstDot = kv.indexOf('.');
++            if (firstDot < 0) return false;
++            int major = Integer.parseInt(kv.substring(0, firstDot));
++            int secondDot = kv.indexOf('.', firstDot + 1);
++            String minorStr = (secondDot < 0) ? kv.substring(firstDot + 1) : kv.substring(firstDot + 1, secondDot);
++            int minor = Integer.parseInt(minorStr);
++            return major < 4 || (major == 4 && minor < 14);
++        } catch (NumberFormatException e) {
++            return false;
++        }
++    }
++
+     private void reduceImageSizesForRemoteView(RemoteViews remoteView, Context context,
+             boolean isLowRam) {
+         if (remoteView != null) {
+-- 
+2.54.0
+
