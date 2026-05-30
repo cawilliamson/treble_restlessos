@@ -13,8 +13,12 @@ MAX_LOOPS=15
 last_type=""
 
 existing="$(getprop "$PROP")"
+if [ -n "$existing" ]; then
+    log -t power-mode-monitor "already populated: $existing, exiting"
+    exit 0
+fi
 
-log -t power-mode-monitor "starting (prop=${existing:-empty})"
+log -t power-mode-monitor "starting (prop empty)"
 
 i=0
 while [ "$i" -lt "$MAX_LOOPS" ]; do
@@ -22,14 +26,14 @@ while [ "$i" -lt "$MAX_LOOPS" ]; do
     # use brief format: P/TAG(PID): message
     logcat -b all -d -v brief 2>/dev/null | while IFS= read -r line; do
         case "$line" in
-            *"mtkpower@impl"*"[setMode] type:"*)
+            *"[setMode] type:"*)
                 # extract the type number.  format:
                 # I/mtkpower@impl( 1338): [setMode] type:6, enabled:1
                 last_type="${line##*type:}"
                 last_type="${last_type%%,*}"
                 ;;
-            *"mtkpower@impl"*"[setMode] unknown"*|\
-            *"mtkpower@impl"*"[setMode] unsupported"*|\
+            *"[setMode] unknown"*|\
+            *"[setMode] unsupported"*|\
             *"setMode: unknown"*|\
             *"setMode: unsupported"*)
                 if [ -n "$last_type" ]; then
