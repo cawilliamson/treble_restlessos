@@ -1,7 +1,7 @@
 From 5bf291eaca40ef487552a70ad64cf34e78231599 Mon Sep 17 00:00:00 2001
 From: "Christopher A. Williamson" <contact@chrisaw.io>
 Date: Fri, 29 May 2026 22:39:11 +0100
-Subject: [PATCH] Notification: scale down large bitmap icons on legacy kernels
+Subject: [PATCH 16/18] Notification: scale down large bitmap icons on legacy kernels
  (< 4.14)
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8

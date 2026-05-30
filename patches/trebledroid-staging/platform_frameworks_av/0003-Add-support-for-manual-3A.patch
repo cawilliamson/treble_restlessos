@@ -1,7 +1,7 @@
 From 3840d42ad6d47eebaa45e7721f8456189afc1081 Mon Sep 17 00:00:00 2001
 From: Peng Zhu <c_pzhu@codeaurora.org>
 Date: Wed, 20 Nov 2013 16:11:24 -0800
-Subject: [PATCH 3/3] Camera: Add support for manual 3A.
+Subject: [PATCH 3/5] Camera: Add support for manual 3A.
 
 Add manual white balance mode.
    user can set the specific cct to lock the white balance.Just as other

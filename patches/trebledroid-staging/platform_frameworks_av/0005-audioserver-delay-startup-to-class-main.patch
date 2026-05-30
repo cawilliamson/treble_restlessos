@@ -1,0 +1,41 @@
+From ca9fefa00ff6e056af5a0a76304820e0a18cdf22 Mon Sep 17 00:00:00 2001
+From: "Christopher A. Williamson" <contact@chrisaw.io>
+Date: Sat, 30 May 2026 21:30:53 +0100
+Subject: [PATCH 5/5] audioserver: delay startup from class core to class main
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+QPR2's more aggressive watchdog kills system_server when audio HAL
+initialization takes too long. On some devices (OnePlus/Oppo with QTI
+audio HAL), vendor_wifidisplayhalservice_qti triggers lazy IModule/default
+lookup before system services have settled, causing the audio HAL to
+register and receive binder calls while still parsing its primary
+configuration. The null config dereferences at offset 0x18 in a binder
+thread, crashing the HAL → audioserver death → system_server stuck in
+StartAudioService → watchdog reboot.
+
+Moving audioserver from class core to class main delays its first
+connection by several seconds, giving the vendor HAL time to fully
+initialize before any binder calls arrive. Audio still initialises
+during boot, just later in the sequence.
+
+Issue: #44
+---
+ media/audioserver/audioserver.rc | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/media/audioserver/audioserver.rc b/media/audioserver/audioserver.rc
+index 0a8efbd..19052c9 100644
+--- a/media/audioserver/audioserver.rc
++++ b/media/audioserver/audioserver.rc
+@@ -1,5 +1,5 @@
+ service audioserver /system/bin/audioserver
+-    class core
++    class main
+     user audioserver
+     # media gid needed for /dev/fm (radio) and for /data/misc/media (tee)
+     group audio camera drmrpc media mediadrm net_bt net_bt_admin net_bw_acct wakelock
+-- 
+2.54.0
+
