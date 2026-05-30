@@ -13,12 +13,7 @@ MAX_LOOPS=15
 last_type=""
 
 existing="$(getprop "$PROP")"
-if [ -n "$existing" ]; then
-    log -t power-mode-monitor "already populated: $existing, exiting"
-    exit 0
-fi
-
-log -t power-mode-monitor "starting (prop empty)"
+log -t power-mode-monitor "starting (prop=${existing:-empty})"
 
 i=0
 while [ "$i" -lt "$MAX_LOOPS" ]; do
