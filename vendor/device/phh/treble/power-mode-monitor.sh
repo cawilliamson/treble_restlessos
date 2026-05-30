@@ -26,14 +26,12 @@ while [ "$i" -lt "$MAX_LOOPS" ]; do
     # use brief format: P/TAG(PID): message
     logcat -b all -d -v brief 2>/dev/null | while IFS= read -r line; do
         case "$line" in
-            *"mtkpower"*"[setMode] type:"*|\
             *"[setMode] type:"*)
                 # extract the type number.  format:
                 # I/mtkpower@impl( 1338): [setMode] type:6, enabled:1
                 last_type="${line##*type:}"
                 last_type="${last_type%%,*}"
                 ;;
-            *"mtkpower"*"[setMode] unknown"*|\
             *"[setMode] unknown"*|\
             *"[setMode] unsupported"*|\
             *"setMode: unknown"*|\
