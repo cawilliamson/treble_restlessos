@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- The bounding path of the cutout region of the main built-in display.
+         Must either be empty if there is no cutout region, or a string that is parsable by
+         {@link android.util.PathParser}.
+
+         The path is assumed to be specified in display coordinates with pixel units and in
+         the display's native orientation, with the origin of the coordinate system at the
+         center top of the display. Optionally, you can append either `@left` or `@right` to the
+         end of the path string, in order to change the path origin to either the top left,
+         or top right of the display.
+
+         To facilitate writing device-independent emulation overlays, the marker `@dp` can be
+         appended after the path string to interpret coordinates in dp instead of px units.
+         Note that a physical cutout should be configured in pixels for the best results.
+
+         Example for a 10px x 10px square top-center cutout:
+                <string ...>M -5,0 L -5,10 L 5,10 L 5,0 Z</string>
+         Example for a 10dp x 10dp square top-center cutout:
+                <string ...>M -5,0 L -5,10 L 5,10 L 5,0 Z @dp</string>
+
+         @see https://www.w3.org/TR/SVG/paths.html#PathData
+         -->
+    <string name="config_mainBuiltInDisplayCutout">M62,0l-3.8,0l-3.9,0.2l-3.9,0.4l-4,0.8l-3.9,1.2l-3.8,1.6l-3.7,2l-3.4,2.4l-3.1,2.8l-2.9,3l-2.7,3.1l-2.6,3.1 l-2.7,2.8C12.5,28,6.2,30.3,0,30.3c-6.3,0-12.5-2.3-17.5-6.8l-2.7-2.8l-2.6-3.1l-2.7-3.1l-2.9-3l-3.2-2.8 L-35,6.2l-3.7-2l-3.8-1.6l-3.9-1.2l-4-0.8L-54.3,0.2L-58.2,0L-62,0Z @dp</string>
+</resources>

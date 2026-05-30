@@ -1,0 +1,107 @@
+// Signature format: 2.0
+package aidl.android.hardware.bluetooth.audio.setting {
+
+  public enum AudioLocation {
+    method public String getRawName();
+    enum_constant public static final aidl.android.hardware.bluetooth.audio.setting.AudioLocation MONO;
+    enum_constant public static final aidl.android.hardware.bluetooth.audio.setting.AudioLocation STEREO;
+  }
+
+  public class CodecConfiguration {
+    ctor public CodecConfiguration();
+    method public aidl.android.hardware.bluetooth.audio.setting.CodecType getCodec();
+    method public short getCodecFrameBlocksPerSdu();
+    method public int getFrameDurationUs();
+    method public String getName();
+    method public int getOctetsPerCodecFrame();
+    method public short getPcmBitDepth();
+    method public int getSamplingFrequency();
+    method public void setCodec(aidl.android.hardware.bluetooth.audio.setting.CodecType);
+    method public void setCodecFrameBlocksPerSdu(short);
+    method public void setFrameDurationUs(int);
+    method public void setName(String);
+    method public void setOctetsPerCodecFrame(int);
+    method public void setPcmBitDepth(short);
+    method public void setSamplingFrequency(int);
+  }
+
+  public class CodecConfigurationList {
+    ctor public CodecConfigurationList();
+    method public java.util.List<aidl.android.hardware.bluetooth.audio.setting.CodecConfiguration> getCodecConfiguration();
+  }
+
+  public enum CodecType {
+    method public String getRawName();
+    enum_constant public static final aidl.android.hardware.bluetooth.audio.setting.CodecType APTX_ADAPTIVE_LE;
+    enum_constant public static final aidl.android.hardware.bluetooth.audio.setting.CodecType APTX_ADAPTIVE_LEX;
+    enum_constant public static final aidl.android.hardware.bluetooth.audio.setting.CodecType LC3;
+  }
+
+  public class Configuration {
+    ctor public Configuration();
+    method public String getCodecConfiguration();
+    method public String getName();
+    method public String getStrategyConfiguration();
+    method public void setCodecConfiguration(String);
+    method public void setName(String);
+    method public void setStrategyConfiguration(String);
+  }
+
+  public class ConfigurationList {
+    ctor public ConfigurationList();
+    method public java.util.List<aidl.android.hardware.bluetooth.audio.setting.Configuration> getConfiguration();
+  }
+
+  public class LeAudioOffloadSetting {
+    ctor public LeAudioOffloadSetting();
+    method public aidl.android.hardware.bluetooth.audio.setting.CodecConfigurationList getCodecConfigurationList();
+    method public aidl.android.hardware.bluetooth.audio.setting.ConfigurationList getConfigurationList();
+    method public aidl.android.hardware.bluetooth.audio.setting.ScenarioList getScenarioList();
+    method public aidl.android.hardware.bluetooth.audio.setting.StrategyConfigurationList getStrategyConfigurationList();
+    method public void setCodecConfigurationList(aidl.android.hardware.bluetooth.audio.setting.CodecConfigurationList);
+    method public void setConfigurationList(aidl.android.hardware.bluetooth.audio.setting.ConfigurationList);
+    method public void setScenarioList(aidl.android.hardware.bluetooth.audio.setting.ScenarioList);
+    method public void setStrategyConfigurationList(aidl.android.hardware.bluetooth.audio.setting.StrategyConfigurationList);
+  }
+
+  public class Scenario {
+    ctor public Scenario();
+    method public String getBroadcast();
+    method public String getDecode();
+    method public String getEncode();
+    method public void setBroadcast(String);
+    method public void setDecode(String);
+    method public void setEncode(String);
+  }
+
+  public class ScenarioList {
+    ctor public ScenarioList();
+    method public java.util.List<aidl.android.hardware.bluetooth.audio.setting.Scenario> getScenario();
+  }
+
+  public class StrategyConfiguration {
+    ctor public StrategyConfiguration();
+    method public aidl.android.hardware.bluetooth.audio.setting.AudioLocation getAudioLocation();
+    method public short getChannelCount();
+    method public short getConnectedDevice();
+    method public String getName();
+    method public void setAudioLocation(aidl.android.hardware.bluetooth.audio.setting.AudioLocation);
+    method public void setChannelCount(short);
+    method public void setConnectedDevice(short);
+    method public void setName(String);
+  }
+
+  public class StrategyConfigurationList {
+    ctor public StrategyConfigurationList();
+    method public java.util.List<aidl.android.hardware.bluetooth.audio.setting.StrategyConfiguration> getStrategyConfiguration();
+  }
+
+  public class XmlParser {
+    ctor public XmlParser();
+    method public static aidl.android.hardware.bluetooth.audio.setting.LeAudioOffloadSetting readLeAudioOffloadSetting(java.io.InputStream) throws javax.xml.datatype.DatatypeConfigurationException, java.io.IOException, org.xmlpull.v1.XmlPullParserException;
+    method public static String readText(org.xmlpull.v1.XmlPullParser) throws java.io.IOException, org.xmlpull.v1.XmlPullParserException;
+    method public static void skip(org.xmlpull.v1.XmlPullParser) throws java.io.IOException, org.xmlpull.v1.XmlPullParserException;
+  }
+
+}
+

@@ -1,0 +1,29 @@
+package vendor.samsung.hardware.exthealth@1.0;
+
+
+import android.hardware.health.V1_0.HealthInfo;
+import android.hardware.health.V2_0.DiskStats;
+import android.hardware.health.V2_0.StorageInfo;
+
+struct ExtHealthInfo {
+	HealthInfo defaultHealthInfo;
+	int32_t batteryCurrentAverage;
+	int32_t batteryCurrentNow;
+	int32_t batteryOnline;
+	int32_t batteryCurrentAvg;
+	int32_t batteryChargeType;
+	int32_t batteryPowerSharingOnline;
+	int32_t chargerPogoOnline;
+	int32_t batteryHighVoltageCharger;
+	int32_t batterySWSelfDischarging;
+	int32_t batterySecEvent;
+	int32_t batterySecCurrentEvent;
+	bool batteryOTGOnline;
+	int32_t wirelessPowerSharingTxEvent;
+	vec<DiskStat> diskStats;
+	vec<StorageInfo> storageInfos;
+};
+
+interface IExtHealthInfoCallback {
+	oneway extHealthInfoChanged(ExtHealthInfo info);
+};

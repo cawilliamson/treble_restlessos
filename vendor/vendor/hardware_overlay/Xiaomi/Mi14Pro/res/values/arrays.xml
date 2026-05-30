@@ -1,0 +1,141 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <integer-array name="config_autoBrightnessLcdBacklightValues">
+        <item>4</item>
+        <item>4</item>
+        <item>4</item>
+        <item>8</item>
+        <item>15</item>
+        <item>20</item>
+        <item>26</item>
+        <item>35</item>
+        <item>45</item>
+        <item>46</item>
+        <item>46</item>
+        <item>46</item>
+        <item>60</item>
+        <item>60</item>
+        <item>60</item>
+        <item>64</item>
+        <item>66</item>
+        <item>70</item>
+        <item>73</item>
+        <item>80</item>
+        <item>88</item>
+        <item>110</item>
+        <item>130</item>
+        <item>135</item>
+        <item>145</item>
+        <item>180</item>
+        <item>200</item>
+        <item>240</item>
+        <item>255</item>
+    </integer-array>
+    <integer-array name="config_autoBrightnessLevels">
+        <item>1</item>
+        <item>2</item>
+        <item>5</item>
+        <item>9</item>
+        <item>13</item>
+        <item>17</item>
+        <item>21</item>
+        <item>26</item>
+        <item>30</item>
+        <item>40</item>
+        <item>83</item>
+        <item>104</item>
+        <item>200</item>
+        <item>400</item>
+        <item>500</item>
+        <item>600</item>
+        <item>700</item>
+        <item>800</item>
+        <item>1000</item>
+        <item>1200</item>
+        <item>1500</item>
+        <item>1800</item>
+        <item>2000</item>
+        <item>2165</item>
+        <item>2680</item>
+        <item>3000</item>
+        <item>3540</item>
+        <item>4000</item>
+    </integer-array>
+    <integer-array name="config_longPressVibePattern">
+        <item>0</item>
+        <item>1</item>
+        <item>75</item>
+        <item>76</item>
+    </integer-array>
+    <integer-array name="config_keyboardTapVibePattern">
+        <item>50</item>
+    </integer-array>
+    <integer-array name="config_virtualKeyVibePattern">
+        <item>0</item>
+        <item>30</item>
+        <item>45</item>
+        <item>53</item>
+    </integer-array>
+    <integer-array name="config_tether_upstream_types">
+        <item>1</item>
+        <item>0</item>
+        <item>5</item>
+        <item>7</item>
+    </integer-array>
+    <integer-array name="config_lteDbmThresholds">
+        <item>-140</item>
+        <item>-140</item>
+        <item>-125</item>
+        <item>-112</item>
+        <item>-102</item>
+        <item>-44</item>
+    </integer-array>
+    <array name="config_biometric_sensors" />
+    <string-array name="config_defaultPinnerServiceFiles">
+        <item>/data/dalvik-cache/arm64/system@framework@boot.oat</item>
+        <item>/data/dalvik-cache/arm/system@framework@boot.oat</item>
+        <item>/data/dalvik-cache/arm64/system@framework@services.jar@classes.dex</item>
+        <item>/data/dalvik-cache/arm/system@framework@services.jar@classes.dex</item>
+        <item>/system/framework/arm64/boot.oat</item>
+        <item>/system/framework/arm64/boot-framework.oat</item>
+        <item>/system/framework/arm64/boot-QPerformance.oat</item>
+        <item>/system/framework/arm64/boot-UxPerformance.oat</item>
+        <item>/system/framework/arm64/boot-core-libart.oat</item>
+        <item>/system/framework/framework.jar</item>
+        <item>/system/framework/oat/arm64/services.odex</item>
+        <item>/system/framework/services.jar</item>
+        <item>/apex/com.android.art/javalib/core-oj.jar</item>
+        <item>/apex/com.android.art/javalib/core-libart.jar</item>
+        <item>/apex/com.android.media/javalib/updatable-media.jar</item>
+        <item>/system/lib64/libRScpp.so</item>
+        <item>/system/lib64/libRS.so</item>
+        <item>/system/lib64/libRS_internal.so</item>
+        <item>/system/lib64/libbcinfo.so</item>
+        <item>/system/lib64/libRSDriver.so</item>
+        <item>/system/lib64/libRSCpuRef.so</item>
+        <item>/system/lib64/libblas.so</item>
+        <item>/system/lib64/libsurfaceflinger.so</item>
+        <item>/vendor/lib64/libllvm-qgl.so</item>
+        <item>/system/lib64/libhwui.so</item>
+        <item>/vendor/lib64/libllvm-glnext.so</item>
+        <item>/system/lib64/libft2.so</item>
+        <item>/system/lib64/libGLESv2.so</item>
+    </string-array>
+    <string-array name="networkAttributes">
+        <item>wifi,1,1,1,-1,true</item>
+        <item>mobile,0,0,0,-1,true</item>
+        <item>mobile_mms,2,0,4,300000,true</item>
+        <item>mobile_supl,3,0,2,300000,true</item>
+        <item>mobile_dun,4,0,2,300000,true</item>
+        <item>mobile_hipri,5,0,3,300000,true</item>
+        <item>mobile_fota,10,0,2,300000,true</item>
+        <item>mobile_ims,11,0,2,300000,true</item>
+        <item>mobile_cbs,12,0,2,300000,true</item>
+        <item>wifi_p2p,13,1,0,-1,true</item>
+        <item>mobile_ia,14,0,2,-1,true</item>
+        <item>mobile_emergency,15,0,2,-1,true</item>
+        <item>bluetooth,7,7,2,-1,true</item>
+        <item>ethernet,9,9,4,-1,true</item>
+    </string-array>
+
+</resources>

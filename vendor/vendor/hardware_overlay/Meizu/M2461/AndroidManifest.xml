@@ -1,0 +1,10 @@
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+        package="me.phh.treble.overlay.meizu.m2461"
+        android:versionCode="1"
+        android:versionName="1.0">
+        <overlay android:targetPackage="android"
+                android:requiredSystemPropertyName="ro.product.vendor.device"
+                android:requiredSystemPropertyValue="meizu21"
+        android:priority="2461"
+        android:isStatic="true" />
+</manifest>

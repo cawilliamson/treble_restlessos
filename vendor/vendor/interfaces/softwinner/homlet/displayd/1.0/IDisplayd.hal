@@ -1,0 +1,135 @@
+package softwinner.homlet.displayd@1.0;
+
+enum AspectRatio : int32_t {
+	ASPECT_RATIO_AUTO = 0,
+	ASPECT_RATIO_FULL = 1,
+	ASPECT_RATIO_4_3 = 2,
+	ASPECT_RATIO_16_9 = 3,
+	ASPECT_RATIO_MATCH_WIDTH = 4,
+	ASPECT_RATIO_MATCH_HEIGHT = 5,
+// missing 6?
+	ASPECT_RATIO_FULL_ONCE = 7,
+	ASPECT_RATIO_RATIO_LOAD = 8,
+};
+
+enum Dataspace : int32_t {
+	DATASPACE_MODE_AUTO = 0,
+	DATASPACE_MODE_HDR = 1,
+	DATASPACE_MODE_WCG = 2,
+	DATASPACE_MODE_SDR = 3,
+	DATASPACE_MODE_OTHER = 4,
+	DATASPACE_MODE_NUM = 5,
+};
+
+enum DispFormat : int32_t {
+    DISP_FMT_480I = 0,
+    DISP_FMT_576I = 1,
+    DISP_FMT_480P = 2,
+    DISP_FMT_576P = 3,
+    DISP_FMT_720P_50HZ = 4,
+    DISP_FMT_720P_60HZ = 5,
+    DISP_FMT_1080I_50HZ = 6,
+    DISP_FMT_1080I_60HZ = 7,
+    DISP_FMT_1080P_24HZ = 8,
+    DISP_FMT_1080P_50HZ = 9,
+    DISP_FMT_1080P_60HZ = 10,
+    DISP_FMT_PAL = 11,
+    DISP_FMT_PAL_SVIDEO = 12,
+    DISP_FMT_NTSC = 14,
+    DISP_FMT_NTSC_SVIDEO = 15,
+    DISP_FMT_PAL_M = 17,
+    DISP_FMT_PAL_M_SVIDEO = 18,
+    DISP_FMT_PAL_NC = 20,
+    DISP_FMT_PAL_NC_SVIDEO = 21,
+    DISP_FMT_1080P_24HZ_3D_FP = 23,
+    DISP_FMT_720P_50HZ_3D_FP = 24,
+    DISP_FMT_720P_60HZ_3D_FP = 25,
+    DISP_FMT_1080P_25HZ = 26,
+    DISP_FMT_1080P_30HZ = 27,
+    DISP_FMT_3840_2160P_30HZ = 28,
+    DISP_FMT_3840_2160P_25HZ = 29,
+    DISP_FMT_3840_2160P_24HZ = 30,
+    DISP_FMT_4096_2160P_24HZ = 31,
+    DISP_FMT_4096_2160P_25HZ = 32,
+    DISP_FMT_4096_2160P_30HZ = 33,
+    DISP_FMT_3840_2160P_60HZ = 34,
+    DISP_FMT_4096_2160P_60HZ = 35,
+    DISP_FMT_3840_2160P_50HZ = 36,
+    DISP_FMT_4096_2160P_50HZ = 37,
+    DISP_FMT_INVALID = 255,
+};
+
+enum EnhanceItem : int32_t {
+	ENHANCE_MODE = 0,
+	ENHANCE_BRIGHT = 1,
+	ENHANCE_CONTRAST = 2,
+	ENHANCE_DENOISE = 3,
+	ENHANCE_DETAIL = 4,
+	ENHANCE_EDGE = 5,
+	ENHANCE_SATURATION = 6,
+};
+
+enum Error : int32_t {
+	NONE = 0,
+	BAD_DISPLAY = -1,
+	BAD_PARAMETER = -2,
+	UNSUPPORTED = -3,
+};
+
+enum IfaceType : int32_t {
+	NONE = 0,
+	LCD = 1,
+	CVBS = 2,
+	HDMI = 4,
+	VGA = 8,
+};
+
+enum LayerMode : int32_t {
+	LAYER_2D_ORIGINAL = 0,
+	LAYER_2D_LEFT = 1,
+	LAYER_2D_RIGHT = 2,
+	LAYER_3D_LEFT_RIGHT_HDMI = 3,
+	LAYER_3D_TOP_BOTTOM_HDMI = 4,
+	LAYER_2D_DUAL_STREAM = 5,
+	LAYER_3D_DUAL_STREAM = 6,
+	LAYER_3D_LEFT_RIGHT_ALL = 7,
+	LAYER_3D_LTOP_BOTTOM_ALL = 8,
+};
+
+enum PixelFormat : int32_t {
+	PIXEL_FORMAT_AUTO = 0,
+	PIXEL_FORMAT_YUV422_12bit = 1,
+	PIXEL_FORMAT_YUV420_10bit = 2,
+	PIXEL_FORMAT_YUV444_8bit = 3,
+	PIXEL_FORMAT_NUM = 5,
+};
+
+struct ScreenMargin {
+	int32_t left;
+	int32_t right;
+	int32_t top;
+	int32_t bottom;
+};
+
+interface IDisplayd {
+	getType(int32_t display) generates (int32_t out_type);
+	getMode(int32_t display) generates (int32_t out_fmt);
+	set_mode(int32_t display, int32_t fmt) generates (int32_t out_err);
+	isSupportedMode(int32_t display, int32_t fmt) generates (bool supported);
+	getSupportedModes(int32_t display) generates (vec<int32_t fmts);
+	isSupported3D(int32_t display) generates (bool out_supported);
+	get3DLayerMode(int32_t display) generates (int32_t out_mode);
+	set3DLayerMode(int32_t display, int32_t mode) generates (int32_t out_err);
+	setAspectRatio(int32_t display, int32_t ratio) generrates (int32_t out_err);
+	getAspectRatio(int32_t display) generates (int32_t out_ratio);
+	setMargin(int32_t display, ScreenMargin margin) generates (int32_t out_err);
+	getMargin(int32_t display) generates (ScreenMargin out_margin);
+	getSupportedPixelFormats(int32_t display) generates (vec<int32_t> out_fmts);
+	getPixelFormat(int32_t display) generates (int32_t out_fmt);
+	setPixelFormat(int32_t display, int32_t fmt) generates (int32_t out_err);
+	getCurrentDataspaceMode(int32_t display) generates (int32_t out_mode);
+	setDataspaceMode(int32_t display, int32_t mode) generates (int32_t out_err);
+	getEnhanceComponent(int32_t display, int32_t item) generates (int32_t out_value);
+	setEnhanceComponent(int32_t display, int32_t item, int32_t value) generates (int32_t out_err);
+	dumpDebugInfo() genereates (string out_debugInfo)
+};

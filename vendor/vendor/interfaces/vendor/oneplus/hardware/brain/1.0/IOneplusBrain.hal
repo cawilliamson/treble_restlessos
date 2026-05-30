@@ -1,0 +1,10 @@
+package vendor.oneplus.hardware.brain@1.0;
+
+//This seems to be Oneplus' boosted performance mode
+//In OP's firmware, those functions are called exclusively for /boosted/ apps
+interface IOneplusBrain {
+notifyAppResume(string pkgName, uint32_t pid);
+notifyAppPause(string pkgName, uint32_t pid);
+notifyAppDied(string pkgName, uint32_t pid);
+dumpsys(string command, string param1, string param2) generates (uint32_t status);
+};

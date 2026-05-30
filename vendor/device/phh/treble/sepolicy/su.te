@@ -1,0 +1,153 @@
+type phhsu_daemon, domain, mlstrustedsubject;
+type phhsu_exec, exec_type, file_type;
+type phhsu_daemon_tmpfs, file_type;
+
+typeattribute phhsu_daemon coredomain;
+permissive phhsu_daemon;
+
+tmpfs_domain(phhsu_daemon);
+domain_auto_trans(init, phhsu_exec, phhsu_daemon);
+domain_trans(init, shell_exec, phhsu_daemon);
+file_type_auto_trans(phhsu_daemon, device, phhsu_daemon);
+
+allow { appdomain shell } phhsu_daemon:unix_stream_socket { connectto write read };
+allow { appdomain shell } phhsu_daemon:sock_file { write read };
+allow { appdomain shell } phhsu_exec:file { getattr read open execute execute_no_trans };
+
+create_pty(shell)
+allowxperm shell devpts:chr_file ioctl { TCSETSF TCGETS unpriv_tty_ioctls };
+allowxperm { phhsu_daemon untrusted_app untrusted_app_27 } untrusted_app_all_devpts:chr_file ioctl { TCSETSF TCGETS unpriv_tty_ioctls };
+
+allow servicemanager phhsu_daemon:dir { search read };
+allow servicemanager phhsu_daemon:file { open read };
+allow servicemanager phhsu_daemon:process { getattr };
+allow servicemanager phhsu_daemon:binder { call transfer };
+
+typeattribute phhsu_daemon mlstrustedobject;
+typeattribute phhsu_daemon mlstrustedsubject;
+
+allow shell su_exec:file getattr;
+typeattribute su mlstrustedsubject;
+
+allow phhsu_daemon { system_api_service app_api_service system_server_service }:service_manager find;
+
+allow system_server phhsu_daemon:fifo_file { read write getattr };
+allow system_server phhsu_daemon:fd use;
+allow system_server phhsu_daemon:binder { call transfer };
+allow system_server phhsu_daemon_tmpfs:file { getattr read open };
+allow system_server shell_devpts:chr_file { read write };
+
+# Add su to various domains
+net_domain(phhsu_daemon)
+
+hwbinder_use(phhsu_daemon)
+
+allow domain untrusted_app_all_devpts:chr_file { getattr read write };
+allow phhsu_daemon untrusted_app_all_devpts:chr_file { getattr read write open ioctl };
+allow phhsu_daemon untrusted_app_all:fifo_file { getattr read write open ioctl };
+allow phhsu_daemon zygote_exec:file { execute read open execute_no_trans getattr };
+
+allow appdomain phhsu_daemon:dir { search };
+
+allow phhsu_daemon self:global_capability_class_set { sys_resource sys_ptrace };
+
+allow phhsu_daemon self:dir rw_dir_perms;
+allow phhsu_daemon self:file { rwx_file_perms create rename setattr unlink };
+allow phhsu_daemon self:lnk_file { r_file_perms execmod };
+
+allow phhsu_daemon adbd_exec:file { getattr read };
+allow phhsu_daemon { rootfs same_process_hal_file system_file tmpfs }:file { mounton getattr };
+allow phhsu_daemon self:capability { sys_admin chown setuid setgid net_raw dac_override dac_read_search kill fowner mknod };
+allow phhsu_daemon self:capability2 { syslog };
+allow phhsu_daemon shell_exec:file rx_file_perms;
+allow phhsu_daemon system_file:file { rx_file_perms entrypoint };
+allow phhsu_daemon kmsg_device:chr_file { ioctl w_file_perms };
+allow phhsu_daemon toolbox_exec:file rx_file_perms;
+allow phhsu_daemon system_block_device:{ lnk_file file } r_file_perms;
+
+allow { phhsu_daemon shell } domain:dir rw_dir_perms;
+allow { phhsu_daemon shell } domain:file rw_file_perms;
+allow { phhsu_daemon shell } domain:lnk_file rw_file_perms;
+allow { phhsu_daemon shell } rootfs:file { rwx_file_perms create rename setattr unlink };
+allow { phhsu_daemon shell } rootfs:dir rw_dir_perms;
+allow phhsu_daemon asec_apk_file:dir rw_dir_perms;
+
+allow phhsu_daemon shell_devpts:chr_file rw_file_perms;
+
+allow phhsu_daemon app_data_file:dir rw_dir_perms;
+allow phhsu_daemon app_data_file:file { rwx_file_perms create rename setattr unlink };
+allow phhsu_daemon dalvikcache_data_file:dir rw_dir_perms;
+allow phhsu_daemon dalvikcache_data_file:file { rwx_file_perms create rename setattr unlink };
+allow phhsu_daemon dalvikcache_data_file:lnk_file { r_file_perms execmod };
+allow phhsu_daemon system_data_file:file { rwx_file_perms create rename setattr unlink };
+allow phhsu_daemon system_data_file:dir rw_dir_perms;
+allow phhsu_daemon system_data_file:file { rwx_file_perms create rename setattr unlink };
+allow phhsu_daemon system_file:dir rw_dir_perms;
+allow phhsu_daemon system_file:file { rwx_file_perms create rename setattr unlink };
+allow phhsu_daemon init:unix_stream_socket { connectto };
+allow phhsu_daemon self:process { ptrace setexec execmem setfscreate };
+allow phhsu_daemon app_data_file:file { rwx_file_perms create rename setattr unlink };
+allow phhsu_daemon app_data_file:dir rw_dir_perms;
+allow phhsu_daemon ashmem_device:chr_file { execute };
+allow phhsu_daemon dex2oat_exec:file rx_file_perms;
+
+
+allow phhsu_daemon phhsu_daemon_tmpfs:file rwx_file_perms;
+
+allow phhsu_daemon { proc_type dev_type exec_type file_type sysfs_type fs_type phhsu_daemon }:file { rwx_file_perms create mounton setattr getattr relabelto relabelfrom unlink rename };
+allow phhsu_daemon { proc_type dev_type exec_type file_type sysfs_type fs_type phhsu_daemon }:lnk_file { rw_file_perms create mounton setattr getattr relabelto relabelfrom unlink rename};
+allow phhsu_daemon { proc_type dev_type exec_type file_type sysfs_type fs_type phhsu_daemon }:dir { rw_dir_perms create mounton setattr getattr relabelto relabelfrom unlink rename};
+allow phhsu_daemon { proc_type dev_type exec_type file_type sysfs_type fs_type phhsu_daemon }:chr_file { rwx_file_perms unlink rename ioctl};
+allow phhsu_daemon { proc_type dev_type exec_type file_type sysfs_type fs_type phhsu_daemon }:blk_file { rw_file_perms create unlink rename ioctl};
+
+allow phhsu_daemon device:file rwx_file_perms;
+allow phhsu_daemon device:dir rw_dir_perms;
+
+allow phhsu_daemon domain:process { ptrace signal signull getattr };
+allow phhsu_daemon selinuxfs:file rwx_file_perms;
+allow domain phhsu_daemon:process { sigchld };
+allow phhsu_daemon domain:binder { call transfer };
+allow phhsu_daemon kernel:system { syslog_read syslog_mod };
+allow phhsu_daemon kernel:security { setenforce compute_av };
+allow phhsu_daemon domain:unix_stream_socket { getattr };
+
+allow phhsu_daemon logdr_socket:sock_file write;
+allow phhsu_daemon logd:unix_stream_socket connectto;
+
+allow phhsu_daemon property_type:property_service { set };
+allow phhsu_daemon property_socket:sock_file { write };
+allow phhsu_daemon property_type:file rw_file_perms;
+allow phhsu_daemon { hwservicemanager hwservice_manager_type }:hwservice_manager { list add find };
+allow phhsu_daemon domain:unix_dgram_socket rw_socket_perms;
+
+allow phhsu_daemon tombstoned_intercept_socket:sock_file { write };
+allow phhsu_daemon tombstoned:unix_stream_socket { connectto };
+
+allow phhsu_daemon { property_data_file data_file_type tmpfs }:file create_file_perms;
+allow phhsu_daemon { property_data_file data_file_type tmpfs }:dir create_dir_perms;
+
+allow phhsu_daemon { tmpfs fs_type }:filesystem { mount remount unmount associate };
+
+allow phhsu_daemon phhsu_daemon:file relabelfrom;
+
+allow phhsu_daemon properties_device:dir { map };
+allow phhsu_daemon { tmpfs }:dir { mounton };
+allow phhsu_daemon { file_type shell_data_file system_file}:file { relabelto relabelfrom} ;
+
+allow phhsu_daemon domain:fd { use };
+allow phhsu_daemon domain:unix_stream_socket { connectto ioctl getattr getopt read write shutdown };
+allow phhsu_daemon self:netlink_kobject_uevent_socket create_socket_perms;
+allow phhsu_daemon self:{ netlink_tcpdiag_socket } { create_socket_perms nlmsg_write nlmsg_read };
+allow phhsu_daemon self:{ netlink_selinux_socket } { create_socket_perms };
+
+allow phhsu_daemon file_type:file create_file_perms;
+allow phhsu_daemon file_type:dir create_dir_perms;
+
+allow phhsu_daemon domain:process { transition };
+
+
+# 05-09 00:05:30.149 18450 18450 W lprename: type=1400 audit(0.0:40923): avc: denied { ioctl } for path="/dev/block/sda25" dev="tmpfs" ino=19441 ioctlcmd=0x1278 scontext=u:r:phhsu_daemon:s0 tcontext=u:object_r:super_block_device:s0 tclass=blk_file permissive=0
+# 06-06 12:59:53.775 30150 30150 I auditd  : type=1400 audit(0.0:35585): avc: denied { ioctl } for comm="blockdev" path="/dev/block/dm-3" dev="tmpfs" ino=12687 ioctlcmd=0x125d scontext=u:r:phhsu_daemon:s0 tcontext=u:object_r:dm_device:s0 tclass=blk_file permissive=0
+
+allowxperm phhsu_daemon { file_type block_device }:blk_file ioctl { 0-0xffff };
+allowxperm phhsu_daemon { system_block_device super_block_device dm_device }:blk_file ioctl { 0x1278-0x127a 0x125d };

@@ -1,0 +1,395 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+    <!-- bools.xml files -->
+    <bool name="config_automatic_brightness_available">true</bool>
+    <bool name="config_showNavigationBar">true</bool>
+    <bool name="config_useDevInputEventForAudioJack">true</bool>
+
+
+    <!-- dimens.xml files -->
+    <dimen name="rounded_corner_radius">20.0dip</dimen>
+    <item type="dimen" name="status_bar_height">25.0dip</item>
+    <item type="dimen" name="status_bar_height_landscape">28.0dip</item>
+    <dimen name="status_bar_height_portrait">48.0dip</dimen>
+
+
+    <!-- arrays.xml files -->
+    <integer-array name="config_ambientBrighteningThresholds">
+        <item>2</item>
+        <item>6</item>
+        <item>10</item>
+        <item>30</item>
+        <item>100</item>
+        <item>400</item>
+        <item>600</item>
+        <item>1000</item>
+    </integer-array>
+    <integer-array name="config_ambientDarkeningThresholds">
+        <item>800</item>
+        <item>800</item>
+        <item>500</item>
+        <item>500</item>
+        <item>500</item>
+        <item>500</item>
+        <item>500</item>
+        <item>500</item>
+    </integer-array>
+    <integer-array name="config_ambientThresholdLevels">
+        <item>2</item>
+        <item>10</item>
+        <item>30</item>
+        <item>100</item>
+        <item>800</item>
+        <item>2000</item>
+        <item>4000</item>
+    </integer-array>
+    <array name="config_autoBrightnessDisplayValuesNits">
+        <item>4.0</item>
+        <item>4.5</item>
+        <item>5.2</item>
+        <item>17.9</item>
+        <item>24.6</item>
+        <item>32.4</item>
+        <item>34.6</item>
+        <item>44.6</item>
+        <item>56.8</item>
+        <item>76.9</item>
+        <item>83.5</item>
+        <item>84.6</item>
+        <item>84.6</item>
+        <item>84.6</item>
+        <item>85.8</item>
+        <item>85.8</item>
+        <item>85.8</item>
+        <item>88.0</item>
+        <item>88.0</item>
+        <item>90.2</item>
+        <item>90.2</item>
+        <item>90.2</item>
+        <item>90.2</item>
+        <item>91.3</item>
+        <item>91.3</item>
+        <item>92.4</item>
+        <item>94.7</item>
+        <item>95.8</item>
+        <item>96.9</item>
+        <item>98.0</item>
+        <item>99.1</item>
+        <item>100.2</item>
+        <item>101.3</item>
+        <item>102.4</item>
+        <item>103.6</item>
+        <item>104.7</item>
+        <item>105.8</item>
+        <item>106.9</item>
+        <item>108.0</item>
+        <item>110.2</item>
+        <item>112.5</item>
+        <item>115.8</item>
+        <item>116.9</item>
+        <item>119.1</item>
+        <item>123.6</item>
+        <item>143.6</item>
+        <item>165.9</item>
+        <item>177.0</item>
+        <item>210.3</item>
+        <item>232.6</item>
+        <item>288.2</item>
+        <item>299.3</item>
+        <item>310.5</item>
+        <item>377.2</item>
+        <item>410.6</item>
+        <item>444.0</item>
+        <item>455.1</item>
+        <item>477.3</item>
+        <item>488.5</item>
+        <item>536.6</item>
+        <item>555.2</item>
+        <item>561.9</item>
+        <item>571.7</item>
+        <item>579.5</item>
+        <item>592.3</item>
+        <item>608.1</item>
+        <item>625.9</item>
+        <item>640.7</item>
+        <item>656.5</item>
+        <item>671.3</item>
+        <item>686.1</item>
+        <item>701.9</item>
+        <item>717.7</item>
+        <item>733.5</item>
+        <item>749.2</item>
+        <item>765.0</item>
+        <item>781.8</item>
+        <item>797.6</item>
+        <item>814.4</item>
+        <item>827.0</item>
+        <item>840.6</item>
+        <item>853.2</item>
+        <item>866.0</item>
+        <item>879.0</item>
+        <item>892.0</item>
+        <item>905.0</item>
+        <item>918.0</item>
+        <item>931.0</item>
+        <item>949.0</item>
+        <item>969.0</item>
+        <item>979.0</item>
+        <item>989.0</item>
+        <item>989.0</item>
+        <item>989.0</item>
+        <item>989.0</item>
+        <item>989.0</item>
+        <item>989.0</item>
+        <item>989.0</item>
+        <item>989.0</item>
+        <item>989.0</item>
+        <item>989.0</item>
+        <item>989.0</item>
+        <item>989.0</item>
+        <item>989.0</item>
+        <item>989.0</item>
+        <item>989.0</item>
+        <item>989.0</item>
+        <item>989.0</item>
+    </array>
+    <integer-array name="config_autoBrightnessLcdBacklightValues">
+        <item>16</item>
+        <item>18</item>
+        <item>22</item>
+        <item>70</item>
+        <item>98</item>
+        <item>127</item>
+        <item>139</item>
+        <item>188</item>
+        <item>241</item>
+        <item>311</item>
+        <item>331</item>
+        <item>335</item>
+        <item>335</item>
+        <item>335</item>
+        <item>339</item>
+        <item>339</item>
+        <item>339</item>
+        <item>343</item>
+        <item>343</item>
+        <item>348</item>
+        <item>348</item>
+        <item>348</item>
+        <item>348</item>
+        <item>352</item>
+        <item>352</item>
+        <item>356</item>
+        <item>364</item>
+        <item>368</item>
+        <item>372</item>
+        <item>380</item>
+        <item>384</item>
+        <item>393</item>
+        <item>397</item>
+        <item>405</item>
+        <item>409</item>
+        <item>413</item>
+        <item>425</item>
+        <item>429</item>
+        <item>434</item>
+        <item>442</item>
+        <item>446</item>
+        <item>454</item>
+        <item>458</item>
+        <item>466</item>
+        <item>475</item>
+        <item>561</item>
+        <item>642</item>
+        <item>737</item>
+        <item>839</item>
+        <item>925</item>
+        <item>1052</item>
+        <item>1146</item>
+        <item>1208</item>
+        <item>1511</item>
+        <item>1638</item>
+        <item>1706</item>
+        <item>1774</item>
+        <item>1842</item>
+        <item>1911</item>
+        <item>1979</item>
+        <item>2047</item>
+    </integer-array>
+    <integer-array name="config_autoBrightnessLevels">
+        <item>1</item>
+        <item>2</item>
+        <item>4</item>
+        <item>6</item>
+        <item>8</item>
+        <item>10</item>
+        <item>15</item>
+        <item>20</item>
+        <item>25</item>
+        <item>30</item>
+        <item>35</item>
+        <item>40</item>
+        <item>45</item>
+        <item>50</item>
+        <item>55</item>
+        <item>60</item>
+        <item>65</item>
+        <item>70</item>
+        <item>75</item>
+        <item>80</item>
+        <item>85</item>
+        <item>90</item>
+        <item>95</item>
+        <item>100</item>
+        <item>120</item>
+        <item>140</item>
+        <item>160</item>
+        <item>180</item>
+        <item>200</item>
+        <item>220</item>
+        <item>240</item>
+        <item>260</item>
+        <item>280</item>
+        <item>300</item>
+        <item>320</item>
+        <item>340</item>
+        <item>360</item>
+        <item>380</item>
+        <item>400</item>
+        <item>420</item>
+        <item>440</item>
+        <item>460</item>
+        <item>480</item>
+        <item>500</item>
+        <item>700</item>
+        <item>900</item>
+        <item>1100</item>
+        <item>1300</item>
+        <item>1500</item>
+        <item>1700</item>
+        <item>1900</item>
+        <item>2000</item>
+        <item>2500</item>
+        <item>3000</item>
+        <item>3500</item>
+        <item>4000</item>
+        <item>4500</item>
+        <item>5000</item>
+        <item>5500</item>
+        <item>6000</item>
+        <item>6500</item>
+        <item>7000</item>
+        <item>7500</item>
+        <item>8000</item>
+        <item>8500</item>
+        <item>9000</item>
+        <item>9500</item>
+        <item>10000</item>
+        <item>10500</item>
+        <item>11000</item>
+        <item>11500</item>
+        <item>12000</item>
+        <item>12500</item>
+        <item>13000</item>
+        <item>13500</item>
+        <item>14000</item>
+        <item>14500</item>
+        <item>15000</item>
+        <item>16000</item>
+        <item>17000</item>
+        <item>18000</item>
+        <item>19000</item>
+        <item>20000</item>
+        <item>21000</item>
+        <item>22000</item>
+        <item>23000</item>
+        <item>24000</item>
+        <item>25000</item>
+        <item>26000</item>
+        <item>27000</item>
+        <item>28000</item>
+        <item>29000</item>
+        <item>30000</item>
+        <item>35000</item>
+        <item>40000</item>
+        <item>45000</item>
+        <item>50000</item>
+        <item>55000</item>
+        <item>60000</item>
+        <item>65000</item>
+        <item>70000</item>
+        <item>75000</item>
+        <item>80000</item>
+        <item>85000</item>
+        <item>90000</item>
+        <item>95000</item>
+        <item>100000</item>
+    </integer-array>
+    <string-array name="config_biometric_sensors">
+        <item>0:2:15</item>
+    </string-array>
+    <string-array name="config_defaultPinnerServiceFiles">
+        <item>/system/framework/arm64/boot-framework.oat</item>
+        <item>/system/framework/arm64/boot-QPerformance.oat</item>
+        <item>/system/framework/arm64/boot-UxPerformance.oat</item>
+        <item>/system/framework/framework.jar</item>
+        <item>/system/framework/oat/arm64/services.odex</item>
+        <item>/system/framework/services.jar</item>
+        <item>/apex/com.android.media/javalib/updatable-media.jar</item>
+        <item>/system/lib64/libsurfaceflinger.so</item>
+        <item>/system/fonts/MiSansVF.ttf</item>
+        <item>/system/lib/libhwui.so</item>
+        <item>/system/lib64/libhwui.so</item>
+        <item>/system/lib64/libEGL.so</item>
+        <item>/system/lib64/libllvm-qgl.so</item>
+        <item>/vendor/lib64/egl/libGLESv2_adreno.so</item>
+        <item>/vendor/lib64/libllvm-qgl.so</item>
+    </string-array>
+    <integer-array name="config_screenBrighteningThresholds">
+        <item>0</item>
+    </integer-array>
+    <integer-array name="config_screenDarkeningThresholds">
+        <item>0</item>
+    </integer-array>
+
+
+    <!-- fractions.xml files -->
+    <fraction name="config_autoBrightnessAdjustmentMaxGamma">300.0%</fraction>
+
+
+    <!-- integers.xml files -->
+    <integer name="config_autoBrightnessBrighteningLightDebounce">1000</integer>
+    <integer name="config_autoBrightnessDarkeningLightDebounce">1000</integer>
+    <integer name="config_bluetooth_idle_cur_ma">6</integer>
+    <integer name="config_bluetooth_operating_voltage_mv">3700</integer>
+    <integer name="config_bluetooth_rx_cur_ma">28</integer>
+    <integer name="config_bluetooth_tx_cur_ma">36</integer>
+    <integer name="config_brightness_ramp_rate_fast">180</integer>
+    <integer name="config_brightness_ramp_rate_slow">60</integer>
+    <integer name="config_defaultPeakRefreshRate">60</integer>
+    <integer name="config_screenBrightnessDim">8</integer>
+    <integer name="config_screenBrightnessDoze">17</integer>
+    <integer name="config_screenBrightnessForVrSettingDefault">86</integer>
+    <integer name="config_screenBrightnessForVrSettingMaximum">255</integer>
+    <integer name="config_screenBrightnessForVrSettingMinimum">79</integer>
+    <integer name="config_screenBrightnessSettingDefault">67</integer>
+    <integer name="config_screenBrightnessSettingMaximum">255</integer>
+    <integer name="config_screenBrightnessSettingMinimum">8</integer>
+    <integer name="config_shutdownBatteryTemperature">600</integer>
+
+
+    <!-- displayCutout -->
+    <string name="config_mainBuiltInDisplayCutout">M 0,0 H -33 V 88 H 33 V 0 H 0 Z</string>
+    
+    <!-- alwaysOnDisplay -->
+    <bool name="config_displayBlanksAfterDoze">false</bool>
+    <bool name="config_displayBrightnessBucketsInDoze">true</bool>
+    <bool name="config_dozeAfterScreenOffByDefault">true</bool>
+    <bool name="config_dozeAlwaysOnDisplayAvailable">true</bool>
+    <bool name="config_dozePulsePickup">false</bool>
+    <bool name="config_dozeSupportsAodWallpaper">false</bool>
+    <bool name="config_powerDecoupleAutoSuspendModeFromDisplay">true</bool>
+    <bool name="config_powerDecoupleInteractiveModeFromDisplay">true</bool>
+
+</resources>

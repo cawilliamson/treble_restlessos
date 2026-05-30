@@ -1,0 +1,15 @@
+package vendor.samsung.hardware.sysinput@1.0;
+
+interface ISehSysInputDev {
+    getKeyCodePressed(uint32_t keycode) generates (uint32_t retval, string outbuf);
+    runTspCmd(uint32_t devId, string cmdname) generates (uint32_t retval, string outbuf);
+    getTspScrubPosition(uint32_t devid) generates (uint32_t retval, string outbuf);
+    getTspSupportFeature(uint32_t devid) generates (uint32_t retval, string outbuf);
+    getTspCommandList(uint32_t devid) generates (uint32_t retval, string outbuf);
+    getTspAodActiveArea(uint32_t devid) generates (uint32_t retval, string outbuf);
+    getTspFodInformation(uint32_t devid) generates (uint32_t retval, string outbuf);
+    getTspFodPosition(uint32_t devid) generates (uint32_t retval, string outbuf);
+    runSpenCmd(string cmdname) generates (uint32_t retval, string outbuf);
+    getSpenPosition() generates (uint32_t retval, string outbuf);
+    getSpenCommandList() generates (uint32_t retval, string outbuf);
+};

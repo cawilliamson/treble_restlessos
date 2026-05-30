@@ -1,0 +1,7 @@
+This projects includes hardware-specific overlay changes, and an app which selects it dynamically
+
+Here are the list of changes:
+- Set Telephony:config_enabled_lte to true on all 4G devices, so the user can select 4G network type in the settings
+- Enable Night Mode on devices where appropriate
+- Enable Navigation Bar on devices not setting qemu.hw.keys (HTC U11+)
+- On Essential PH-1,extends Status Bar to cover the camera notch

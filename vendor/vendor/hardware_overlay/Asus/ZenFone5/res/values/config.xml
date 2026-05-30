@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <integer-array name="config_autoBrightnessLevels">
+        <item>8</item>
+        <item>55</item>
+        <item>350</item>
+        <item>1600</item>
+        <item>2550</item>
+    </integer-array>
+    <integer-array name="config_autoBrightnessLcdBacklightValues">
+        <item>6</item>
+        <item>47</item>
+        <item>150</item>
+        <item>180</item>
+        <item>250</item>
+        <item>255</item>
+    </integer-array>
+    <integer-array name="config_autoBrightnessButtonBacklightValues">
+        <item>0</item>
+        <item>0</item>
+        <item>0</item>
+        <item>0</item>
+        <item>0</item>
+        <item>0</item>
+        <item>0</item>
+        <item>0</item>
+        <item>0</item>
+        <item>0</item>
+    </integer-array>
+    <bool name="config_automatic_brightness_available">true</bool>
+    <bool name="config_setColorTransformAccelerated">true</bool>
+    <fraction name="config_autoBrightnessAdjustmentMaxGamma">300.0%</fraction>
+    <integer name="config_autoBrightnessBrighteningLightDebounce">2000</integer>
+    <integer name="config_autoBrightnessDarkeningLightDebounce">4000</integer>
+    <integer name="config_screenBrightnessDark">1</integer>
+    <integer name="config_screenBrightnessDim">10</integer>
+    <integer name="config_screenBrightnessDoze">17</integer>
+    <integer name="config_screenBrightnessSettingDefault">90</integer>
+    <integer name="config_screenBrightnessSettingMinimum">2</integer>
+    <integer name="config_screenBrightnessSettingMaximum">255</integer>
+    <integer name="config_brightness_ramp_rate_fast">180</integer>
+    <integer name="config_brightness_ramp_rate_slow">60</integer>
+</resources>

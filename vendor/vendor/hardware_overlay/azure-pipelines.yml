@@ -1,0 +1,12 @@
+pool:
+  vmImage: ubuntu-latest
+
+steps:
+- script: |
+    sudo apt install xmlstarlet dos2unix
+    cd build
+    bash build.sh
+  displayName: 'Building APKs'
+
+- script: bash tests/tests.sh
+  displayName: 'Running test scripts'

@@ -1,0 +1,123 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    Copyright (c) 2015, The Linux Foundation. All rights reserved.
+
+    Redistribution and use in source and binary forms, with or without
+    modification, are permitted provided that the following conditions are
+    met:
+        * Redistributions of source code must retain the above copyright
+          notice, this list of conditions and the following disclaimer.
+        * Redistributions in binary form must reproduce the above
+          copyright notice, this list of conditions and the following
+          disclaimer in the documentation and/or other materials provided
+          with the distribution.
+        * Neither the name of The Linux Foundation nor the names of its
+          contributors may be used to endorse or promote products derived
+          from this software without specific prior written permission.
+
+    THIS SOFTWARE IS PROVIDED "AS IS" AND ANY EXPRESS OR IMPLIED
+    WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
+    MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NON-INFRINGEMENT
+    ARE DISCLAIMED.  IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS
+    BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+    CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+    SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR
+    BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
+    WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE
+    OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
+    IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE
+-->
+
+<device name="Android">
+    <!-- All values are in mA except as noted -->
+    <!-- Nothing -->
+    <item name="none">0</item>
+    <item name="screen.on">63</item>
+    <item name="screen.full">261</item>
+    <!-- Additional power used when Wi-Fi is turned on but not receiving,
+     transmitting, or scanning -->
+    <item name="wifi.on">0.606</item>
+    <!-- Additional power used when transmitting or receiving over Wi-Fi -->
+    <item name="wifi.active">74.462</item>
+    <!-- Additional power used when Wi-Fi is scanning for access points -->
+    <item name="wifi.scan">25.088</item>
+    <!-- Average power use by the camera subsystem for a typical camera
+         application. Intended as a rough estimate for an application running a
+         preview and capturing approximately 10 full-resolution pictures per
+         minute. -->
+    <item name="camera.avg">374.399</item>
+    <!-- Average power used by the camera flash module when on -->
+    <item name="camera.flashlight">265.769</item>
+    <!-- Additional power used when GPS is acquiring a signal -->
+    <item name="gps.on">21.412</item>
+    <!-- Additional power used when cellular radio is transmitting/receiving -->
+    <item name="radio.active">208.332</item>
+    <!-- The current consumed by the radio when it is scanning for a signal -->
+    <item name="radio.scanning">46.310</item>
+    <!-- Current consumed by the radio at different signal strengths, when paging -->
+    <array name="radio.on">
+        <value>33.079</value>
+        <value>30</value>
+        <value>25</value>
+        <value>20</value>
+        <value>15</value>
+        <value>10</value>
+        <value>5</value>
+        <value>1.090</value>
+    </array>
+    <!-- Number of cores each CPU cluster contains -->
+    <array name="cpu.clusters.cores">
+        <value>4</value> <!-- Cluster 0 has 4 cores (cpu0, cpu1, cpu2, cpu3) -->
+        <value>4</value> <!-- Cluster 1 has 4 cores (cpu4, cpu5, cpu6, cpu7) -->
+    </array>
+    <array name="cpu.core_speeds.cluster0">
+        <value>614400</value> <!-- 614 MHz CPU speed -->
+        <value>883200</value> <!-- 883 MHz CPU speed -->
+        <value>1036800</value> <!-- 1036 MHz CPU speed -->
+        <value>1363200</value> <!-- 1363 MHz CPU speed -->
+        <value>1536000</value> <!-- 1536 MHz CPU speed -->
+        <value>1670400</value> <!-- 1670 MHz CPU speed -->
+        <value>1804800</value> <!-- 1804 MHz CPU speed -->
+    </array>
+    <array name="cpu.core_speeds.cluster1">
+        <value>633600</value> <!-- 663 MHz CPU speed -->
+        <value>902400</value> <!-- 902 MHz CPU speed -->
+        <value>1094400</value> <!-- 1094 MHz CPU speed -->
+        <value>1401600</value> <!-- 1401 MHz CPU speed -->
+        <value>1555200</value> <!-- 1552 MHz CPU speed -->
+        <value>1804800</value> <!-- 1804 MHz CPU speed -->
+    </array>
+    <array name="cpu.core_power.cluster0">
+        <value>8.24</value> <!-- 614 MHz CPU speed -->
+        <value>18.66</value> <!-- 883 MHz CPU speed -->
+        <value>20.2</value> <!-- 1036 MHz CPU speed -->
+        <value>28.57</value> <!-- 1363 MHz CPU speed -->
+        <value>48.57</value> <!-- 1536 MHz CPU speed -->
+        <value>51.23</value> <!-- 1670 MHz CPU speed -->
+        <value>62.6</value> <!-- 1804 MHz CPU speed -->
+    </array>
+    <array name="cpu.core_power.cluster1">
+        <value>10.85</value> <!-- 663 MHz CPU speed -->
+        <value>20.85</value> <!-- 902 MHz CPU speed -->
+        <value>31.57</value> <!-- 1094 MHz CPU speed -->
+        <value>50.96</value> <!-- 1401 MHz CPU speed -->
+        <value>70.31</value> <!-- 1552 MHz CPU speed -->
+        <value>100.25</value> <!-- 1804 MHz CPU speed -->
+    </array>
+    <!-- Additional power consumption by CPU cluster0 itself when running
+     excluding cores in it -->
+    <item name="cpu.cluster_power.cluster0">4.27</item>
+    <!-- Additional power consumption by CPU cluster1 itself when running
+         excluding cores in it -->
+    <item name="cpu.cluster_power.cluster1">7.22</item>
+    <!-- Power consumption when CPU is suspended -->
+    <item name="cpu.suspend">3.993</item>
+    <!-- Additional power consumption when CPU is in a kernel idle loop -->
+    <item name="cpu.idle">2.969</item>
+    <!-- Additional power consumption by CPU excluding cluster and core when
+         running -->
+    <item name="cpu.active">3.5</item>
+    <!-- This is the battery capacity in mAh -->
+    <!-- This is the battery capacity in mAh (measured at nominal voltage) -->
+    <item name="battery.capacity">3060</item>
+</device>

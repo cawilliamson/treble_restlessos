@@ -1,0 +1,10 @@
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+        package="me.phh.treble.overlay.huawei.PIC"
+        android:versionCode="1"
+        android:versionName="1.0">
+        <overlay android:targetPackage="android"
+                android:requiredSystemPropertyName="ro.hw.oemName"
+                android:requiredSystemPropertyValue="+PIC*"
+		android:priority="150"
+		android:isStatic="true" />
+</manifest>

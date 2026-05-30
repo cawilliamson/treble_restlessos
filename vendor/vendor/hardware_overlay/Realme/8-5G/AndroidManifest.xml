@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8" standalone="no"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android" package="me.phh.treble.overlay.realme.r8_5g">
+    <overlay
+	android:isStatic="true"
+	android:priority="261"
+	android:targetPackage="android"
+        android:requiredSystemPropertyName="ro.boot.prjname"
+	android:requiredSystemPropertyValue="+(132863|133013)" />
+</manifest>

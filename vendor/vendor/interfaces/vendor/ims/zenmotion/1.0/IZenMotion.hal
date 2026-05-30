@@ -1,0 +1,20 @@
+package vendor.ims.zenmotion@1.0;
+
+interface IZenMotion {
+    // Send power keyevent
+    setDclickEnable(uint32_t enable);
+    // Sends DPAD_UP keyevent
+    setSwipeUpEnable(uint32_t enable);
+    // Send as base-2 int
+    // 2 => W
+    // 4 => S
+    // 8 => E
+    // 16 => M | C
+    // 32 => Z
+    // 64 => V
+    // 128 => Music Control
+    setTouchGestureType(string str);
+    getDclickStatus() generates (uint16_t res);
+    getSwipeUpEnable() generates (uint16_t res);
+    getTouchGestureType() generates (uint16_t res);
+};

@@ -1,0 +1,5 @@
+package com.qualcomm.qti.uceservice@2.0;
+
+interface IUceListener {
+	oneway onStatusChange(UceStatus status, string iccId);
+};

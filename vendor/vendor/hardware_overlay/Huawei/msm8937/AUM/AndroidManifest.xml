@@ -1,0 +1,10 @@
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+        package="io.tenseventyseven.treble.huawei.AUM"
+        android:versionCode="1"
+        android:versionName="1.0">
+        <overlay android:targetPackage="android"
+                android:requiredSystemPropertyName="ro.hw.oemName"
+                android:requiredSystemPropertyValue="+AUM*"
+		android:priority="132"
+		android:isStatic="true" />
+</manifest>

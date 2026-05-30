@@ -1,0 +1,8 @@
+package vendor.hct.hardware.gesturewake@1.0;
+
+import vendor.hct.hardware.gesturewake@1.0::IGestureWakeCallback;
+
+interface IGestureWake {
+    startGesture(bool state) generates (uint32_t result);
+    oneway readGesture(IGestureWakeCallback cb);
+};

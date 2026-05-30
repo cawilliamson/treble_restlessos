@@ -1,0 +1,17 @@
+type phhota_dev, dev_type;
+typeattribute phhota_dev mlstrustedobject;
+
+allow phhsu_daemon phhota_dev:blk_file rw_file_perms;
+allow system_app phhota_dev:blk_file rw_file_perms;
+allow kernel phhsu_daemon:fd use;
+
+allow phhsu_daemon gsi_data_file:file ioctl;
+allowxperm phhsu_daemon gsi_data_file:file ioctl { 0x660b };
+
+allow phhsu_daemon loop_device:blk_file ioctl;
+allowxperm phhsu_daemon loop_device:blk_file ioctl { 0x4c00 };
+
+allow phhsu_daemon userdata_block_device:blk_file ioctl;
+allowxperm phhsu_daemon userdata_block_device:blk_file ioctl { 0x1278 0x127a };
+
+allow kernel gsi_data_file:file rw_file_perms;

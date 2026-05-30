@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Display/UI -->
+    <dimen name="keyguard_carrier_text_margin">45px</dimen>
+    <dimen name="system_icons_keyguard_padding_end">45px</dimen>
+    <dimen name="rounded_corner_content_padding">10dp</dimen>
+
+    <!-- Power button & Side FP Sensor -->
+    <dimen name="physical_power_button_center_screen_location_y">890px</dimen>
+    <dimen name="physical_fingerprint_sensor_center_screen_location_x">1080px</dimen>
+    <dimen name="physical_fingerprint_sensor_center_screen_location_y">@dimen/physical_power_button_center_screen_location_y</dimen>
+</resources>

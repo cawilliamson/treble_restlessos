@@ -1,0 +1,5 @@
+package vendor.mediatek.hardware.mtkpower@1.1;
+interface IMtkPowerCallback {
+    oneway mtkPowerHint(int32_t hint, int32_t duration);
+    oneway notifyAppState(string pack, string act, int32_t pid, int32_t state, int32_t uid);
+};

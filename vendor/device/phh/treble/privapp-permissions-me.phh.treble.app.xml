@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<permissions>
+    <privapp-permissions package="me.phh.treble.app">
+	    <permission name="android.permission.ACCESS_NETWORK_STATE"/>
+	    <permission name="android.permission.DIAGNOSTIC"/>
+	    <permission name="android.permission.INSTALL_PACKAGES"/>
+	    <permission name="android.permission.INTERACT_ACROSS_USERS"/>
+	    <permission name="android.permission.REQUEST_INSTALL_PACKAGES"/>
+    </privapp-permissions>
+</permissions>

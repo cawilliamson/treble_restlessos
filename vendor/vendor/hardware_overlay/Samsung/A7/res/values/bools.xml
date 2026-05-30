@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <bool name="config_fillMainBuiltInDisplayCutout">true</bool>
+    <bool name="config_showNavigationBar">true</bool>
+    <bool name="config_useDevInputEventForAudioJack">false</bool>
+    <bool name="config_wifi_background_scan_support">true</bool>
+    <bool name="config_wifi_dual_band_support">true</bool>
+    <bool name="config_wifi_fast_bss_transition_enabled">true</bool>
+    <bool name="config_enableBurnInProtection">true</bool>
+    <bool name="config_dozeAlwaysOnDisplayAvailable">true</bool>
+    <bool name="config_dozePulsePickup">true</bool>
+    <bool name="config_automatic_brightness_available">true</bool>
+</resources>

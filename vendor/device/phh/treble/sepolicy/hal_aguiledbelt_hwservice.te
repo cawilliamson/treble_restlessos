@@ -1,0 +1,4 @@
+type hal_aguiledbelt_hwservice, hwservice_manager_type;
+allow system_app hal_aguiledbelt_hwservice:hwservice_manager { find };
+type hal_aguiledbelt, domain;
+allow system_app hal_aguiledbelt:binder { call };

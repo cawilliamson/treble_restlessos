@@ -1,0 +1,10 @@
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+        package="me.phh.treble.overlay.teracube2e"
+        android:versionCode="1"
+        android:versionName="1.0">
+        <overlay android:targetPackage="android"
+                android:requiredSystemPropertyName="ro.vendor.build.fingerprint"
+		android:requiredSystemPropertyValue="+Teracube/Teracube_2e*"
+		android:priority="312"
+		android:isStatic="true" />
+</manifest>

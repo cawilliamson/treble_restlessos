@@ -1,0 +1,10 @@
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+        package="me.phh.treble.overlay.xiaomi.redminote114g.systemui"
+        android:versionCode="1"
+        android:versionName="1.0">
+        <overlay android:targetPackage="com.android.systemui"
+                android:requiredSystemPropertyName="ro.product.vendor.device"
+                android:requiredSystemPropertyValue="+(selene|selenes)"
+		android:priority="403"
+		android:isStatic="true" />
+</manifest>

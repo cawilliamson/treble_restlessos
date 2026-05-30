@@ -1,0 +1,120 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+	<integer name="config_autoPowerModeAnyMotionSensor">30</integer>
+	<bool name="config_wifi_dual_band_support">false</bool>
+	<bool name="config_wifi_fast_bss_transition_enabled">true</bool>
+	<bool name="config_wifi_background_scan_support">true</bool>
+	<bool name="config_wifi_enable_disconnection_debounce">true</bool>
+	<bool name="config_automatic_brightness_available">true</bool>
+	<integer name="config_brightness_ramp_rate_fast">200</integer>
+	<integer name="config_brightness_ramp_rate_slow">40</integer>
+	<bool name="config_setColorTransformAccelerated">true</bool>
+	<bool name="config_nightDisplayAvailable">true</bool>
+	<bool name="config_suspendWhenScreenOffDueToProximity">true</bool>
+
+	<integer-array name="config_longPressVibePattern">
+		<item>0</item>
+		<item>25</item>
+	</integer-array>
+	<integer-array name="config_virtualKeyVibePattern">
+		<item>0</item>
+		<item>34</item>
+	</integer-array>
+	<integer-array name="config_keyboardTapVibePattern">
+		<item>0</item>
+		<item>25</item>
+	</integer-array>
+	<bool name="config_hotswapCapable">true</bool>
+	<integer name="config_screenBrightnessSettingMinimum">3</integer>
+	<integer name="config_screenBrightnessSettingDefault">90</integer>
+	<integer name="config_screenBrightnessDoze">17</integer>
+	<integer name="config_autoBrightnessBrighteningLightDebounce">2000</integer>
+	<integer name="config_screenBrightnessDark">2</integer>
+	<integer-array name="config_autoBrightnessLcdBacklightValues">
+		<item>3</item>
+		<item>10</item>
+		<item>35</item>
+		<item>55</item>
+		<item>65</item>
+		<item>75</item>
+		<item>90</item>
+		<item>90</item>
+		<item>90</item>
+		<item>90</item>
+		<item>112</item>
+		<item>135</item>
+		<item>151</item>
+		<item>159</item>
+		<item>215</item>
+		<item>255</item>
+		<item>255</item>
+		<item>255</item>
+		<item>256</item>
+	</integer-array>
+	<integer-array name="config_autoBrightnessLevels">
+		<item>2</item>
+		<item>10</item>
+		<item>50</item>
+		<item>90</item>
+		<item>100</item>
+		<item>150</item>
+		<item>200</item>
+		<item>300</item>
+		<item>400</item>
+		<item>500</item>
+		<item>800</item>
+		<item>1000</item>
+		<item>1300</item>
+		<item>2000</item>
+		<item>3000</item>
+		<item>4000</item>
+		<item>8000</item>
+		<item>20000</item>
+	</integer-array>
+	<bool name="config_bluetooth_le_peripheral_mode_supported">true</bool>
+	<integer name="config_bluetooth_operating_voltage_mv">3300</integer>
+	<bool name="skip_restoring_network_selection">true</bool>
+	<bool name="config_showNavigationBar">true</bool>
+
+	<bool name="config_dozeAfterScreenOff">true</bool>
+	<bool name="config_powerDecoupleInteractiveModeFromDisplay">true</bool>
+
+	<integer name="config_mobile_mtu">1410</integer>
+	<bool name="config_speed_up_audio_on_mt_calls">true</bool>
+	<bool name="config_auto_attach_data_on_creation">false</bool>
+	<string-array name="config_gpsParameters">
+        	<item>XTRA_SERVER_1=https://xtrapath1.izatcloud.net/xtra2.bin</item>
+        	<item>XTRA_SERVER_2=https://xtrapath2.izatcloud.net/xtra2.bin</item>
+        	<item>XTRA_SERVER_3=https://xtrapath3.izatcloud.net/xtra2.bin</item>
+        	<item>NTP_SERVER=north-america.pool.ntp.org</item>
+        	<item>SUPL_MODE=0</item>
+        	<item>SUPL_HOST=NONE</item>
+        	<item>SUPL_PORT=7275</item>
+        	<item>SUPL_VER=0x20000</item>
+        	<item>LPP_PROFILE=3</item>
+        	<item>NMEA_PROVIDER=0</item>
+        	<item>A_GLONASS_POS_PROTOCOL_SELECT=0</item>
+        	<item>ERR_ESTIMATE=0</item>
+        	<item>INTERMEDIATE_POS=0</item>
+        	<item>SUPL_ES=1</item>
+        	<item>GPS_LOCK=1</item>
+	</string-array>
+	<bool name="config_switch_phone_on_voice_reg_state_change">false</bool>
+	<bool name="config_use_sim_language_file">true</bool>
+	<integer name="config_cameraLaunchGestureSensorType">-1</integer>
+	<string name="config_cameraLaunchGestureSensorStringType" />
+
+
+	<!-- big ram -->
+	<bool name="config_pinnerCameraApp">false</bool>
+	<string-array name="config_defaultPinnerServiceFiles">
+        	<item>/system/framework/arm/boot-framework.oat</item>
+        	<item>/system/framework/arm/boot-framework.vdex</item>
+        	<item>/system/framework/oat/arm/services.odex</item>
+        	<item>/system/framework/oat/arm/services.vdex</item>
+        	<item>/system/framework/arm/boot.oat</item>
+        	<item>/system/framework/arm/boot.vdex</item>
+        	<item>/system/framework/arm/boot-core-libart.oat</item>
+        	<item>/system/framework/arm/boot-core-libart.vdex</item>
+	</string-array>
+</resources>

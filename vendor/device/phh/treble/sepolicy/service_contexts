@@ -1,0 +1,19 @@
+qti.ims.ext                                          u:object_r:radio_service:s0
+# SPRD IMS
+ims_ex                                               u:object_r:radio_service:s0
+ims_ut_ex                                            u:object_r:radio_service:s0
+ims_doze_manager                                     u:object_r:radio_service:s0
+irit                                                 u:object_r:radio_service:s0
+
+# MTK IMS
+mwis                                    u:object_r:radio_service:s0
+mtkIms                                    u:object_r:radio_service:s0
+
+# Audio AIDL interface
+android.hardware.bluetooth.audio.IBluetoothAudioProviderFactory/sysbta    u:object_r:hal_audio_service:s0
+
+# Fingerprint
+android.hardware.biometrics.fingerprint.IFingerprint/defaultHIDL     u:object_r:fingerprint_hidl_service:s0
+
+# QcRilAm
+me.phh.qcrilam                                                            u:object_r:qcrilam_service:s0

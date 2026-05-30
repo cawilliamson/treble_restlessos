@@ -1,0 +1,8 @@
+package vendor.samsung.hardware.exthealth@1.0;
+
+import android.hardware.health@2.0::IHealth;
+
+interface IExtHealth extends android.hardware.health@2.0::IHealth {
+	registerCallbackSec(IExtHealthInfoCallback callback) generates (int32_t result);
+	unregisterCallbackSec(IExtHealthInfoCallback callback) generates (int32_t result);
+}

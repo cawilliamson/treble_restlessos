@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <dimen name="rounded_corner_content_padding">52.0px</dimen>
+    <dimen name="status_bar_padding_end">3.0px</dimen>
+    <dimen name="status_bar_padding_start">3.0px</dimen>
+</resources>

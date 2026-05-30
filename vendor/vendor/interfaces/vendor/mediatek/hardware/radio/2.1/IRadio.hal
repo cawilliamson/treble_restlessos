@@ -1,0 +1,6 @@
+package vendor.mediatek.hardware.radio@2.1;
+
+import vendor.mediatek.hardware.radio@2.0::IRadio;
+
+interface IRadio extends vendor.mediatek.hardware.radio@2.0::IRadio {
+};

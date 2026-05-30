@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <integer-array name="config_autoBrightnessLcdBacklightValues">
+        <item>3</item>
+        <item>35</item>
+        <item>53</item>
+        <item>60</item>
+        <item>65</item>
+        <item>77</item>
+        <item>115</item>
+        <item>179</item>
+        <item>230</item>
+        <item>255</item>
+    </integer-array>
+    <integer-array name="config_autoBrightnessLevels">
+        <item>20</item>
+        <item>50</item>
+        <item>100</item>
+        <item>200</item>
+        <item>400</item>
+        <item>1000</item>
+        <item>2000</item>
+        <item>3000</item>
+        <item>5000</item>
+    </integer-array>
+    <string-array name="config_tether_wifi_regexs">
+        <item>wigig0</item>
+        <item>wlan0</item>
+    </string-array>
+</resources>

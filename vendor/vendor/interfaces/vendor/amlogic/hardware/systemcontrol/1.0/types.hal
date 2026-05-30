@@ -1,0 +1,20 @@
+package vendor.amlogic.hardware.systemcontrol@1.0;
+
+enum Result : uint32_t {
+	OK,
+	FAIL,
+};
+
+struct DroidDisplayInfo {
+	uint32_t type;
+	string socType;
+	string defaultUI;
+	uint32_t fb0w;
+	uint32_t fb0h;
+	uint32_t fb0bits;
+	uint32_t fb0trip;
+	uint32_t fb1w;
+	uint32_t fb1h;
+	uint32_t fb1bits;
+	uint32_t fb1trip;
+};

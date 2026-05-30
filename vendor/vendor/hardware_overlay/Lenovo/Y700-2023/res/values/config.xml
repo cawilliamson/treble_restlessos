@@ -1,0 +1,67 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <bool name="config_voice_capable">false</bool>
+    <bool name="config_sms_capable">false</bool>
+    <bool name="config_mobile_data_capable">false</bool>
+
+    <bool name="config_useDevInputEventForAudioJack">true</bool>
+    <bool name="config_showNavigationBar">true</bool>
+    <bool name="config_automatic_brightness_available">true</bool>
+
+    <dimen name="status_bar_height_default">32dp</dimen>
+    <dimen name="status_bar_height">32dp</dimen>
+    <dimen name="status_bar_height_portrait">32dp</dimen>
+    <dimen name="quick_qs_offset_height">32dp</dimen>
+
+    <integer name="config_screenBrightnessSettingMinimum">1</integer>
+
+    <integer-array name="config_autoBrightnessLevels">
+        <item>10</item>
+        <item>60</item>
+        <item>210</item>
+        <item>350</item>
+        <item>420</item>
+        <item>1000</item>
+        <item>1001</item>
+    </integer-array>
+    <integer-array name="config_autoBrightnessLcdBacklightValues">
+        <item>77</item>
+        <item>77</item>
+        <item>120</item>
+        <item>144</item>
+        <item>198</item>
+        <item>230</item>
+        <item>247</item>
+        <item>255</item>
+    </integer-array>
+    <integer-array name="config_autoBrightnessDisplayValuesNits">
+        <item>40</item>
+        <item>40</item>
+        <item>100</item>
+        <item>150</item>
+        <item>300</item>
+        <item>420</item>
+        <item>490</item>
+        <item>500</item>
+    </integer-array>
+    <integer-array name="config_screenBrightnessNits">
+        <item>0</item>
+        <item>40</item>
+        <item>100</item>
+        <item>150</item>
+        <item>300</item>
+        <item>420</item>
+        <item>490</item>
+        <item>500</item>
+    </integer-array>
+    <integer-array name="config_screenBrightnessBacklight">
+        <item>0</item>
+        <item>20</item>
+        <item>51</item>
+        <item>77</item>
+        <item>153</item>
+        <item>214</item>
+        <item>250</item>
+        <item>255</item>
+    </integer-array>
+</resources>

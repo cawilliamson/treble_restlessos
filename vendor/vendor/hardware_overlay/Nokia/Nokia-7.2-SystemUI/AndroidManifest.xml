@@ -1,0 +1,9 @@
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+        package="me.phh.treble.overlay.nokia.nokia_7_2.systemui"
+        android:versionCode="1"
+        android:versionName="1.0">
+        <overlay android:targetPackage="com.android.systemui"
+                android:requiredSystemPropertyName="ro.vendor.build.fingerprint"
+                android:requiredSystemPropertyValue="+Nokia/Daredevil*"
+                android:priority="183" />
+</manifest>

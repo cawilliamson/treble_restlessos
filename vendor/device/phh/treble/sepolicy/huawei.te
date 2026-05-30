@@ -1,0 +1,37 @@
+allow ueventd proc:file r_file_perms;
+permissive ueventd;
+
+type teecd_data_file, file_type;
+type dmd_device, file_type;
+allow hal_fingerprint_server dmd_device:chr_file rw_file_perms;
+allow hal_fingerprint_server sysfs:file rw_file_perms;
+allow tee hal_fingerprint_default:process { getattr };
+allow tee teecd_data_file:dir { search read write create getattr add_name open };
+allow tee teecd_data_file:file { read write create getattr open };
+allow tee system_data_file:dir { getattr };
+
+type oeminfo_nvm, domain;
+type oeminfo_nvm_device, file_type;
+allowxperm oeminfo_nvm oeminfo_nvm_device:blk_file ioctl { 0x1260 };
+
+allow charger rootfs:file { ioctl read getattr lock map execute entrypoint open };
+
+# This is use exclusively for init to relabel /dev/selinux from tmpfs to device
+allow kernel tmpfs:{ dir file } relabelfrom;
+allow kernel device:{ dir file } relabelto;
+
+# system/core/init/mount_handler.cpp likes to browse all /sys/block/xxx, so let it do so...
+type sys_block_sdd, file_type;
+allow init { sysfs sys_block_sdd }:dir r_dir_perms;
+allow init { sysfs sys_block_sdd }:file r_file_perms;
+allow init { sysfs sys_block_sdd }:lnk_file read;
+
+allowxperm vendor_init { teecd_data_file }:dir ioctl { 
+  FS_IOC_GET_ENCRYPTION_POLICY
+  FS_IOC_SET_ENCRYPTION_POLICY
+};
+
+# Fixes boot issue in EMUI 9 P20 lite
+type sys_block_mmcblk0, file_type;
+allow init sys_block_mmcblk0:lnk_file read;
+allow init sysfs_zram:lnk_file read;

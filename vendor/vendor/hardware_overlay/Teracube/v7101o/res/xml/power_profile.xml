@@ -1,0 +1,77 @@
+<?xml version="1.0" encoding="utf-8"?>
+<device name="Android">
+    <item name="ambient.on">5</item>
+    <item name="screen.on">56.2</item>
+    <item name="screen.full">300.7</item>
+    <item name="bluetooth.active">37</item>
+    <item name="bluetooth.on">1.2</item>
+    <item name="wifi.on">0.9</item>
+    <item name="wifi.active">131.5</item>
+    <item name="wifi.scan">32.1</item>
+    <item name="audio">22.9</item>
+    <item name="video">39</item>
+    <item name="camera.flashlight">160</item>
+    <item name="camera.avg">550</item>
+    <item name="gps.on">26.7</item>
+    <item name="radio.active">227</item>
+    <item name="radio.scanning">2</item>
+    <array name="radio.on">
+        <value>2.5</value>
+        <value>1</value>
+    </array>
+    <array name="cpu.clusters.cores">
+        <value>4</value>
+        <value>4</value>
+    </array>
+    <array name="cpu.speeds.cluster0">
+        <value>2000000</value>
+        <value>2000000</value>
+        <value>2000000</value>
+        <value>2000000</value>
+    </array>
+    <array name="cpu.speeds.cluster1">
+        <value>1600000</value>
+        <value>1600000</value>
+        <value>1600000</value>
+        <value>1600000</value>
+    </array>
+    <array name="cpu.active.cluster0">
+        <value>125</value>
+    </array>
+    <array name="cpu.active.cluster1">
+        <value>75</value>
+    </array>
+    <item name="cpu.idle">3.9</item>
+    <array name="memory.bandwidths">
+        <value>22.7</value>
+    </array>
+    <item name="battery.capacity">3450</item>
+    <item name="wifi.controller.idle">2</item>
+    <item name="wifi.controller.rx">83</item>
+    <item name="wifi.controller.tx">360</item>
+    <array name="wifi.controller.tx_levels" />
+    <item name="wifi.controller.voltage">3700</item>
+    <array name="wifi.batchedscan">
+        <value>0.015</value>
+        <value>0.122</value>
+        <value>0.962</value>
+        <value>7.682</value>
+        <value>61.488</value>
+    </array>
+    <item name="modem.controller.sleep">0</item>
+    <item name="modem.controller.idle">145</item>
+    <item name="modem.controller.rx">147</item>
+    <array name="modem.controller.tx">
+        <value>153</value>
+        <value>198</value>
+        <value>259</value>
+        <value>310</value>
+        <value>395</value>
+    </array>
+    <item name="modem.controller.voltage">0</item>
+    <array name="gps.signalqualitybased">
+        <value>49</value>
+        <value>8</value>
+    </array>
+    <item name="gps.voltage">3700</item>
+</device>

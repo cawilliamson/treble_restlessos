@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+  <bool name="config_showNavigationBar">true</bool>
+  <bool name="config_fillMainBuiltInDisplayCutout">false</bool>
+  <bool name="config_useDevInputEventForAudioJack">true</bool>
+  <bool name="config_wifi_dual_band_support">true</bool>
+  <bool name="config_wifi_fast_bss_transition_enabled">true</bool>
+  <bool name="config_supportDoubleTapWake">true</bool>
+
+  <integer name="config_screenBrightnessSettingDefault">128</integer>
+  <integer name="config_screenBrightnessSettingMaximum">306</integer>
+  <integer name="config_screenBrightnessSettingMinimum">1</integer>
+
+  <dimen name="status_bar_height">88px</dimen>
+  <dimen name="status_bar_height_default">88px</dimen>
+  <dimen name="status_bar_height_portrait">88px</dimen>
+  <dimen name="status_bar_height_landscape">24dp</dimen>
+
+  <dimen name="rounded_corner_radius_top">40.0px</dimen>
+  <dimen name="rounded_corner_radius_bottom">40.0px</dimen>
+  <dimen name="rounded_corner_radius">40.0px</dimen>
+
+  <string translatable="false" name="config_mainBuiltInDisplayCutout">
+    M 0,0
+    H 105
+    V 88
+    H 0
+    V 0
+    Z
+    @left
+  </string>
+
+  <string-array name="config_tether_usb_regexs">
+    <item>rndis0</item>
+  </string-array>
+  <string-array name="config_tether_wifi_regexs">
+    <item>wlan0</item>
+  </string-array>
+</resources>

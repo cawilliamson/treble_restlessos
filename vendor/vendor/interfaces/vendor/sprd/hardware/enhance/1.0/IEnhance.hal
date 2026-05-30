@@ -1,0 +1,7 @@
+package vendor.sprd.hardware.enhance@1.0;
+
+interface IEnhance {
+    setValue(Type type, int32_t val) generates (Status status);
+    setMode(Type type, int32_t mode) generates (Status result);
+    
+};

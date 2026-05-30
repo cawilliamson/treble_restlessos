@@ -1,0 +1,249 @@
+package vendor.sprd.hardware.radio@1.0;
+
+import android.hardware.radio@1.0::CallState;
+import android.hardware.radio@1.0::UusInfo;
+
+struct CallForwardInfoUri {
+    int32_t status;
+    int32_t reason;
+    int32_t numberType;
+    int32_t ton;
+    string number;
+    int32_t serviceClass;
+    string ruleset;
+    int32_t timeSeconds;
+};
+
+struct CallVoLTE {
+    int32_t index;
+    int8_t isMT;
+    int32_t negStatusPresent;
+    int32_t negStatus;
+    string mediaDescription;
+    int32_t csMode;
+    CallState state;
+    int32_t mpty;
+    int32_t numberType;
+    int32_t toa;
+    string number;
+    int32_t prioritypresent;
+    int32_t priority;
+    int32_t cliValidityPresent;
+    int32_t numberPresentation;
+    int32_t als;
+    int8_t isVoicePrivacy;
+    string name;
+    int32_t namePresentation;
+    int8_t isLoopback;
+    UusInfo uusInfo;
+};
+
+enum ExtPersoSubstate : int32_t {
+    UNKNOWN = 0,
+    IN_PROGRESS = 1,
+    READY = 2,
+    SIM_NETWORK = 3,
+    SIM_NETWORK_SUBSET = 4,
+    SIM_CORPORATE = 5,
+    SIM_SERVICE_PROVIDER = 6,
+    SIM_SIM = 7,
+    SIM_NETWORK_PUK = 8,
+    SIM_NETWORK_SUBSET_PUK = 9,
+    SIM_CORPORATE_PUK = 10,
+    SIM_SERVICE_PROVIDER_PUK = 11,
+    SIM_SIM_PUK = 12,
+    RUIM_NETWORK1 = 13,
+    RUIM_NETWORK2 = 14,
+    RUIM_HRPD = 15,
+    RUIM_CORPORATE = 16,
+    RUIM_SERVICE_PROVIDER = 17,
+    RUIM_RUIM = 18,
+    RUIM_NETWORK1_PUK = 19,
+    RUIM_NETWORK2_PUK = 20,
+    RUIM_HRPD_PUK = 21,
+    RUIM_CORPORATE_PUK = 22,
+    RUIM_SERVICE_PROVIDER_PUK = 23,
+    RIL_EXT_PERSOSUBSTATE_BASE = 24,
+    RUIM_RUIM_PUK = 24, //Yup, same value for both
+    RIL_PERSOSUBSTATE_SIMLOCK_FOREVER = 25,
+};
+
+enum ExtRadioErrno : int32_t {
+    NONE = 0,
+    RADIO_NOT_AVAILABLE = 1,
+    GENERIC_FAILURE = 2,
+    PASSWORD_INCORRECT = 3,
+    SIM_PIN2 = 4,
+    SIM_PUK2 = 5,
+    REQUEST_NOT_SUPPORTED = 6,
+    CANCELLED = 7,
+    OP_NOT_ALLOWED_DURING_VOICE_CALL = 8,
+    OP_NOT_ALLOWED_BEFORE_REG_TO_NW = 9,
+    SMS_SEND_FAIL_RETRY = 10,
+    SIM_ABSENT = 11,
+    SUBSCRIPTION_NOT_AVAILABLE = 12,
+    MODE_NOT_SUPPORTED = 13,
+    FDN_CHECK_FAILURE = 14,
+    ILLEGAL_SIM_OR_ME = 15,
+    MISSING_RESOURCE = 16,
+    NO_SUCH_ELEMENT = 17,
+    DIAL_MODIFIED_TO_USSD = 18,
+    DIAL_MODIFIED_TO_SS = 19,
+    DIAL_MODIFIED_TO_DIAL = 20,
+    USSD_MODIFIED_TO_DIAL = 21,
+    USSD_MODIFIED_TO_SS = 22,
+    USSD_MODIFIED_TO_USSD = 23,
+    SS_MODIFIED_TO_DIAL = 24,
+    SS_MODIFIED_TO_USSD = 25,
+    SUBSCRIPTION_NOT_SUPPORTED = 26,
+    SS_MODIFIED_TO_SS = 27,
+    LCE_NOT_SUPPORTED = 36,
+    NO_MEMORY = 37,
+    INTERNAL_ERR = 38,
+    SYSTEM_ERR = 39,
+    MODEM_ERR = 40,
+    INVALID_STATE = 41,
+    NO_RESOURCES = 42,
+    SIM_ERR = 43,
+    INVALID_ARGUMENTS = 44,
+    INVALID_SIM_STATE = 45,
+    INVALID_MODEM_STATE = 46,
+    INVALID_CALL_ID = 47,
+    NO_SMS_TO_ACK = 48,
+    NETWORK_ERR = 49,
+    REQUEST_RATE_LIMITED = 50,
+    SIM_BUSY = 51,
+    SIM_FULL = 52,
+    NETWORK_REJECT = 53,
+    OPERATION_NOT_ALLOWED = 54,
+    EMPTY_RECORD = 55,
+    INVALID_SMS_FORMAT = 56,
+    ENCODING_ERR = 57,
+    INVALID_SMSC_ADDRESS = 58,
+    NO_SUCH_ENTRY = 59,
+    NETWORK_NOT_READY = 60,
+    NOT_PROVISIONED = 61,
+    NO_SUBSCRIPTION = 62,
+    NO_NETWORK_FOUND = 63,
+    DEVICE_IN_USE = 64,
+    ABORTED = 65,
+    INVALID_RESPONSE = 66,
+    OEM_ERROR_1 = 501,
+    OEM_ERROR_2 = 502,
+    OEM_ERROR_3 = 503,
+    OEM_ERROR_4 = 504,
+    OEM_ERROR_5 = 505,
+    OEM_ERROR_6 = 506,
+    OEM_ERROR_7 = 507,
+    OEM_ERROR_8 = 508,
+    OEM_ERROR_9 = 509,
+    OEM_ERROR_10 = 510,
+    OEM_ERROR_11 = 511,
+    OEM_ERROR_12 = 512,
+    OEM_ERROR_13 = 513,
+    OEM_ERROR_14 = 514,
+    OEM_ERROR_15 = 515,
+    OEM_ERROR_16 = 516,
+    OEM_ERROR_17 = 517,
+    OEM_ERROR_18 = 518,
+    OEM_ERROR_19 = 519,
+    OEM_ERROR_20 = 520,
+    OEM_ERROR_21 = 521,
+    OEM_ERROR_22 = 522,
+    OEM_ERROR_23 = 523,
+    OEM_ERROR_24 = 524,
+    OEM_ERROR_25 = 525,
+    RIL_E_SPRD_BASE = 600,
+    RIL_E_INVALID_PARAMETER = 601,
+};
+
+struct ImsErrorCauseInfo {
+    int32_t type;
+    int32_t errCode;
+    string errDescription;
+};
+
+enum ImsHandeoverToVoWifiResult {
+    IMS_HANDOVER_REGISTER_FAIL = 0,
+    IMS_HANDOVER_SUCCESS = 1,
+    IMS_HANDOVER_PDN_BUILD_FAIL = 2,
+    IMS_HANDOVER_RE_REGISTER_FAIL = 3,
+    IMS_HANDOVER_ATTACH_FAIL = 4,
+    IMS_HANDOVER_ATTACH_SUCCESS = 5,
+};
+
+enum ImsHandoverType : int32_t {
+    IDEL_HANDOVER_TO_VOWIFI = 1,
+    IDEL_HANDOVER_TO_VOLTE = 2,
+    INCALL_HANDOVER_TO_VOWIFI = 3,
+    INCALL_HANDOVER_TO_VOLTE = 4,
+};
+
+struct ImsNetworkInfo {
+    int32_t type;
+    int32_t age;
+    string info;
+};
+
+enum ImsPdnStatus : int32_t {
+    IMS_PDN_ACTIVE_FAILED = 0,
+    IMS_PDN_READY = 1,
+    IMS_PDN_START = 2,
+};
+
+strct ImsPhoneCMCCSI {
+    int32_t id;
+    int32_t idr;
+    int32_t negStatPresent;
+    int32_t negStat;
+    string sdpMd;
+    int32_t csMod;
+    int32_t ccsStat;
+    int32_t mpty;
+    int32_t numType;
+    int32_t ton;
+    string number;
+    int32_t exitType;
+    int32_t exitCause;
+};
+
+struct NetworkList {
+    string operatorNumeric;
+    int32_t act;
+};
+
+struct StkCallControlResult {
+    int32_t callType;
+    int32_t result;
+    int32_t isAlpha;
+    int32_t alphaLen;
+    string alphaData;
+    int32_t preType;
+    int32_t ton;
+    int32_t npi;
+    int32_t numLen;
+    string number;
+};
+
+struct VideoPhoneCodec {
+    int32_t type;
+};
+
+struct VideoPhoneDial {
+    string address;
+    string subAddress;
+    int32_t clir;
+};
+
+struct VideoPhoneDSCI {
+    int32_t id;
+    int32_t idr;
+    int32_t stat;
+    int32_t type;
+    int32_t mpty;
+    string number;
+    int32_t numType;
+    int32_t bsType;
+    int32_t cause;
+    int32_t location;
+};

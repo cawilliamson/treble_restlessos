@@ -1,0 +1,35 @@
+package vendor.samsung.hardware.radio@1.2;
+
+import android.hardware.radio@1.2::IRadioIndication;
+import android.hardware.radio@1.0::RadioIndicationType;
+
+interface IRadioIndication extends android.hardware.radio@1.2::IRadioIndication {
+    oneway secCurrentSignalStrength(RadioIndicationType type, SecSignalStrength signalStrength);
+    oneway secImsNetworkStateChanged(RadioIndicationType type, vec<int32_t> regState);
+    oneway oemAcbInfoChanged(RadioIndicationType type, vec<int32_t> acbInfo);
+    oneway oemCsFallback(RadioIndicationType type, int32_t state);
+    oneway oemImsPreferenceChangeInd(RadioIndicationType type, vec<int32_t> imsPref);
+    oneway oemVoiceRadioBearerHoStatusInd(RadioIndicationType type, int32_t state);
+    oneway oemHysteresisDcnInd(RadioIndicationType type);
+    oneway oemTimerStatusChangedInd(int32_t type, vec<int32_t> eventNoti);
+    oneway oemModemCapInd(int32_t type, vec<int8_t> data);
+    oneway oemAmInd(int32_t type, string intent);
+    oneway oemTrunRadioOnInd(int32_t type);
+    oneway oemSimPbReadyInd(int32_t type);
+    oneway oemPbInitCompleteInd(int32_t type);
+    oneway oemDeviceReadyNoti(int32_t type);
+    oneway oemStkSmsSendResultInd(int32_t type, int32_t result);
+    oneway oemStkCallControlResultInd(int32_t type, string cmd);
+    oneway oemSimSwapStateChangedInd(int32_t type, int32_t state);
+    oneway oemSimCountMismatchedInd(int32_t type, int32_t state);
+    oneway oemSimIccidNoti(int32_t type, string iccid);
+    oneway oemSimOnOffNoti(int32_t type, int32_t mode);
+    oneway oemReleaseCompleteMessageInd(int32_t typer, OemSSReleaseComplete result);
+    oneway oemSapNoti(int32_t type, vec<int8_t> data);
+    oneway oemNrBearerAllocationChangeInd(int32_t type, int32_t status);
+    oneway oem5gStatusChangeInd(int32_t type, int32_t status);
+    oneway oemNrDcParamChangeInd(int32_t type, DcParam dcParam);
+    oneway oemNrSignalStrengthInd(int32_t type, NrSignalStrength nrSignalStrength);
+    oemLoadApnProfile(string select) generates (ApnProfile apnProf);
+    oemGetSettingValue(string key, string table) generates (int32_t value);
+};

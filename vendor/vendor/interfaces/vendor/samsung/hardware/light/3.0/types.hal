@@ -1,0 +1,47 @@
+package vendor.samsung.hardware.light@3.0;
+
+import android.hardware.light@2.0::types;
+
+enum SehType : uint32_t {
+	BACKLIGHT = 0,
+	KEYBOARD = 1,
+	BUTTONS = 2,
+	BATTERY = 3,
+	NOTIFICATIONS = 4,
+	ATTENTION = 5,
+	BLUETOOTH = 6,
+	WIFI = 7,
+	SUB_BACKLIGHT = 8,
+};
+
+struct SehLightState {
+    /**
+     * The color of the LED in ARGB.
+     *
+     * Do your best here.
+     *   - If your light can only do red or green, if they ask for blue,
+     *     you should do green.
+     *   - If you can only do a brightness ramp, then use this formula:
+     *      unsigned char brightness = ((77*((color>>16)&0x00ff))
+     *              + (150*((color>>8)&0x00ff)) + (29*(color&0x00ff))) >> 8;
+     *   - If you can only do on or off, 0 is off, anything else is on.
+     *
+     * The high byte should be ignored. Callers will set it to 0xff (which
+     * would correspond to 255 alpha).
+     */
+    uint32_t color;
+
+    /**
+     * To flash the light at a given rate, set flashMode to LIGHT_FLASH_TIMED,
+     * and then flashOnMS should be set to the number of milliseconds to turn
+     * the light on, followed by the number of milliseconds to turn the light
+     * off.
+     */
+    Flash flashMode;
+
+    int32_t flashOnMs;
+    int32_t flashOffMs;
+
+    Brightness brightnessMode;
+    int32_t extendedBrightness;
+};

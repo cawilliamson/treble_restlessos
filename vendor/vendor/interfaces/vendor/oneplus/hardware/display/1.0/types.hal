@@ -1,0 +1,11 @@
+package vendor.oneplus.hardware.display@1.0;
+
+struct ColorGamut {
+    uint32_t[3] red;
+    uint32_t[3] green;
+    uint32_t[3] blue;
+    uint32_t[3] cyan;
+    uint32_t[3] magenta;
+    uint32_t[3] yellow;
+    uint32_t[3] whitePoint;
+};

@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+    <resources>
+         <item type="dimen" name="status_bar_height">@dimen/status_bar_height_portrait</item>
+         <dimen name="status_bar_height_default">100px</dimen>
+         <dimen name="status_bar_height_portrait">100px</dimen>
+         <string name="config_mainBuiltInDisplayCutout">M 0,0 M 0,12.25101276465640 a 10.60613009248640,10.60613009248640 0 1,0 0,21.21226018497290 a 10.60613009248640,10.60613009248640 0 1,0 0,-21.21226018497290 Z @dp</string>
+    </resources>

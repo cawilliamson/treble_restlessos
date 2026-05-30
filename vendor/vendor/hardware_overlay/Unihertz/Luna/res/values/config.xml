@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <item type="dimen" name="config_screenBrightnessSettingDefaultFloat">0.4</item>
+    <item type="dimen" name="config_screenBrightnessSettingMaximumFloat">1.0</item>
+    <item type="dimen" name="config_screenBrightnessSettingMinimumFloat">0.0</item>
+    <dimen name="quick_qs_offset_height">40.0dip</dimen>
+    <dimen name="rounded_corner_radius">10.0dip</dimen>
+    <dimen name="status_bar_height_landscape">28.0dip</dimen>
+    <dimen name="status_bar_height_portrait">117.0px</dimen>
+    <dimen name="status_bar_height_default">117.0px</dimen>
+    <dimen name="status_bar_height">117.0px</dimen>
+
+    <integer name="config_autoBrightnessBrighteningLightDebounce">2000</integer>
+    <integer name="config_autoBrightnessDarkeningLightDebounce">2000</integer>
+    <integer name="config_screenBrightnessDoze">5</integer>
+
+    <bool name="config_useDevInputEventForAudioJack">true</bool>
+    <bool name="config_showNavigationBar">true</bool>
+    <bool name="config_fillMainBuiltInDisplayCutout">false</bool>
+    <bool name="config_automatic_brightness_available">true</bool>
+
+    <string name="config_mainBuiltInDisplayCutout">M86.5,97 A38.5,38.5 0 1 0 86.5,20 38.5,38.5 0 1 0 86.5,97z @left</string>
+    <string name="config_mainBuiltInDisplayCutoutRectApproximation">M 0.0,0.0 h 149 v 97 h -149 Z @left</string>
+
+    <integer-array name="config_autoBrightnessLcdBacklightValues">
+        <item>8</item>
+        <item>64</item>
+        <item>98</item>
+        <item>104</item>
+        <item>110</item>
+        <item>116</item>
+        <item>122</item>
+        <item>128</item>
+        <item>134</item>
+        <item>182</item>
+        <item>255</item>
+        <item>255</item>
+        <item>255</item>
+        <item>255</item>
+        <item>255</item>
+        <item>255</item>
+        <item>255</item>
+        <item>255</item>
+    </integer-array>
+    <integer-array name="config_autoBrightnessLevels">
+        <item>128</item>
+        <item>256</item>
+        <item>384</item>
+        <item>512</item>
+        <item>640</item>
+        <item>768</item>
+        <item>896</item>
+        <item>1024</item>
+        <item>2048</item>
+        <item>4096</item>
+        <item>6144</item>
+        <item>8192</item>
+        <item>10240</item>
+        <item>12288</item>
+        <item>14336</item>
+        <item>16384</item>
+        <item>18432</item>
+    </integer-array>
+</resources>

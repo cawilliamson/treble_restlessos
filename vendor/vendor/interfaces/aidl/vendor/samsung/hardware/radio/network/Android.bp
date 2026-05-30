@@ -1,0 +1,28 @@
+aidl_interface {
+    name: "vendor.samsung.hardware.radio.network",
+    vendor_available: true,
+    srcs: [
+        "vendor/samsung/hardware/radio/network/*.aidl",
+    ],
+    stability: "vintf",
+    backend: {
+        java: {
+            sdk_version: "module_current",
+            min_sdk_version: "30",
+            lint: {
+                // Disable linter to avoid error about fixed size arrays.
+                // Interface will only be accessed on devices >= U.
+                enabled: false,
+            },
+        },
+    },
+    owner: "phh",
+    frozen: true,
+    versions_with_info: [
+        {
+            version: "1",
+            imports: [],
+        },
+    ],
+
+}

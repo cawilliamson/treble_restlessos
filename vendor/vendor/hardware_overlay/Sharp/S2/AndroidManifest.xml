@@ -1,0 +1,10 @@
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+        package="me.phh.treble.overlay.sharp.s2"
+        android:versionCode="1"
+        android:versionName="1.0">
+        <overlay android:targetPackage="android"
+                android:requiredSystemPropertyName="ro.product.board"
+                android:requiredSystemPropertyValue="SAT"
+		android:priority="18"
+		android:isStatic="true" />
+</manifest>

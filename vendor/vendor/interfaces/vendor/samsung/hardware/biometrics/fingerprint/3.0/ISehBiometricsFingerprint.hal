@@ -1,0 +1,92 @@
+package vendor.samsung.hardware.biometrics.fingerprint@3.0;
+
+import android.hardware.biometrics.fingerprint@2.1::IBiometricsFingerprint;
+
+//Extracted from A51
+interface ISehBiometricsFingerprint extends android.hardware.biometrics.fingerprint@2.1::IBiometricsFingerprint {
+/*
+        public boolean onAcquired(int acquiredInfo, int vendorCode) {
+            if (BiometricFeature.FP_FEATURE_TSP_BLOCK && acquiredInfo == 6 && vendorCode == 1005) {
+                acquiredInfo = 0;
+                vendorCode = 0;
+            }*/
+
+/*
+- 18 called on fp.start(), with BiometricFeature.FP_FEATURE_SWIPE_ENROLL ? 1 : 0, null
+- 29 notify wireless power status (true/false, null)
+- 17 screen on/off by proximity (true = screen on, null)
+- 15 enable gesture mode (,0,null)
+- 16 disable gesture mode (,0,null)
+- 30 get security level (,0,null)
+- 4 read daemon sdk level (0, null) returns byte[]
+- 5 read sensor info (0, null) returns byte[]
+- 3 requestSensorTest
+- 10 requestUpdateSecureId
+- 9 requestProcessFIDO 
+- 11 enumerate (0, null) returns number of fingerprints?
+- 2 openSession (param, null)
+- 0 pause (0, null)
+- 1 resume (0, null)
+- 27 hasNewMatcher (0, null) returns bool
+- 28 updateMatcher (0, null)
+- 6 getSensorStatus (0, null) return status
+- 10001 seh install ta (0 start, 1 write, 2 end)
+*/
+
+/*
+    String FOD_POS_PATH = "/sys/class/fingerprint/fingerprint/position";
+                    this.mSemSensorMarginBottom = values[0];
+                    this.mSemSensorMarginLeft = values[1];
+                    this.mSemSensorAreaWidth = values[2];
+                    this.mSemSensorAreaHeight = values[3];
+                    this.mSemSensorImageSize = values[7];
+                    this.mSemSensorActiveArea = values[5];
+                    this.mSemSensorDraggingArea = values[8];
+windowManager.getInitialDisplaySize(0, size);
+if (Utils.isCutoutNotchHidden(this.mContext))
+    size.y += SystemProperties.getInt("persist.sys.displayinset.top", 0);
+int width = metrics.widthPixels;
+double widthInch = ((double) width) / ((double) metrics.xdpi);
+double maxResXdpi = ((double) size.x) / widthInch;
+double fingerActiveArea = Double.parseDouble(this.mSemSensorActiveArea) * maxResXdpi * 0.03937007859349251d;
+double fingerSensorMarginBottom = Double.parseDouble(this.mSemSensorMarginBottom) * maxResXdpi * 0.03937007859349251d;
+DisplayMetrics displayMetrics = metrics;
+IWindowManager iWindowManager = windowManager;
+int posY = ((int) fingerSensorMarginBottom) + (((int) (0.03937007859349251d * (Double.parseDouble(this.mSemSensorAreaHeight) * maxResXdpi))) / 2) + (((int) fingerActiveArea) / 2);
+rect.left = (size.x / 2) - ((((int) fingerActiveArea) / 2) - ((int) ((Double.parseDouble(this.mSemSensorMarginLeft) * maxResXdpi) * 0.03937007859349251d)));
+rect.right = rect.left + ((int) fingerActiveArea);
+rect.top = size.y - posY;
+rect.bottom = rect.top + ((int) fingerActiveArea);
+setTspMode(String.format(Locale.ENGLISH, "set_fod_rect,%d,%d,%d,%d", new Object[]{Integer.valueOf(rect.left), Integer.valueOf(rect.top), Integer.valueOf(rect.right), Integer.valueOf(rect.bottom)}));
+
+setTspMode(String.format(Locale.ENGLISH, "set_fod_rect,%d,%d,%d,%d", new Object[]{Integer.valueOf(rect.left), Integer.valueOf(rect.top), Integer.valueOf(rect.right), Integer.valueOf(rect.bottom)}));
+
+
+    String FOD_TSP_PATH = "/sys/class/sec/tsp/cmd";
+    HW_LIGHT_GREEN_CIRCLE_DRAW = "1";
+    HW_LIGHT_GREEN_CIRCLE_HIDE = "0";
+    HW_LIGHT_SOURCE_PATH = "/sys/class/lcd/panel/fp_green_circle"; // looks like this is used only in calibration mode? Though it does actually show a green circle on the screen
+    TSP_FOD_DISABLE = "fod_enable,0";
+    TSP_FOD_ENABLE_0 = "fod_enable,1,1,0";
+    TSP_FOD_ENABLE_50 = "fod_enable,1,0,0";
+    TSP_FOD_STRICT_ENABLE_0 = "fod_enable,1,1,1";
+    TSP_FOD_STRICT_ENABLE_50 = "fod_enable,1,0,1";
+    TSP_FOD_STRICT_MODE = "fod_strict";
+    TSP_FOD_TEMPERATURE = "set_temperature,1";
+
+HBM mode (read-only) /sys/class/lcd/panel/actual_mask_brightness
+
+        private static final int DEFAULT_MAX_BRIGHTNESS = 319;
+        private static final int DEFAULT_NITS = 525;
+        private static final String MAX_BRIGHTNESS_PATH = "/sys/class/lcd/panel/mask_brightness";
+
+onAcquired() {
+if(acquiredInfo == 6 && vendorCode == 10002) {
+notifyFingerStartEventToTSP
+Utils.writeFile(new File(FOD_TSP_PATH), TSP_FOD_TEMPERATURE.getBytes());
+}
+}
+
+*/
+    sehRequest(int32_t cmdId, int32_t inParam, vec<int8_t> inBuf) generates (int32_t retval, vec<int8_t> outBuf);
+};

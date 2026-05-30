@@ -1,0 +1,36 @@
+cc_library_shared {
+    name: "audio.sysbta.default",
+    relative_install_path: "hw",
+    srcs: [
+        "audio_bluetooth_hw.cc",
+        "stream_apis.cc",
+        "device_port_proxy.cc",
+        "device_port_proxy_hidl.cc",
+        "utils.cc",
+    ],
+    header_libs: ["libhardware_headers"],
+    defaults: [
+        "latest_android_hardware_audio_common_ndk_shared",
+        "latest_android_hardware_bluetooth_audio_ndk_shared",
+    ],
+    shared_libs: [
+        "libbluetooth_audio_session_aidl_system",
+        "libaudioutils",
+        "libbase",
+        "libbinder_ndk",
+        "libcutils",
+        "libfmq",
+        "liblog",
+        "libutils",
+        // HIDL dependencies
+        "android.hardware.bluetooth.audio@2.0",
+        "android.hardware.bluetooth.audio@2.1",
+        "libbluetooth_audio_session_system",
+        "libhidlbase",
+    ],
+    cflags: [
+        "-Wall",
+        "-Werror",
+        "-Wno-unused-parameter",
+    ],
+}

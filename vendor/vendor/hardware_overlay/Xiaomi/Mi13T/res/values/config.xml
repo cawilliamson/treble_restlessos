@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+  <string name="config_mainBuiltInDisplayCutout">M 0,0 H -33 V 88 H 33 V 0 H 0 Z</string>
+  <dimen name="rounded_corner_radius">90.0px</dimen>
+  <dimen name="rounded_corner_radius_bottom">90.0px</dimen>
+  <dimen name="rounded_corner_radius_top">90.0px</dimen>
+  <dimen name="status_bar_height_default">88.0px</dimen>
+  <dimen name="status_bar_height_portrait">88.0px</dimen>
+</resources>

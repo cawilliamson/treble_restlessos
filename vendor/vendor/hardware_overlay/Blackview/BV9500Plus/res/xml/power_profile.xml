@@ -1,0 +1,131 @@
+<?xml version="1.0" encoding="utf-8"?>
+<device name="Android">
+    <item name="ambient.on">0.1</item>
+    <item name="screen.on">102</item>
+    <item name="screen.full">134</item>
+    <item name="bluetooth.active">46</item>
+    <item name="bluetooth.on">5</item>
+    <item name="wifi.on">3</item>
+    <item name="wifi.active">465</item>
+    <item name="wifi.scan">62</item>
+    <item name="audio">24</item>
+    <item name="video">295</item>
+    <item name="camera.flashlight">200</item>
+    <item name="camera.avg">600</item>
+    <item name="gps.on">24</item>
+    <item name="radio.active">640</item>
+    <item name="radio.scanning">110</item>
+    <array name="radio.on">
+        <value>5</value>
+        <value>5</value>
+    </array>
+    <array name="cpu.clusters.cores">
+        <value>4</value>
+        <value>4</value>
+    </array>
+    <array name="cpu.speeds.cluster0">
+        <value>1989000</value>
+        <value>1924000</value>
+        <value>1846000</value>
+        <value>1781000</value>
+        <value>1716000</value>
+        <value>1677000</value>
+        <value>1625000</value>
+        <value>1586000</value>
+        <value>1508000</value>
+        <value>1417000</value>
+        <value>1326000</value>
+        <value>1248000</value>
+        <value>1131000</value>
+        <value>1014000</value>
+        <value>910000</value>
+        <value>793000</value>
+    </array>
+    <array name="cpu.speeds.cluster1">
+        <value>2002000</value>
+        <value>1976000</value>
+        <value>1937000</value>
+        <value>1911000</value>
+        <value>1859000</value>
+        <value>1807000</value>
+        <value>1742000</value>
+        <value>1690000</value>
+        <value>1586000</value>
+        <value>1456000</value>
+        <value>1287000</value>
+        <value>1170000</value>
+        <value>1040000</value>
+        <value>910000</value>
+        <value>715000</value>
+        <value>520000</value>
+    </array>
+    <array name="cpu.active.cluster0">
+        <value>420</value>
+        <value>400</value>
+        <value>380</value>
+        <value>360</value>
+        <value>340</value>
+        <value>320</value>
+        <value>300</value>
+        <value>280</value>
+        <value>260</value>
+        <value>240</value>
+        <value>220</value>
+        <value>200</value>
+        <value>180</value>
+        <value>160</value>
+        <value>140</value>
+        <value>120</value>
+    </array>
+    <array name="cpu.active.cluster1">
+        <value>420</value>
+        <value>400</value>
+        <value>380</value>
+        <value>360</value>
+        <value>340</value>
+        <value>320</value>
+        <value>300</value>
+        <value>280</value>
+        <value>260</value>
+        <value>240</value>
+        <value>220</value>
+        <value>200</value>
+        <value>180</value>
+        <value>160</value>
+        <value>140</value>
+        <value>120</value>
+    </array>
+    <item name="cpu.idle">3</item>
+    <array name="memory.bandwidths">
+        <value>22.7</value>
+    </array>
+    <item name="battery.capacity">10000</item>
+    <item name="wifi.controller.idle">3</item>
+    <item name="wifi.controller.rx">200</item>
+    <item name="wifi.controller.tx">200</item>
+    <array name="wifi.controller.tx_levels" />
+    <item name="wifi.controller.voltage">3.3</item>
+    <array name="wifi.batchedscan">
+        <value>.0002</value>
+        <value>.002</value>
+        <value>.02</value>
+        <value>.2</value>
+        <value>2</value>
+    </array>
+    <item name="modem.controller.sleep">0</item>
+    <item name="modem.controller.idle">0</item>
+    <item name="modem.controller.rx">0</item>
+    <array name="modem.controller.tx">
+        <value>0</value>
+        <value>0</value>
+        <value>0</value>
+        <value>0</value>
+        <value>0</value>
+    </array>
+    <item name="modem.controller.voltage">0</item>
+    <array name="gps.signalqualitybased">
+        <value>0</value>
+        <value>0</value>
+    </array>
+    <item name="gps.voltage">0</item>
+</device>

@@ -1,0 +1,12 @@
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+				android:versionCode="1"
+				android:versionName="1.0"
+				package="me.phh.treble.overlay.vivo.y20.systemui"
+				platformBuildVersionCode="30"
+				platformBuildVersionName="11">
+				<overlay android:targetPackage="com.android.systemui"
+						android:requiredSystemPropertyName="ro.vendor.build.fingerprint"
+		                android:requiredSystemPropertyValue="+*vivo/2026*"
+				android:priority="581"
+				android:isStatic="true" />
+</manifest>

@@ -1,0 +1,11 @@
+package vendor.samsung.hardware.radio@2.2;
+
+import vendor.samsung.hardware.radio@2.1::ISehRadioIndication;
+import android.hardware.radio@1.0::RadioResponseInfo;
+import vendor.samsung.hardware.radio@2.0::types;
+
+interface ISehRadioIndication extends @2.1::ISehRadioIndication {
+oneway callDetailsChanged(uint32_t type, vec<SehCallDetails> callDetails);
+oneway vendorConfigurationChanged(uint32_t type, vec<SehVendorConfiguration> configurations);
+oneway eriInfoReceived(uint32_t type, SehEriInfo eriInfo);
+};

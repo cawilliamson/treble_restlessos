@@ -1,0 +1,41 @@
+apply plugin: 'com.android.application'
+
+apply plugin: 'kotlin-android'
+
+android {
+    compileSdkVersion 33
+    defaultConfig {
+        applicationId "me.phh.treble.app"
+        minSdkVersion 27
+        targetSdkVersion 33
+        versionCode 1
+        versionName "1.0"
+        testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
+    }
+    buildTypes {
+        release {
+            minifyEnabled true
+            proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
+        }
+    }
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_11
+        targetCompatibility JavaVersion.VERSION_11
+    }
+    kotlinOptions {
+        jvmTarget = '11'
+    }
+}
+
+dependencies {
+    compileOnly fileTree(dir: 'libs', include: '*.jar')
+    implementation files('libs/vendor.hct.hardware.gesturewake-V1.0-java.jar')
+    implementation files('libs/vendor.ims.zenmotion-V1.0-java.jar')
+    implementation files('libs/vendor.xiaomi.hw.touchfeature-V1-java.jar')
+    implementation files('libs/vendor.mediatek.hardware.agolddaemon-V1-java.jar')
+
+    implementation "org.jetbrains.kotlin:kotlin-stdlib:$kotlin_version"
+    implementation 'org.tukaani:xz:1.9'
+    implementation 'androidx.preference:preference-ktx:1.2.0'
+    implementation 'com.squareup.okhttp3:okhttp:4.9.0'
+}

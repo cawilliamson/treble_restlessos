@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Display cutout configuration -->
+    <string name="config_mainBuiltInDisplayCutout">M-35.93,0C-29.26,0,-23.46,3.85,-22.46,9.56l.12.73a22.69,22.69,0,0,0,44.68,0l.12-.73C23.5,3.85,29.26,0,35.93,0Z @dp</string>
+</resources>

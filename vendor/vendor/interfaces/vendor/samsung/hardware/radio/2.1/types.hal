@@ -1,0 +1,7 @@
+package vendor.samsung.hardware.radio@2.1;
+
+import vendor.samsung.hardware.radio@2.0::types;
+struct SehCardStatus {
+    vendor.samsung.hardware.radio@2.0::SehCardStatus base;
+    string eid;
+};

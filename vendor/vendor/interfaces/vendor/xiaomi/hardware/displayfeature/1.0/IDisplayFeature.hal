@@ -1,0 +1,22 @@
+package vendor.xiaomi.hardware.displayfeature@1.0;
+
+interface IDisplayFeature {
+	//displayId = 0, cookie = 255
+/*
+DEFALUT_GAMUT_MODE = 0,
+DEFALUT_SCREEN_COLOR = 2,
+
+EXT_COLOR_PROC_STATE = 15,
+
+SCREEN_ADAPT = 0,
+SCREEN_ENHANCE = 1,
+SCREEN_STANDARD = 2,
+SCREEN_EYECARE = 3, //also called paper mode, paper mode level
+mode = SCREEN_MONOCHROME = 4, value 0 = disable, 1 = enable
+SCREEN_SUNLIGHT = 8,
+SCREEN_NIGHTLIGHT = 9,
+SCREEN_HIGHLIGHT = 11,
+*/
+	setFeature(uint32_t displayId, uint32_t mode, uint32_t value, uint32_t cookie);
+};
+

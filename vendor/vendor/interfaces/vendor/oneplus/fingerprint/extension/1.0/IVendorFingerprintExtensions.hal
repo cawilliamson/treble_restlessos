@@ -1,0 +1,15 @@
+package vendor.oneplus.fingerprint.extension@1.0;
+
+import vendor.oneplus.fingerprint.extension@1.0::types;
+import vendor.oneplus.fingerprint.extension@1.0::IVendorFingerprintExtensionsCallback;
+
+interface IVendorFingerprintExtensions {
+	updateStatus(int32_t status) generates (int32_t debugErrno);
+	getStatus() generates (int32_t debugErrno2);
+	getEngTest() generates (vec<FpTest> FpTests);
+	setEngCallback(IVendorFingerprintExtensionsCallback Callback) generates (int32_t debugErrno);
+	startEngTest(int32_t cmdId) generates (int32_t debugErrno);
+	stopEngTest(int32_t cmdId) generates (int32_t debugErrno);
+	stopAllEngTest() generates (int32_t debugErrno2);
+	setParam(int32_t level) generates (int32_t debugErrno);
+};

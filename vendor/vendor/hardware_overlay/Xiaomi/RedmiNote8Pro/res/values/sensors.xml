@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- This file contains misc non default vars -->
+<resources>
+    <bool name="config_suspendWhenScreenOffDueToProximity">true</bool>
+    <bool name="config_lidControlsSleep">true</bool>
+</resources>

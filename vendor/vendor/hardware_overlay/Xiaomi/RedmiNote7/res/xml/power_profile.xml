@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="utf-8"?>
+<device name="Android">
+    <item name="none">0</item>
+    <item name="screen.on">103</item>
+    <item name="screen.full">300</item>
+    <array name="cpu.clusters.cores">
+        <value>4</value>
+        <value>4</value>
+    </array>
+    <array name="cpu.core_speeds.cluster0">
+        <value>633600</value>
+        <value>902400</value>
+        <value>1113600</value>
+        <value>1401600</value>
+        <value>1536000</value>
+        <value>1747200</value>
+        <value>1843200</value>
+    </array>
+    <array name="cpu.core_power.cluster0">
+        <value>13</value>
+        <value>20</value>
+        <value>28</value>
+        <value>36</value>
+        <value>45</value>
+        <value>55</value>
+        <value>65</value>
+    </array>
+    <array name="cpu.core_speeds.cluster1">
+        <value>1113600</value>
+        <value>1401600</value>
+        <value>1747200</value>
+        <value>1958400</value>
+    </array>
+    <array name="cpu.core_power.cluster1">
+        <value>75</value>
+        <value>105</value>
+        <value>166</value>
+        <value>205</value>
+    </array>
+    <item name="cpu.suspend">3.9</item>
+    <item name="cpu.idle">2</item>
+    <item name="cpu.active">1</item>
+    <item name="cpu.cluster_power.cluster0">1</item>
+    <item name="cpu.cluster_power.cluster1">1</item>
+    <item name="battery.capacity">4000</item>
+    <item name="bluetooth.active">80</item>
+    <item name="bluetooth.at">2</item>
+    <item name="bluetooth.on">2</item>
+    <item name="wifi.on">2</item>
+    <item name="wifi.active">125</item>
+    <item name="wifi.scan">180</item>
+    <item name="dsp.audio">45</item>
+    <item name="dsp.video">60</item>
+    <item name="camera.flashlight">200</item>
+    <item name="camera.avg">550</item>
+    <item name="gps.on">100</item>
+    <item name="radio.active">100</item>
+    <item name="radio.scanning">45</item>
+    <array name="radio.on">
+        <value>6</value>
+        <value>4</value>
+    </array>
+</device>

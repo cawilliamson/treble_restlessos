@@ -1,0 +1,10 @@
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+        package="me.phh.treble.overlay.xiaomi.civi4pro.systemui"
+        android:versionCode="1"
+        android:versionName="1.0">
+        <overlay android:targetPackage="com.android.systemui"
+                android:requiredSystemPropertyName="ro.boot.hardware.sku"
+                android:requiredSystemPropertyValue="chenfeng"
+        android:priority="1244"
+        android:isStatic="true" />
+</manifest>

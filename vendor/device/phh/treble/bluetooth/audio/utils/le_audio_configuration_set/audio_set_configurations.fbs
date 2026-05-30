@@ -1,0 +1,91 @@
+/*
+ *  Copyright (c) 2022 The Android Open Source Project
+ *
+ *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  you may not use this file except in compliance with the License.
+ *  You may obtain a copy of the License at:
+ *
+ *  http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *  Unless required by applicable law or agreed to in writing, software
+ *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  See the License for the specific language governing permissions and
+ *  limitations under the License.
+ *
+ */
+namespace aidl.android.hardware.bluetooth.audio.le_audio;
+enum CodecSpecificLtvGenericTypes : byte {
+    SUPPORTED_SAMPLING_FREQUENCY = 0x01,
+    SUPPORTED_FRAME_DURATION = 0x02,
+    SUPPORTED_AUDIO_CHANNEL_ALLOCATION = 0x03,
+    SUPPORTED_OCTETS_PER_CODEC_FRAME = 0x04,
+    SUPPORTED_CODEC_FRAME_BLOCKS_PER_SDU = 0x05,
+}
+/// Note: Holds either a single value (when `value_width == 0`) or multiple
+///       values if `value.length()` is no-remainder divisible by the non-zero
+///       `value_width`.
+/// Note: Consider extending it with `flags` field, to hold additional info like
+///       IsBitfield, IsRange, etc. if we need these type-specific validations.
+table CompoundValue {
+    value: [ubyte] (required);
+    value_width: ubyte = 0;
+}
+table CodecSpecificConfiguration {
+    name: string;
+    type: ubyte (key);
+    compound_value: CompoundValue;
+}
+struct CodecId {
+    coding_format: ubyte;
+    vendor_company_id : ushort;
+    vendor_codec_id : ushort;
+}
+enum AudioSetConfigurationStrategy : byte {
+    MONO_ONE_CIS_PER_DEVICE = 0x00,
+    STEREO_TWO_CISES_PER_DEVICE = 0x01,
+    STEREO_ONE_CIS_PER_DEVICE = 0x02,
+}
+enum AudioSetConfigurationDirection : byte {
+    SINK = 0x01,
+    SOURCE = 0x02,
+}
+enum AudioSetConfigurationTargetLatency : byte {
+    LOW = 0x01,
+    BALANCED_RELIABILITY = 0x02,
+    HIGH_RELIABILITY = 0x03,
+}
+table AudioSetSubConfiguration {
+    device_cnt: ubyte;
+    ase_cnt: ubyte;
+    direction: AudioSetConfigurationDirection = SINK;
+    configuration_strategy: AudioSetConfigurationStrategy;
+    codec_id : CodecId (required);
+    codec_configuration: [CodecSpecificConfiguration] (required);
+}
+table CodecConfiguration {
+    name: string (key, required);
+    subconfigurations: [AudioSetSubConfiguration] (required);
+}
+table QosConfiguration {
+    name: string (key, required);
+    target_latency: AudioSetConfigurationTargetLatency = BALANCED_RELIABILITY;
+    retransmission_number: ubyte;
+    max_transport_latency : ushort;
+}
+/// Each set configration can contain multiple logical subconfigurations, which
+/// all must be configurable with the current set of audio devices. For example,
+/// one can define multiple output stream configurations with different
+/// qualities, or assign different configurations to each stream direction.
+table AudioSetConfiguration {
+    name: string (key, required);
+    codec_config_name: string (required);
+    qos_config_name: [string] (required);
+}
+table AudioSetConfigurations {
+    _comments_: [string];
+    configurations: [AudioSetConfiguration] (required);
+    codec_configurations: [CodecConfiguration] (required);
+    qos_configurations: [QosConfiguration] (required);
+}
+root_type AudioSetConfigurations;

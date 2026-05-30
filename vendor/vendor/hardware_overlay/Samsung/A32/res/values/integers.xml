@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <integer name="config_screenBrightnessDoze">85</integer>
+    <integer name="config_screenBrightnessDim">12</integer>
+    <integer name="config_screenBrightnessSettingDefault">128</integer>
+    <integer name="config_screenBrightnessSettingMaximum">255</integer>
+    <integer name="config_screenBrightnessSettingMinimum">0</integer>
+    <integer name="config_burnInProtectionMaxRadius">100</integer>
+    <integer name="config_burnInProtectionMinHorizontalOffset">-50</integer>
+    <integer name="config_burnInProtectionMaxHorizontalOffset">50</integer>
+    <integer name="config_burnInProtectionMinVerticalOffset">-70</integer>
+    <integer name="config_burnInProtectionMaxVerticalOffset">70</integer>
+</resources>

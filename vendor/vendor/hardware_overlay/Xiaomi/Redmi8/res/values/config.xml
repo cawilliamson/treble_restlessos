@@ -1,0 +1,175 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <integer-array name="config_autoBrightnessLcdBacklightValues">
+        <item>17</item>
+        <item>21</item>
+        <item>40</item>
+        <item>77</item>
+        <item>111</item>
+        <item>144</item>
+        <item>175</item>
+        <item>245</item>
+        <item>302</item>
+        <item>348</item>
+        <item>382</item>
+        <item>404</item>
+        <item>406</item>
+        <item>407</item>
+        <item>408</item>
+        <item>409</item>
+        <item>412</item>
+        <item>414</item>
+        <item>416</item>
+        <item>417</item>
+        <item>419</item>
+        <item>420</item>
+        <item>423</item>
+        <item>426</item>
+        <item>428</item>
+        <item>432</item>
+        <item>442</item>
+        <item>449</item>
+        <item>456</item>
+        <item>458</item>
+        <item>466</item>
+        <item>472</item>
+        <item>479</item>
+        <item>486</item>
+        <item>494</item>
+        <item>500</item>
+        <item>507</item>
+        <item>516</item>
+        <item>522</item>
+        <item>530</item>
+        <item>536</item>
+        <item>545</item>
+        <item>550</item>
+        <item>559</item>
+        <item>565</item>
+        <item>674</item>
+        <item>783</item>
+        <item>905</item>
+        <item>1028</item>
+        <item>1152</item>
+        <item>1284</item>
+        <item>1418</item>
+        <item>1600</item>
+        <item>1760</item>
+        <item>1900</item>
+        <item>2000</item>
+        <item>2047</item>
+        <item>2047</item>
+    </integer-array>
+
+    <integer-array name="config_autoBrightnessLevels">
+        <item>1</item>
+        <item>2</item>
+        <item>4</item>
+        <item>6</item>
+        <item>8</item>
+        <item>10</item>
+        <item>15</item>
+        <item>20</item>
+        <item>25</item>
+        <item>30</item>
+        <item>35</item>
+        <item>40</item>
+        <item>45</item>
+        <item>50</item>
+        <item>55</item>
+        <item>60</item>
+        <item>65</item>
+        <item>70</item>
+        <item>75</item>
+        <item>80</item>
+        <item>85</item>
+        <item>90</item>
+        <item>95</item>
+        <item>100</item>
+        <item>120</item>
+        <item>140</item>
+        <item>160</item>
+        <item>180</item>
+        <item>200</item>
+        <item>220</item>
+        <item>240</item>
+        <item>260</item>
+        <item>280</item>
+        <item>300</item>
+        <item>320</item>
+        <item>340</item>
+        <item>360</item>
+        <item>380</item>
+        <item>400</item>
+        <item>420</item>
+        <item>440</item>
+        <item>460</item>
+        <item>480</item>
+        <item>500</item>
+        <item>700</item>
+        <item>900</item>
+        <item>1100</item>
+        <item>1300</item>
+        <item>1500</item>
+        <item>1700</item>
+        <item>1900</item>
+        <item>2200</item>
+        <item>2500</item>
+        <item>3000</item>
+        <item>3500</item>
+        <item>4000</item>
+        <item>4500</item>
+    </integer-array>
+
+    <bool name="config_showNavigationBar">true</bool>
+    <bool name="config_automatic_brightness_available">true</bool>
+    <bool name="config_setColorTransformAccelerated">true</bool>
+    <bool name="config_supportAudioSourceUnprocessed">true</bool>
+    <bool name="config_useDevInputEventForAudioJack">true</bool>
+    <bool name="skip_restoring_network_selection">true</bool>
+    <bool name="config_bluetooth_le_peripheral_mode_supported">true</bool>
+    <bool name="config_carrier_volte_available">true</bool>
+    <bool name="config_device_volte_available">true</bool>
+    <bool name="config_device_vt_available">true</bool>
+    <bool name="config_device_wfc_ims_available">true</bool>
+    <bool name="config_hotswapCapable">true</bool>
+    <bool name="config_lidControlsSleep">true</bool>
+    <bool name="config_wifiDisplaySupportsProtectedBuffers">true</bool>
+    <bool name="config_wifi_background_scan_support">true</bool>
+    <bool name="config_wifi_batched_scan_supported">true</bool>
+    <bool name="config_wifi_dual_band_support">false</bool>
+    <bool name="config_dozeAlwaysOnDisplayAvailable">true</bool>
+    <bool name="config_dozePulsePickup">true</bool>
+    <bool name="config_displayBlanksAfterDoze">true</bool>
+    <bool name="config_powerDecoupleAutoSuspendModeFromDisplay">true</bool>
+    <bool name="config_supportDoubleTapWake">true</bool>
+    <bool name="config_supportSystemNavigationKeys">false</bool>
+    <bool name="config_enableBurnInProtection">true</bool>
+    <bool name="config_fillMainBuiltInDisplayCutout">false</bool>
+    <fraction name="config_autoBrightnessAdjustmentMaxGamma">100.0%</fraction>
+    <fraction name="config_maximumScreenDimRatio">30%</fraction>
+    <fraction name="config_screenAutoBrightnessDozeScaleFactor">100.0%</fraction>
+    <integer name="config_autoBrightnessBrighteningLightDebounce">1000</integer>
+    <integer name="config_autoBrightnessDarkeningLightDebounce">1000</integer>
+    <integer name="config_screenBrightnessDark">1</integer>
+    <integer name="config_screenBrightnessDim">13</integer>
+    <integer name="config_screenBrightnessDoze">17</integer>
+    <integer name="config_screenBrightnessSettingDefault">536</integer>
+    <integer name="config_screenBrightnessSettingMaximum">2047</integer>
+    <integer name="config_screenBrightnessSettingMinimum">1</integer>
+    <integer name="config_bluetooth_idle_cur_ma">0</integer>
+    <integer name="config_bluetooth_operating_voltage_mv">3300</integer>
+    <integer name="config_bluetooth_rx_cur_ma">0</integer>
+    <integer name="config_bluetooth_tx_cur_ma">0</integer>
+    <integer name="config_shutdownBatteryTemperature">600</integer>
+    <integer name="config_autoBrightnessInitialLightSensorRate">-1</integer>
+    <integer name="config_autoBrightnessLightSensorRate">250</integer>
+    <integer name="config_screenBrightnessForVrSettingDefault">86</integer>
+    <integer name="config_screenBrightnessForVrSettingMaximum">255</integer>
+    <integer name="config_screenBrightnessForVrSettingMinimum">79</integer>
+    <dimen name="rounded_corner_radius">70px</dimen>
+    <dimen name="status_bar_height">60px</dimen>
+    <dimen name="status_bar_height_portrait">60px</dimen>
+    <dimen name="status_bar_height_landscape">24.0dip</dimen>
+    <string translatable="false" name="config_mainBuiltInDisplayCutout">M -50,0 L -50,55 L 50,55 L 50,0 Z</string>
+</resources>

@@ -1,0 +1,10 @@
+package vendor.xiaomi.hardware.fingerprintextension@1.0;
+
+interface IXiaomiFingerprint {
+	//startExtCmd in java, extCmd in c++
+	//Commands seen:
+	// cmd = 2; param = 1; = navigation enable
+	// cmd = 3; param = 1; = navigation enable
+	// cmd = 10; param = nit {1,2,3,4}, param=0 off
+	extCmd(int32_t cmd, int32_t param) generates (int32_t result);
+};

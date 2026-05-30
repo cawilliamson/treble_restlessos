@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- I swear it makes sense to set dialog_min_width_major, and I can completely explain why. -->
+    <!-- I swear it makes sense to set dialog_min_width_minor, and I can completely explain why. -->
+    <item type="dimen" name="dialog_min_width_major">55.000008%</item>
+    <item type="dimen" name="dialog_min_width_minor">79.99999%</item>
+</resources>

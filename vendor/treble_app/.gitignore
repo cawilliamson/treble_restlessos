@@ -1,0 +1,20 @@
+# IDEA
+*.iml
+/.idea
+
+# Gradle
+.gradle
+build
+/local.properties
+/captures
+
+# macOS
+.DS_Store
+
+# Release Build
+TrebleApp.apk
+
+# Sdk
+/sdk/platform-tools/
+/sdk/platforms/
+/sdk/build-tools/

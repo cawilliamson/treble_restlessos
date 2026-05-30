@@ -1,0 +1,43 @@
+package vendor.sprd.hardware.radio@1.0;
+
+import android.hardware.radio@1.0::RadioIndicationType;
+
+interface IExtRadioIndication {
+    updatePlmn(string data) generates (string /* */);
+    updateNetworkList(vec<string> data) generates (string /* */);
+    oneway videoPhoneCodecInd(RadioIndicationType type, vec<int32_t> data);
+    oneway videoPhoneDSCIInd(RadioIndicationType type, VideoPhoneDSCI data);
+    oneway videoPhoneStringInd(RadioIndicationType type, string data);
+    oneway videoPhoneRemoteMediaInd(RadioIndicationType type, vec<int32_t> data);
+    oneway videoPhoneMMRingInd(RadioIndicationType type, int32_t data);
+    oneway videoPhoneReleasingInd(RadioIndicationType type, string data);
+    oneway videoPhoneRecordVideoInd(RadioIndicationType type, int32_t data);
+    oneway videoPhoneMediaStartInd(RadioIndicationType type, int32_t data);
+    oneway eccNetworkListChangedInd(RadioIndicationType type, string data);
+    oneway rauSuccessInd(RadioIndicationType type);
+    oneway clearCodeFallbackInd(RadioIndicationType type);
+    oneway rilConnectedInd(RadioIndicationType type);
+    oneway simlockStatusChangedInd(RadioIndicationType type);
+    oneway simlockSimExpiredInd(RadioIndicationType type, int32_t data);
+    oneway bandInfoInd(RadioIndicationType type, string data);
+    oneway switchPrimaryCardInd(RadioIndicationType type, int32_t data);
+    oneway networkErrorCodeInd(RadioIndicationType type, vec<int32_t> data);
+    oneway simMgrSimStatusChangedInd(RadioIndicationType type);
+    oneway radioCapabilityChangedInd(RadioIndicationType type);
+    oneway earlyMediaInd(RadioIndicationType type, int32_t data);
+    oneway availableNetworksInd(RadioIndicationType type, vec<string> data);
+    oneway IMSCallStateChangedInd(RadioIndicationType type);
+    oneway videoQualityInd(RadioIndicationType type, vec<int32_t> data);
+    oneway IMSBearerEstablished(RadioIndicationType type, int32_t status);
+    oneway IMSHandoverRequestInd(RadioIndicationType type, int32_t status);
+    oneway INSHandoverStatusChangedInd(RadioIndicationType type, int32_t status);
+    oneway IMSNetworkInfoChangedInd(RadioIndicationType type, ImsNetworkInfo nwInfo);
+    oneway IMSRegisterAddressChangedInd(RadioIndicationType type, vec<string> data);
+    oneway IMSWifiParamInd(RadioIndicationType type, vec<int32_t> data);
+    oneway IMSNetworkStateChangedInd(RadioIndicationType type, int32_t status);
+    oneway DsdaStatusInd(RadioIndicationType type, int32_t status);
+    oneway updateHdStateInd(RadioIndicationType type, int32_t data);
+    oneway IMSCsfbVendorCauseInd(RadioIndicationType type, string csfbVVendorCause);
+    oneway IMSErrorCauseInd(RadioIndicationType type, ImsErrorCauseInfo errCauseInfo);
+};
+

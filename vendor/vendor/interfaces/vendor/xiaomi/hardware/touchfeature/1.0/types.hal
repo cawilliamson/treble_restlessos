@@ -1,0 +1,27 @@
+package vendor.xiaomi.hardware.touchfeature@1.0;
+
+enum TouchFeature : uint32_t {
+    DOUBLE_TAP = 1,
+    GLOBAL_TOUCH_DIRECTION = 2,
+    EDGE_MODE = 4,
+    DRIVER_DEBUGLEVEL = 8,
+    REMOVE_EDGE_SETTINGS = 64,
+};
+
+enum TouchCommand : uint32_t {
+    GAME_MODE = 0,
+    ACTIVE_MODE = 1,
+    UP_THRESHOLD = 2,
+    TOLERANCE = 3,
+    WGH_MIN = 4,
+    WGH_MAX = 5,
+    WGH_STEP = 6,
+    EDGE_FILTER = 7,
+    MODE_DIRECTION = 8,
+    FOD = 9,
+    DOUBLETAP_MODE = 14,
+    EDGE_MODE = 15,
+    DEBUG_LEVEL = 18,
+    STYLUS_MODE = 20,
+    PERFORMANCE_MODE = 21,
+};

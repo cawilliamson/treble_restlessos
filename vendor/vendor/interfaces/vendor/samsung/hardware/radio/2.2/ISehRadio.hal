@@ -1,0 +1,10 @@
+package vendor.samsung.hardware.radio@2.2;
+
+import vendor.samsung.hardware.radio@2.1::ISehRadio;
+import android.hardware.radio@1.0::RadioResponseInfo;
+
+interface ISehRadio extends @2.1::ISehRadio {
+oneway setNrMode_2_2(int32_t serial, int32_t mode, bool force);
+oneway getVendorSpecificConfiguration(int32_t serial);
+oneway setVendorSpecificConfiguration(int32_t serial, vec<SehVendorConfiguration> configurations);
+};

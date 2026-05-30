@@ -1,0 +1,6 @@
+package vendor.oneplus.fingerprint.extension@1.0;
+
+struct FpTest {
+	string name;
+	int32_t cmdId;
+};

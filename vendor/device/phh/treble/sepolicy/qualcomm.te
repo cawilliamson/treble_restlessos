@@ -1,0 +1,32 @@
+type bt_firmware_file, file_type;
+type rild, domain;
+
+#me.phh.treble.qti.audio is system-signed
+allow system_app hal_telephony_hwservice:hwservice_manager { find };
+allow { rild system_app } { rild system_app }:binder { call transfer };
+
+#Pixel 1
+type vnd_qcril_audio_hwservice, hwservice_manager_type;
+allow system_app vnd_qcril_audio_hwservice:hwservice_manager { find };
+
+#Pixel 2
+type vnd_qcrilhook_hwservice, hwservice_manager_type;
+allow system_app vnd_qcrilhook_hwservice:hwservice_manager { find };
+
+#OP6
+allow system_app hal_telephony_hwservice:hwservice_manager { find };
+
+# cf https://github.com/phhusson/treble_experimentations/issues/131
+# SELinux : avc:  denied  { add } for interface=android.hardware.tetheroffload.control::IOffloadControl pid=15220 scontext=u:r:ipacm:s0 tcontext=u:object_r:hal_tetheroffload_hwservice:s0 tclass=hwservice_manager permissive=0
+type ipacm, hwservice_manager_type;
+allow ipacm hal_tetheroffload_hwservice:hwservice_manager { add };
+
+type rpmb_device, file_type;
+allow tee rpmb_device:blk_file rw_file_perms;
+allowxperm tee rpmb_device:blk_file ioctl { 0xb300-0xbfff };
+
+attribute smcinvoke_device_29_0;
+type smcinvoke_device, dev_type;
+typeattribute smcinvoke_device smcinvoke_device_29_0;
+
+get_prop(rild, default_prop);

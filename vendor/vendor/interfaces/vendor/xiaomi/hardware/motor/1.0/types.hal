@@ -1,0 +1,6 @@
+package vendor.xiaomi.hardware.motor@1.0;
+
+struct MotorEvent {
+        int32_t vaalue;
+        int32_t cookie;
+};

@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <bool name="config_useDevInputEventForAudioJack">true</bool>
+    <bool name="config_showNavigationBar">true</bool>
+
+    <dimen name="status_bar_height_default">133px</dimen>
+    <dimen name="status_bar_height">133px</dimen>
+    <dimen name="status_bar_height_portrait">133px</dimen>
+    <dimen name="status_bar_height_landscape">28dp</dimen>
+    <dimen name="quick_qs_offset_height">133px</dimen>
+
+    <integer name="config_screenBrightnessSettingMinimum">1</integer>
+
+    <string name="config_mainBuiltInDisplayCutout">M -540,0 L -540,109 L -399,109 L -399,0 Z</string>
+    <string name="config_mainBuiltInDisplayCutoutRectApproximation">M -540,0 L -540,109 L -399,109 L -399,0 Z</string>
+</resources>

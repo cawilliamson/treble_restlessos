@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <fraction name="config_autoBrightnessAdjustmentMaxGamma">300.0%</fraction>
+    <fraction name="config_maximumScreenDimRatio">30%</fraction>
+</resources>

@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <dimen name="status_bar_padding_end">20.0dip</dimen>
+    <dimen name="status_bar_padding_start">18.0dip</dimen>
+    <dimen name="status_bar_padding_top">0.0dip</dimen>
+</resources>

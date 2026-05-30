@@ -1,0 +1,14 @@
+package vendor.oneplus.camera.CameraHIDL@1.0;
+
+interface IOnePlusCameraProvider {
+	setCameraId(int32_t name) generates (bool status);
+	setPackageName(string name) generates (bool status);
+	getPackageName() generates (string cameraDeviceNames);
+	file_access(string path) generates (bool status);
+	file_delete(string path) generates (bool status);
+	file_open(string path) generates (int32_t fd);
+	file_write(int32_t fd, vec<int8_t> buffer, int32_t size) generates (bool status2);
+	file_read(int32_t fd, int32_t size) generates (bool status, vec<int8_t> buffer, int32_t size);
+	file_close(int32_t fd) generates (bool status);
+};	
+	

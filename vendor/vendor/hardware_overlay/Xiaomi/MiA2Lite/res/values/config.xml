@@ -1,0 +1,223 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <array name="config_autoBrightnessButtonBacklightValues" />
+    <array name="config_autoBrightnessDisplayValuesNits">
+        <item>7.702998</item>
+        <item>32.31226</item>
+        <item>38.786167</item>
+        <item>43.30993</item>
+        <item>46.851162</item>
+        <item>55.90478</item>
+        <item>61.334614</item>
+        <item>68.4388</item>
+        <item>75.59099</item>
+        <item>82.8686</item>
+        <item>91.49397</item>
+        <item>102.49851</item>
+        <item>118.8174</item>
+        <item>144.68486</item>
+        <item>180.69225</item>
+        <item>225.84135</item>
+        <item>292.46844</item>
+        <item>377.05084</item>
+        <item>481.93427</item>
+    </array>
+    <array name="config_autoBrightnessLcdBacklightValues" />
+    <integer-array name="config_autoBrightnessLevels">
+        <item>1</item>
+        <item>2</item>
+        <item>3</item>
+        <item>4</item>
+        <item>8</item>
+        <item>12</item>
+        <item>20</item>
+        <item>33</item>
+        <item>55</item>
+        <item>90</item>
+        <item>148</item>
+        <item>245</item>
+        <item>403</item>
+        <item>665</item>
+        <item>1097</item>
+        <item>1808</item>
+        <item>2981</item>
+        <item>5000</item>
+    </integer-array>
+    <array name="config_minimumBrightnessCurveNits">
+        <item>0.0</item>
+        <item>50.0</item>
+        <item>90.0</item>
+    </array>
+    <integer-array name="config_screenBrightnessBacklight">
+        <item>1</item>
+        <item>2</item>
+        <item>3</item>
+        <item>4</item>
+        <item>5</item>
+        <item>6</item>
+        <item>7</item>
+        <item>8</item>
+        <item>9</item>
+        <item>10</item>
+        <item>11</item>
+        <item>12</item>
+        <item>13</item>
+        <item>14</item>
+        <item>15</item>
+        <item>16</item>
+        <item>17</item>
+        <item>18</item>
+        <item>19</item>
+        <item>20</item>
+        <item>25</item>
+        <item>30</item>
+        <item>35</item>
+        <item>40</item>
+        <item>45</item>
+        <item>50</item>
+        <item>55</item>
+        <item>60</item>
+        <item>65</item>
+        <item>70</item>
+        <item>75</item>
+        <item>80</item>
+        <item>85</item>
+        <item>90</item>
+        <item>95</item>
+        <item>100</item>
+        <item>105</item>
+        <item>110</item>
+        <item>115</item>
+        <item>120</item>
+        <item>125</item>
+        <item>130</item>
+        <item>135</item>
+        <item>140</item>
+        <item>145</item>
+        <item>150</item>
+        <item>155</item>
+        <item>160</item>
+        <item>165</item>
+        <item>170</item>
+        <item>175</item>
+        <item>180</item>
+        <item>185</item>
+        <item>190</item>
+        <item>195</item>
+        <item>200</item>
+        <item>205</item>
+        <item>210</item>
+        <item>215</item>
+        <item>220</item>
+        <item>225</item>
+        <item>230</item>
+        <item>235</item>
+        <item>240</item>
+        <item>245</item>
+        <item>250</item>
+        <item>255</item>
+    </integer-array>
+    <array name="config_screenBrightnessNits">
+        <item>2.685</item>
+        <item>3.343</item>
+        <item>4.13</item>
+        <item>5.216</item>
+        <item>6.308</item>
+        <item>7.565</item>
+        <item>9.269</item>
+        <item>10.98</item>
+        <item>13.25</item>
+        <item>15.49</item>
+        <item>18.42</item>
+        <item>20.6</item>
+        <item>22.71</item>
+        <item>24.68</item>
+        <item>26.31</item>
+        <item>28.39</item>
+        <item>30.34</item>
+        <item>32.39</item>
+        <item>33.94</item>
+        <item>35.94</item>
+        <item>45.12</item>
+        <item>54</item>
+        <item>62.31</item>
+        <item>70.73</item>
+        <item>78.85</item>
+        <item>86.41</item>
+        <item>93.53</item>
+        <item>102.3</item>
+        <item>109.1</item>
+        <item>118.7</item>
+        <item>126.4</item>
+        <item>136.9</item>
+        <item>147.8</item>
+        <item>158.9</item>
+        <item>168.3</item>
+        <item>177.4</item>
+        <item>186.6</item>
+        <item>195.7</item>
+        <item>204.5</item>
+        <item>214</item>
+        <item>221.8</item>
+        <item>234</item>
+        <item>242.1</item>
+        <item>250.6</item>
+        <item>263.4</item>
+        <item>272.4</item>
+        <item>282.5</item>
+        <item>296.3</item>
+        <item>305.6</item>
+        <item>315.3</item>
+        <item>329.8</item>
+        <item>339.8</item>
+        <item>349.7</item>
+        <item>357.4</item>
+        <item>364.6</item>
+        <item>374.6</item>
+        <item>384.9</item>
+        <item>392.5</item>
+        <item>402.8</item>
+        <item>413.6</item>
+        <item>421.6</item>
+        <item>432.2</item>
+        <item>440.3</item>
+        <item>448.3</item>
+        <item>459.2</item>
+        <item>467.6</item>
+        <item>478.5</item>
+    </array>
+    <bool name="config_automatic_brightness_available">true</bool>
+    <bool name="config_setColorTransformAccelerated">true</bool>
+    <bool name="config_supportAudioSourceUnprocessed">false</bool>
+    <bool name="config_useDevInputEventForAudioJack">true</bool>
+    <bool name="skip_restoring_network_selection">true</bool>
+    <bool name="config_bluetooth_le_peripheral_mode_supported">true</bool>
+    <bool name="config_carrier_volte_available">true</bool>
+    <bool name="config_device_volte_available">true</bool>
+    <bool name="config_device_vt_available">true</bool>
+    <bool name="config_device_wfc_ims_available">true</bool>
+    <bool name="config_hotswapCapable">true</bool>
+    <bool name="config_lidControlsSleep">true</bool>
+    <bool name="config_wifiDisplaySupportsProtectedBuffers">true</bool>
+    <bool name="config_wifi_background_scan_support">true</bool>
+    <bool name="config_wifi_batched_scan_supported">true</bool>
+    <bool name="config_wifi_dual_band_support">true</bool>
+    <bool name="config_dozeAlwaysOnDisplayAvailable">false</bool>
+    <bool name="config_displayBlanksAfterDoze">true</bool>
+    <bool name="config_powerDecoupleAutoSuspendModeFromDisplay">true</bool>
+    <fraction name="config_autoBrightnessAdjustmentMaxGamma">200.0%</fraction>
+    <fraction name="config_maximumScreenDimRatio">29.999996%</fraction>
+    <integer name="config_autoBrightnessBrighteningLightDebounce">2000</integer>
+    <integer name="config_autoBrightnessDarkeningLightDebounce">4000</integer>
+    <integer name="config_screenBrightnessDark">1</integer>
+    <integer name="config_screenBrightnessDim">1</integer>
+    <integer name="config_screenBrightnessDoze">17</integer>
+    <integer name="config_screenBrightnessSettingDefault">102</integer>
+    <integer name="config_screenBrightnessSettingMaximum">255</integer>
+    <integer name="config_screenBrightnessSettingMinimum">1</integer>
+    <integer name="config_bluetooth_idle_cur_ma">1</integer>
+    <integer name="config_bluetooth_operating_voltage_mv">3300</integer>
+    <integer name="config_bluetooth_rx_cur_ma">2</integer>
+    <integer name="config_bluetooth_tx_cur_ma">3</integer>
+    <integer name="config_shutdownBatteryTemperature">600</integer>
+</resources>

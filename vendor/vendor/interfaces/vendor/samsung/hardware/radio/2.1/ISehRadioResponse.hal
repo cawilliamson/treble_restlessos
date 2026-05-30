@@ -1,0 +1,11 @@
+package vendor.samsung.hardware.radio@2.1;
+
+import vendor.samsung.hardware.radio@2.0::ISehRadioResponse;
+import android.hardware.radio@1.0::RadioResponseInfo;
+
+interface ISehRadioResponse extends @2.0::ISehRadioResponse {
+oneway setNrModeResponse(RadioResponseInfo info);
+oneway getNrModeResponse(RadioResponseInfo info, uint32_t nrMode);
+oneway getNrIconResponse(RadioResponseInfo info, uint32_t nrIconType);
+oneway getIccCardStatusResponse_2_1(RadioResponseInfo info, SehCardStatus cardStatus);
+};

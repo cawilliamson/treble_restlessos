@@ -1,0 +1,66 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+	<bool name="config_wifi_dual_band_support">true</bool>
+	<bool name="config_wifi_background_scan_support">true</bool>
+	<bool name="config_wifi_batched_scan_supported">false</bool>
+	<bool name="config_automatic_brightness_available">false</bool>
+	<integer name="config_brightness_ramp_rate_fast">200</integer>
+	<integer name="config_brightness_ramp_rate_slow">40</integer>
+	<bool name="config_lidControlsSleep">false</bool>
+	<integer name="config_shutdownBatteryTemperature">680</integer>
+	<bool name="config_hotswapCapable">false</bool>
+	<integer name="config_screenBrightnessSettingDefault">102</integer>
+	<integer name="config_screenBrightnessDoze">1</integer>
+	<bool name="config_allowAutoBrightnessWhileDozing">false</bool>
+	<integer name="config_autoBrightnessBrighteningLightDebounce">4000</integer>
+	<integer name="config_autoBrightnessDarkeningLightDebounce">8000</integer>
+	<fraction name="config_autoBrightnessAdjustmentMaxGamma">300.0%</fraction>
+	<integer name="config_screenBrightnessDim">10</integer>
+	<integer-array name="config_autoBrightnessLcdBacklightValues">
+        <item>8</item>
+        <item>64</item>
+        <item>98</item>
+        <item>104</item>
+        <item>110</item>
+        <item>116</item>
+        <item>122</item>
+        <item>128</item>
+        <item>134</item>
+        <item>182</item>
+        <item>255</item>
+        <item>255</item>
+        <item>255</item>
+        <item>255</item>
+        <item>255</item>
+        <item>255</item>
+        <item>255</item>
+        <item>255</item>
+	</integer-array>
+	<integer-array name="config_autoBrightnessLevels">
+        <item>128</item>
+        <item>256</item>
+        <item>384</item>
+        <item>512</item>
+        <item>640</item>
+        <item>768</item>
+        <item>896</item>
+        <item>1024</item>
+        <item>2048</item>
+        <item>4096</item>
+        <item>6144</item>
+        <item>8192</item>
+        <item>10240</item>
+        <item>12288</item>
+        <item>14336</item>
+        <item>16384</item>
+        <item>18432</item>
+	</integer-array>
+	<bool name="config_bluetooth_le_peripheral_mode_supported">false</bool>
+	<integer name="config_bluetooth_operating_voltage_mv">4</integer>
+	<bool name="skip_restoring_network_selection">false</bool>
+	<bool name="config_showNavigationBar">true</bool>
+	<bool name="config_dozeAfterScreenOff">false</bool>
+	<bool name="config_powerDecoupleAutoSuspendModeFromDisplay">false</bool>
+	<bool name="config_useDevInputEventForAudioJack">false</bool>
+	<bool name="config_switch_phone_on_voice_reg_state_change">true</bool>
+</resources>

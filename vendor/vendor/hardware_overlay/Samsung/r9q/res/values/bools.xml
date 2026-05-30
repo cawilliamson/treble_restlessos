@@ -1,0 +1,27 @@
+<?xml version="1.0"?>
+<resources>
+    <bool name="config_dozePulsePickup">true</bool>
+    <bool name="config_bluetooth_hfp_inband_ringing_support">true</bool>
+    <bool name="config_bluetooth_le_peripheral_mode_supported">true</bool>
+    <bool name="config_device_vt_available">true</bool>
+    <bool name="config_device_wfc_ims_available">true</bool>
+    <bool name="config_device_volte_available">true</bool>
+    <bool name="config_carrier_volte_available">true</bool>
+    <bool name="config_hotswapCapable">true</bool>
+    <bool name="config_switch_phone_on_voice_reg_state_change">false</bool>
+    <bool name="skip_restoring_network_selection">true</bool>
+    <bool name="config_wifi_background_scan_support">true</bool>
+    <bool name="config_wifi_batched_scan_supported">true</bool>
+    <bool name="config_wifi_dual_band_support">true</bool>
+    <bool name="config_speed_up_audio_on_mt_calls">true</bool>
+    <bool name="config_enableBurnInProtection">true</bool>
+    <bool name="config_showNavigationBar">true</bool>
+    <bool name="config_useDevInputEventForAudioJack">true</bool>
+    <bool name="config_dozeAlwaysOnDisplayAvailable">true</bool>
+    <bool name="config_supportDoubleTapWake">true</bool>
+    <bool name="config_wifiDisplaySupportsProtectedBuffers">true</bool>
+    <bool name="config_allowAutoBrightnessWhileDozing">true</bool>
+    <dimen name="rounded_corner_radius_bottom">26.0dip</dimen>
+    <dimen name="rounded_corner_radius_top">26.0dip</dimen>
+</resources>
+

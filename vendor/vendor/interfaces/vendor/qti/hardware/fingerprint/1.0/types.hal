@@ -1,0 +1,124 @@
+package vendor.qti.hardware.fingerprint@1.0;
+
+enum Status : uint32_t {
+	SUCCESS = 0,
+	FAILURE = 1,
+};
+
+struct TxTestResult {
+	Status status;
+	uint32_t median;
+	uint32_t stddev;
+	uint32_t q5;
+	uint32_t q95;
+};
+
+struct TemperatureTestResult {
+	Status status;
+	double temperature;
+};
+
+struct ReadInfoResult {
+	Status status;
+	uint32_t fwVersion;
+	uint32_t chipId;
+	uint32_t chipSn;
+	vec<uint8_t> lotId;
+	vec<uint8_t> waferId;
+	uint32_t sensorWidth;
+	uint32_t sensorHeight;
+	uint8_t livenessSupport;
+	vec<uint8_t> tftId;
+};
+
+struct PsfVerificationResult {
+	Status status;
+	uint32_t residualPhase;
+};
+
+struct PsfSettingFormat {
+	Status status;
+	double rmax;
+	double speedOfSound;
+};
+
+struct PsfCalibrationResult {
+	Status status;
+	uint32_t phase;
+	uint32_t initialDelay;
+	uint32_t phaseCosinus;
+};
+
+struct OtpTestResult {
+	Status status;
+	double otpVal;
+};
+
+struct NoiseTestResult {
+	Status status
+	uint32_t stddevTbOn;
+	uint32_t stddevTbOff;
+};
+
+struct ImageQualityTestResult {
+	Status status;
+	uint32_t SNR1;
+	uint32_t delta1;
+};
+
+struct FrameworkInfo {
+	Status status;
+	vec<uint32_t> version;
+	string capabilities;
+};
+
+struct FieldMfgFormat {
+	Status status;
+	string mfgValue;
+};
+
+struct EnrollRecord {
+	Status status;
+	string enrolleeId;
+	uint64_t enrollmentDate;
+	vec<string> fingers;
+	uint32_t dbStatus;
+};
+
+struct DigitalTestResult {
+	Status status;
+	uint32_t asicId;
+	uint32_t asicSerialNo;
+};
+
+struct DbiasCalibrationResult {
+	Status status;
+	uint32_t optimalDbias;
+};
+
+struct ContactResistanceTestResult {
+	Status status;
+	double rsenseOhm;
+};
+
+struct CaptureDebugData {
+	string key;
+	vec<uint8_t> data;
+	uint32_t dataSize;
+};
+
+struct CaptouchCalibrationResult {
+	Status status;
+	uint32_t tempOffset;
+	uint32_t capOffset;
+	double tempForCalibration;
+};
+
+struct BiasTestResult {
+	Status status;
+	uint32_t bias;
+	uint32_t median;
+	uint32_t stddev;
+	uint32_t q5;
+	uint32_t q95;
+};

@@ -1,0 +1,10 @@
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+        package="me.phh.treble.overlay.huawei.JKM"
+        android:versionCode="1"
+        android:versionName="1.0">
+        <overlay android:targetPackage="android"
+                android:requiredSystemPropertyName="ro.hw.oemName"
+                android:requiredSystemPropertyValue="+JKM*"
+		android:priority="916"
+		android:isStatic="true" />
+</manifest>

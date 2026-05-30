@@ -1,0 +1,13 @@
+package vendor.samsung.hardware.radio@2.2;
+
+struct SehVendorConfiguration {
+    string name;
+    string value;
+};
+
+struct SehEriInfo {
+    uint8_t roamingIndicator;
+    uint8_t iconIndex;
+    uint8_t iconMode;
+    string eriText;
+};

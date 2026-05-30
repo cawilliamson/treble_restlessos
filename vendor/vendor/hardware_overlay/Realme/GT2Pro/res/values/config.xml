@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <bool name="config_useDevInputEventForAudioJack">true</bool>
+    <bool name="config_showNavigationBar">true</bool>
+    <bool name="config_fillMainBuiltInDisplayCutout">false</bool>
+    <bool name="config_dozeAlwaysOnDisplayAvailable">true</bool>
+    <bool name="config_powerDecoupleAutoSuspendModeFromDisplay">true</bool>
+    <bool name="config_powerDecoupleInteractiveModeFromDisplay">true</bool>
+    <bool name="config_enableBurnInProtection">true</bool>
+
+    <integer name="config_screenBrightnessDoze">3</integer>
+    <integer name="config_screenBrightnessSettingMinimum">1</integer>
+
+    <string name="config_mainBuiltInDisplayCutout">M -720,0 L -720,124 L -525,124 L -525,0 Z</string>
+    <string name="config_mainBuiltInDisplayCutoutRectApproximation">M -720,0 L -720,124 L -525,124 L -525,0 Z</string>
+</resources>

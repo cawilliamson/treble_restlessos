@@ -1,0 +1,8 @@
+package vendor.oneplus.hardware.motorcontrol@1.0;
+
+interface IOPMotorControl {
+	readMotorData(int32_t id, int32_t size) generates (int32_t result);
+	writeMotorData(int32_t id, int32_t direction, int32_t enable) generates (int32_t result);
+	writeFlashData(int32_t id, int32_t enable) generates (int32_t result);
+	writeCalibData(int32_t id, string value) generates (int32_t result);
+};

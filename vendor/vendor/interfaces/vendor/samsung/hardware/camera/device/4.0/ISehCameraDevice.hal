@@ -1,0 +1,8 @@
+package vendor.samsung.hardware.camera.device@4.0;
+
+import android.hardware.camera.common@1.0::types;
+import android.hardware.camera.device@3.5::ICameraDevice;
+
+interface ISehCameraDevice extends android.hardware.camera.device@3.5::ICameraDevice {
+	sehSetTorchModeStrength(TorchMode mode, uint32_t strength) generates (Status status);
+};

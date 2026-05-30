@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <bool name="config_bluetooth_le_peripheral_mode_supported">true</bool>
+    <bool name="config_wifi_dual_band_support">true</bool>
+    <bool name="config_wifi_background_scan_support">true</bool>
+    <bool name="config_device_volte_available">true</bool>
+    <bool name="config_carrier_volte_available">true</bool>
+    <bool name="config_showNavigationBar">true</bool>
+    <bool name="config_enableNetworkLocationOverlay">false</bool>
+    <bool name="config_dozeAfterScreenOff">true</bool>
+    <bool name="config_supportDoubleTapWake">true</bool>
+    <bool name="config_powerDecoupleAutoSuspendModeFromDisplay">true</bool>
+    <bool name="config_dozeAfterScreenOffByDefault">true</bool>
+</resources>

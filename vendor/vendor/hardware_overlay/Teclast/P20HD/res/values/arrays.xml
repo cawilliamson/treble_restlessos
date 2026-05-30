@@ -1,0 +1,109 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <array name="config_autoBrightnessDisplayValuesNits">
+        <item>33.07</item>
+        <item>49.81</item>
+        <item>65.02</item>
+        <item>80.2</item>
+        <item>96.75</item>
+        <item>111.8</item>
+        <item>144.3</item>
+        <item>144.3</item>
+        <item>144.3</item>
+        <item>144.3</item>
+        <item>144.3</item>
+        <item>260.0</item>
+        <item>288.5</item>
+        <item>302.0</item>
+        <item>308.7</item>
+        <item>315.4</item>
+        <item>330.0</item>
+        <item>363.6</item>
+        <item>366.6</item>
+    </array>
+    <integer-array name="config_autoBrightnessLevels">
+        <item>16</item>
+        <item>32</item>
+        <item>50</item>
+        <item>100</item>
+        <item>140</item>
+        <item>180</item>
+        <item>240</item>
+        <item>300</item>
+        <item>600</item>
+        <item>800</item>
+        <item>1000</item>
+        <item>2000</item>
+        <item>3000</item>
+        <item>4000</item>
+        <item>5000</item>
+        <item>6000</item>
+        <item>8000</item>
+        <item>10000</item>
+    </integer-array>
+    <string-array name="config_defaultPinnerServiceFiles">
+        <item>/system/lib/libjavacrypto.so</item>
+        <item>/system/lib/libhidltransport.so</item>
+        <item>/system/framework/arm/boot-core-libart.oat</item>
+        <item>/system/framework/arm/boot-conscrypt.oat</item>
+        <item>/system/framework/arm/boot-core-libart.vdex</item>
+        <item>/system/framework/arm/boot-ext.vdex</item>
+        <item>/system/framework/arm/boot.vdex</item>
+        <item>/system/framework/arm/boot-framework.vdex</item>
+        <item>/system/framework/framework-res.apk</item>
+    </string-array>
+    <integer-array name="config_longPressVibePattern">
+        <item>0</item>
+        <item>30</item>
+    </integer-array>
+    <integer-array name="config_screenBrightnessBacklight">
+        <item>0</item>
+        <item>15</item>
+        <item>30</item>
+        <item>45</item>
+        <item>60</item>
+        <item>75</item>
+        <item>90</item>
+        <item>105</item>
+        <item>120</item>
+        <item>135</item>
+        <item>150</item>
+        <item>165</item>
+        <item>180</item>
+        <item>195</item>
+        <item>210</item>
+        <item>225</item>
+        <item>240</item>
+        <item>255</item>
+    </integer-array>
+    <array name="config_screenBrightnessNits">
+        <item>0.0125</item>
+        <item>10.39</item>
+        <item>33.07</item>
+        <item>57.41</item>
+        <item>80.02</item>
+        <item>104.3</item>
+        <item>126.7</item>
+        <item>150.3</item>
+        <item>172.3</item>
+        <item>195.4</item>
+        <item>216.9</item>
+        <item>239.6</item>
+        <item>260.0</item>
+        <item>281.9</item>
+        <item>302.0</item>
+        <item>323.3</item>
+        <item>343.1</item>
+        <item>363.6</item>
+    </array>
+    <string-array name="config_tether_bluetooth_regexs">
+        <item>bt-pan</item>
+    </string-array>
+    <string-array name="config_tether_usb_regexs">
+        <item>rndis0</item>
+        <item>usb0</item>
+    </string-array>
+    <string-array name="config_tether_wifi_regexs">
+        <item>wlan0</item>
+    </string-array>
+</resources>

@@ -1,0 +1,14 @@
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+        package="me.phh.treble.overlay.moto.g8power"
+        android:versionCode="1"
+        android:versionName="1.0">
+	<!--
+		TESTS: Ignore ro.vendor.product.name
+		There is no vendor fingerprint: https://github.com/TadiT7/motorola_evert_dump/blob/evert_n-user-8.0.0-OPW27.113-45-53-release-keys/vendor/build.prop
+	-->
+        <overlay android:targetPackage="android"
+                android:requiredSystemPropertyName="ro.product.vendor.name"
+                android:requiredSystemPropertyValue="+*sofia*"
+		android:priority="109"
+		android:isStatic="true" />
+</manifest>

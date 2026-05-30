@@ -1,0 +1,14 @@
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+        package="me.phh.treble.overlay.moto.one"
+        android:versionCode="1"
+        android:versionName="1.0">
+	<!--
+		TESTS: Ignore ro.vendor.product.name
+		Same as G6 Plus
+	-->
+        <overlay android:targetPackage="android"
+                android:requiredSystemPropertyName="ro.vendor.product.name"
+                android:requiredSystemPropertyValue="deen"
+		android:priority="63"
+		android:isStatic="true" />
+</manifest>

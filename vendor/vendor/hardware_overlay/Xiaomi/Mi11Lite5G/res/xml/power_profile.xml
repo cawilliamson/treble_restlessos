@@ -1,0 +1,123 @@
+<?xml version="1.0" encoding="utf-8"?>
+<device name="Android">
+    <item name="none">0</item>
+    <item name="screen.on.display0">103.76</item>
+    <item name="screen.full.display0">448.43</item>
+    <array name="cpu.clusters.cores">
+        <value>4</value>
+        <value>3</value>
+        <value>1</value>
+    </array>
+    <array name="cpu.core_speeds.cluster0">
+        <value>300000</value>
+        <value>576000</value>
+        <value>691200</value>
+        <value>806400</value>
+        <value>940800</value>
+        <value>1171200</value>
+        <value>1324800</value>
+        <value>1516800</value>
+        <value>1670400</value>
+        <value>1804800</value>
+        <value>1900800</value>
+    </array>
+    <array name="cpu.core_power.cluster0">
+        <value>33.41</value>
+        <value>35.96</value>
+        <value>36.91</value>
+        <value>38.5</value>
+        <value>40.16</value>
+        <value>43.95</value>
+        <value>46.72</value>
+        <value>55.69</value>
+        <value>69.07</value>
+        <value>76.5</value>
+        <value>78.65</value>
+    </array>
+    <array name="cpu.core_speeds.cluster1">
+        <value>691200</value>
+        <value>940800</value>
+        <value>1209600</value>
+        <value>1344000</value>
+        <value>1497600</value>
+        <value>1651200</value>
+        <value>1900800</value>
+        <value>2131200</value>
+        <value>2208000</value>
+    </array>
+    <array name="cpu.core_power.cluster1">
+        <value>70.66</value>
+        <value>88.43</value>
+        <value>112.19</value>
+        <value>135.48</value>
+        <value>153.64</value>
+        <value>176.07</value>
+        <value>249.96</value>
+        <value>329.66</value>
+        <value>357.27</value>
+    </array>
+    <array name="cpu.core_speeds.cluster2">
+        <value>806400</value>
+        <value>1094400</value>
+        <value>1267200</value>
+        <value>1516800</value>
+        <value>1766400</value>
+        <value>1862400</value>
+        <value>2035200</value>
+        <value>2169600</value>
+        <value>2361600</value>
+        <value>2400000</value>
+    </array>
+    <array name="cpu.core_power.cluster2">
+        <value>85.09</value>
+        <value>106.46</value>
+        <value>121.37</value>
+        <value>150.8</value>
+        <value>184.33</value>
+        <value>201.27</value>
+        <value>275.3</value>
+        <value>291.09</value>
+        <value>348.8</value>
+        <value>420.74</value>
+    </array>
+    <item name="cpu.active">11.86</item>
+    <item name="cpu.idle">5.37</item>
+    <item name="cpu.suspend">0</item>
+    <item name="battery.capacity">4250</item>
+    <item name="wifi.on">2.47</item>
+    <item name="wifi.active">266.5</item>
+    <item name="wifi.scan">34.36</item>
+    <item name="audio">26.75</item>
+    <item name="video">37.04</item>
+    <item name="camera.flashlight">108.77</item>
+    <item name="camera.avg">890.77</item>
+    <item name="gps.on">73.3</item>
+    <item name="radio.active">206.15</item>
+    <item name="radio.scanning">65</item>
+    <array name="radio.on">
+        <value>1.41</value>
+        <value>1.41</value>
+    </array>
+    <item name="modem.controller.idle">6</item>
+    <item name="modem.controller.rx">180</item>
+    <item name="modem.controller.tx">186</item>
+    <item name="modem.controller.voltage">3700</item>
+    <array name="memory.bandwidths">
+        <value>17</value>
+    </array>
+    <item name="wifi.controller.idle">1</item>
+    <item name="wifi.controller.rx">152</item>
+    <item name="wifi.controller.tx">190</item>
+    <array name="wifi.controller.tx_levels">1 </array>
+    <item name="wifi.controller.voltage">3700</item>
+    <array name="wifi.batchedscan">
+        <value>.0001</value>
+        <value>.001</value>
+        <value>.01</value>
+        <value>.1</value>
+        <value>1</value>
+    </array>
+    <item name="bluetooth.active">23.97</item>
+    <item name="bluetooth.on">1.39</item>
+    <item name="bluetooth.controller.voltage">3700</item>
+</device>

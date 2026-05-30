@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <dimen name="status_bar_height_default">133.0px</dimen>
+    <dimen name="status_bar_height">133.0px</dimen>
+    <dimen name="quick_qs_offset_height">133.0px</dimen>
+    <dimen name="status_bar_height_portrait">133.0px</dimen>
+    <dimen name="status_bar_height_landscape">28.0dip</dimen>
+</resources>

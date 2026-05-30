@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- This file contains misc non default vars -->
+<resources>
+    <bool name="config_dynamic_bind_ims">true</bool>
+    <bool name="config_hotswapCapable">true</bool>    
+    <bool name="config_switch_phone_on_voice_reg_state_change">false</bool>
+    <bool name="config_wifi_background_scan_support">true</bool>
+    <bool name="config_wifi_dual_band_support">true</bool>
+    <bool name="skip_restoring_network_selection">true</bool>
+</resources>

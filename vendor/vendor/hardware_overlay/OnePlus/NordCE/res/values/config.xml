@@ -1,0 +1,206 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <bool name="config_useDevInputEventForAudioJack">true</bool>
+    <bool name="config_showNavigationBar">true</bool>
+    <bool name="config_fillMainBuiltInDisplayCutout">false</bool>
+    <bool name="config_automatic_brightness_available">true</bool>
+
+    <dimen name="status_bar_height_default">139px</dimen>
+    <dimen name="status_bar_height">139px</dimen>
+    <dimen name="status_bar_height_portrait">139px</dimen>
+    <dimen name="status_bar_height_landscape">28dp</dimen>
+    <dimen name="quick_qs_offset_height">139px</dimen>
+
+    <integer name="config_screenBrightnessSettingMinimum">1</integer>
+
+    <integer-array name="config_autoBrightnessLevels">
+        <item>1</item>
+        <item>4</item>
+        <item>12</item>
+        <item>20</item>
+        <item>28</item>
+        <item>47</item>
+        <item>63</item>
+        <item>86</item>
+        <item>150</item>
+        <item>160</item>
+        <item>220</item>
+        <item>270</item>
+        <item>360</item>
+        <item>420</item>
+        <item>510</item>
+        <item>620</item>
+        <item>1000</item>
+        <item>2000</item>
+        <item>3100</item>
+        <item>5000</item>
+        <item>8000</item>
+        <item>12000</item>
+        <item>16000</item>
+        <item>20000</item>
+    </integer-array>
+    <array name="config_autoBrightnessDisplayValuesNits">
+        <item>0.8487</item>
+        <item>3.0394</item>
+        <item>15.2619</item>
+        <item>30.2619</item>
+        <item>46.671</item>
+        <item>65.95</item>
+        <item>80.46</item>
+        <item>84.38</item>
+        <item>89.51</item>
+        <item>100.34</item>
+        <item>102.21</item>
+        <item>109.48</item>
+        <item>114.19</item>
+        <item>123.86</item>
+        <item>129.18</item>
+        <item>138.07</item>
+        <item>145.62</item>
+        <item>168.84</item>
+        <item>234.9</item>
+        <item>280</item>
+        <item>320</item>
+        <item>360</item>
+        <item>405</item>
+        <item>450</item>
+        <item>500</item>
+    </array>
+    <array name="config_screenBrightnessNits">
+        <item>0.0306835</item>
+        <item>7.036976</item>
+        <item>15.378969</item>
+        <item>23.549307</item>
+        <item>31.779863</item>
+        <item>39.88114</item>
+        <item>48.224293</item>
+        <item>56.22962</item>
+        <item>64.20222</item>
+        <item>71.99428</item>
+        <item>80.594086</item>
+        <item>88.73333</item>
+        <item>96.98312</item>
+        <item>105.07983</item>
+        <item>113.16353</item>
+        <item>121.19726</item>
+        <item>129.2246</item>
+        <item>137.3341</item>
+        <item>145.32004</item>
+        <item>153.26695</item>
+        <item>161.16608</item>
+        <item>169.02992</item>
+        <item>177.01715</item>
+        <item>184.8931</item>
+        <item>192.68034</item>
+        <item>200.42543</item>
+        <item>208.20667</item>
+        <item>216.03822</item>
+        <item>223.7154</item>
+        <item>231.39688</item>
+        <item>239.02518</item>
+        <item>244.72389</item>
+        <item>252.30759</item>
+        <item>260.0522</item>
+        <item>267.6324</item>
+        <item>275.16675</item>
+        <item>282.65814</item>
+        <item>290.31934</item>
+        <item>297.93735</item>
+        <item>305.57104</item>
+        <item>313.0667</item>
+        <item>320.6049</item>
+        <item>328.6051</item>
+        <item>335.74124</item>
+        <item>343.19217</item>
+        <item>350.65656</item>
+        <item>358.13226</item>
+        <item>365.529</item>
+        <item>373.01135</item>
+        <item>380.45087</item>
+        <item>387.86578</item>
+        <item>395.3285</item>
+        <item>402.69513</item>
+        <item>410.0712</item>
+        <item>417.44424</item>
+        <item>424.8042</item>
+        <item>432.0771</item>
+        <item>439.3496</item>
+        <item>446.65448</item>
+        <item>454.04626</item>
+        <item>461.40967</item>
+        <item>468.5552</item>
+        <item>473.9042</item>
+        <item>482.879</item>
+        <item>490.22714</item>
+    </array>
+    <integer-array name="config_screenBrightnessBacklight">
+        <item>0</item>
+        <item>4</item>
+        <item>8</item>
+        <item>12</item>
+        <item>16</item>
+        <item>20</item>
+        <item>24</item>
+        <item>28</item>
+        <item>32</item>
+        <item>36</item>
+        <item>40</item>
+        <item>44</item>
+        <item>48</item>
+        <item>52</item>
+        <item>56</item>
+        <item>60</item>
+        <item>64</item>
+        <item>68</item>
+        <item>72</item>
+        <item>76</item>
+        <item>80</item>
+        <item>84</item>
+        <item>88</item>
+        <item>92</item>
+        <item>96</item>
+        <item>100</item>
+        <item>104</item>
+        <item>108</item>
+        <item>112</item>
+        <item>116</item>
+        <item>120</item>
+        <item>123</item>
+        <item>127</item>
+        <item>131</item>
+        <item>135</item>
+        <item>139</item>
+        <item>143</item>
+        <item>147</item>
+        <item>151</item>
+        <item>155</item>
+        <item>159</item>
+        <item>163</item>
+        <item>167</item>
+        <item>171</item>
+        <item>175</item>
+        <item>179</item>
+        <item>183</item>
+        <item>187</item>
+        <item>191</item>
+        <item>195</item>
+        <item>199</item>
+        <item>203</item>
+        <item>207</item>
+        <item>211</item>
+        <item>215</item>
+        <item>219</item>
+        <item>223</item>
+        <item>227</item>
+        <item>231</item>
+        <item>235</item>
+        <item>239</item>
+        <item>243</item>
+        <item>246</item>
+        <item>251</item>
+        <item>255</item>
+    </integer-array>
+
+    <string name="config_mainBuiltInDisplayCutout">M -540,0 L -540,100 L -401,100 L -401,0 Z</string>
+    <string name="config_mainBuiltInDisplayCutoutRectApproximation">M -540,0 L -540,100 L -401,100 L -401,0 Z</string>
+</resources>

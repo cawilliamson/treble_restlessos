@@ -1,0 +1,10 @@
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+        package="me.phh.treble.overlay.xiaomi.redminote10s"
+        android:versionCode="1"
+        android:versionName="1.0">
+        <overlay android:targetPackage="android"
+                android:requiredSystemPropertyName="ro.vendor.build.fingerprint"
+                android:requiredSystemPropertyValue="+(*edmi/rosemary*|*edmi/secret*|*edmi/maltose*)"
+		android:priority="671"
+		android:isStatic="true" />
+</manifest>

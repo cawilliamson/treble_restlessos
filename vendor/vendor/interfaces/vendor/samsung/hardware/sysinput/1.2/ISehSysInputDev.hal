@@ -1,0 +1,13 @@
+package vendor.samsung.hardware.sysinput@1.2;
+
+import vendor.samsung.hardware.sysinput@1.1::ISehSysInputDev;
+
+interface ISehSysInputDev extends vendor.samsung.hardware.sysinput@1.1::ISehSysInputDev {
+    initTspRawData(uint32_t devid, uint32_t mode) generates (uint32_t retval, vec<uint16_t> mmap_max_num);
+    pollTspIrq(uint32_t devId) generates (uint32_t retval, vec<uint16_t> count);
+    getTspRawdata(uint32_t devid) generates (uint32_t retval, vec<uint16_t> data);
+    openTaas() generates (uint32_t retval);
+    closeTaas() generates (uint32_t retval);
+    readTaas() generates (uint32_t retval, string outbuf);
+    writeTaas(string buf) generates (uint32_t retval);
+};

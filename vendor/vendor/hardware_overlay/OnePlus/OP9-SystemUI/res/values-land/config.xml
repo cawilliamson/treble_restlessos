@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <dimen name="status_bar_header_height_keyguard">28dp</dimen>
+    <dimen name="large_screen_shade_header_height">28dp</dimen>
+    <dimen name="large_screen_shade_header_min_height">28dp</dimen>
+</resources>

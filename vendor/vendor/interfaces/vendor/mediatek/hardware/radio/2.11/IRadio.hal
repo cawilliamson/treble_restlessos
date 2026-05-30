@@ -1,0 +1,1 @@
+oneway notifyEPDGScreenState(int32_t serial, int32_t phoneId, int32_t state);

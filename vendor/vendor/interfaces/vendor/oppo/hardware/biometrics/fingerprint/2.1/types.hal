@@ -1,0 +1,103 @@
+/*
+ * Copyright (C) 2017 The Android Open Source Project
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package vendor.oppo.hardware.biometrics.fingerprint@2.1;
+
+enum RequestStatus : int32_t {
+  SYS_UNKNOWN = 1,
+  SYS_OK = 0,
+  SYS_ENOENT = -2,
+  SYS_EINTR = -4,
+  SYS_EIO = -5,
+  SYS_EAGAIN = -11,
+  SYS_ENOMEM = -12,
+  SYS_EACCES = -13,
+  SYS_EFAULT = -14,
+  SYS_EBUSY = -16,
+  SYS_EINVAL = -22,
+  SYS_ENOSPC = -28,
+  SYS_ETIMEDOUT = -110,
+};
+
+enum FingerprintError : int32_t {
+  ERROR_NO_ERROR = 0,
+  ERROR_HW_UNAVAILABLE = 1,
+  ERROR_UNABLE_TO_PROCESS = 2,
+  ERROR_TIMEOUT = 3,
+  ERROR_NO_SPACE = 4,
+  ERROR_CANCELED = 5,
+  ERROR_UNABLE_TO_REMOVE = 6,
+  ERROR_LOCKOUT = 7,
+  ERROR_VENDOR = 8
+};
+
+enum FingerprintAcquiredInfo : int32_t {
+  ACQUIRED_GOOD = 0,
+  ACQUIRED_PARTIAL = 1,
+  ACQUIRED_INSUFFICIENT = 2,
+  ACQUIRED_IMAGER_DIRTY = 3,
+  ACQUIRED_TOO_SLOW = 4,
+  ACQUIRED_TOO_FAST = 5,
+  ACQUIRED_VENDOR = 6
+};
+
+struct FingerprintFingerId {
+  uint32_t gid;
+  uint32_t fid;
+};
+
+struct FingerprintEnroll {
+  FingerprintFingerId finger;
+  uint32_t samplesRemaining;  uint64_t msg;
+};
+
+struct FingerprintIterator {
+  FingerprintFingerId finger;
+  uint32_t remainingTemplates;
+};
+
+typedef FingerprintIterator FingerprintEnumerated;
+typedef FingerprintIterator FingerprintRemoved;
+
+struct FingerprintAcquired {
+  FingerprintAcquiredInfo acquiredInfo;
+};
+
+struct FingerprintAuthenticated {
+  FingerprintFingerId finger;
+  uint8_t[69] hat;
+};
+
+enum FingerprintMsgType : int32_t {
+  ERROR = -1,
+  ACQUIRED = 1,
+  TEMPLATE_ENROLLING = 3,
+  TEMPLATE_REMOVED = 4,
+  AUTHENTICATED = 5,
+  TEMPLATE_ENUMERATING = 6,
+};
+
+enum FingerprintScreenState : int32_t {
+  FINGERPRINT_SCREEN_OFF = 0,
+  FINGERPRINT_SCREEN_ON = 1,
+};
+
+enum FingerprintAuthType : int32_t {
+  TYPE_KEYGUARD = 1,
+  TYPE_PAY = 2,
+  TYPE_OTHER = 3,
+};
+

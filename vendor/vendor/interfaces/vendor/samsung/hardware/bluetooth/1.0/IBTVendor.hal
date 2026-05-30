@@ -1,0 +1,8 @@
+package vendor.samsung.hardware.bluetooth@1.0;
+
+interface IBTVendor {
+	writeOutVendorFile(string file_path, string cmd) generates (bool success);
+	getVendorFileInfo(string file_path) generates (bool success, string data);
+	setVendorProperty(string prop_name, string data) generates (bool success);
+	getVendorProperty(string prop_name) generates (bool success, string data);
+};

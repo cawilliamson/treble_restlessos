@@ -1,0 +1,5 @@
+package vendor.ims.colortemp@1.0;
+
+interface IColorTemp {
+    setStationColorTemp(int32_t colortemplevel);
+};

@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <bool name="config_useDevInputEventForAudioJack">true</bool>
+    <bool name="config_showNavigationBar">true</bool>
+    <bool name="config_fillMainBuiltInDisplayCutout">false</bool>
+    <bool name="config_automatic_brightness_available">true</bool>
+    <bool name="config_dozeAlwaysOnDisplayAvailable">true</bool>
+    <bool name="config_powerDecoupleAutoSuspendModeFromDisplay">true</bool>
+    <bool name="config_powerDecoupleInteractiveModeFromDisplay">true</bool>
+    <bool name="config_enableBurnInProtection">true</bool>
+
+    <dimen name="status_bar_height_default">139px</dimen>
+    <dimen name="status_bar_height">139px</dimen>
+    <dimen name="status_bar_height_portrait">139px</dimen>
+    <dimen name="status_bar_height_landscape">28dp</dimen>
+    <dimen name="quick_qs_offset_height">139px</dimen>
+
+    <integer name="config_screenBrightnessDoze">30</integer>
+    <integer name="config_screenBrightnessSettingMinimum">1</integer>
+
+    <integer-array name="config_autoBrightnessLevels">
+        <item>10</item>
+        <item>30</item>
+        <item>60</item>
+        <item>100</item>
+        <item>150</item>
+        <item>210</item>
+        <item>255</item>
+    </integer-array>
+    <integer-array name="config_autoBrightnessLcdBacklightValues">
+        <item>10</item>
+        <item>20</item>
+        <item>40</item>
+        <item>70</item>
+        <item>110</item>
+        <item>160</item>
+        <item>200</item>
+        <item>255</item>
+    </integer-array>
+
+    <string name="config_mainBuiltInDisplayCutout">M -540,0 L -540,102 L -405,102 L -405,0 Z</string>
+    <string name="config_mainBuiltInDisplayCutoutRectApproximation">M -540,0 L -540,102 L -405,102 L -405,0 Z</string>
+</resources>

@@ -1,0 +1,5 @@
+package vendor.sprd.hardware.radio@1.0;
+
+interface IAtcRadioResponse {
+    oneway vsimSendCmdResponse(RadioResponseInfo, string response);
+};

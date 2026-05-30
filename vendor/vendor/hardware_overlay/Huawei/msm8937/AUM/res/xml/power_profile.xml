@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+**
+** Copyright 2009, The Android Open Source Project
+**
+** Licensed under the Apache License, Version 2.0 (the "License")
+** you may not use this file except in compliance with the License.
+** You may obtain a copy of the License at
+**
+**     http://www.apache.org/licenses/LICENSE-2.0
+**
+** Unless required by applicable law or agreed to in writing, software
+** distributed under the License is distributed on an "AS IS" BASIS,
+** WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+** See the License for the specific language governing permissions and
+** limitations under the License.
+*/
+-->
+<device name="Android">
+  <!-- All values are in mA except as noted -->
+  <item name="none">0</item>
+  <item name="screen.on">100</item> <!-- min brite -->
+  <item name="bluetooth.active">97</item>
+  <item name="bluetooth.on">2.5</item>
+  <item name="bluetooth.at">2.5</item> <!-- TBD -->
+  <item name="screen.full">245</item> <!-- backlight 14 leds -->
+  <item name="wifi.on">1.4</item>
+  <item name="wifi.active">260</item>
+  <item name="wifi.scan">70</item>
+  <item name="dsp.audio">43</item> <!-- k3v5 -->
+  <item name="dsp.video">176</item>
+  <item name="radio.active">150</item>
+  <item name="gps.on">36</item>
+  <item name="battery.capacity">3000</item> <!-- 3000mAh -->
+  <item name="radio.scanning">102</item> <!-- TBD -->
+  <!-- Current consumed by the radio at different signal strengths, when paging  -->
+  <array name="radio.on"> <!-- 1 entry per signal strength bin, TBD -->
+    <value>13.0</value>
+    <value>10.0</value>
+    <value>10.0</value>
+    <value>10.0</value>
+    <value>10.0</value>
+  </array>
+  <array name="cpu.speeds">
+    <value>960000</value> <!-- 960 MHz CPU speed -->
+    <value>1094400</value> <!-- 1 GHz CPU speed -->
+    <value>1248000</value> <!-- 1.2 GHz CPU speed -->
+    <value>1401000</value><!-- 1.4 GHz CPU speed -->
+  </array>
+  <!-- Power consumption in suspend -->
+  <item name="cpu.idle">2.2</item> <!-- k3v5 -->
+  <!-- Power consumption due to wake lock held -->
+  <item name="cpu.awake">50</item> <!-- k3v5 -->
+  <!-- Power consumption at different speeds -->
+  <array name="cpu.active">
+    <value>137</value>
+    <value>147</value>
+    <value>158</value>
+    <value>169</value>
+  </array>
+</device>

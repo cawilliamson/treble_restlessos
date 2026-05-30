@@ -1,0 +1,3 @@
+#11-14 21:15:02.748   477   477 I auditd  : type=1400 audit(0.0:104): avc: denied { search } for comm="BootAnimation" name="dri" dev="tmpfs" ino=1108 scontext=u:r:bootanim:s0 tcontext=u:object_r:gpu_device:s0 tclass=dir permissive=0
+#Seen on some MTK devices
+allow bootanim gpu_device:dir r_dir_perms;

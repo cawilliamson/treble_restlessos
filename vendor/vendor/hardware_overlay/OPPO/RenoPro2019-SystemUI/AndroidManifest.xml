@@ -1,0 +1,10 @@
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+        package="me.phh.treble.overlay.oppo.renopro2019.systemui"
+        android:versionCode="1"
+        android:versionName="1.0">
+        <overlay android:targetPackage="com.android.systemui"
+                android:requiredSystemPropertyName="ro.boot.prjname"
+                android:requiredSystemPropertyValue="+(19101|19102|19191|19192|20131|20133|20135|20139|20161|20163|20171)"
+        android:priority="1910"
+        android:isStatic="true" />
+</manifest>

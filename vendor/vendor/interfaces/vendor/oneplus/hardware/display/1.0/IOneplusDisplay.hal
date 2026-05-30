@@ -1,0 +1,6 @@
+package vendor.oneplus.hardware.display@1.0;
+
+interface IOneplusDisplay {
+setMode(uint32_t mode, uint32_t enable);
+toneColorGamut(ColorGamut cg);
+};

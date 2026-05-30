@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <integer name="config_defaultPeakRefreshRate">120</integer>
+    <bool name="config_fillMainBuiltInDisplayCutout">true</bool>
+    <bool name="config_enableBurnInProtection">true</bool>
+        <!-- Array of hysteresis constraint values for darkening, represented as tenths of a
+        percent. The length of this array is assumed to be one greater than
+        config_screenThresholdLevels. The darkening threshold is calculated as
+        screenBrightness * (1.0f - CONSTRAINT_VALUE). When the new screen brightness is lower than
+        this threshold, it is applied. See the config_screenThresholdLevels description for how
+        the constraint value is chosen. -->
+    <integer-array name="config_screenBrightnessBacklight">
+        <item>2</item>
+        <item>3</item>
+        <item>10</item>
+        <item>15</item>
+        <item>30</item>
+        <item>45</item>
+        <item>60</item>
+        <item>75</item>
+        <item>90</item>
+        <item>105</item>
+        <item>120</item>
+        <item>135</item>
+        <item>150</item>
+        <item>165</item>
+        <item>180</item>
+        <item>195</item>
+        <item>210</item>
+        <item>225</item>
+        <item>240</item>
+        <item>255</item>
+    </integer-array>
+
+    <!-- An array of floats describing the screen brightness in nits corresponding to the backlight
+        values in the config_screenBrightnessBacklight array.  On OLED displays these  values
+        should be measured with an all white image while the display is in the fully on state.
+        Note that this value should *not* reflect the maximum brightness value for any high
+        brightness modes but only the maximum brightness value obtainable in a sustainable manner.
+        This array should be equal in size to config_screenBrightnessBacklight -->
+    <integer-array name="config_screenBrightnessNits">
+        <item>2</item>
+        <item>4</item>
+        <item>22</item>
+        <item>30</item>
+        <item>68</item>
+        <item>95</item>
+        <item>133</item>
+        <item>165</item>
+        <item>192</item>
+        <item>218</item>
+        <item>255</item>
+        <item>290</item>
+        <item>326</item>
+        <item>352</item>
+        <item>384</item>
+        <item>399</item>
+        <item>422</item>
+        <item>432</item>
+        <item>442</item>
+        <item>455</item>
+    </integer-array>
+
+</resources>

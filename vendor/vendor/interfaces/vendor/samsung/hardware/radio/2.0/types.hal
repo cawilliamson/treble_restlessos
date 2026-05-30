@@ -1,0 +1,92 @@
+package vendor.samsung.hardware.radio@2.0;
+
+import android.hardware.radio@1.4::RadioTechnology;
+import android.hardware.radio@1.0::RegState;
+import android.hardware.radio@1.0::AppStatus;
+import android.hardware.radio@1.0::PinState;
+import android.hardware.radio@1.0::CardState;
+
+enum SehCallType : uint32_t {
+    VOCIE = 0,
+    VS_TX = 1,
+    VS_RX = 2,
+    VT = 3,
+};
+
+struct SehCallDetails {
+    SehCallType callType;
+    vec<string> extras;
+};
+
+struct SehSsReleaseComplete {
+    uint32_t size;
+    uint32_t dataLen;
+    uint32_t params;
+    uint32_t status;
+    string data;
+};
+
+struct SehRrcStateInfo {
+    RadioTechnology rat;
+    uint32_t state;
+};
+
+struct SehConfigModemCapability {
+    uint32_t supportCltcp;
+};
+
+enum SehSignalLevel : uint32_t {
+    NONE = 0,
+    POOR = 1,
+    MODERATE = 2,
+    GOOD = 3,
+    GREAT = 4,
+    EXCELLENT = 5,
+};
+
+struct SehSignalBar {
+    SehSignalLevel cdmaLevel;
+    SehSignalLevel evdoLevel;
+    SehSignalLevel gsmLevel;
+    SehSignalLevel wcdmaLevel;
+    SehSignalLevel tdscdmaLevel;
+    SehSignalLevel lteLevel; 
+    SehSignalLevel nrLevel; 
+};
+
+struct SehExtendedRegStateResult {
+    bool isValid;
+    uint32_t snapshotStatus;
+    RegState unprocessedDataRegState;
+    uint32_t unprocessedDataRat;
+    uint32_t mobileOptionalRat;
+    uint32_t imsEmergencyCallBarring;
+    RegState unprocessedVoiceRegState;
+    bool isPsOnlyReg;
+};
+
+struct SehPacketUsage {
+uint32_t rxBytes;
+uint32_t txBytes;
+};
+
+struct SehAppStatus {
+AppStatus base;
+uint32_t pin1NumRetries;
+uint32_t puk1NumRetries;
+uint32_t pin2NumRetries;
+uint32_t puk2NumRetries;
+uint32_t persoUnblockRetries;
+};
+
+struct SehCardStatus {
+CardState cardState;
+PinState universalPinState;
+uint32_t gsmUmtsSubscriptionAppIndex;
+uint32_t cdmaSubscriptionAppIndex;
+uint32_t imsSubscriptionAppIndex;
+vec<SehAppStatus> applications;
+uint32_t physicalSlotId;
+string atr;
+string iccid;
+};

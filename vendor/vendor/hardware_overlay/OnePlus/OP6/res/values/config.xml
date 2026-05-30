@@ -1,0 +1,69 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <bool name="config_autoBrightnessResetAmbientLuxAfterWarmUp">true</bool>
+    <bool name="config_automatic_brightness_available">true</bool>
+    <integer name="config_autoBrightnessAmbientLightHorizon">10000</integer>
+    <integer name="config_autoBrightnessBrighteningLightDebounce">2000</integer>
+    <integer name="config_autoBrightnessDarkeningLightDebounce">4000</integer>
+    <integer name="config_autoBrightnessInitialLightSensorRate">-1</integer>
+    <integer name="config_autoBrightnessLightSensorRate">250</integer>
+    <integer name="config_brightness_ramp_rate_fast">180</integer>
+    <integer name="config_brightness_ramp_rate_slow">60</integer>
+    <integer-array name="config_autoBrightnessLcdBacklightValues">
+        <item>6</item>
+        <item>10</item>
+        <item>20</item>
+        <item>46</item>
+        <item>78</item>
+        <item>128</item>
+        <item>220</item>
+        <item>255</item>
+    </integer-array>
+    <integer-array name="config_autoBrightnessLevels">
+        <item>20</item>
+        <item>45</item>
+        <item>1025</item>
+        <item>1480</item>
+        <item>2250</item>
+        <item>3300</item>
+        <item>10000</item>
+    </integer-array>
+
+    <bool name="config_suspendWhenScreenOffDueToProximity">true</bool>
+    <bool name="config_sustainedPerformanceModeSupported">true</bool>
+    <bool name="config_supportAudioSourceUnprocessed">true</bool>
+    <bool name="config_switch_phone_on_voice_reg_state_change">false</bool>
+    <integer name="config_overrideHasPermanentMenuKey">2</integer>
+    <bool name="config_powerDecoupleAutoSuspendModeFromDisplay">true</bool>
+    <bool name="config_dozeAfterScreenOff">true</bool>
+    <bool name="config_showNavigationBar">true</bool>
+    <bool name="skip_restoring_network_selection">true</bool>
+    <integer name="config_bluetooth_operating_voltage_mv">3300</integer>
+    <bool name="config_bluetooth_hfp_inband_ringing_support">true</bool>
+    <bool name="config_bluetooth_le_peripheral_mode_supported">true</bool>
+    <integer name="config_screenBrightnessDark">2</integer>
+    <integer name="config_screenBrightnessDim">6</integer>
+    <bool name="config_allowAutoBrightnessWhileDozing">true</bool>
+    <integer name="config_screenBrightnessDoze">17</integer>
+    <integer name="config_screenBrightnessSettingMinimum">2</integer>
+    <bool name="config_hotswapCapable">true</bool>
+
+    <integer-array name="config_longPressVibePattern">
+        <item>0</item>
+        <item>10</item>
+    </integer-array>
+    <integer-array name="config_virtualKeyVibePattern">
+        <item>0</item>
+        <item>10</item>
+    </integer-array>
+    <integer-array name="config_keyboardTapVibePattern">
+        <item>10</item>
+    </integer-array>
+    <bool name="config_lidControlsSleep">true</bool>
+    <bool name="config_wifi_batched_scan_supported">true</bool>
+    <bool name="config_wifi_background_scan_support">true</bool>
+    <bool name="config_wifi_dual_band_support">true</bool>
+
+    <!--<bool name="config_dozeAlwaysOnDisplayAvailable">true</bool>
+    <bool name="config_powerDecoupleInteractiveModeFromDisplay">true</bool>-->
+</resources>

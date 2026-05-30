@@ -1,0 +1,10 @@
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+        package="com.dil3mm4.huawei.VTR"
+        android:versionCode="1"
+        android:versionName="1.0">
+        <overlay android:targetPackage="android"
+	        android:requiredSystemPropertyName="ro.hw.oemName"
+		android:requiredSystemPropertyValue="+VTR*"
+		android:priority="38"
+		android:isStatic="true" />
+</manifest>

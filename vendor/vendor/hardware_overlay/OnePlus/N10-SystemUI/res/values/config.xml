@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <dimen name="status_bar_padding_top">0dp</dimen>
+    <dimen name="status_bar_padding_start">0dp</dimen>
+    <dimen name="status_bar_padding_end">2dp</dimen>
+    <dimen name="status_bar_battery_icon_width">7.8dp</dimen>
+    <dimen name="status_bar_header_height_default">48dp</dimen>
+    <dimen name="status_bar_header_height_keyguard">48dp</dimen>
+</resources>

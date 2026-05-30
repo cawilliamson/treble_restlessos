@@ -1,0 +1,138 @@
+on post-fs
+    exec - root -- /system/bin/vndk-detect
+    exec - root -- /system/bin/rw-system.sh
+    mount none /system/etc/usb_audio_policy_configuration.xml /vendor/etc/usb_audio_policy_configuration.xml bind
+    setprop ro.vndk.version ${persist.sys.vndk}
+
+    start watchdogd-gsi
+
+on property:vold.decrypt=trigger_restart_framework
+    exec - root -- /system/bin/phh-on-data.sh
+
+on early-boot
+    exec - root -- /system/bin/phh-on-data.sh
+
+service phh_on_boot /system/bin/phh-on-boot.sh
+    oneshot
+    disabled
+
+service power_mode_monitor /system/bin/power-mode-monitor.sh
+    oneshot
+    disabled
+    seclabel u:r:phhsu_daemon:s0
+on property:sys.boot_completed=1
+    start phh_on_boot
+    start power_mode_monitor
+    chown wifi system /data/misc/wifi
+    chown system wifi /data/misc/wifi/hostapd.conf
+
+on property:persist.sys.phh.mainkeys=*
+    setprop qemu.hw.mainkeys ${persist.sys.phh.mainkeys}
+
+on property:persist.sys.phh.asus.dt2w=*
+    exec u:r:phhsu_daemon:s0 root -- /system/bin/phh-prop-handler.sh "persist.sys.phh.asus.dt2w"
+
+on property:persist.sys.phh.asus.usb.port=*
+    exec u:r:phhsu_daemon:s0 root -- /system/bin/phh-prop-handler.sh "persist.sys.phh.asus.usb.port"
+
+on property:persist.sys.phh.oppo.dt2w=*
+    exec u:r:phhsu_daemon:s0 root -- /system/bin/phh-prop-handler.sh "persist.sys.phh.oppo.dt2w"
+
+on property:persist.sys.phh.oppo.gaming_mode=*
+    exec u:r:phhsu_daemon:s0 root -- /system/bin/phh-prop-handler.sh "persist.sys.phh.oppo.gaming_mode"
+
+on property:sys.phh.oplus.fppress=*
+    exec u:r:phhsu_daemon:s0 root -- /system/bin/phh-prop-handler.sh "sys.phh.oplus.fppress"
+
+on property:persist.sys.phh.oppo.usbotg=*
+    exec u:r:phhsu_daemon:s0 root -- /system/bin/phh-prop-handler.sh "persist.sys.phh.oppo.usbotg"
+
+on property:persist.sys.phh.transsion.usbotg=*
+    exec u:r:phhsu_daemon:s0 root -- /system/bin/phh-prop-handler.sh "persist.sys.phh.transsion.usbotg"
+
+on property:persist.sys.phh.transsion.dt2w=*
+    exec u:r:phhsu_daemon:s0 root -- /system/bin/phh-prop-handler.sh "persist.sys.phh.transsion.dt2w"
+
+on property:persist.sys.phh.xiaomi.dt2w=*
+    exec u:r:phhsu_daemon:s0 root -- /system/bin/phh-prop-handler.sh "persist.sys.phh.xiaomi.dt2w"
+
+on property:persist.sys.phh.allow_binder_thread_on_incoming_calls=*
+    exec u:r:phhsu_daemon:s0 root -- /system/bin/phh-prop-handler.sh "persist.sys.phh.allow_binder_thread_on_incoming_calls"
+
+on property:persist.sys.phh.disable_audio_effects=*
+    exec u:r:phhsu_daemon:s0 root -- /system/bin/phh-prop-handler.sh "persist.sys.phh.disable_audio_effects"
+
+on property:persist.sys.phh.caf.audio_policy=*
+    exec u:r:phhsu_daemon:s0 root -- /system/bin/phh-prop-handler.sh "persist.sys.phh.caf.audio_policy"
+
+on property:persist.sys.phh.vsmart.dt2w=*
+    exec u:r:phhsu_daemon:s0 root -- /system/bin/phh-prop-handler.sh "persist.sys.phh.vsmart.dt2w"
+
+on property:persist.sys.phh.backlight.scale=*
+    exec u:r:phhsu_daemon:s0 root -- /system/bin/phh-prop-handler.sh "persist.sys.phh.backlight.scale"
+
+on property:persist.sys.phh.disable_soundvolume_effect=*
+    exec u:r:phhsu_daemon:s0 root -- /system/bin/phh-prop-handler.sh "persist.sys.phh.disable_soundvolume_effect"
+
+# ro.sf.lcd_density is set by rw-system.sh during post-fs, before
+# surfaceflinger starts.  the previous `restart surfaceflinger` here
+# killed the already-running SF to pick up the new density, but that
+# caused the DRM pipeline to reset without a clean panel power-off.
+# on devices with an external backlight IC (e.g. ktz8866) the kernel
+# panel driver's state tracking desyncs from the hardware: it believes
+# the bias/boost is still enabled from the bootloader, so the power-on
+# path in the second SF never calls bias_enable(1).  the backlight IC
+# stays off and the display is permanently blank.
+#
+# removing the restart is safe because rw-system.sh runs before
+# class_start core, so ro.sf.lcd_density is already set when SF reads
+# it during init().
+#on property:ro.sf.lcd_density=*
+#    restart surfaceflinger
+
+on property:persist.bluetooth.system_audio_hal.enabled=*
+    exec u:r:phhsu_daemon:s0 root -- /system/bin/phh-prop-handler.sh "persist.bluetooth.system_audio_hal.enabled"
+
+on property:init.svc.ril-proxy=stopped && property:persist.sys.phh.restart_ril=true
+    start ril-proxy
+
+on property:init.svc.vendor.ril-daemon-mtk=stopped && property:persist.sys.phh.restart_ril=true
+    start vendor.ril-daemon-mtk
+
+on property:persist.sys.phh.restart_ril=true
+    restart ril-proxy
+    restart vendor.qcrild
+    restart vendor.qcrild2
+    restart vendor.ril-daemon-mtk
+
+on property:vendor.debug.sf.latch_unsignaled=1
+    setprop debug.sf.latch_unsignaled 1
+
+on property:sys.phh.uninstall-ota=true
+    exec u:r:phhsu_daemon:s0 root -- /system/bin/rm /metadata/phh/img
+
+on property:ro.vendor.radio.default_network=*
+    setprop ro.telephony.default_network ${ro.vendor.radio.default_network}
+
+on property:persist.sys.phh.force_display_5g=1
+    exec u:r:phhsu_daemon:s0 root -- /system/bin/resetprop_phh ro.telephony.default_network 33,33
+
+on property:persist.sys.phh.ims.floss=true
+    exec u:r:phhsu_daemon:s0 root -- /system/bin/resetprop_phh ro.telephony.iwlan_operation_mode AP-assisted
+
+on property:persist.sys.phh.enable_sf_gl_backpressure=*
+    setprop debug.sf.enable_gl_backpressure ${persist.sys.phh.enable_sf_gl_backpressure}
+
+on property:persist.sys.phh.dynamic_fps=*
+    setprop ro.surface_flinger.use_content_detection_for_refresh_rate ${persist.sys.phh.dynamic_fps}
+
+# Set watchdog timer to 30 seconds and pet it every 10 seconds to get a 20 second margin
+service watchdogd-gsi /system/bin/watchdogd 10 20
+    class core
+    oneshot
+    disabled
+    seclabel u:r:watchdogd:s0
+
+on property:persist.sys.phh.adb_secure=1
+    exec u:r:phhsu_daemon:s0 root -- /system/bin/resetprop_phh ro.adb.secure 1
+    restart adbd

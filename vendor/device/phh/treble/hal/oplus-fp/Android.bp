@@ -1,0 +1,23 @@
+cc_binary {
+    name: "android.hardware.biometrics.fingerprint@2.1-service.oplus.compat",
+    defaults: ["hidl_defaults"],
+    init_rc: ["android.hardware.biometrics.fingerprint@2.1-service.oplus.rc"],
+    relative_install_path: "hw",
+    srcs: [
+        "BiometricsFingerprint.cpp",
+        "service.cpp",
+    ],
+    cflags: [
+        "-Wno-unused-parameter",
+    ],
+    shared_libs: [
+        "libcutils",
+        "liblog",
+        "libhidlbase",
+        "libhardware",
+        "libutils",
+        "libbase",
+        "android.hardware.biometrics.fingerprint@2.1",
+        "vendor.oplus.hardware.biometrics.fingerprint@2.1",
+    ],
+}

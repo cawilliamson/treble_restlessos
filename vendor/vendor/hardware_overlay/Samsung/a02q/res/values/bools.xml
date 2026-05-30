@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <bool name="config_dozeAfterScreenOff">true</bool>
+    <bool name="config_powerDecoupleInteractiveModeFromDisplay">false</bool>
+    <bool name="config_setColorTransformAccelerated">true</bool>
+    <bool name="config_supportAudioSourceUnprocessed">false</bool>
+    <bool name="config_suspendWhenScreenOffDueToProximity">true</bool>
+</resources>

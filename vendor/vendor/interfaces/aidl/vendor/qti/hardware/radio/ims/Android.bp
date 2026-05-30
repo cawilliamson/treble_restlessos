@@ -1,0 +1,28 @@
+aidl_interface {
+    name: "vendor.qti.hardware.radio.ims",
+    vendor_available: true,
+    srcs: [
+        "vendor/qti/hardware/radio/ims/*.aidl",
+    ],
+    stability: "vintf",
+    backend: {
+        java: {
+            sdk_version: "module_current",
+            min_sdk_version: "30",
+            lint: {
+                // Disable linter to avoid error about fixed size arrays.
+                // Interface will only be accessed on devices >= U.
+                enabled: false,
+            },
+        },
+    },
+    owner: "phh",
+    versions_with_info: [
+        {
+            version: "1",
+            imports: [],
+        },
+    ],
+    frozen: true,
+
+}

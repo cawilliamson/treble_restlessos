@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Radius of the software rounded corners. -->
+    <dimen name="rounded_corner_radius_bottom">100.73999px</dimen>
+    <dimen name="rounded_corner_radius_top">100.73999px</dimen>
+
+    <!-- Height of the status bar -->
+    <dimen name="status_bar_height">53.0px</dimen>
+    <dimen name="status_bar_height_portrait">53.0px</dimen>
+</resources>

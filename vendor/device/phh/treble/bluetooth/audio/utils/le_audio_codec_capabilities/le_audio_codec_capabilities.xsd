@@ -1,0 +1,77 @@
+<!-- LE Audio Offload Codec Capability Schema -->
+<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema">
+  <xs:element name="leAudioOffloadSetting">
+    <xs:complexType>
+      <xs:element ref="scenarioList" minOccurs="1" maxOccurs="1"/>
+      <xs:element ref="configurationList" minOccurs="1" maxOccurs="1"/>
+      <xs:element ref="codecConfigurationList" minOccurs="1" maxOccurs="1"/>
+      <xs:element ref="strategyConfigurationList" minOccurs="1" maxOccurs="1"/>
+    </xs:complexType>
+  </xs:element>
+  <xs:element name="scenarioList">
+    <xs:complexType>
+      <xs:element ref="scenario" minOccurs="1" maxOccurs="unbounded"/>
+    </xs:complexType>
+  </xs:element>
+  <xs:element name="configurationList">
+    <xs:complexType>
+      <xs:element ref="configuration" minOccurs="1" maxOccurs="unbounded"/>
+    </xs:complexType>
+  </xs:element>
+  <xs:element name="codecConfigurationList">
+    <xs:complexType>
+      <xs:element ref="codecConfiguration" minOccurs="1" maxOccurs="unbounded"/>
+    </xs:complexType>
+  </xs:element>
+  <xs:element name="strategyConfigurationList">
+    <xs:complexType>
+      <xs:element ref="strategyConfiguration" minOccurs="1" maxOccurs="unbounded"/>
+    </xs:complexType>
+  </xs:element>
+  <xs:element name="scenario">
+    <xs:complexType>
+      <xs:attribute name="encode" type="xs:string"/>
+      <xs:attribute name="decode" type="xs:string"/>
+      <xs:attribute name="broadcast" type="xs:string"/>
+    </xs:complexType>
+  </xs:element>
+  <xs:element name="configuration">
+    <xs:complexType>
+      <xs:attribute name="name" type="xs:string"/>
+      <xs:attribute name="codecConfiguration" type="xs:string"/>
+      <xs:attribute name="strategyConfiguration" type="xs:string"/>
+    </xs:complexType>
+  </xs:element>
+  <xs:element name="codecConfiguration">
+    <xs:complexType>
+      <xs:attribute name="name" type="xs:string"/>
+      <xs:attribute name="codec" type="codecType"/>
+      <xs:attribute name="pcmBitDepth" type="xs:unsignedByte"/>
+      <xs:attribute name="samplingFrequency" type="xs:int"/>
+      <xs:attribute name="frameDurationUs" type="xs:int"/>
+      <xs:attribute name="octetsPerCodecFrame" type="xs:int"/>
+      <xs:attribute name="codecFrameBlocksPerSdu" type="xs:unsignedByte"/>
+    </xs:complexType>
+  </xs:element>
+  <xs:element name="strategyConfiguration">
+    <xs:complexType>
+      <xs:attribute name="name" type="xs:string"/>
+      <xs:attribute name="audioLocation" type="audioLocation"/>
+      <xs:attribute name="connectedDevice" type="xs:unsignedByte"/>
+      <xs:attribute name="channelCount" type="xs:unsignedByte"/>
+    </xs:complexType>
+  </xs:element>
+  <xs:simpleType name="audioLocation">
+    <xs:restriction base="xs:string">
+      <xs:enumeration value="MONO"/>
+      <xs:enumeration value="STEREO"/>
+    </xs:restriction>
+  </xs:simpleType>
+  <xs:simpleType name="codecType">
+    <xs:restriction base="xs:string">
+      <xs:enumeration value="LC3"/>
+      <xs:enumeration value="APTX_ADAPTIVE_LE"/>
+      <xs:enumeration value="APTX_ADAPTIVE_LEX"/>
+    </xs:restriction>
+  </xs:simpleType>
+</xs:schema>

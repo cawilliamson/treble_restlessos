@@ -1,0 +1,10 @@
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+        package="me.phh.treble.overlay.umidigi.A3S"
+        android:versionCode="1"
+        android:versionName="1.0">
+        <overlay android:targetPackage="android"
+                android:requiredSystemPropertyName="ro.vendor.build.fingerprint"
+		android:requiredSystemPropertyValue="+UMIDIGI/A3S/A3S*"
+		android:priority="153"
+		android:isStatic="true" />
+</manifest>

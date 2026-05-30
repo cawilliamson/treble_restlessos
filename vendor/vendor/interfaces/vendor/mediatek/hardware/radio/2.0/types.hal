@@ -1,0 +1,24 @@
+package vendor.mediatek.hardware.radio@2.0;
+
+import android.hardware.radio@1.0::types;
+
+struct MtkDataProfileInfo {
+	android.hardware.radio@1.0::DataProfileInfo dpi;
+	int32_t inactiveTimer;
+};
+
+struct IncomingCallNotification {
+    string callId;
+    string number;
+    string type;
+    string callMode;
+    string seqNo;
+    string redirectNumber;
+    string toNumber;
+};
+
+struct MtkSetupDataCallResult {
+    android.hardware.radio@1.0::SetupDataCallResult dcr;
+    int32_t rat;
+};
+

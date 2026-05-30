@@ -1,0 +1,8 @@
+package vendor.goodix.hardware.biometrics.fingerprint@2.1;
+
+import vendor.goodix.hardware.biometrics.fingerprint@2.1::IGoodixFingerprintDaemonCallback;
+
+interface IGoodixFingerprintDaemon {
+    setNotify(IGoodixFingerprintDaemonCallback callback);
+    sendCommand(int32_t cmdId, vec<int8_t> in_buf) generates(int32_t resultCode, vec<int8_t> resultData);
+};

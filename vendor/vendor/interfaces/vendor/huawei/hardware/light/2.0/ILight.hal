@@ -1,0 +1,11 @@
+package vendor.huawei.hardware.light@2.0;
+
+import android.hardware.light@2.0::ILight;
+import android.hardware.light@2.0::types;
+
+interface ILight extends android.hardware.light@2.0::ILight {
+	HWsetLight(int32_t/*HWType*/ type, android.hardware.light@2.0::LightState state);
+	HWgetSupportedTypes() generates (vec<uint32_t/*HWType*/> types);
+	HWsetLightBrightness(uint32_t a, uint32_t b) generates (Status status);
+	HWsetLedAlwaysonStatus(uint32_t a, uint32_t b) generates (Status status);
+};

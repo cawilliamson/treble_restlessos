@@ -1,0 +1,52 @@
+cc_binary {
+    name: "android.hardware.bluetooth.audio-service-system",
+    vintf_fragment_modules: ["bluetooth_audio_system.xml"],
+    init_rc: ["android.hardware.bluetooth.audio-service-system.rc"],
+    relative_install_path: "hw",
+    srcs: [
+        "BluetoothAudioProvider.cpp",
+        "BluetoothAudioProviderFactory.cpp",
+        "A2dpOffloadAudioProvider.cpp",
+        "A2dpOffloadCodecAac.cpp",
+        "A2dpOffloadCodecFactory.cpp",
+        "A2dpOffloadCodecSbc.cpp",
+        "A2dpSoftwareAudioProvider.cpp",
+        "HearingAidAudioProvider.cpp",
+        "HfpOffloadAudioProvider.cpp",
+        "HfpSoftwareAudioProvider.cpp",
+        "LeAudioOffloadAudioProvider.cpp",
+        "LeAudioSoftwareAudioProvider.cpp",
+        "service_system.cpp",
+    ],
+    header_libs: [
+        "libhardware_headers",
+    ],
+    defaults: [
+        "latest_android_hardware_bluetooth_audio_ndk_shared",
+    ],
+    shared_libs: [
+        "libbase",
+        "libbinder",
+        "libbinder_ndk",
+        "libcutils",
+        "libfmq",
+        "libhidlbase",
+        "liblog",
+        "libutils",
+        "libbluetooth_audio_session_aidl_system",
+    ],
+    required: [
+        // Audio HAL impls
+        "android.hardware.audio@2.0-impl-system",
+        "android.hardware.audio@4.0-impl-system",
+        "android.hardware.audio@5.0-impl-system",
+        "android.hardware.audio@6.0-impl-system",
+        "android.hardware.audio@7.0-impl-system",
+        "android.hardware.audio@7.1-impl-system",
+    ],
+}
+
+vintf_fragment {
+    name: "bluetooth_audio_system.xml",
+    src: "bluetooth_audio_system.xml",
+}

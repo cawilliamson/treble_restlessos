@@ -1,0 +1,21 @@
+package vendor.asus.hardware.vibratorcontrol@1.0;
+
+interface IVibratorcontrol {
+oneway setChannel(int8_t nChannel);
+getChannel() generate (int8_t nChannel);
+oneway setVmaxTrig(uint16_t nVmax);
+getVmaxTrig() generates(uint16_t nVmax);
+oneway setVmax(uint8_t nChannel, uint16_t nVmax);
+getVmax(uint8_t nChannel) generates(uint16_t nVmax);
+oneway mem_play(uint8_t nChannel, uint8_t num);
+oneway rtp_play(uin8_t nChannel, uint16_t num);
+oneway rtp_play_repeat(uin8_t nChannel, uint16_t num, uint8_t repeat);
+oneway rtp_play_break(uin8_t nChannel, bool disable);
+getStatus0(uint8_t nChannel) generates (uint8_t status);
+getStatus1(uint8_t nChannel) generates (uint8_t status);
+oneway set_Immrvibe_Actuator_enable(uint8_t nActuatorIndex);
+get_Immrvibe_Actuator_enable() generate (uint8_t enable);
+oneway set_airtrigger_tap_level(uint8_t level);
+oneway set_airtrigger_tap_waveform(uint8_t channel, uint8_t trigger_r, uint8_t break_r, uint8_t trigger_f, uint8_t break_f);
+set_trigger_tap(uint8_t channel, uint8_t trigger_gpio, uint8_t pressed, uint8_t level);
+};

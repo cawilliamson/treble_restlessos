@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- This file contains misc non default vars -->
+<resources>
+    <bool name="config_displayBlanksAfterDoze">true</bool>
+    <bool name="config_dozeAfterScreenOffByDefault">true</bool>
+</resources>
+

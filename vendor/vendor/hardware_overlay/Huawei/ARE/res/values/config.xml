@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <bool name="config_automatic_brightness_available">true</bool>
+    <bool name="config_useDevInputEventForAudioJack">true</bool>
+    <bool name="config_showNavigationBar">true</bool>
+
+    <dimen name="status_bar_height">96px</dimen>
+    <dimen name="status_bar_height_portrait">96px</dimen>
+    <dimen name="status_bar_height_landscape">96px</dimen>
+
+    <fraction name="config_autoBrightnessAdjustmentMaxGamma">300.0%</fraction>
+    <fraction name="config_maximumScreenDimRatio">20.000004%</fraction>
+
+    <integer name="config_screenBrightnessDark">1</integer>
+    <integer name="config_screenBrightnessDim">6</integer>
+    <integer name="config_screenBrightnessDoze">1</integer>
+    <integer name="config_screenBrightnessSettingMinimum">1</integer>
+    <integer name="config_screenBrightnessSettingDefault">33</integer>
+    <integer name="config_autoBrightnessBrighteningLightDebounce">4000</integer>
+    <integer name="config_autoBrightnessDarkeningLightDebounce">8000</integer>
+    <integer name="config_brightness_ramp_rate_fast">180</integer>
+    <integer name="config_brightness_ramp_rate_slow">60</integer>
+
+    <integer-array name="config_autoBrightnessLevels">
+        <item>8</item>
+        <item>55</item>
+        <item>350</item>
+        <item>1600</item>
+        <item>2550</item>
+    </integer-array>
+    <integer-array name="config_autoBrightnessLcdBacklightValues">
+        <item>6</item>
+        <item>47</item>
+        <item>150</item>
+        <item>180</item>
+        <item>250</item>
+        <item>255</item>
+    </integer-array>
+
+    <string name="config_mainBuiltInDisplayCutout">M-100,0c17.9,0 32.8,19.4 32.8,32.8l0,0C-62.4,68.6 -38.7,96 0,96c37.1,0 62.4,-27.4 67.3,-63.2l0,0C67.3,19.4 82.1,0 100,0H-100z</string>
+</resources>

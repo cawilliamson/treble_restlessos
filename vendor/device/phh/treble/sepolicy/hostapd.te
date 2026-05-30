@@ -1,0 +1,4 @@
+type hostapd, domain;
+
+allow hostapd wifi_data_file:dir create_dir_perms;
+allow hostapd wifi_data_file:file create_file_perms;

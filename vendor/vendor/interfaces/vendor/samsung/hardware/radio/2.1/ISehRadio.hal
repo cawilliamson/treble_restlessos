@@ -1,0 +1,10 @@
+package vendor.samsung.hardware.radio@2.1;
+
+import vendor.samsung.hardware.radio@2.0::ISehRadio;
+import android.hardware.radio@1.0::RadioResponseInfo;
+
+interface ISehRadio extends @2.0::ISehRadio {
+oneway setNrMode(int32_t serial, int32_t mode);
+oneway getNrMode(int32_t serial);
+oneway getNrIconType(int32_t serial);
+};

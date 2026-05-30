@@ -1,0 +1,95 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <array name="config_autoBrightnessDisplayValuesNits">
+        <item>5.4</item>
+        <item>9.7</item>
+        <item>80.7</item>
+        <item>100.2</item>
+        <item>120.9</item>
+        <item>149.1</item>
+        <item>185.8</item>
+        <item>261.6</item>
+        <item>417.1</item>
+    </array>
+    <integer-array name="config_autoBrightnessLcdBacklightValues">
+        <item>35</item>
+        <item>62</item>
+        <item>127</item>
+        <item>139</item>
+        <item>153</item>
+        <item>162</item>
+        <item>181</item>
+        <item>212</item>
+        <item>255</item>
+    </integer-array>
+    <integer-array name="config_autoBrightnessLevels">
+        <item>1</item>
+        <item>40</item>
+        <item>80</item>
+        <item>170</item>
+        <item>350</item>
+        <item>710</item>
+        <item>1400</item>
+        <item>2250</item>
+    </integer-array>
+    <integer-array name="config_keyboardTapVibePattern">
+        <item>0</item>
+        <item>30</item>
+    </integer-array>
+    <integer-array name="config_longPressVibePattern">
+        <item>0</item>
+        <item>30</item>
+    </integer-array>
+    <string-array name="config_mobile_tcp_buffers">
+        <item>5gnr:2097152,6291456,16777216,512000,2097152,8388608</item>
+        <item>lte:2097152,4194304,8388608,262144,524288,1048576</item>
+        <item>lte_ca:4096,6291456,12582912,4096,1048576,2097152</item>
+        <item>umts:4094,87380,1220608,4096,16384,1220608</item>
+        <item>hspa:4094,87380,1220608,4096,16384,1220608</item>
+        <item>hsupa:4094,87380,1220608,4096,16384,1220608</item>
+        <item>hsdpa:4094,87380,1220608,4096,16384,1220608</item>
+        <item>hspap:4094,87380,1220608,4096,16384,1220608</item>
+        <item>edge:4093,26280,35040,4096,16384,35040</item>
+        <item>gprs:4092,8760,11680,4096,8760,11680</item>
+        <item>evdo:4094,87380,524288,4096,16384,262144</item>
+    </string-array>
+    <integer-array name="config_screenBrightnessBacklight">
+        <item>10</item>
+        <item>35</item>
+        <item>62</item>
+        <item>127</item>
+        <item>139</item>
+        <item>153</item>
+        <item>162</item>
+        <item>181</item>
+        <item>212</item>
+        <item>255</item>
+    </integer-array>
+    <array name="config_screenBrightnessNits">
+        <item>3.4</item>
+        <item>5.4</item>
+        <item>9.7</item>
+        <item>80.7</item>
+        <item>100.2</item>
+        <item>120.9</item>
+        <item>149.1</item>
+        <item>185.8</item>
+        <item>261.6</item>
+        <item>417.1</item>
+    </array>
+    <string-array name="config_tether_bluetooth_regexs">
+        <item>bt-pan</item>
+    </string-array>
+    <string-array name="config_tether_usb_regexs">
+        <item>usb\\d</item>
+        <item>rndis\\d</item>
+    </string-array>
+    <string-array name="config_tether_wifi_regexs">
+        <item>wlan0</item>
+        <item>wlan1</item>
+    </string-array>
+    <integer-array name="config_virtualKeyVibePattern">
+        <item>0</item>
+        <item>30</item>
+    </integer-array>
+</resources>

@@ -2,10 +2,6 @@
 <manifest>
   <remote name="andycgyan" fetch="https://github.com/AndyCGYan/" />
   <remote name="cawilliamson-priv" fetch="ssh://git@github.com/cawilliamson/" />
-  <remote name="lmodroid" fetch="https://github.com/LMODroid/" />
-  <remote name="phhusson" fetch="https://github.com/phhusson/" />
-  <remote name="ponces" fetch="https://github.com/ponces/" />
-  <remote name="trebledroid" fetch="https://github.com/TrebleDroid/" />
   <remote name="lineage" fetch="https://github.com/LineageOS/" />
   <remote name="gitlab" fetch="https://gitlab.com/" />
 
@@ -23,27 +19,6 @@
 
   <!-- aosp: vndk-v30 -->
   <project path="prebuilts/vndk/v30" name="platform/prebuilts/vndk/v30" remote="aosp" revision="5f9884aa352825291757dfd6694b874ad8c1805e" clone-depth="1" />
-
-  <!-- phhusson: lptools  -->
-  <project path="vendor/lptools" name="vendor_lptools" remote="phhusson" revision="master" clone-depth="1" />
-
-  <!-- phhusson: magisk vendor -->
-  <project path="vendor/magisk" name="vendor_magisk" remote="phhusson" revision="android-10.0" clone-depth="1" />
-
-  <!-- phhusson: vndk tests -->
-  <project path="vendor/vndk-tests" name="vendor_vndk-tests" remote="phhusson" revision="master" clone-depth="1" />
-
-  <!-- trebledroid: device -->
-  <project path="device/phh/treble" name="device_phh_treble" remote="trebledroid" revision="android-16.0" clone-depth="1" />
-
-  <!-- trebledroid: hardware overlay -->
-  <project path="vendor/hardware_overlay" name="vendor_hardware_overlay" remote="trebledroid" revision="pie" clone-depth="1" />
-
-  <!-- trebledroid: treble app -->
-  <project path="treble_app" name="treble_app" remote="trebledroid" revision="master" clone-depth="1" />
-
-  <!-- trebledroid: vendor interface -->
-  <project path="vendor/interfaces" name="vendor_interfaces" remote="trebledroid" revision="android-16.0" clone-depth="1" />
 
   <!-- lineage: apn database -->
   <project path="vendor/apn" name="android_vendor_apn" remote="lineage" revision="main" clone-depth="1" />

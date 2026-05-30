@@ -1,0 +1,156 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+  <integer-array name="config_autoBrightnessDisplayValuesNits">
+    <item>5</item>
+    <item>5</item>
+    <item>7</item>
+    <item>13</item>
+    <item>27</item>
+    <item>37</item>
+    <item>43</item>
+    <item>97</item>
+    <item>113</item>
+    <item>133</item>
+    <item>143</item>
+    <item>157</item>
+    <item>200</item>
+    <item>343</item>
+    <item>487</item>
+    <item>600</item>
+    <item>720</item>
+    <item>807</item>
+    <item>850</item>
+  </integer-array>
+  <integer-array name="config_autoBrightnessLevels">
+    <item>1</item>
+    <item>2</item>
+    <item>3</item>
+    <item>5</item>
+    <item>8</item>
+    <item>10</item>
+    <item>50</item>
+    <item>100</item>
+    <item>200</item>
+    <item>300</item>
+    <item>500</item>
+    <item>1000</item>
+    <item>3000</item>
+    <item>5000</item>
+    <item>7000</item>
+    <item>10000</item>
+    <item>30000</item>
+    <item>50000</item>
+  </integer-array>
+  <integer-array name="config_screenBrightnessBacklight">
+    <item>0</item>
+    <item>1</item>
+    <item>15</item>
+    <item>30</item>
+    <item>45</item>
+    <item>60</item>
+    <item>75</item>
+    <item>90</item>
+    <item>105</item>
+    <item>120</item>
+    <item>135</item>
+    <item>150</item>
+    <item>165</item>
+    <item>180</item>
+    <item>195</item>
+    <item>210</item>
+    <item>225</item>
+    <item>240</item>
+    <item>255</item>
+  </integer-array>
+  <array name="config_screenBrightnessNits">
+    <item>0</item>
+    <item>2</item>
+    <item>22.83</item>
+    <item>45.16</item>
+    <item>67.48</item>
+    <item>89.8</item>
+    <item>112.13</item>
+    <item>134.45</item>
+    <item>156.77</item>
+    <item>179.09</item>
+    <item>201.42</item>
+    <item>223.74</item>
+    <item>246.06</item>
+    <item>268.39</item>
+    <item>290.71</item>
+    <item>313.03</item>
+    <item>335.35</item>
+    <item>357.68</item>
+    <item>380</item>
+  </array>
+  <bool name="config_autoBrightnessResetAmbientLuxAfterWarmUp">true</bool>
+  <bool name="config_auto_attach_data_on_creation">true</bool>
+  <bool name="config_automatic_brightness_available">true</bool>
+  <bool name="config_bluetooth_hfp_inband_ringing_support">false</bool>
+  <bool name="config_bluetooth_le_peripheral_mode_supported">true</bool>
+  <bool name="config_carrier_volte_available">true</bool>
+  <bool name="config_carrier_wfc_ims_available">true</bool>
+  <bool name="config_device_volte_available">true</bool>
+  <bool name="config_device_vt_available">true</bool>
+  <bool name="config_device_wfc_ims_available">true</bool>
+  <bool name="config_displayBlanksAfterDoze">true</bool>
+  <bool name="config_dozeAfterScreenOff">true</bool>
+  <bool name="config_dozeAfterScreenOffByDefault">true</bool>
+  <bool name="config_dozeAlwaysOnDisplayAvailable">true</bool>
+  <bool name="config_dozePulsePickup">true</bool>
+  <bool name="config_dynamic_bind_ims">true</bool>
+  <bool name="config_enableBurnInProtection">true</bool>
+  <bool name="config_enableFusedLocationOverlay">true</bool>
+  <bool name="config_enableNetworkLocationOverlay">false</bool>
+  <bool name="config_fillMainBuiltInDisplayCutout">false</bool>
+  <bool name="config_hotswapCapable">true</bool>
+  <bool name="config_intrusiveNotificationLed">true</bool>
+  <bool name="config_lidControlsSleep">true</bool>
+  <bool name="config_pinnerCameraApp">false</bool>
+  <bool name="config_powerDecoupleAutoSuspendModeFromDisplay">false</bool>
+  <bool name="config_powerDecoupleInteractiveModeFromDisplay">false</bool>
+  <bool name="config_setColorTransformAccelerated">true</bool>
+  <bool name="config_showNavigationBar">true</bool>
+  <bool name="config_speed_up_audio_on_mt_calls">true</bool>
+  <bool name="config_supportAudioSourceUnprocessed">true</bool>
+  <bool name="config_supportDoubleTapWake">false</bool>
+  <bool name="config_supportSystemNavigationKeys">false</bool>
+  <bool name="config_suspendWhenScreenOffDueToProximity">true</bool>
+  <bool name="config_sustainedPerformanceModeSupported">false</bool>
+  <bool name="config_switch_phone_on_voice_reg_state_change">false</bool>
+  <bool name="config_useDevInputEventForAudioJack">true</bool>
+  <bool name="config_use_sim_language_file">true</bool>
+  <bool name="config_wifiDisplaySupportsProtectedBuffers">true</bool>
+  <bool name="config_wifi_background_scan_support">true</bool>
+  <bool name="config_wifi_batched_scan_supported">true</bool>
+  <bool name="config_wifi_dual_band_support">true</bool>
+  <bool name="config_wifi_enable_disconnection_debounce">true</bool>
+  <bool name="config_wifi_enable_wifi_firmware_debugging">false</bool>
+  <bool name="config_wifi_fast_bss_transition_enabled">true</bool>
+  <fraction name="config_autoBrightnessAdjustmentMaxGamma">300.0%</fraction>
+  <fraction name="config_maximumScreenDimRatio">25.0%</fraction>
+  <integer name="config_autoBrightnessBrighteningLightDebounce">4000</integer>
+  <integer name="config_autoBrightnessDarkeningLightDebounce">8000</integer>
+  <integer name="config_autoBrightnessInitialLightSensorRate">-1</integer>
+  <integer name="config_autoBrightnessLightSensorRate">250</integer>
+  <integer name="config_autoPowerModeAnyMotionSensor">0</integer>
+  <integer name="config_bluetooth_idle_cur_ma">0</integer>
+  <integer name="config_bluetooth_operating_voltage_mv">0</integer>
+  <integer name="config_bluetooth_rx_cur_ma">0</integer>
+  <integer name="config_bluetooth_tx_cur_ma">0</integer>
+  <integer name="config_brightness_ramp_rate_fast">200</integer>
+  <integer name="config_brightness_ramp_rate_slow">50</integer>
+  <integer name="config_cameraLaunchGestureSensorType">-1</integer>
+  <integer name="config_lightSensorWarmupTime">0</integer>
+  <integer name="config_mobile_mtu">1500</integer>
+  <integer name="config_screenBrightnessDark">1</integer>
+  <integer name="config_screenBrightnessDim">10</integer>
+  <integer name="config_screenBrightnessDoze">17</integer>
+  <integer name="config_screenBrightnessForVrSettingDefault">86</integer>
+  <integer name="config_screenBrightnessForVrSettingMaximum">255</integer>
+  <integer name="config_screenBrightnessForVrSettingMinimum">79</integer>
+  <integer name="config_screenBrightnessSettingDefault">102</integer>
+  <integer name="config_screenBrightnessSettingMaximum">255</integer>
+  <integer name="config_screenBrightnessSettingMinimum">1</integer>
+  <integer name="config_shutdownBatteryTemperature">680</integer>
+</resources>

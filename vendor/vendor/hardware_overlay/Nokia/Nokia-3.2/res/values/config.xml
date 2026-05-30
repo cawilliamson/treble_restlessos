@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <dimen name="status_bar_height_portrait">53px</dimen>
+    <dimen name="status_bar_height_landscape">24dp</dimen>
+    <dimen name="rounded_corner_radius_top">106px</dimen>
+    <dimen name="rounded_corner_radius_bottom">64px</dimen>
+
+
+    <!-- notch configuration in oem xml, works well -->
+    <string name="config_mainBuiltInDisplayCutout">M 0,0 L -24,0 C -24,0 -24,28 0,28 C 0,28 24,28 24,0 Z @dp</string>
+</resources>

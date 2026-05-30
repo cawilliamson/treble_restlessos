@@ -1,0 +1,105 @@
+package vendor.mediatek.hardware.radio@2.0;
+
+import android.hardware.radio@1.1::IRadioResponse;
+import android.hardware.radio@1.0::RadioResponseInfo;
+
+interface IRadioResponse extends android.hardware.radio@1.1::IRadioResponse {
+        oneway setTrmResponse();	// 136: setTrmResponse(Landroid/hardware/radio/V1_0/RadioResponseInfo;)V
+        oneway getATRResponse();	// 137: getATRResponse(Landroid/hardware/radio/V1_0/RadioResponseInfo;Ljava/lang/String;)V
+        oneway setSimPowerResponse();	// 138: setSimPowerResponse(Landroid/hardware/radio/V1_0/RadioResponseInfo;)V
+        oneway setModemPowerResponse();	// 139: setModemPowerResponse(Landroid/hardware/radio/V1_0/RadioResponseInfo;)V
+        oneway hangupAllResponse();	// 140: hangupAllResponse(Landroid/hardware/radio/V1_0/RadioResponseInfo;)V
+        oneway setCallIndicationResponse(RadioResponseInfo info);	// 141: setCallIndicationResponse(Landroid/hardware/radio/V1_0/RadioResponseInfo;)V
+        oneway emergencyDialResponse();	// 142: emergencyDialResponse(Landroid/hardware/radio/V1_0/RadioResponseInfo;)V
+        oneway setEccServiceCategoryResponse();	// 143: setEccServiceCategoryResponse(Landroid/hardware/radio/V1_0/RadioResponseInfo;)V
+        oneway setEccListResponse();	// 144: setEccListResponse(Landroid/hardware/radio/V1_0/RadioResponseInfo;)V
+        oneway vtDialResponse();	// 145: vtDialResponse(Landroid/hardware/radio/V1_0/RadioResponseInfo;)V
+        oneway voiceAcceptResponse();	// 146: voiceAcceptResponse(Landroid/hardware/radio/V1_0/RadioResponseInfo;)V
+        oneway replaceVtCallResponse();	// 147: replaceVtCallResponse(Landroid/hardware/radio/V1_0/RadioResponseInfo;)V
+        oneway setNetworkSelectionModeManualWithActResponse();	// 148: setNetworkSelectionModeManualWithActResponse(Landroid/hardware/radio/V1_0/RadioResponseInfo;)V
+        oneway getAvailableNetworksWithActResponse();	// 149: getAvailableNetworksWithActResponse(Landroid/hardware/radio/V1_0/RadioResponseInfo;Ljava/util/ArrayList;)V
+        oneway cancelAvailableNetworksResponse();	// 150: cancelAvailableNetworksResponse(Landroid/hardware/radio/V1_0/RadioResponseInfo;)V
+        oneway currentStatusResponse();	// 151: currentStatusResponse(Landroid/hardware/radio/V1_0/RadioResponseInfo;)V
+        oneway eccPreferredRatResponse();	// 152: eccPreferredRatResponse(Landroid/hardware/radio/V1_0/RadioResponseInfo;)V
+        oneway getSmsParametersResponse();	// 153: getSmsParametersResponse(Landroid/hardware/radio/V1_0/RadioResponseInfo;Lvendor/mediatek/hardware/radio/V2_0/SmsParams;)V
+        oneway setSmsParametersResponse();	// 154: setSmsParametersResponse(Landroid/hardware/radio/V1_0/RadioResponseInfo;)V
+        oneway getSmsMemStatusResponse();	// 155: getSmsMemStatusResponse(Landroid/hardware/radio/V1_0/RadioResponseInfo;Lvendor/mediatek/hardware/radio/V2_0/SmsMemStatus;)V
+        oneway setEtwsResponse();	// 156: setEtwsResponse(Landroid/hardware/radio/V1_0/RadioResponseInfo;)V
+        oneway removeCbMsgResponse();	// 157: removeCbMsgResponse(Landroid/hardware/radio/V1_0/RadioResponseInfo;)V
+        oneway setGsmBroadcastLangsResponse();	// 158: setGsmBroadcastLangsResponse(Landroid/hardware/radio/V1_0/RadioResponseInfo;)V
+        oneway getGsmBroadcastLangsResponse();	// 159: getGsmBroadcastLangsResponse(Landroid/hardware/radio/V1_0/RadioResponseInfo;Ljava/lang/String;)V
+        oneway getGsmBroadcastActivationRsp();	// 160: getGsmBroadcastActivationRsp(Landroid/hardware/radio/V1_0/RadioResponseInfo;I)V
+        oneway sendEmbmsAtCommandResponse();	// 161: sendEmbmsAtCommandResponse(Landroid/hardware/radio/V1_0/RadioResponseInfo;Ljava/lang/String;)V
+        oneway setupDataCallResponseEx(RadioResponseInfo info, MtkSetupDataCallResult setupDataCallResult);	// 162: setupDataCallResponseEx(Landroid/hardware/radio/V1_0/RadioResponseInfo;Lvendor/mediatek/hardware/radio/V2_0/MtkSetupDataCallResult;)V
+        oneway getDataCallListResponseEx(RadioResponseInfo info, vec<MtkSetupDataCallResult> dcResponse);	// 163: getDataCallListResponseEx(Landroid/hardware/radio/V1_0/RadioResponseInfo;Ljava/util/ArrayList;)V
+        oneway setApcModeResponse();	// 164: setApcModeResponse(Landroid/hardware/radio/V1_0/RadioResponseInfo;)V
+        oneway getApcInfoResponse();	// 165: getApcInfoResponse(Landroid/hardware/radio/V1_0/RadioResponseInfo;Ljava/util/ArrayList;)V
+        oneway triggerModeSwitchByEccResponse();	// 166: triggerModeSwitchByEccResponse(Landroid/hardware/radio/V1_0/RadioResponseInfo;)V
+        oneway getSmsRuimMemoryStatusResponse();	// 167: getSmsRuimMemoryStatusResponse(Landroid/hardware/radio/V1_0/RadioResponseInfo;Lvendor/mediatek/hardware/radio/V2_0/SmsMemStatus;)V
+        oneway setFdModeResponse();	// 168: setFdModeResponse(Landroid/hardware/radio/V1_0/RadioResponseInfo;)V
+        oneway setResumeRegistrationResponse();	// 169: setResumeRegistrationResponse(Landroid/hardware/radio/V1_0/RadioResponseInfo;)V
+        oneway storeModemTypeResponse();	// 170: storeModemTypeResponse(Landroid/hardware/radio/V1_0/RadioResponseInfo;)V
+        oneway reloadModemTypeResponse();	// 171: reloadModemTypeResponse(Landroid/hardware/radio/V1_0/RadioResponseInfo;)V
+        oneway handleStkCallSetupRequestFromSimWithResCodeResponse();	// 172: handleStkCallSetupRequestFromSimWithResCodeResponse(Landroid/hardware/radio/V1_0/RadioResponseInfo;)V
+        oneway getFemtocellListResponse();	// 173: getFemtocellListResponse(Landroid/hardware/radio/V1_0/RadioResponseInfo;Ljava/util/ArrayList;)V
+        oneway abortFemtocellListResponse();	// 174: abortFemtocellListResponse(Landroid/hardware/radio/V1_0/RadioResponseInfo;)V
+        oneway selectFemtocellResponse();	// 175: selectFemtocellResponse(Landroid/hardware/radio/V1_0/RadioResponseInfo;)V
+        oneway queryFemtoCellSystemSelectionModeResponse();	// 176: queryFemtoCellSystemSelectionModeResponse(Landroid/hardware/radio/V1_0/RadioResponseInfo;I)V
+        oneway setFemtoCellSystemSelectionModeResponse();	// 177: setFemtoCellSystemSelectionModeResponse(Landroid/hardware/radio/V1_0/RadioResponseInfo;)V
+        oneway setClipResponse();	// 178: setClipResponse(Landroid/hardware/radio/V1_0/RadioResponseInfo;)V
+        oneway getColpResponse();	// 179: getColpResponse(Landroid/hardware/radio/V1_0/RadioResponseInfo;II)V
+        oneway getColrResponse();	// 180: getColrResponse(Landroid/hardware/radio/V1_0/RadioResponseInfo;I)V
+        oneway sendCnapResponse();	// 181: sendCnapResponse(Landroid/hardware/radio/V1_0/RadioResponseInfo;II)V
+        oneway setColpResponse();	// 182: setColpResponse(Landroid/hardware/radio/V1_0/RadioResponseInfo;)V
+        oneway setColrResponse();	// 183: setColrResponse(Landroid/hardware/radio/V1_0/RadioResponseInfo;)V
+        oneway queryCallForwardInTimeSlotStatusResponse();	// 184: queryCallForwardInTimeSlotStatusResponse(Landroid/hardware/radio/V1_0/RadioResponseInfo;Ljava/util/ArrayList;)V
+        oneway setCallForwardInTimeSlotResponse();	// 185: setCallForwardInTimeSlotResponse(Landroid/hardware/radio/V1_0/RadioResponseInfo;)V
+        oneway runGbaAuthenticationResponse();	// 186: runGbaAuthenticationResponse(Landroid/hardware/radio/V1_0/RadioResponseInfo;Ljava/util/ArrayList;)V
+        oneway queryPhbStorageInfoResponse();	// 187: queryPhbStorageInfoResponse(Landroid/hardware/radio/V1_0/RadioResponseInfo;Ljava/util/ArrayList;)V
+        oneway writePhbEntryResponse();	// 188: writePhbEntryResponse(Landroid/hardware/radio/V1_0/RadioResponseInfo;)V
+        oneway readPhbEntryResponse();	// 189: readPhbEntryResponse(Landroid/hardware/radio/V1_0/RadioResponseInfo;Ljava/util/ArrayList;)V
+        oneway queryUPBCapabilityResponse();	// 190: queryUPBCapabilityResponse(Landroid/hardware/radio/V1_0/RadioResponseInfo;Ljava/util/ArrayList;)V
+        oneway editUPBEntryResponse();	// 191: editUPBEntryResponse(Landroid/hardware/radio/V1_0/RadioResponseInfo;)V
+        oneway deleteUPBEntryResponse();	// 192: deleteUPBEntryResponse(Landroid/hardware/radio/V1_0/RadioResponseInfo;)V
+        oneway readUPBGasListResponse();	// 193: readUPBGasListResponse(Landroid/hardware/radio/V1_0/RadioResponseInfo;Ljava/util/ArrayList;)V
+        oneway readUPBGrpEntryResponse();	// 194: readUPBGrpEntryResponse(Landroid/hardware/radio/V1_0/RadioResponseInfo;Ljava/util/ArrayList;)V
+        oneway writeUPBGrpEntryResponse();	// 195: writeUPBGrpEntryResponse(Landroid/hardware/radio/V1_0/RadioResponseInfo;)V
+        oneway getPhoneBookStringsLengthResponse();	// 196: getPhoneBookStringsLengthResponse(Landroid/hardware/radio/V1_0/RadioResponseInfo;Ljava/util/ArrayList;)V
+        oneway getPhoneBookMemStorageResponse();	// 197: getPhoneBookMemStorageResponse(Landroid/hardware/radio/V1_0/RadioResponseInfo;Lvendor/mediatek/hardware/radio/V2_0/PhbMemStorageResponse;)V
+        oneway setPhoneBookMemStorageResponse();	// 198: setPhoneBookMemStorageResponse(Landroid/hardware/radio/V1_0/RadioResponseInfo;)V
+        oneway readPhoneBookEntryExtResponse();	// 199: readPhoneBookEntryExtResponse(Landroid/hardware/radio/V1_0/RadioResponseInfo;Ljava/util/ArrayList;)V
+        oneway writePhoneBookEntryExtResponse();	// 200: writePhoneBookEntryExtResponse(Landroid/hardware/radio/V1_0/RadioResponseInfo;)V
+        oneway queryUPBAvailableResponse();	// 201: queryUPBAvailableResponse(Landroid/hardware/radio/V1_0/RadioResponseInfo;Ljava/util/ArrayList;)V
+        oneway readUPBEmailEntryResponse();	// 202: readUPBEmailEntryResponse(Landroid/hardware/radio/V1_0/RadioResponseInfo;Ljava/lang/String;)V
+        oneway readUPBSneEntryResponse();	// 203: readUPBSneEntryResponse(Landroid/hardware/radio/V1_0/RadioResponseInfo;Ljava/lang/String;)V
+        oneway readUPBAnrEntryResponse();	// 204: readUPBAnrEntryResponse(Landroid/hardware/radio/V1_0/RadioResponseInfo;Ljava/util/ArrayList;)V
+        oneway readUPBAasListResponse();	// 205: readUPBAasListResponse(Landroid/hardware/radio/V1_0/RadioResponseInfo;Ljava/util/ArrayList;)V
+        oneway queryNetworkLockResponse();	// 206: queryNetworkLockResponse(Landroid/hardware/radio/V1_0/RadioResponseInfo;IIIIIII)V
+        oneway setNetworkLockResponse();	// 207: setNetworkLockResponse(Landroid/hardware/radio/V1_0/RadioResponseInfo;)V
+        oneway resetRadioResponse();	// 208: resetRadioResponse(Landroid/hardware/radio/V1_0/RadioResponseInfo;)V
+        oneway syncDataSettingsToMdResponse();	// 209: syncDataSettingsToMdResponse(Landroid/hardware/radio/V1_0/RadioResponseInfo;)V
+        oneway resetMdDataRetryCountResponse();	// 210: resetMdDataRetryCountResponse(Landroid/hardware/radio/V1_0/RadioResponseInfo;)V
+        oneway setRemoveRestrictEutranModeResponse();	// 211: setRemoveRestrictEutranModeResponse(Landroid/hardware/radio/V1_0/RadioResponseInfo;)V
+        oneway setLteAccessStratumReportResponse();	// 212: setLteAccessStratumReportResponse(Landroid/hardware/radio/V1_0/RadioResponseInfo;)V
+        oneway setLteUplinkDataTransferResponse();	// 213: setLteUplinkDataTransferResponse(Landroid/hardware/radio/V1_0/RadioResponseInfo;)V
+        oneway setRxTestConfigResponse();	// 214: setRxTestConfigResponse(Landroid/hardware/radio/V1_0/RadioResponseInfo;Ljava/util/ArrayList;)V
+        oneway getRxTestResultResponse();	// 215: getRxTestResultResponse(Landroid/hardware/radio/V1_0/RadioResponseInfo;Ljava/util/ArrayList;)V
+        oneway getPOLCapabilityResponse();	// 216: getPOLCapabilityResponse(Landroid/hardware/radio/V1_0/RadioResponseInfo;Ljava/util/ArrayList;)V
+        oneway getCurrentPOLListResponse();	// 217: getCurrentPOLListResponse(Landroid/hardware/radio/V1_0/RadioResponseInfo;Ljava/util/ArrayList;)V
+        oneway setPOLEntryResponse();	// 218: setPOLEntryResponse(Landroid/hardware/radio/V1_0/RadioResponseInfo;)V
+        oneway setRoamingEnableResponse();	// 219: setRoamingEnableResponse(Landroid/hardware/radio/V1_0/RadioResponseInfo;)V
+        oneway getRoamingEnableResponse();	// 220: getRoamingEnableResponse(Landroid/hardware/radio/V1_0/RadioResponseInfo;Ljava/util/ArrayList;)V
+        oneway vsimNotificationResponse();	// 221: vsimNotificationResponse(Landroid/hardware/radio/V1_0/RadioResponseInfo;Lvendor/mediatek/hardware/radio/V2_0/VsimEvent;)V
+        oneway vsimOperationResponse();	// 222: vsimOperationResponse(Landroid/hardware/radio/V1_0/RadioResponseInfo;)V
+        oneway setWifiEnabledResponse();	// 223: setWifiEnabledResponse(Landroid/hardware/radio/V1_0/RadioResponseInfo;)V
+        oneway setWifiAssociatedResponse();	// 224: setWifiAssociatedResponse(Landroid/hardware/radio/V1_0/RadioResponseInfo;)V
+        oneway setWifiSignalLevelResponse();	// 225: setWifiSignalLevelResponse(Landroid/hardware/radio/V1_0/RadioResponseInfo;)V
+        oneway setWifiIpAddressResponse();	// 226: setWifiIpAddressResponse(Landroid/hardware/radio/V1_0/RadioResponseInfo;)V
+        oneway setLocationInfoResponse();	// 227: setLocationInfoResponse(Landroid/hardware/radio/V1_0/RadioResponseInfo;)V
+        oneway setEmergencyAddressIdResponse();	// 228: setEmergencyAddressIdResponse(Landroid/hardware/radio/V1_0/RadioResponseInfo;)V
+        oneway setNattKeepAliveStatusResponse();	// 229: setNattKeepAliveStatusResponse(Landroid/hardware/radio/V1_0/RadioResponseInfo;)V
+        oneway setE911StateResponse();	// 230: setE911StateResponse(Landroid/hardware/radio/V1_0/RadioResponseInfo;)V
+        oneway setServiceStateToModemResponse();	// 231: setServiceStateToModemResponse(Landroid/hardware/radio/V1_0/RadioResponseInfo;)V
+        oneway sendRequestRawResponse();	// 232: sendRequestRawResponse(Landroid/hardware/radio/V1_0/RadioResponseInfo;Ljava/util/ArrayList;)V
+        oneway sendRequestStringsResponse();	// 233: sendRequestStringsResponse(Landroid/hardware/radio/V1_0/RadioResponseInfo;Ljava/util/ArrayList;)V
+};

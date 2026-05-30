@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <dimen name="rounded_corner_content_padding">32px</dimen>
+    <dimen name="keyguard_carrier_text_margin">52px</dimen>
+    <dimen name="system_icons_keyguard_padding_end">36px</dimen>
+</resources>

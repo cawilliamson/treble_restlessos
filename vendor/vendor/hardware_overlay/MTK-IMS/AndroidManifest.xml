@@ -1,0 +1,10 @@
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+        package="me.phh.treble.overlay.mtkims"
+        android:versionCode="1"
+        android:versionName="1.0">
+        <overlay android:targetPackage="android"
+                android:requiredSystemPropertyName="persist.sys.phh.ims.mtk"
+                android:requiredSystemPropertyValue="true"
+		android:priority="79"
+		android:isStatic="true" />
+</manifest>

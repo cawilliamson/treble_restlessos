@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Support non default location providers -->
+<resources>
+    <bool name="config_enableFusedLocationOverlay">true</bool>
+    <bool name="config_enableNetworkLocationOverlay">true</bool>
+</resources>

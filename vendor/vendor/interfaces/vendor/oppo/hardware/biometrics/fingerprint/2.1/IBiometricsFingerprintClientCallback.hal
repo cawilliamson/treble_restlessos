@@ -1,0 +1,44 @@
+/*
+ * Copyright (C) 2017 The Android Open Source Project
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package vendor.oppo.hardware.biometrics.fingerprint@2.1;
+
+/* This HAL interface communicates asynchronous results from the
+   fingerprint driver in response to user actions on the fingerprint sensor
+*/
+interface IBiometricsFingerprintClientCallback {
+
+    oneway onEnrollResult(uint64_t deviceId, uint32_t fingerId, uint32_t groupId, uint32_t remaining);
+
+    oneway onAcquired(uint64_t deviceId, FingerprintAcquiredInfo acquiredInfo, int32_t vendorCode);
+
+    oneway onAuthenticated(uint64_t deviceId, uint32_t fingerId, uint32_t groupId, vec<uint8_t> token);
+
+    oneway onError(uint64_t deviceId, FingerprintError error, int32_t vendorCode);
+
+    oneway onRemoved(uint64_t deviceId, uint32_t fingerId, uint32_t groupId, uint32_t remaining);
+
+    oneway onEnumerate(uint64_t deviceId, uint32_t fingerId, uint32_t groupId, uint32_t remaining);
+
+    oneway onTouchDown(uint64_t deviceId);
+    oneway onTouchUp(uint64_t deviceId);
+    oneway onMonitorEventTriggered(uint32_t type, string data);
+    oneway onImageInfoAcquired(uint32_t type, uint32_t quality, uint32_t match_score);
+    oneway onSyncTemplates(uint64_t deviceId, vec<uint32_t> fingerId, uint32_t remaining);
+    oneway onEngineeringInfoUpdated(uint32_t length, vec<uint32_t> keys, vec<string> values);
+    oneway onFingerprintCmd(int32_t deviceId, vec<uint32_t> groupId, uint32_t remaining);
+    oneway onUIReady(int64_t deviceId);
+};

@@ -1,0 +1,10 @@
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+        package="me.phh.treble.overlay.xiaomi.mi13.systemui"
+        android:versionCode="1"
+        android:versionName="1.0">
+        <overlay android:targetPackage="com.android.systemui"
+                android:requiredSystemPropertyName="ro.boot.hardware.sku"
+                android:requiredSystemPropertyValue="fuxi"
+        android:priority="1300"
+        android:isStatic="true" />
+</manifest>

@@ -1,0 +1,107 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+<!--Display-->
+    <integer name="config_defaultPeakRefreshRate">120</integer>
+    <integer name="config_defaultRefreshRate">120</integer>
+    <integer-array name="config_availableColorModes">
+       <item>0</item> <!-- COLOR_MODE_NATURAL -->
+       <item>3</item> <!-- COLOR_MODE_AUTOMATIC -->
+    </integer-array>
+    <bool name="config_dozeAfterScreenOff">true</bool>
+    <bool name="config_powerDecoupleAutoSuspendModeFromDisplay">true</bool>
+    <bool name="config_powerDecoupleInteractiveModeFromDisplay">true</bool>
+
+<!--Brightness-->
+    <bool name="config_automatic_brightness_available">true</bool>
+    <fraction name="config_autoBrightnessAdjustmentMaxGamma">300.0%</fraction>
+    <fraction name="config_maximumScreenDimRatio">29.999996%</fraction>
+    <fraction name="config_screenAutoBrightnessDozeScaleFactor">100.0%</fraction>
+    <integer name="config_screenBrightnessDoze">5</integer>
+    <integer-array name="config_autoBrightnessLcdBacklightValues">
+        <item>10</item>
+        <item>70</item>
+        <item>98</item>
+        <item>122</item>
+        <item>128</item>
+        <item>134</item>
+        <item>140</item>
+        <item>146</item>
+        <item>152</item>
+        <item>158</item>
+        <item>182</item>
+        <item>255</item>
+        <item>255</item>
+        <item>255</item>
+        <item>255</item>
+        <item>255</item>
+        <item>255</item>
+        <item>255</item>
+        <item>255</item>
+        <item>255</item>
+    </integer-array>
+    <integer-array name="config_autoBrightnessLevels">
+        <item>10</item>
+        <item>64</item>
+        <item>128</item>
+        <item>256</item>
+        <item>384</item>
+        <item>512</item>
+        <item>640</item>
+        <item>768</item>
+        <item>896</item>
+        <item>1024</item>
+        <item>2048</item>
+        <item>4096</item>
+        <item>6144</item>
+        <item>8192</item>
+        <item>10240</item>
+        <item>12288</item>
+        <item>14336</item>
+        <item>16384</item>
+        <item>18432</item>
+    </integer-array>
+
+<!--Other-->
+    <string-array name="config_defaultPinnerServiceFiles">
+        <item>/system/framework/arm/boot-mediatek-framework.vdex</item>
+        <item>/system/lib/libjavacrypto.so</item>
+        <item>/system/lib/libhidltransport.so</item>
+        <item>/system/framework/arm/boot-core-libart.oat</item>
+        <item>/system/framework/arm/boot-conscrypt.oat</item>
+        <item>/system/framework/arm/boot-core-libart.vdex</item>
+        <item>/system/framework/arm/boot-ext.vdex</item>
+        <item>/system/framework/arm/boot.vdex</item>
+        <item>/system/framework/arm/boot-framework.vdex</item>
+    </string-array>
+    <string-array name="config_tether_bluetooth_regexs">
+        <item>bt-pan</item>
+        <item>bt-dun</item>
+    </string-array>
+    <string-array name="config_tether_usb_regexs">
+        <item>rndis\\d</item>
+    </string-array>
+    <string-array name="config_tether_wifi_regexs">
+        <item>ap\\d</item>
+    </string-array>
+    <string-array name="networkAttributes">
+        <item>wifi,1,1,1,-1,true</item>
+        <item>mobile,0,0,0,-1,true</item>
+        <item>mobile_mms,2,0,2,60000,true</item>
+        <item>mobile_supl,3,0,2,60000,true</item>
+        <item>mobile_dun,4,0,2,60000,true</item>
+        <item>mobile_hipri,5,0,3,60000,true</item>
+        <item>ethernet,9,9,9,-1,true</item>
+        <item>mobile_fota,10,0,2,60000,true</item>
+        <item>mobile_ims,11,0,-1,-1,true</item>
+        <item>mobile_cbs,12,0,2,60000,true</item>
+        <item>wifi_p2p,13,1,0,-1,true</item>
+        <item>mobile_ia,14,0,2,-1,true</item>
+        <item>mobile_emergency,15,0,2,-1,true</item>
+        <item>mobile_mcx,1001,0,3,60000,true</item>
+        <item>mobile_xcap,1002,0,3,60000,true</item>
+        <item>mobile_rcs,2001,0,3,60000,true</item>
+        <item>mobile_bip,2002,0,3,60000,true</item>
+        <item>mobile_vsim,2003,0,-1,60000,true</item>
+    </string-array>
+    <bool name="config_showNavigationBar">true</bool>
+</resources>

@@ -1,0 +1,9 @@
+package vendor.samsung.hardware.light@2.0;
+
+import android.hardware.light@2.0::ILight;
+import android.hardware.light@2.0::types;
+
+interface ISecLight extends android.hardware.light@2.0::ILight {
+	setLightSec(SecType type, android.hardware.light@2.0::LightState lightState) generates (Status status);
+};
+

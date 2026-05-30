@@ -1,0 +1,64 @@
+cc_binary {
+	name: "resetprop_phh",
+	srcs: [
+		//nanopb
+		"Magisk/native/jni/external/nanopb/pb_common.c",
+		"Magisk/native/jni/external/nanopb/pb_encode.c",
+		"Magisk/native/jni/external/nanopb/pb_decode.c",
+		
+		//Magisk resetprop
+		"Magisk/native/jni/resetprop/resetprop.cpp",
+		"Magisk/native/jni/resetprop/persist_properties.cpp",
+		"Magisk/native/jni/resetprop/system_property_api.cpp",
+		"Magisk/native/jni/resetprop/system_property_set.cpp",
+
+		//Systemproperties
+		"Magisk/native/jni/systemproperties/context_node.cpp",
+		"Magisk/native/jni/systemproperties/contexts_serialized.cpp",
+		"Magisk/native/jni/systemproperties/contexts_split.cpp",
+		"Magisk/native/jni/systemproperties/prop_area.cpp",
+		"Magisk/native/jni/systemproperties/prop_info.cpp",
+		"Magisk/native/jni/systemproperties/property_info_parser.cpp",
+		"Magisk/native/jni/systemproperties/system_properties.cpp",
+
+		//Magisk utils
+		"Magisk/native/jni/utils/file.cpp",
+		"Magisk/native/jni/utils/logging.cpp",
+		"Magisk/native/jni/utils/misc.cpp",
+		"Magisk/native/jni/utils/selinux.cpp",
+		"Magisk/native/jni/utils/xwrap.cpp",
+
+		//glue
+		"resetprop.cpp",
+	],
+	local_include_dirs: [
+		"Magisk/native/jni/include",
+		"Magisk/native/jni/utils/include",
+		"Magisk/native/jni/",
+		"Magisk/native/jni/resetprop/",
+		"Magisk/native/jni/systemproperties/include/",
+		"Magisk/native/jni/external/nanopb/",
+	],
+
+    bootstrap: true,
+    target: {
+        android: {
+            ldflags: ["-Wl,--rpath,/system/${LIB}/bootstrap"],
+         },
+    },
+}
+
+cc_binary {
+	name: "patchelf",
+	srcs: [
+		"patchelf/src/patchelf.cc",
+	],
+	local_include_dirs: [
+		"patchelf/src",
+	],
+	cflags: [
+		"-DPAGESIZE=4096",
+		"-fexceptions",
+		"-DPACKAGE_STRING=\"phh-git\"",
+	],
+}

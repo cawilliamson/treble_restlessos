@@ -1,0 +1,7 @@
+package vendor.mediatek.hardware.radio@2.8;
+
+import vendor.mediatek.hardware.radio@2.7::IRadioIndication;
+
+interface IRadioIndication extends vendor.mediatek.hardware.radio@2.7::IRadioIndication {
+	smlSlotLockInfoChangedInd(int32_t type, vec<int32_t> info);
+};

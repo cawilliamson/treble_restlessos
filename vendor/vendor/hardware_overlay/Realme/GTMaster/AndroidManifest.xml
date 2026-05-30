@@ -1,0 +1,10 @@
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+        package="me.phh.treble.overlay.realme.gtmaster"
+        android:versionCode="1"
+        android:versionName="1.0">
+        <overlay android:targetPackage="android"
+                android:requiredSystemPropertyName="ro.boot.prjname"
+                android:requiredSystemPropertyValue="+(21603|21675|21676)"
+        android:priority="2160"
+        android:isStatic="true" />
+</manifest>

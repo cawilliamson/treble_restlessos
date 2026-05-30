@@ -1,0 +1,10 @@
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+        package="me.phh.treble.overlay.tethering"
+        android:versionCode="1"
+        android:versionName="1.0">
+        <overlay
+		android:priority="10"
+            android:targetPackage="com.android.networkstack.tethering"
+            android:targetName="TetheringConfig"
+		android:isStatic="true" />
+</manifest>

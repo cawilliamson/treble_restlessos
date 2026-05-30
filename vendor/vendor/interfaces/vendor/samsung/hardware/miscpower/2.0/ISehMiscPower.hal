@@ -1,0 +1,5 @@
+package vendor.samsung.hardware.miscpower@2.0;
+
+interface ISehMiscPower {
+	oneway setInteractiveAsync(bool interactive, int32_t dualScreenPolicy);
+};

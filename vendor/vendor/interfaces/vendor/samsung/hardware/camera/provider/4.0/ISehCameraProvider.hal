@@ -1,0 +1,8 @@
+package vendor.samsung.hardware.camera.provider@4.0;
+
+import android.hardware.camera.common@1.0::types;
+import android.hardware.camera.provider@2.6::ICameraProvider;
+
+interface ISehCameraProvider extends android.hardware.camera.provider@2.6::ICameraProvider {
+    sehGetCameraIdList() generates (android.hardware.camera.common@1.0::Status status, vec<string> cameraIds);
+};

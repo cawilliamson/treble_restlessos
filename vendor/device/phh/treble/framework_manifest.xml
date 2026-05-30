@@ -1,0 +1,13 @@
+<manifest version="1.0" type="framework">
+    <!-- For our Oppo/Realme friends -->
+    <hal>
+        <name>android.hardware.biometrics.fingerprint</name>
+        <transport>hwbinder</transport>
+        <version>2.1</version>
+        <interface>
+            <name>IBiometricsFingerprint</name>
+            <instance>default</instance>
+        </interface>
+    </hal>
+</manifest>
+

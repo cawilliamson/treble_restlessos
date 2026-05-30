@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <dimen name="quick_qs_offset_height">36.0dip</dimen>
+    <dimen name="rounded_corner_radius">39.0dip</dimen>
+    <dimen name="status_bar_height_landscape">28.0dip</dimen>
+    <dimen name="status_bar_height_portrait">36.0dip</dimen>
+    <item type="dimen" name="config_screenBrightnessSettingDefaultFloat">0.4</item>
+    <item type="dimen" name="config_screenBrightnessSettingMaximumFloat">1.0</item>
+    <item type="dimen" name="config_screenBrightnessSettingMinimumFloat">0.003921569</item>
+</resources>

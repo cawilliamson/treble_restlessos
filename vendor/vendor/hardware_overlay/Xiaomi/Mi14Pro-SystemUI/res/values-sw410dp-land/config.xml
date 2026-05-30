@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <dimen name="biometric_auth_pattern_view_max_size">348.0dip</dimen>
+    <dimen name="biometric_auth_pattern_view_size">248.0dip</dimen>
+</resources>

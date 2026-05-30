@@ -1,0 +1,36 @@
+# allow health HAL to read vendor-labelled battery/charger/power_supply sysfs.
+# some vendors (samsung, others) label all power_supply nodes under a
+# vendor-defined sysfs_battery type instead of AOSP's sysfs_batteryinfo.
+# without this rule the health HAL is denied access and healthd reports
+# no battery devices.
+type hal_health_default, domain;
+type sysfs_battery, fs_type, sysfs_type;
+allow hal_health_default sysfs_battery:dir { getattr open read search };
+allow hal_health_default sysfs_battery:file { getattr open read };
+allow hal_health_default sysfs_battery:lnk_file { getattr read };
+
+type hal_fingerprint_oppo_compat, domain;
+hal_client_domain(hal_fingerprint_oppo_compat, hal_fingerprint)
+hal_server_domain(hal_fingerprint_oppo_compat, hal_fingerprint)
+
+type hal_fingerprint_oppo_compat_exec, exec_type, vendor_file_type, file_type;
+init_daemon_domain(hal_fingerprint_oppo_compat)
+
+
+type hal_fingerprint_oppo, domain;
+allow hal_fingerprint_oppo vendor_default_prop:property_service { set };
+
+# allow vendor domains to read system and default properties.
+# vendor blobs compiled against older AOSP versions routinely read
+# system_prop and default_prop for feature detection, configuration,
+# and build fingerprint checks.  the GSI's tighter policy denies
+# these reads, causing widespread log spam and occasional functional
+# breakage when a HAL can't read a property it depends on.
+allow { domain -coredomain } system_prop:file { getattr open read map };
+allow { domain -coredomain } default_prop:file { getattr open read map };
+
+# allow vendor_init to set system_prop and default_prop.
+# vendor init.rc scripts set system properties during boot that
+# the stricter GSI policy blocks.
+allow vendor_init system_prop:property_service set;
+allow vendor_init default_prop:property_service set;

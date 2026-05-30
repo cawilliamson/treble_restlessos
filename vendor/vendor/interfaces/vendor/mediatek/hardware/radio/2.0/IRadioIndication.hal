@@ -1,0 +1,71 @@
+package vendor.mediatek.hardware.radio@2.0;
+
+import android.hardware.radio@1.1::IRadioIndication;
+import android.hardware.radio@1.0::RadioIndicationType;
+
+interface IRadioIndication extends android.hardware.radio@1.1::IRadioIndication {
+        oneway incomingCallIndication(RadioIndicationType type, IncomingCallNotification notification);	// 49: incomingCallIndication(ILvendor/mediatek/hardware/radio/V2_0/IncomingCallNotification;)V
+        oneway cipherIndication();	// 50: cipherIndication(ILvendor/mediatek/hardware/radio/V2_0/CipherNotification;)V
+        oneway crssIndication();	// 51: crssIndication(ILvendor/mediatek/hardware/radio/V2_0/CrssNotification;)V
+        oneway vtStatusInfoIndication();	// 52: vtStatusInfoIndication(II)V
+        oneway speechCodecInfoIndication();	// 53: speechCodecInfoIndication(II)V
+        oneway cdmaCallAccepted();	// 54: cdmaCallAccepted(I)V
+        oneway onVirtualSimOn();	// 55: onVirtualSimOn(II)V
+        oneway onVirtualSimOff();	// 56: onVirtualSimOff(II)V
+        oneway onImeiLock();	// 57: onImeiLock(I)V
+        oneway onImsiRefreshDone();	// 58: onImsiRefreshDone(I)V
+        oneway newEtwsInd();	// 59: newEtwsInd(ILvendor/mediatek/hardware/radio/V2_0/EtwsNotification;)V
+        oneway meSmsStorageFullInd();	// 60: meSmsStorageFullInd(I)V
+        oneway smsReadyInd();	// 61: smsReadyInd(I)V
+        oneway dataCallListChangedEx(RadioIndicationType type, vec<MtkSetupDataCallResult> dcResponse);	// 62: dataCallListChangedEx(ILjava/util/ArrayList;)V
+        oneway responseCsNetworkStateChangeInd();	// 63: responseCsNetworkStateChangeInd(ILjava/util/ArrayList;)V
+        oneway eMBMSAtInfoIndication();	// 64: eMBMSAtInfoIndication(ILjava/lang/String;)V
+        oneway eMBMSSessionStatusIndication();	// 65: eMBMSSessionStatusIndication(II)V
+        oneway responsePsNetworkStateChangeInd();	// 66: responsePsNetworkStateChangeInd(ILjava/util/ArrayList;)V
+        oneway responseInvalidSimInd();	// 67: responseInvalidSimInd(ILjava/util/ArrayList;)V
+        oneway responseNetworkEventInd();	// 68: responseNetworkEventInd(ILjava/util/ArrayList;)V
+        oneway responseModulationInfoInd();	// 69: responseModulationInfoInd(ILjava/util/ArrayList;)V
+        oneway dataAllowedNotification();	// 70: dataAllowedNotification(II)V
+        oneway onPseudoCellInfoInd();	// 71: onPseudoCellInfoInd(ILjava/util/ArrayList;)V
+        oneway plmnChangedIndication();	// 72: plmnChangedIndication(ILjava/util/ArrayList;)V
+        oneway registrationSuspendedIndication();	// 73: registrationSuspendedIndication(ILjava/util/ArrayList;)V
+        oneway gmssRatChangedIndication();	// 74: gmssRatChangedIndication(ILjava/util/ArrayList;)V
+        oneway worldModeChangedIndication();	// 75: worldModeChangedIndication(ILjava/util/ArrayList;)V
+        oneway resetAttachApnInd();	// 76: resetAttachApnInd(I)V
+        oneway mdChangedApnInd();	// 77: mdChangedApnInd(II)V
+        oneway esnMeidChangeInd();	// 78: esnMeidChangeInd(ILjava/lang/String;)V
+        oneway responseFemtocellInfo();	// 79: responseFemtocellInfo(ILjava/util/ArrayList;)V
+        oneway phbReadyNotification();	// 80: phbReadyNotification(II)V
+        oneway bipProactiveCommand();	// 81: bipProactiveCommand(ILjava/lang/String;)V
+        oneway triggerOtaSP();	// 82: triggerOtaSP(I)V
+        oneway onStkMenuReset();	// 83: onStkMenuReset(I)V
+        oneway onMdDataRetryCountReset();	// 84: onMdDataRetryCountReset(I)V
+        oneway onRemoveRestrictEutran();	// 85: onRemoveRestrictEutran(I)V
+        oneway onPcoStatus();	// 86: onPcoStatus(ILjava/util/ArrayList;)V
+        oneway onLteAccessStratumStateChanged();	// 87: onLteAccessStratumStateChanged(ILjava/util/ArrayList;)V
+        oneway onSimPlugIn();	// 88: onSimPlugIn(I)V
+        oneway onSimPlugOut();	// 89: onSimPlugOut(I)V
+        oneway onSimMissing();	// 90: onSimMissing(II)V
+        oneway onSimRecovery();	// 91: onSimRecovery(II)V
+        oneway onSimTrayPlugIn();	// 92: onSimTrayPlugIn(I)V
+        oneway onSimCommonSlotNoChanged();	// 93: onSimCommonSlotNoChanged(I)V
+        oneway onSimMeLockEvent();	// 94: onSimMeLockEvent(I)V
+        oneway networkInfoInd();	// 95: networkInfoInd(ILjava/util/ArrayList;)V
+        oneway cfuStatusNotify();	// 96: cfuStatusNotify(ILvendor/mediatek/hardware/radio/V2_0/CfuStatusNotification;)V
+        oneway pcoDataAfterAttached();	// 97: pcoDataAfterAttached(ILvendor/mediatek/hardware/radio/V2_0/PcoDataAttachedInfo;)V
+        oneway confSRVCC();	// 98: confSRVCC(ILjava/util/ArrayList;)V
+        oneway onVsimEventIndication();	// 99: onVsimEventIndication(ILvendor/mediatek/hardware/radio/V2_0/VsimOperationEvent;)V
+        oneway volteLteConnectionStatus();	// 100: volteLteConnectionStatus(ILjava/util/ArrayList;)V
+        oneway dedicatedBearerActivationInd();	// 101: dedicatedBearerActivationInd(ILvendor/mediatek/hardware/radio/V2_0/DedicateDataCall;)V
+        oneway dedicatedBearerModificationInd();	// 102: dedicatedBearerModificationInd(ILvendor/mediatek/hardware/radio/V2_0/DedicateDataCall;)V
+        oneway dedicatedBearerDeactivationInd();	// 103: dedicatedBearerDeactivationInd(II)V
+        oneway onWifiMonitoringThreshouldChanged();	// 104: onWifiMonitoringThreshouldChanged(ILjava/util/ArrayList;)V
+        oneway onWifiPdnActivate();	// 105: onWifiPdnActivate(ILjava/util/ArrayList;)V
+        oneway onWfcPdnError();	// 106: onWfcPdnError(ILjava/util/ArrayList;)V
+        oneway onPdnHandover();	// 107: onPdnHandover(ILjava/util/ArrayList;)V
+        oneway onWifiRoveout();	// 108: onWifiRoveout(ILjava/util/ArrayList;)V
+        oneway onLocationRequest();	// 109: onLocationRequest(ILjava/util/ArrayList;)V
+        oneway onWfcPdnStateChanged();	// 110: onWfcPdnStateChanged(ILjava/util/ArrayList;)V
+        oneway onNattKeepAliveChanged();	// 111: onNattKeepAliveChanged(ILjava/util/ArrayList;)V
+        oneway oemHookRaw();	// 112: oemHookRaw(ILjava/util/ArrayList;)V
+};

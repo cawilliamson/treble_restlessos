@@ -1,0 +1,13 @@
+package vendor.qti.hardware.fingerprint@1.0;
+
+interface IQtiExtendedFingerprintCallback {
+	onMatch(uint32_t fingerprintId, string user, uint64_t userId, vec<uint8_t> encapsulatedResult, vec<uint8_t> authToken);
+	onError(uint32_t error);
+	onStatus(Status status, vec<uint8_t> extension);
+	onEnroll(string user, uint32_t fingerprintId, uint32_t remaining);
+	onRemove(string user, uint32_t fingerprintId);
+	onEnumerate(string user, uint32_t fingerprintId, uint32_t remaining);
+	onRemoveUser(string user);
+	onCaptureDebugData(vec<CaptureDebugData> datas);
+	onCapture(uint32_t width, uint32_t height, vec<uint8_t> image);
+};

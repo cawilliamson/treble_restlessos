@@ -1,0 +1,10 @@
+package vendor.ims.glovemode@1.0;
+
+enum Mode : uint32_t {
+DISABLE = 0,
+ENABLE = 1,
+};
+
+interface IGloveMode {
+setEnable(Mode mode);
+};

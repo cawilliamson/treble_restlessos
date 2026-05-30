@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <integer name="config_bluetooth_idle_cur_ma">4</integer>
+    <integer name="config_bluetooth_operating_voltage_mv">4000</integer>
+    <integer name="config_bluetooth_rx_cur_ma">18</integer>
+    <integer name="config_bluetooth_tx_cur_ma">33</integer>
+    <integer name="config_brightness_ramp_rate_fast">180</integer>
+    <integer name="config_brightness_ramp_rate_slow">60</integer>
+    <integer name="config_defaultPeakRefreshRate">240</integer>
+    <integer name="config_defaultRefreshRate">144</integer>
+    <integer name="config_screenBrightnessDim">5</integer>
+    <integer name="config_screenBrightnessForVrSettingDefault">86</integer>
+    <integer name="config_screenBrightnessForVrSettingMaximum">255</integer>
+    <integer name="config_screenBrightnessForVrSettingMinimum">79</integer>
+    <integer name="config_screenBrightnessSettingDefault">67</integer>
+    <integer name="config_screenBrightnessSettingMaximum">255</integer>
+    <integer name="config_screenBrightnessSettingMinimum">5</integer>
+    <integer name="config_shutdownBatteryTemperature">580</integer>
+</resources>

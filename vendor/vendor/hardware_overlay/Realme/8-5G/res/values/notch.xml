@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Height of the status bar in landscape -->
+    <dimen name="status_bar_height_landscape">110.0px</dimen>
+
+    <!-- Height of the status bar in portrait -->
+    <dimen name="status_bar_height_portrait">110.0px</dimen>
+    
+    <!-- Height of area above QQS where battery/time go. -->
+    <dimen name="quick_qs_offset_height">@dimen/status_bar_height_portrait</dimen>
+
+    <!-- Whether the display cutout region of the main built-in display should be forced to
+         black in software (to avoid aliasing or emulate a cutout that is not physically existent).
+      -->
+    <bool name="config_fillMainBuiltInDisplayCutout">false</bool>
+    
+    <!-- The bounding path of the cutout region of the main built-in display. -->
+    <string translatable="false" name="config_mainBuiltInDisplayCutout">M -544,0 L -544,110 L -388,110 L -388,0 Z</string>
+
+    <!-- Default radius of the software rounded corners. -->
+    <dimen name="rounded_corner_radius">110.0px</dimen>
+
+</resources>

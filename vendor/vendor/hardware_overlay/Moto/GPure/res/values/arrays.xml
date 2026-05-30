@@ -1,0 +1,101 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <integer-array name="config_autoBrightnessDisplayValuesNits">
+        <item>3</item>
+        <item>10</item>
+        <item>20</item>
+        <item>50</item>
+        <item>70</item>
+        <item>85</item>
+        <item>110</item>
+        <item>130</item>
+        <item>150</item>
+        <item>160</item>
+        <item>160</item>
+        <item>180</item>
+        <item>180</item>
+        <item>225</item>
+        <item>225</item>
+        <item>225</item>
+        <item>230</item>
+        <item>245</item>
+        <item>300</item>
+        <item>380</item>
+        <item>400</item>
+        <item>400</item>
+        <item>400</item>
+        <item>400</item>
+    </integer-array>
+    <integer-array name="config_autoBrightnessLevels">
+        <item>1</item>
+        <item>2</item>
+        <item>5</item>
+        <item>10</item>
+        <item>29</item>
+        <item>50</item>
+        <item>90</item>
+        <item>100</item>
+        <item>150</item>
+        <item>200</item>
+        <item>300</item>
+        <item>400</item>
+        <item>500</item>
+        <item>800</item>
+        <item>1000</item>
+        <item>1300</item>
+        <item>1500</item>
+        <item>1600</item>
+        <item>1800</item>
+        <item>2000</item>
+        <item>3000</item>
+        <item>4000</item>
+        <item>8000</item>
+    </integer-array>
+    <integer-array name="config_availableColorModes">
+        <item>0</item>
+        <item>2</item>
+    </integer-array>
+    <string-array name="config_biometric_sensors">
+        <item>0:2:15</item>
+    </string-array>
+    <integer-array name="config_screenBrightnessBacklight">
+        <item>0</item>
+        <item>2</item>
+        <item>6</item>
+        <item>13</item>
+        <item>32</item>
+        <item>45</item>
+        <item>54</item>
+        <item>70</item>
+        <item>83</item>
+        <item>96</item>
+        <item>102</item>
+        <item>115</item>
+        <item>143</item>
+        <item>147</item>
+        <item>156</item>
+        <item>191</item>
+        <item>242</item>
+        <item>255</item>
+    </integer-array>
+    <integer-array name="config_screenBrightnessNits">
+        <item>0</item>
+        <item>3</item>
+        <item>10</item>
+        <item>20</item>
+        <item>50</item>
+        <item>70</item>
+        <item>85</item>
+        <item>110</item>
+        <item>130</item>
+        <item>150</item>
+        <item>160</item>
+        <item>180</item>
+        <item>225</item>
+        <item>230</item>
+        <item>245</item>
+        <item>300</item>
+        <item>380</item>
+        <item>400</item>
+    </integer-array>
+</resources>

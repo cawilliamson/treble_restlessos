@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <dimen name="navigation_bar_height">40.0dip</dimen>
+    <dimen name="navigation_bar_height_landscape">40.0dip</dimen>
+    <dimen name="navigation_bar_width">40.0dip</dimen>
+    <dimen name="quick_qs_offset_height">36.0dip</dimen>
+    <dimen name="status_bar_height_landscape">28.0dip</dimen>
+    <dimen name="status_bar_height_portrait">36.0dip</dimen>
+</resources>

@@ -1,0 +1,69 @@
+package vendor.samsung.hardware.radio@1.2;
+
+import android.hardware.radio@1.2::IRadioResponse;
+import android.hardware.radio@1.0::LastCallFailCauseInfo;
+import android.hardware.radio@1.0::RadioResponseInfo;
+
+interface IRadioResponse extends android.hardware.radio@1.2::IRadioResponse {
+    oneway secGetIccCardStatusReponse(RadioResponseInfo info, SecCardStatus cardStatus); //143
+    oneway secSupplyNetworkDepersonalizationResponse(RadioResponseInfo info, int32_t remainingRetries);
+    oneway secAcceptCallResponse(RadioResponseInfo info);
+    oneway secDialResponse(RadioResponseInfo info);
+    oneway secGetCurrentCallsResponse(RadioResponseInfo info, vec<SecCall> calls);
+    oneway secGetSignalStrengthResponse(RadioResponseInfo info, SecSignalStrength sigStrength);
+    oneway secGetVoiceRegistrationStateResponse(RadioResponseInfo info, SecVoiceRegStateResult voiceRegResponse);
+    oneway secGetDataRegistrationStateResponse(RadioResponseInfo info, SecDataRegStateResult dataRegResponse);
+    oneway secExplicitCallTransferResponse(RadioResponseInfo info);
+    oneway secGetOperatorRespnse(RadioResponseInfo info, string longName, string shortName, string plmn, string epdgname); //153
+    oneway oemSetBarringPasswordResponse(RadioResponseInfo info);
+    oneway secgetImsRegistrationStateReponse(RadioResponseInfo info, vec<int32_t> regState);
+    oneway secGetAvailableNetworkResponse(RadioResponseInfo info, vec<SecOperatorInfo> networkInfo);
+    oneway oemDialEmergencyCallResponse(RadioResponseInfo info);
+    oneway oemCallDeflectionResponse(RadioResponseInfo info);
+    oneway oemModifyCallInitiateResponse(RadioResponseInfo info, LastCallFailCauseInfo failCauseInfo);
+    oneway oemSetImsCallListResponse(RadioResponseInfo info);
+    oneway oemGetPreferredNetworkListResponse(RadioResponseInfo info, vec<OemPreferredNetworkInfo> infos);
+    oneway oemSetPreferredNetworkListResponse(RadioResponseInfo info);
+    oneway oemSendEncodedUSSDResponse(RadioResponseInfo info); //163
+    oneway oemHoldCallResponse(RadioResponseInfo info);
+    oneway oemGetDisable2gResponse(RadioResponseInfo info, int32_t isDisable);
+    oneway oemSetDisable2gResponse(RadioResponseInfo info);
+    oneway oenGetAcbInfoResponse(RadioResponseInfo info, vec<int32_t> acbInfo);
+    oneway oemSetTransferCallResponse(RadioResponseInfo info);
+    oneway oemGetICBarringResponse(RadioResponseInfo info, string numberDateList);
+    oneway oemSetICBarringResponse(RadioResponseInfo info);
+    oneway oemQueryCnapResponse(RadioResponseInfo info, int32_t queryCNAP);
+    oneway oemRefreshNitzTimeResponse(RadioResponseInfo info);
+    oneway oemEnableUnsolResponseResponse(RadioResponseInfo info); //173
+    oneway oemCancelTransferCallResponse(RadioResponseInfo info);
+    oneway oemAcknowledgeRilConnectedResponse(RadioResponseInfo info);
+    oneway oemGetPhoneBookStorageInfoResponse(RadioResponseInfo info, vec<int32_t> phoneBookInfo);
+    oneway oemUsimPbCapaResponse(RadioResponseInfo info, vec<int32_t> usimPbCapa);
+    oneway oemSetSimPowerResponse(RadioResponseInfo info, int32_t power);
+    oneway oemSetSimOnOffResponse(RadioResponseInfo info);
+    oneway oemSetSimInitEventResponse(RadioResponseInfo info);
+    oneway oemGetSimLockInfoResponse(RadioResponseInfo info, vec<int32_t> simLockInfO);
+    oneway oemSupplyIccPersoResponse(RadioResponseInfo info);
+    oneway oemChangeIccPersoResponse(RadioResponseInfo info); //183
+    oneway oemGetPhoneBookEntryResponse(RadioResponseInfo info, OemSimPBResponse SimPBResponseInfo);
+    oneway oemAccessPhoneBookEntryResponse(RadioResponseInfo info, int32_t SimPbAccessResp);
+    oneway oemGetCellBroadcastConfigResponse(RadioResponseInfo info, OemCbConfigArgs configs);
+    oneway oemEmergencySearchResponse(RadioResponseInfo info, int32_t respEmergencySearch);
+    oneway oemEmergencyControlResponse(RadioResponseInfo info);
+    oneway oemGetAtrResponse(RadioResponseInfo info, string atr);
+    oneway oemSendCdmaSmsExpectMoreResponse(RadioResponseInfo info, SecSendSmsResult sms);
+    oneway secSendSmsResponse(RadioResponseInfo info, SecSendSmsResult sms);
+    oneway secSendSMSExpectMoreResponse(RadioResponseInfo info, SecSendSmsResult sms);
+    oneway secSendCdmaSmsResponse(RadioResponseInfo info, SecSendSmsResult sms); //193
+    oneway secSendImsSmsResponse(RadioResponseInfo info, SecSendSmsResult sms);
+    oneway secSetDataAllowedResponse(RadioResponseInfo info);
+    oneway secGetCdmaRoamingPreferenceResponse(RadioResponseInfo info, int32_t n, int32_t m);
+    oneway secEnable5gResponse(RadioResponseInfo info);
+    oneway secDisable5gResponse(RadioResponseInfo info);
+    oneway secQuery5gStatusResponse(RadioResponseInfo info);
+    oneway secQueryNrDcParamResponse(RadioResponseInfo info, DcParam endcDcnr);
+    oneway secQueryNrBearerAllocationResponse(RadioResponseInfo info, int32_t bearerStatus);
+    oneway secQueryNrSignalStrengthResponse(RadioResponseInfo info, NrSignalStrength nrSignalStrength);
+    oneway oemQueryCsgListResponse(RadioResponseInfo info, vec<OemCsgInfo> csgInfos);
+    oneway oemSelectCsgManualResponse(RadioResponseInfo info); //205
+};

@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="utf-8"?>
+<device name="Android">
+    <item name="battery.capacity">3300</item>
+    <array name="cpu.clusters.cores">
+        <value>4</value>
+        <value>4</value>
+    </array>
+    <item name="cpu.suspend">4.3</item>
+    <item name="cpu.idle">3.7</item>
+    <array name="cpu.core_speeds.cluster0">
+        <value>633600</value>
+        <value>902400</value>
+        <value>1113600</value>
+        <value>1401600</value>
+        <value>1536000</value>
+        <value>1593600</value>
+        <value>1612800</value>
+    </array>
+    <array name="cpu.core_speeds.cluster1">
+        <value>1113600</value>
+        <value>1401600</value>
+        <value>1747200</value>
+        <value>1766400</value>
+        <value>1785600</value>
+        <value>1804800</value>
+    </array>
+    <array name="cpu.core_power.cluster0">
+        <value>24</value>
+        <value>32</value>
+        <value>36</value>
+        <value>43</value>
+        <value>56</value>
+        <value>58</value>
+        <value>67</value>
+    </array>
+    <array name="cpu.core_power.cluster1">
+        <value>44</value>
+        <value>70</value>
+        <value>88</value>
+        <value>116</value>
+        <value>146</value>
+        <value>155</value>
+    </array>
+    <item name="screen.on">155</item>
+    <item name="screen.full">365</item>
+    <item name="camera.flashlight">212</item>
+    <item name="camera.avg">620</item>
+    <item name="video">61</item>
+    <item name="audio">30</item>
+    <item name="wifi.controller.idle">0.48</item>
+    <item name="wifi.controller.tx">123</item>
+    <item name="bluetooth.controller.idle">0.39</item>
+</device>

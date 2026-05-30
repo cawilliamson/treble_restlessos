@@ -1,0 +1,4 @@
+type sysfs_board_properties, fs_type, sysfs_type;
+
+allow system_server sysfs_board_properties:dir search;
+allow system_server sysfs_board_properties:file r_file_perms;

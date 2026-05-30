@@ -1,0 +1,82 @@
+package vendor.nvidia.hardware.graphics.display@1.0;
+
+
+enum HwcSvcDisplay : int32_t {
+    HWC_SVC_DISPLAY_NONE = -1,
+    HWC_SVC_DISPLAY_PANEL = 0,
+    HWC_SVC_DISPLAY_HDMI = 1,
+    HWC_SVC_DISPLAY_HDMI2 = 2,
+    HWC_SVC_DISPLAY_PRIMARY = 3,
+    HWC_SVC_DISPLAY_EXTERNAL = 4,
+    HWC_SVC_DISPLAY_EXTERNAL2 = 5,
+};
+
+enum HwcSvcModeFlags : int32_t {
+    HWC_SVC_MODE_FLAG_VRR = 1,
+    HWC_SVC_MODE_FLAG_HDR10 = 2,
+};
+
+struct HwcVcDisplayMode {
+        uint32_t index;
+        uint32_t xres;
+        uint32_t yres;
+        float refresh;
+        uint32_t stereo;
+        uint32_t pixenc;
+        uint32_t colorimetry;
+        uint32_t bpc;
+        bitfield<HwcSvcModeFlags> flags
+};
+
+enum HwcWvcModeType : uint32_t {
+    HWC_SVC_MODE_TYPE_CURRENT = 0,
+    HWC_SVC_MODE_TYPE_MAX = 1,
+    HWC_SVC_MODE_TYPE_MAX_50HZ = 2,
+    HWC_SVC_MODE_TYPE_MAX_60HZ = 3,
+    HWC_SVC_MODE_TYPE_MAX_23_976HZ = 4,
+    HWC_SVC_MODE_TYPE_MAX_59_94HZ = 5,
+    HWC_SVC_MODE_TYPE_MAX_1080P_60HZ = 6,
+    HWC_SVC_MODE_TYPE_MAX_1080P_60HZ_RGB = 7,
+    HWC_SVC_MODE_TYPE_SAFE = 8,
+};
+
+enum HwcSvcProperty : uint32_t {
+    PERSIST_VENDOR_SYS_SF_VRR = 0,
+    PERSIST_VENDOR_TEGRA_HDMI_RESOLUTION = 1,
+    PERSIST_VENDOR_TEGRA_HDMI_RANGE = 2,
+    PERSIST_VENDOR_TEGRA_HDMI_COLORIMETRY = 3,
+    PERSIST_VENDOR_TEGRA_HDMI_ALL_MODES = 4,
+    PERSIST_VENDOR_TEGRA_HDMI_UNDERSCAN = 5,
+    VENDOR_SF_VRR_ACTIVE = 6,
+    VENDOR_SF_VRR_SUPPORTED = 7,
+};
+
+interface INvDisplay {
+    modeGetList(HwcSvcDisplay display) generates (vec<HwcSvcDisplayMode> modes);
+    getMode(HwcSvcDisplay display, HwcSvcModeType modeType) generates (HwcSvcDisplayMode mode);
+    modeSet(HwcSvcDisplay display, HwcSvcDisplayMode request);
+    modeSetIndex(HwcSvcDisplay display, uint32_t index);
+    modeDefaultSetIndex(HwcSvcDisplay display, uint32_t index);
+    modeDefaultCommit(HwcSvcDisplay display);
+    modeDefaultRollback(HwcSvcDisplay display);
+    modeDefaultStore(HwcSvcDisplay display);
+    modeDefaultGet(HwcSvcDisplay display) generates (uint32_t idx);
+    modeDefaultDelete(HwcSvcDisplay display);
+    modeDefaultDeleteAll(HwcSvcDisplay display);
+    modeUpdate(HwcSvcDisplay display);
+    layerDepthPolicy(HwcSvcDisplay display);
+    hdcpGetVersion(HwcSvcDisplay display) generates (uint32_t ret);
+    edidGetInfo(HwcSvcDisplay display) generates (HwcSvcEdidInfo info);
+    edidGetRaw(HwcSvcDisplay display) generates (vec<uint8_t> edid);
+    getUnderscan(HwcSvcDisplay display, float underscan);
+    getScanlineFence(); // int getScanlineFence(int display, HwcSvcSLFenceInfo info)
+    removeScanlineInterrupt(); //void removeScanlineInterrupt(int display, int id);
+    enableCrc(); // HwcSvcCrc enableCrc(int display, HwcSvcCrc crc)
+    readCrc(); // HwcSvcCrc readCrc(int display, HwcSvcCrc crc)
+    getCrcFlipId(); //HwcSvcCrc getCrcFlipId(int display)
+    displayGetType(); // int displayGetType(int display)
+    displayAddWindow(); //void displayAddWindow(int display)
+    enableGsync(); // void enableGsync(int display, boolean enable)
+    getHwcProperty(HwcSvcProperty prop) generates (string res);
+    setHwcProperty(HwcSvcProperty prop, string value);
+};

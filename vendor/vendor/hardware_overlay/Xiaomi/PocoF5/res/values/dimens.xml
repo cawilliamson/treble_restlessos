@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string translatable="false" name="config_mainBuiltInDisplayCutout">
+        M -23,52
+        M 23,52
+        A 23,23 0 1,0 -23,52
+        A 23,23 0 1,0 23,52
+        Z</string>
+    <dimen name="rounded_corner_radius">22.0dip</dimen>
+    <dimen name="status_bar_height">36.0dip</dimen>
+    <dimen name="status_bar_height_default">36.0dip</dimen>
+    <dimen name="status_bar_height_portrait">36.0dip</dimen>
+    <dimen name="status_bar_height_landscape">24.0dip</dimen>
+</resources>

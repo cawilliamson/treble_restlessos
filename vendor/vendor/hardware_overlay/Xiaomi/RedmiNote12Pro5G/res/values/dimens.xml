@@ -1,0 +1,8 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<resources xmlns:xliff="urn:oasis:names:tc:xliff:document:1.2">
+    <dimen name="status_bar_height_default">94.0px</dimen>
+    <dimen name="status_bar_height_portrait">94.0px</dimen>
+    <dimen name="status_bar_height_landscape">94.0px</dimen>
+    <dimen name="rounded_corner_radius_bottom">70.0px</dimen>
+    <dimen name="rounded_corner_radius_top">70.0px</dimen>
+</resources>

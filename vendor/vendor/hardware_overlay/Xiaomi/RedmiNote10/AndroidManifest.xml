@@ -1,0 +1,10 @@
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+        package="me.phh.treble.overlay.xiaomi.redminote10"
+        android:versionCode="1"
+        android:versionName="1.0">
+        <overlay android:targetPackage="android"
+                android:requiredSystemPropertyName="ro.product.board"
+                android:requiredSystemPropertyValue="+(mojito*|sunny*)"
+		android:priority="550"
+		android:isStatic="true" />
+</manifest>

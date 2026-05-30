@@ -1,0 +1,7 @@
+package vendor.mediatek.hardware.radio@2.8;
+
+import vendor.mediatek.hardware.radio@2.7::IRadio;
+
+interface IRadio extends vendor.mediatek.hardware.radio@2.7::IRadio {
+	oneway supplyDeviceNetworkDepersonalization(int32_t serial, string pwd);
+};

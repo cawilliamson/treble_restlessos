@@ -1,0 +1,84 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <bool name="config_autoBrightnessResetAmbientLuxAfterWarmUp">true</bool>
+    <bool name="config_automatic_brightness_available">true</bool>
+    <integer name="config_autoBrightnessAmbientLightHorizon">10000</integer>
+    <integer name="config_autoBrightnessBrighteningLightDebounce">2000</integer>
+    <integer name="config_autoBrightnessDarkeningLightDebounce">3000</integer>
+    <integer name="config_autoBrightnessInitialLightSensorRate">-1</integer>
+    <integer name="config_autoBrightnessLightSensorRate">250</integer>
+    <integer name="config_brightness_ramp_rate_fast">200</integer>
+    <integer name="config_brightness_ramp_rate_slow">40</integer>
+    <integer-array name="config_autoBrightnessLcdBacklightValues">
+        <item>16</item>
+        <item>61</item>
+        <item>70</item>
+        <item>100</item>
+        <item>116</item>
+        <item>137</item>
+        <item>161</item>
+        <item>178</item>
+	<item>209</item>
+	<item>255</item>
+    </integer-array>
+    <integer-array name="config_autoBrightnessLevels">
+        <item>8</item>
+        <item>15</item>
+        <item>50</item>
+        <item>100</item>
+        <item>200</item>
+        <item>400</item>
+        <item>800</item>
+        <item>1600</item>
+        <item>3100</item>
+    </integer-array>
+    <array name="config_autoBrightnessDisplayValuesNits">
+        <item>8.2</item>
+        <item>23.3</item>
+        <item>122.28</item>
+        <item>144.4</item>
+        <item>189.4</item>
+        <item>237.9</item>
+        <item>341.8</item>
+        <item>550.0</item>
+    </array>
+
+    <bool name="config_suspendWhenScreenOffDueToProximity">true</bool>
+    <bool name="config_sustainedPerformanceModeSupported">true</bool>
+    <bool name="config_supportAudioSourceUnprocessed">true</bool>
+    <bool name="config_switch_phone_on_voice_reg_state_change">false</bool>
+    <integer name="config_overrideHasPermanentMenuKey">2</integer>
+    <bool name="config_powerDecoupleAutoSuspendModeFromDisplay">false</bool>
+    <bool name="config_dozeAfterScreenOff">true</bool>
+    <bool name="config_showNavigationBar">true</bool>
+    <bool name="skip_restoring_network_selection">true</bool>
+    <integer name="config_bluetooth_operating_voltage_mv">3300</integer>
+    <bool name="config_bluetooth_hfp_inband_ringing_support">true</bool>
+    <bool name="config_bluetooth_le_peripheral_mode_supported">true</bool>
+    <integer name="config_screenBrightnessDark">1</integer>
+    <integer name="config_screenBrightnessDim">1</integer>
+    <bool name="config_allowAutoBrightnessWhileDozing">false</bool>
+    <integer name="config_screenBrightnessDoze">1</integer>
+    <integer name="config_screenBrightnessSettingMinimum">1</integer>
+    <bool name="config_hotswapCapable">true</bool>
+
+    <integer-array name="config_longPressVibePattern">
+        <item>0</item>
+        <item>30</item>
+    </integer-array>
+    <integer-array name="config_virtualKeyVibePattern">
+        <item>0</item>
+        <item>30</item>
+    </integer-array>
+    <integer-array name="config_keyboardTapVibePattern">
+        <item>0</item>
+        <item>30</item>
+    </integer-array>
+    <bool name="config_lidControlsSleep">false</bool>
+    <bool name="config_wifi_batched_scan_supported">false</bool>
+    <bool name="config_wifi_background_scan_support">false</bool>
+    <bool name="config_wifi_dual_band_support">true</bool>
+
+    <bool name="config_dozeAlwaysOnDisplayAvailable">true</bool>
+    <bool name="config_powerDecoupleInteractiveModeFromDisplay">true</bool>
+</resources>

@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <bool name="config_useDevInputEventForAudioJack">true</bool>
+    <bool name="config_showNavigationBar">true</bool>
+
+    <dimen name="status_bar_height_default">32dp</dimen>
+    <dimen name="status_bar_height">32dp</dimen>
+    <dimen name="status_bar_height_portrait">32dp</dimen>
+    <dimen name="quick_qs_offset_height">32dp</dimen>
+
+    <integer name="config_screenBrightnessSettingMinimum">1</integer>
+</resources>

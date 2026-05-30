@@ -1,0 +1,9 @@
+package vendor.samsung.hardware.camera.device@5.0;
+
+import android.hardware.camera.common@1.0::types;
+import android.hardware.camera.device@3.6::ICameraDevice;
+
+interface ISehCameraDevice extends android.hardware.camera.device@3.6::ICameraDevice {
+	//Values seen on Galaxy S22: 1 to 5
+	sehSetTorchModeStrength(TorchMode mode, uint32_t strength) generates (Status status);
+};

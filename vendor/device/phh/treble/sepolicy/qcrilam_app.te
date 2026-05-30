@@ -1,0 +1,22 @@
+type qcrilam_app, domain;
+
+app_domain(qcrilam_app)
+
+# Needed to get access to /data/data/me.phh.qcrilam
+# Only getattr and search are requested since qcrilam does not write to its own directory
+# /data/data/me.phh.qcrilam only has two empty subdirs
+dontaudit qcrilam_app app_data_file:dir { getattr search };
+
+# Access services that should be available to all apps
+allow qcrilam_app app_api_service:service_manager find;
+
+# Find media.audio_flinger
+allow qcrilam_app audioserver_service:service_manager find;
+# Find isub
+allow qcrilam_app radio_service:service_manager find;
+
+# Find the vendor.qti.hardware.radio.am::IQcRilAudio HIDL service
+# And grant binder access to the host (`rild`)
+hal_client_domain(qcrilam_app, hal_telephony)
+
+allow qcrilam_app cgroup:file w_file_perms;

@@ -1,0 +1,4 @@
+hidl_package_root {
+    name: "vendor",
+    path: "vendor/interfaces/vendor",
+}

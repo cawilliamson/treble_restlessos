@@ -1,0 +1,5 @@
+package vendor.goodix.hardware.biometrics.fingerprint@2.1;
+
+interface IGoodixFingerprintDaemonCallback {
+    oneway onDaemonMessage(int64_t a, int32_t b, int32_t c, vec<int8_t> d);
+};

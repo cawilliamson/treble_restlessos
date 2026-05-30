@@ -1,0 +1,17 @@
+package vendor.goodix.extend.service@2.0;
+
+enum RequestStatus: int32_t {
+	SYS_OK = 0,
+	SYS_UNKNOWN = 1,
+	SYS_ENOENT = -2,
+	SYS_EINTR = -4,
+	SYS_EIO = -5,
+	SYS_EAGAIN = -11,
+	SYS_ENOMEM = -12,
+	SYS_EACCES = -13,
+	SYS_EFAULT = -14,
+	SYS_EBUSY = -16,
+	SYS_EINVAL = -22,
+	SYS_ENOSPC = -28,
+	SYS_ETIMEDOUT = -110,
+};

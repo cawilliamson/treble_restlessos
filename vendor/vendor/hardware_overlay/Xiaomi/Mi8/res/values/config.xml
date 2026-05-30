@@ -1,0 +1,118 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <integer-array name="config_autoBrightnessLcdBacklightValues">
+        <item>2</item>
+        <item>2</item>
+        <item>2</item>
+        <item>8</item>
+        <item>8</item>
+        <item>8</item>
+        <item>8</item>
+        <item>8</item>
+        <item>8</item>
+        <item>18</item>
+        <item>18</item>
+        <item>18</item>
+        <item>27</item>
+        <item>27</item>
+        <item>27</item>
+        <item>32</item>
+        <item>32</item>
+        <item>32</item>
+        <item>37</item>
+        <item>46</item>
+        <item>49</item>
+        <item>52</item>
+        <item>53</item>
+        <item>59</item>
+        <item>61</item>
+        <item>64</item>
+        <item>70</item>
+        <item>77</item>
+        <item>85</item>
+        <item>97</item>
+        <item>107</item>
+        <item>120</item>
+        <item>131</item>
+        <item>149</item>
+        <item>175</item>
+        <item>186</item>
+        <item>209</item>
+        <item>255</item>
+    </integer-array>
+    <integer-array name="config_autoBrightnessLevels">
+        <item>1</item>
+        <item>2</item>
+        <item>3</item>
+        <item>4</item>
+        <item>5</item>
+        <item>6</item>
+        <item>7</item>
+        <item>8</item>
+        <item>10</item>
+        <item>12</item>
+        <item>15</item>
+        <item>18</item>
+        <item>22</item>
+        <item>30</item>
+        <item>40</item>
+        <item>50</item>
+        <item>80</item>
+        <item>110</item>
+        <item>155</item>
+        <item>173</item>
+        <item>300</item>
+        <item>387</item>
+        <item>492</item>
+        <item>533</item>
+        <item>726</item>
+        <item>883</item>
+        <item>1023</item>
+        <item>1222</item>
+        <item>1501</item>
+        <item>1733</item>
+        <item>2034</item>
+        <item>2227</item>
+        <item>2517</item>
+        <item>3042</item>
+        <item>3495</item>
+        <item>3998</item>
+        <item>4472</item>
+    </integer-array>
+    <bool name="config_automatic_brightness_available">true</bool>
+    <bool name="config_setColorTransformAccelerated">true</bool>
+    <bool name="config_supportAudioSourceUnprocessed">true</bool>
+    <bool name="config_useDevInputEventForAudioJack">true</bool>
+    <bool name="skip_restoring_network_selection">true</bool>
+    <bool name="config_bluetooth_le_peripheral_mode_supported">true</bool>
+    <bool name="config_carrier_volte_available">true</bool>
+    <bool name="config_device_volte_available">true</bool>
+    <bool name="config_device_vt_available">true</bool>
+    <bool name="config_device_wfc_ims_available">true</bool>
+    <bool name="config_hotswapCapable">true</bool>
+    <bool name="config_intrusiveNotificationLed">true</bool>
+    <bool name="config_lidControlsSleep">true</bool>
+    <bool name="config_wifiDisplaySupportsProtectedBuffers">true</bool>
+    <bool name="config_wifi_background_scan_support">true</bool>
+    <bool name="config_wifi_batched_scan_supported">true</bool>
+    <bool name="config_wifi_dual_band_support">true</bool>
+    <bool name="config_dozeAlwaysOnDisplayAvailable">true</bool>
+    <bool name="config_displayBlanksAfterDoze">true</bool>
+    <bool name="config_powerDecoupleAutoSuspendModeFromDisplay">true</bool>
+    <bool name="config_dozeAfterScreenOffByDefault">true</bool>
+    <fraction name="config_autoBrightnessAdjustmentMaxGamma">200.0%</fraction>
+    <fraction name="config_maximumScreenDimRatio">29.999996%</fraction>
+    <integer name="config_autoBrightnessBrighteningLightDebounce">2000</integer>
+    <integer name="config_autoBrightnessDarkeningLightDebounce">2000</integer>
+    <integer name="config_screenBrightnessDark">1</integer>
+    <integer name="config_screenBrightnessDim">2</integer>
+    <integer name="config_screenBrightnessDoze">17</integer>
+    <integer name="config_screenBrightnessSettingDefault">67</integer>
+    <integer name="config_screenBrightnessSettingMaximum">255</integer>
+    <integer name="config_screenBrightnessSettingMinimum">2</integer>
+    <integer name="config_bluetooth_idle_cur_ma">1</integer>
+    <integer name="config_bluetooth_operating_voltage_mv">3300</integer>
+    <integer name="config_bluetooth_rx_cur_ma">2</integer>
+    <integer name="config_bluetooth_tx_cur_ma">3</integer>
+    <integer name="config_shutdownBatteryTemperature">600</integer>
+</resources>

@@ -1,0 +1,13 @@
+on property:persist.sys.phh.remote=true
+    setprop persist.adb.tcp.port 5555
+    restart adbd
+    start phh-remotectl
+
+on property:persist.sys.phh.remote=false
+    setprop persist.adb.tcp.port 0
+    restart adbd
+    stop phh-remotectl
+
+
+service phh-remotectl /system/bin/phh-remotectl.sh
+   seclabel u:r:phhsu_daemon:s0

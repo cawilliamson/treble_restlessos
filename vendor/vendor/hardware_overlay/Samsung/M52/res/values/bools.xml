@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+	<bool name="config_automatic_brightness_available">true</bool>
+   <bool name="config_supportAudioSourceUnprocessed">true</bool>
+	<bool name="config_enableBurnInProtection">true</bool>
+	<bool name="config_dozeAlwaysOnDisplayAvailable">true</bool>
+	<bool name="config_supportDoubleTapWake">true</bool>
+	<bool name="config_wifi_dual_band_support">true</bool>
+	<bool name="config_dozePulsePickup">true</bool>
+	<bool name="config_useDevInputEventForAudioJack">true</bool>
+</resources>

@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+	<bool name="skip_restoring_network_selection">true</bool>
+	<bool name="config_hotswapCapable">true</bool>
+	<bool name="config_bluetooth_le_peripheral_mode_supported">true</bool>
+	<bool name="config_carrier_volte_available">true</bool>
+	<bool name="config_device_volte_available">true</bool>
+	<bool name="config_device_vt_available">true</bool>
+	<bool name="config_device_wfc_ims_available">true</bool>
+	<bool name="config_wifiDisplaySupportsProtectedBuffers">true</bool>
+	<bool name="config_wifi_background_scan_support">true</bool>
+	<bool name="config_wifi_batched_scan_supported">true</bool>
+	<bool name="config_wifi_dual_band_support">true</bool>
+	<bool name="config_wifi_fast_bss_transition_enabled">false</bool>
+	<integer name="config_bluetooth_idle_cur_ma">0</integer>
+	<integer name="config_bluetooth_rx_cur_ma">0</integer>
+	<integer name="config_bluetooth_tx_cur_ma">0</integer>
+	<string-array name="config_tether_usb_regexs">
+		<item>usb\\d</item>
+		<item>rndis\\d</item>
+	</string-array>
+	<string-array name="config_tether_wifi_regexs">
+		<item>wigig0</item>
+		<item>softap0</item>
+	</string-array>
+	<string-array name="networkAttributes">
+		<item>wifi,1,1,1,-1,true</item>
+		<item>mobile,0,0,0,-1,true</item>
+		<item>mobile_mms,2,0,4,60000,true</item>
+		<item>mobile_supl,3,0,2,60000,true</item>
+		<item>mobile_dun,4,0,2,60000,true</item>
+		<item>mobile_hipri,5,0,3,60000,true</item>
+		<item>mobile_fota,10,0,2,60000,true</item>
+		<item>mobile_ims,11,0,2,60000,true</item>
+		<item>mobile_cbs,12,0,2,60000,true</item>
+		<item>bluetooth,7,7,2,-1,true</item>
+		<item>mobile_emergency,15,0,5,-1,true</item>
+	</string-array>
+</resources>

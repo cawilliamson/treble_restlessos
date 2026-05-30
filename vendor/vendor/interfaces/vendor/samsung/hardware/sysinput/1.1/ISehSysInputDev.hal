@@ -1,0 +1,10 @@
+package vendor.samsung.hardware.sysinput@1.1;
+
+import vendor.samsung.hardware.sysinput@1.0::ISehSysInputDev;
+
+interface ISehSysInputDev extends vendor.samsung.hardware.sysinput@1.0::ISehSysInputDev {
+    runTspCmdNoRead(uint32_t devid, string cmdname) generates(uint32_t retval);
+    runSpenCmdNoRead(string cmdname) generates (uint32_t retval);
+    setTspEnable(uint32_t devid, uint32_t enable, bool isBefore) generates (uint32_t retval);
+    setSpenEnable(uint32_t enable, bool isBefore) generates (uint32_t retval);
+};

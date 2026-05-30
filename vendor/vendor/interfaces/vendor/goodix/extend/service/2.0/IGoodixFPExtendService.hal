@@ -1,0 +1,10 @@
+package vendor.goodix.extend.service@2.0;
+
+interface IGoodixFPExtendService {
+	/*
+Seen usages:
+	(2,0) => get device type. if -13 then "fp_position_offset_2" else "fp_position_offset_1"
+	(10, event) // event are probably 0 or 1
+	*/
+	goodixExtendCommand(int32_t cmd, int32_t param) generates (RequestStatus status);
+};

@@ -1,0 +1,10 @@
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+        package="me.phh.treble.overlay.umidigi.A13_Pro_Max_5G"
+        android:versionCode="1"
+        android:versionName="1.0">
+        <overlay android:targetPackage="android"
+                android:requiredSystemPropertyName="ro.vendor.build.fingerprint"
+		android:requiredSystemPropertyValue="+UMIDIGI/A13_Pro_Max_5G/A13_Pro_Max_5G*"
+		android:priority="843"
+		android:isStatic="true" />
+</manifest>

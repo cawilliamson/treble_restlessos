@@ -1,0 +1,9 @@
+package vendor.pixelworks.hardware.display@1.0;
+
+interface IIris {
+irisConfigureSet(int32_t type, vec<int32_t> values) genereate (int32_t result);
+irisConfigureGet(uint32_t type, vec<int32_t> values) generate (int32_t result, vec<int32_t> outValues);
+registerCallback(IIRisCallback callback);
+panelReadWrite(bool highSpeed, int8_t dtype, int8_t vc, bool last, int8_t rxLen) generates (int32_t result, vec<int8_t> rx); //0x4
+
+};

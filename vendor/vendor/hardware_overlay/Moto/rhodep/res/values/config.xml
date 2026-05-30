@@ -1,0 +1,86 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <bool name="config_useDevInputEventForAudioJack">true</bool>
+    <bool name="config_showNavigationBar">true</bool>
+    <bool name="config_fillMainBuiltInDisplayCutout">false</bool>
+    <bool name="config_dozeAlwaysOnDisplayAvailable">true</bool>
+    <bool name="config_powerDecoupleAutoSuspendModeFromDisplay">true</bool>
+    <bool name="config_powerDecoupleInteractiveModeFromDisplay">true</bool>
+    <bool name="config_enableBurnInProtection">true</bool>
+
+    <dimen name="status_bar_height_default">122px</dimen>
+    <dimen name="status_bar_height">122px</dimen>
+    <dimen name="status_bar_height_portrait">122px</dimen>
+    <dimen name="status_bar_height_landscape">28dp</dimen>
+    <dimen name="quick_qs_offset_height">122px</dimen>
+
+    <integer name="config_screenBrightnessDoze">36</integer>
+    <integer name="config_screenBrightnessSettingMinimum">1</integer>
+
+    <integer-array name="config_autoBrightnessLevels">
+        <item>2</item>
+        <item>4</item>
+        <item>5</item>
+        <item>10</item>
+        <item>40</item>
+        <item>100</item>
+        <item>325</item>
+        <item>1250</item>
+        <item>3500</item>
+        <item>5500</item>
+    </integer-array>
+    <integer-array name="config_autoBrightnessLcdBacklightValues">
+        <item>10</item>
+        <item>20</item>
+        <item>40</item>
+        <item>70</item>
+        <item>110</item>
+        <item>160</item>
+        <item>200</item>
+        <item>255</item>
+    </integer-array>
+    <integer-array name="config_autoBrightnessDisplayValuesNits">
+        <item>2</item>
+        <item>7</item>
+        <item>10</item>
+        <item>12</item>
+        <item>24</item>
+        <item>95</item>
+        <item>111</item>
+        <item>149</item>
+        <item>192</item>
+        <item>252</item>
+        <item>500</item>
+    </integer-array>
+    <integer-array name="config_screenBrightnessNits">
+        <item>0</item>
+        <item>2</item>
+        <item>7</item>
+        <item>10</item>
+        <item>12</item>
+        <item>24</item>
+        <item>95</item>
+        <item>111</item>
+        <item>149</item>
+        <item>192</item>
+        <item>252</item>
+        <item>500</item>
+    </integer-array>
+    <integer-array name="config_screenBrightnessBacklight">
+        <item>0</item>
+        <item>1</item>
+        <item>4</item>
+        <item>5</item>
+        <item>6</item>
+        <item>12</item>
+        <item>48</item>
+        <item>57</item>
+        <item>76</item>
+        <item>98</item>
+        <item>129</item>
+        <item>255</item>
+    </integer-array>
+
+    <string name="config_mainBuiltInDisplayCutout">M -32.5,0 L -32.5,95 L 32.5,95 L 32.5,0 Z</string>
+    <string name="config_mainBuiltInDisplayCutoutRectApproximation">M -32.5,0 L -32.5,95 L 32.5,95 L 32.5,0 Z</string>
+</resources>

@@ -1,0 +1,5 @@
+package vendor.nubia.ifaa@1.0;
+
+interface IIfaa {
+	processCmd(int32_t cmd, int32_t param1, int32_t param2, vec<int8_t> send_buf, int32_t length) generates (vec<int8_t> result);
+};

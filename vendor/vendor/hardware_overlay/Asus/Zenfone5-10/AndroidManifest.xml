@@ -1,0 +1,10 @@
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+        package="me.phh.treble.overlay.asus.zenfone5.ten"
+        android:versionCode="1"
+        android:versionName="1.0">
+        <overlay android:targetPackage="android"
+                android:requiredSystemPropertyName="ro.product.vendor.name"
+                android:requiredSystemPropertyValue="ASUS_X00QD"
+		android:priority="162"
+		android:isStatic="true" />
+</manifest>

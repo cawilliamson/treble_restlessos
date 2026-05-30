@@ -1,0 +1,45 @@
+package vendor.samsung.hardware.radio@2.0;
+
+import android.hardware.radio@1.0::RadioResponseInfo;
+
+interface ISehRadioResponse {
+oneway getIccCardStatusResponse();//getIccCardStatusResponse(RadioResponseInfo info, SehCardStatus cardStatus);
+oneway supplyNetworkDepersonalizationResponse(RadioResponseInfo info);//(RadioResponseInfo info, int32_t remainingRetries);
+oneway dialResponse(RadioResponseInfo info);
+oneway getCurrentCallsResponse(); //(RadioResponseInfo info, vec<SehCall> calls);
+oneway getImsRegistrationStateResponse();//(RadioResponseInfo info, vec<SehOperatorInfo> networkInfos)
+oneway setImsCallListResponse(RadioResponseInfo info);
+oneway getPreferredNetworkListResponse(); //RadioResponseInfo, vec<SehPreferredNetworkInfo> infos
+oneway setPreferredNetworkListResponse(RadioResponseInfo info);
+oneway sendEncodedUssdResponse(RadioResponseInfo info);
+oneway getDisable2gResponse(RadioResponseInfo info, int32_t isDisable);
+oneway setDisable2gResponse(RadioResponseInfo info);
+oneway getCnapResponse(RadioResponseInfo info, int32_t m);
+oneway getPhonebookStorageInfoResponse(); //RadioResponseInfo, SehPhonebookInfo
+oneway getUsimPhonebookCapabilityResponse(RadioResponseInfo info, vec<int32_t> phonebookCapability);
+oneway setSimOnOffResponse(RadioResponseInfo info);
+oneway setSimInitEventResponse(RadioResponseInfo info);
+oneway getSimLockInfoResponse();//RadioResponseInfo info, SehSimLockInfo simLockInfo
+oneway supplyIccPersonalizationResponse(RadioResponseInfo info);
+oneway changeIccPersonalizationResponse(RadioResponseInfo info);
+oneway getPhonebookEntryResponse(); //RadioResponseInfo, SehSimPhonebookResponse
+oneway accessPhonebookEntryResponse(RadioResponseInfo info, int32_t SimPhonmebookAccessResp);
+oneway getCellBroadcastConfigResponse();//RadioResponseInfo, SehCbConfigArgs
+oneway emergencySearchResponse(RadioResponseInfo info, int32_t respEmergencySearch);
+oneway emergencyControlResponse(RadioResponseInfo info);
+oneway getAtrResponse(RadioResponseInfo info, string atr);
+oneway sendCdmaSmsExpectMoreResponse();//RadioResponseInfo, SehSendSmsResult
+oneway sendSmsResponse();//RadioResponseInfo, SehSendSmsResult
+oneway sendSMSExpectMoreResponse();//RadioResponseInfo, SehSendSmsResult
+oneway sendCdmaSmsResponse();//RadioResponseInfo, SehSendSmsResult
+oneway sendImsSmsResponse();//RadioResponseInfo, SehSendSmsResult
+oneway getStoredMsgCountFromSimResponse();//RadioResponseInfo, SehStoredMsgCount
+oneway readSmsFromSimResponse();//RadioResponseInfo, SehSimMsgArgs
+oneway writeSmsToSimResponse(RadioResponseInfo info, int32_t index);
+oneway setDataAllowedResponse(RadioResponseInfo info);
+oneway getCsgListResponse();//RadioResponseInfo, vec<SehCsgInfo>
+oneway selectCsgManualResponse(RadioResponseInfo info);
+oneway setMobileDataSettingResponse(RadioResponseInfo info);
+oneway sendRequestRawResponse(RadioResponseInfo info, vec<int8_t> data);
+oneway sendRequestStringsResponse(RadioResponseInfo info, vec<string> data);
+};

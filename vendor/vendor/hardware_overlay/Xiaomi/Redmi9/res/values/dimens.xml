@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <dimen name="status_bar_height_portrait">27.636353dip</dimen>
+    <dimen name="rounded_corner_radius_top">95.0px</dimen>
+    <dimen name="rounded_corner_radius_bottom">90.0px</dimen>
+</resources>

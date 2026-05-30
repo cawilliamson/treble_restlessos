@@ -1,0 +1,48 @@
+package vendor.samsung.hardware.radio@2.0;
+
+import @2.0::ISehRadioIndication;
+import @2.0::ISehRadioResponse;
+
+interface ISehRadio {
+oneway setResponseFunction(ISehRadioResponse radioResponse, ISehRadioIndication radioIndication);
+oneway getIccCardStatus(int32_t serial);
+supplyNetworkDepersonalization();
+dial();
+getCurrentCalls();
+getImsRegistrationState();
+getAvailableNetworks();
+setImsCallList();
+getPreferredNetworkList();
+setPreferredNetworkList();
+sendEncodedUssd();
+getDisable2g();
+setDisable2g();
+getCnap();
+getPhonebookStorageInfo();
+getUsimPhonebookCapability();
+setSimOnOff();
+setSimInitEvent();
+getSimLockInfo();
+supplyIccPersonalization();
+changeIccPersonalization();
+sendCdmaSmsExpectMore();
+getPhonebookEntry();
+accessPhonebookEntry();
+getCellBroadcastConfig();
+emergencySearch();
+emergencyControl();
+getAtr();
+sendSms();
+sendSMSExpectMore();
+sendCdmaSms();
+sendImsSms();
+getStoredMsgCountFromSim();
+readSmsFromSim();
+writeSmsToSim();
+getCsgList();
+selectCsgManual();
+setDataAllowed();
+setMobileDataSetting();
+oneway sendRequestRaw(int32_t serial, vec<uint8_t> data);
+sendRequestStrings();
+};

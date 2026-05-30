@@ -1,0 +1,14 @@
+package vendor.xiaomi.hardware.motor@1.0;
+
+import vendor.xiaomi.hardware.motor@1.0::IMotorCallback;
+
+interface IMotor {
+        popupMotor(int32_t cookie);
+        takebackMotor(int32_t cookie);
+        setMotorCallback(IMotorCallback motorcallback);
+        init();
+        release();
+        getMotorStatus() generates (int32_t result);
+        calibration();
+        takebackMotorShortly();
+};

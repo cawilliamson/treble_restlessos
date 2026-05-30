@@ -1,0 +1,121 @@
+<?xml version="1.0" encoding="utf-8"?>
+<device name="Android">
+    <item name="battery.capacity">5000</item>
+    <array name="cpu.clusters.cores">
+        <value>6</value>
+        <value>2</value>
+    </array>
+    <item name="cpu.suspend">4.65</item>
+    <item name="cpu.idle">0.52</item>
+    <item name="cpu.active">1</item>
+    <item name="cpu.cluster_power.cluster0">12.10</item>
+    <item name="cpu.cluster_power.cluster1">16.43</item>
+    <array name="cpu.core_speeds.cluster0">
+        <value>900000</value>
+        <value>979000</value>
+        <value>1085000</value>
+        <value>1218000</value>
+        <value>1351000</value>
+        <value>1484000</value>
+        <value>1617000</value>
+        <value>1750000</value>
+        <value>1814000</value>
+        <value>1879000</value>
+        <value>1944000</value>
+        <value>2009000</value>
+        <value>2074000</value>
+        <value>2139000</value>
+        <value>2215000</value>
+        <value>2301000</value>
+    </array>
+    <array name="cpu.core_speeds.cluster1">
+        <value>400000</value>
+        <value>501000</value>
+        <value>542000</value>
+        <value>643000</value>
+        <value>745000</value>
+        <value>846000</value>
+        <value>948000</value>
+        <value>1050000</value>
+        <value>1138000</value>
+        <value>1226000</value>
+        <value>13140000</value>
+        <value>14020000</value>
+        <value>14910000</value>
+        <value>15790000</value>
+        <value>16820000</value>
+        <value>18000000</value>
+    </array>
+    <array name="cpu.core_power.cluster0">
+        <value>32.11</value>
+        <value>35.09</value>
+        <value>39.91</value>
+        <value>47.83</value>
+        <value>54.71</value>
+        <value>72.63</value>
+        <value>98.22</value>
+        <value>138.90</value>
+        <value>192.17</value>
+        <value>212.45</value>
+        <value>231.47</value>
+        <value>365.83</value>
+        <value>377.78</value>
+        <value>391.24</value>
+        <value>322.39</value>
+        <value>346.73</value>
+    </array>
+    <array name="cpu.core_power.cluster1">
+        <value>5.34</value>
+        <value>7.47</value>
+        <value>8.06</value>
+        <value>10.74</value>
+        <value>11.69</value>
+        <value>13.39</value>
+        <value>14.86</value>
+        <value>16.82</value>
+        <value>20.95</value>
+        <value>23.17</value>
+        <value>27.63</value>
+        <value>34.05</value>
+        <value>37.73</value>
+        <value>50.56</value>
+        <value>62.13</value>
+        <value>71.82</value>
+    </array>
+    <item name="screen.on">82.45</item>
+    <item name="screen.full">242.93</item>
+    <item name="camera.flashlight">245.859</item>
+    <item name="camera.avg">500</item>
+    <item name="video">83.29</item>
+    <item name="audio">37.41</item>
+    <item name="wifi.controller.idle">2</item>
+    <item name="wifi.controller.rx">220</item>
+    <item name="wifi.controller.tx">150</item>
+    <item name="wifi.controller.voltage">3700</item>
+    <item name="modem.controller.sleep">1</item>
+    <item name="modem.controller.idle">1</item>
+    <item name="modem.controller.rx">100</item>
+    <array name="modem.controller.tx">
+        <value>90</value>
+        <value>100</value>
+        <value>110</value>
+        <value>120</value>
+        <value>130</value>
+    </array>
+    <item name="modem.controller.voltage">3700</item>
+    <array name="gps.signalqualitybased">
+        <value>100</value>
+        <value>110</value>
+    </array>
+    <item name="gps.voltage">3700</item>
+    <item name="bluetooth.controller.idle">1</item>
+    <item name="bluetooth.controller.rx">50</item>
+    <item name="bluetooth.controller.tx">50</item>
+    <item name="bluetooth.controller.voltage">3300</item>
+    <item name="radio.active">100</item>
+    <item name="radio.scanning">50</item>
+    <array name="radio.on">
+        <value>7</value>
+        <value>5</value>
+    </array>
+</device>

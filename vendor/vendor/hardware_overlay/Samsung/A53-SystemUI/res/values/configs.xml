@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <dimen name="status_bar_padding_start">40px</dimen>
+    <dimen name="status_bar_padding_top">35px</dimen>
+    <dimen name="physical_power_button_center_screen_location_y">1150px</dimen>
+</resources>

@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <bool name="config_useDevInputEventForAudioJack">true</bool>
+    <bool name="config_showNavigationBar">true</bool>
+
+    <dimen name="status_bar_height">71.0px</dimen>
+    <dimen name="status_bar_height_portrait">71.0px</dimen>
+    <dimen name="status_bar_height_landscape">28dp</dimen>
+
+    <integer name="config_screenBrightnessDark">1</integer>
+    <integer name="config_screenBrightnessDim">2</integer>
+    <integer name="config_screenBrightnessSettingMinimum">1</integer>
+    <integer name="config_screenBrightnessSettingDefault">99</integer>
+
+    <!--
+    For some reason, the cutout defined by the vendor overlay isn't fully working
+    Issue is that SystemUI doesn't respect the punch-hole in portrait mode
+    <string name="config_mainBuiltInDisplayCutout">M -325,0 L -276,0 L -276,68 L -325,68 Z</string>
+    The workaround is to modify the cutout definition, so that its left edge extends to the edge of the display
+     -->
+    <string name="config_mainBuiltInDisplayCutout">M -360,0 L -276,0 L -276,68 L -360,68 Z</string>
+</resources>

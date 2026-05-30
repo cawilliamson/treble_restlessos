@@ -1,0 +1,17 @@
+LOCAL_PATH := $(my-dir)
+
+include $(CLEAR_VARS)
+
+LOCAL_MODULE := TrebleApp
+LOCAL_SRC_FILES := ../../../treble_app/TrebleApp.apk
+LOCAL_MODULE_CLASS := APPS
+LOCAL_MODULE_SUFFIX := .apk
+LOCAL_BUILT_MODULE_STEM := package.apk
+LOCAL_CERTIFICATE := platform
+LOCAL_PRIVILEGED_MODULE := true
+LOCAL_OVERRIDES_PACKAGES := Updater
+ifeq ($(shell test $(PLATFORM_SDK_VERSION) -ge 31 && echo OK),OK)
+LOCAL_ENFORCE_USES_LIBRARIES := false
+endif
+
+include $(BUILD_PREBUILT)

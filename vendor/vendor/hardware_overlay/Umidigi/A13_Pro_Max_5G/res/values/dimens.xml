@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <item type="dimen" name="config_screenBrightnessSettingMaximumFloat">1.0</item>
+    <item type="dimen" name="config_screenBrightnessSettingMinimumFloat">0.0</item>
+    <dimen name="status_bar_height">130.0px</dimen>
+    <dimen name="status_bar_height_default">130.0px</dimen>
+    <dimen name="status_bar_height_portrait">130.0px</dimen>
+    <dimen name="status_bar_height_landscape">24.0dip</dimen>
+</resources>

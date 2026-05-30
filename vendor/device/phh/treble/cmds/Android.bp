@@ -1,0 +1,327 @@
+cc_binary {
+	name: "lightsctl",
+	srcs: [
+		"lightsctl.cpp",
+	],
+	shared_libs: [
+		"android.hardware.light@2.0",
+		"libutils",
+		"libhidlbase",
+	],
+}
+
+cc_binary {
+	name: "op-fp",
+	srcs: [
+		"op-fp.cpp",
+	],
+	shared_libs: [
+		"vendor.oneplus.fingerprint.extension@1.0",
+		"libutils",
+		"libhidlbase",
+	],
+}
+
+cc_binary {
+	name: "uevent",
+	srcs: [
+		"uevent.cpp",
+	],
+}
+
+cc_binary {
+	name: "simg2img_simple",
+	srcs: [
+		"simg2img_simple.cpp",
+	],
+	host_supported: true,
+}
+
+cc_binary {
+	name: "vibrator-lge",
+	srcs: [
+		"vibrator-lge.cpp",
+	],
+	shared_libs: [
+		"vendor.lge.hardware.vibrator@1.0",
+		"libutils",
+		"libhidlbase",
+	],
+}
+
+cc_binary {
+	name: "mtk-sms-fwk-ready",
+	srcs: [
+		"mtk-sms-fwk-ready.cpp",
+	],
+	shared_libs: [
+		"vendor.mediatek.hardware.radio@2.6",
+		"libutils",
+		"libhidlbase",
+	],
+	init_rc: [
+		"mtk-sms-fwk-ready.rc"
+	],
+}
+
+cc_binary {
+	name: "xiaomi-display-feature",
+	srcs: [
+		"xiaomi-display-feature.cpp",
+	],
+	shared_libs: [
+		"vendor.xiaomi.hardware.displayfeature@1.0",
+		"libutils",
+		"libhidlbase",
+	],
+}
+
+cc_binary {
+	name: "xiaomi-fp",
+	srcs: [
+		"xiaomi-fp.cpp",
+	],
+	shared_libs: [
+		"vendor.xiaomi.hardware.fingerprintextension@1.0",
+		"libutils",
+		"libhidlbase",
+	],
+}
+
+cc_binary {
+	name: "lightsctl-sec",
+	srcs: [
+		"lightsctl-sec.cpp",
+	],
+	shared_libs: [
+		"vendor.samsung.hardware.light@2.0",
+		"libutils",
+		"libhidlbase",
+	],
+}
+
+cc_binary {
+	name: "lightsctl-seh",
+	srcs: [
+		"lightsctl-seh.cpp",
+	],
+	shared_libs: [
+		"vendor.samsung.hardware.light@3.0",
+		"libutils",
+		"libhidlbase",
+	],
+}
+
+cc_binary {
+	name: "xiaomi-motor",
+	srcs: [
+		"xiaomi-motor.cpp",
+	],
+	shared_libs: [
+		"vendor.xiaomi.hardware.motor@1.0",
+		"libutils",
+		"libhidlbase",
+	],
+}
+
+cc_binary {
+	name: "oneplus-motor",
+	srcs: [
+		"oneplus-motor.cpp",
+	],
+	shared_libs: [
+		"vendor.oneplus.hardware.motorcontrol@1.0",
+		"libutils",
+		"libhidlbase",
+	],
+}
+
+cc_binary {
+	name: "persistprops",
+	srcs: [
+		"persistent_properties.proto",
+		"persistprops.cpp",
+	],
+	static_executable: true,
+	proto: {
+		type: "lite",
+		static: true,
+	},
+	static_libs: [
+		"libprotobuf-cpp-lite"
+	],
+}
+
+cc_binary {
+	name: "lightsctl-huawei",
+	srcs: [
+		"lightsctl-huawei.cpp",
+	],
+	shared_libs: [
+		"vendor.huawei.hardware.light@2.0",
+		"libutils",
+		"libhidlbase",
+	],
+}
+
+cc_binary {
+	name: "asus-motor",
+	srcs: [
+		"asus-motor.cpp",
+	],
+}
+
+cc_binary {
+	name: "goodix-fp",
+	srcs: [
+		"goodix-fp.cpp",
+	],
+	shared_libs: [
+		"vendor.goodix.extend.service@2.0",
+		"libutils",
+		"libhidlbase",
+	],
+}
+
+cc_binary {
+	name: "sec-camera-list",
+	srcs: [
+		"sec-camera-list.cpp",
+	],
+	shared_libs: [
+		"vendor.samsung.hardware.camera.provider@4.0",
+		"vendor.samsung.hardware.camera.provider@3.0",
+		"libutils",
+		"libhidlbase",
+	],
+}
+
+cc_binary {
+	name: "oplus-alert-slider",
+	srcs: [
+		"oplus-alert-slider.cpp",
+	],
+	init_rc: [
+		"oplus-alert-slider.rc",
+	],
+}
+
+cc_binary {
+	name: "xiaomi-touch",
+	srcs: [
+		"xiaomi-touch.cpp",
+	],
+}
+
+cc_binary {
+	name: "sec-ril",
+	srcs: [
+		"sec-ril.cpp",
+	],
+	shared_libs: [
+		"android.hardware.radio@1.6",
+		"vendor.samsung.hardware.radio@2.0",
+		"vendor.samsung.hardware.radio@2.1",
+		"vendor.samsung.hardware.radio@2.2",
+		"libutils",
+		"libhidlbase",
+	],
+}
+
+cc_binary {
+	name: "sec-torch",
+	srcs: [
+		"sec-torch.cpp",
+	],
+	shared_libs: [
+		"vendor.samsung.hardware.camera.provider@4.0",
+		"vendor.samsung.hardware.camera.provider@3.0",
+		"vendor.samsung.hardware.camera.device@5.0",
+		"libutils",
+		"libhidlbase",
+	],
+}
+
+cc_binary {
+	name: "lightsctl-aidl",
+	srcs: [
+		"lightsctl-aidl.cpp",
+	],
+	shared_libs: [
+		"android.hardware.light-V1-cpp",
+		"libutils",
+		"libhidlbase",
+		"libbinder",
+	],
+}
+
+cc_binary {
+	name: "slsi-ddiscaler",
+	srcs: [
+		"slsi-ddiscaler.cpp",
+	],
+	shared_libs: [
+		"vendor.samsung_slsi.hardware.ExynosHWCServiceTW@1.0",
+		"libutils",
+		"libhidlbase",
+	],
+}
+
+cc_binary {
+	name: "slsi-booted",
+	srcs: [
+		"slsi-booted.cpp",
+	],
+	shared_libs: [
+		"vendor.samsung_slsi.hardware.ExynosHWCServiceTW@1.0",
+		"libutils",
+		"libhidlbase",
+	],
+	init_rc: [
+		"slsi-booted.rc"
+	],
+}
+
+cc_binary {
+	name: "mtk-power",
+	srcs: [
+		"mtk-power.cpp",
+	],
+	shared_libs: [
+		"vendor.mediatek.hardware.mtkpower@1.0",
+		"libutils",
+		"libhidlbase",
+	],
+}
+
+cc_binary {
+	name: "evgrab",
+	srcs: [
+		"evgrab.cpp",
+	],
+	shared_libs: [
+        "libbase",
+    ],
+	init_rc: [
+		"evgrab.rc"
+	],
+}
+
+cc_binary {
+	name: "re-libged_sys",
+	srcs: [
+		"re-libged_sys.cpp",
+	],
+}
+
+cc_binary {
+	name: "agold-cmd",
+	srcs: [
+		"agold-cmd.cpp",
+	],
+	shared_libs: [
+        "vendor.mediatek.hardware.agolddaemon-V1-cpp",
+		"libutils",
+		"libbinder",
+	],
+}

@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <dimen name="physical_fingerprint_sensor_center_screen_location_x">540.0px</dimen>
+    <dimen name="physical_fingerprint_sensor_center_screen_location_y">2020.0px</dimen>
+    <dimen name="physical_power_button_center_screen_location_y">1115.0px</dimen>
+    <dimen name="rounded_corner_content_padding">55px</dimen>
+    <dimen name="status_bar_padding_start">0px</dimen>
+    <dimen name="status_bar_padding_end">0px</dimen>
+</resources>

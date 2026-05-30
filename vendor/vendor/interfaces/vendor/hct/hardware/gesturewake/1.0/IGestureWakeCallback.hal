@@ -1,0 +1,5 @@
+package vendor.hct.hardware.gesturewake@1.0;
+
+interface IGestureWakeCallback {
+    reportResults(string data);
+};

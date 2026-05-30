@@ -1,0 +1,96 @@
+cc_binary {
+    name: "lptools",
+    cflags: [
+        "-Werror",
+        "-Wextra",
+    ],
+    device_supported: true,
+    shared_libs: [
+        "libbase",
+        "liblog",
+        "liblp",
+        "libsparse",
+        "libfs_mgr",
+        "libutils",
+        "libcutils",
+		"android.hardware.boot@1.1",
+		"libhidlbase",
+    ],
+    static_libs: [
+        "libdm",
+    ],
+    srcs: [
+        "lptools.cc",
+    ],
+    cppflags: [
+        "-D_FILE_OFFSET_BITS=64",
+    ],
+}
+
+// See commented section below for building lptools_static as a fully static executable
+cc_binary {
+    name: "lptools_static",
+    cflags: [
+        "-Werror",
+        "-Wextra",
+        "-DLPTOOLS_STATIC",
+    ],
+    device_supported: true,
+shared_libs: [
+        "libcrypto",
+],
+    static_libs: [
+        "libbase",
+        "liblog",
+        "liblp",
+        "libsparse",
+        "libfs_mgr",
+        "libutils",
+        "libcutils",
+        "libdm",
+        "libext4_utils",
+    ],
+    srcs: [
+        "lptools.cc",
+    ],
+    cppflags: [
+        "-D_FILE_OFFSET_BITS=64",
+    ],
+}
+
+// To properly build lptools_static, it's necessary to make libcrypto_static visible to this binary
+// That requires adding the path of this repo to the "visibility" section of "libcrypto_static"
+// in external/boringssl/Android.bp. Then you can build lptools_static fully standalone.
+//
+// cc_binary {
+//     name: "lptools_static",
+//     cflags: [
+//         "-Werror",
+//         "-Wextra",
+//         "-DLPTOOLS_STATIC",
+//     ],
+//     device_supported: true,
+//     static_executable: true,
+//     static_libs: [
+//         "libbase",
+//         "libc",
+//         "libc++_static",
+//         "libcrypto_static",
+//         "libdl",
+//         "liblog",
+//         "liblp",
+//         "libm",
+//         "libsparse",
+//         "libfs_mgr",
+//         "libutils",
+//         "libcutils",
+//         "libdm",
+//         "libext4_utils",
+//     ],
+//     srcs: [
+//         "lptools.cc",
+//     ],
+//     cppflags: [
+//         "-D_FILE_OFFSET_BITS=64",
+//     ],
+// }

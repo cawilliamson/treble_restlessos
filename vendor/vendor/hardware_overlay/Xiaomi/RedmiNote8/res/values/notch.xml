@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <bool name="config_fillMainBuiltInDisplayCutout">false</bool>
+    <dimen name="status_bar_height">80px</dimen>
+    <dimen name="status_bar_height_portrait">80px</dimen>
+    <dimen name="status_bar_height_landscape">24dp</dimen>
+    <dimen name="rounded_corner_radius_top">106.0px</dimen>
+    <dimen name="rounded_corner_radius_bottom">108.0px</dimen>
+    <string name="config_mainBuiltInDisplayCutout">M -80,0 L -80,80 L 80,80 L 80,0 Z</string>
+    <string name="config_mainBuiltInDisplayCutoutRectApproximation">M -80,0 L -80,80 L 80,80 L 80,0 Z</string>
+</resources>

@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="utf-8"?>
+<device name="Android">
+    <item name="none">0</item>
+    <item name="screen.on">98</item>
+    <item name="screen.full">315</item>
+    <item name="bluetooth.active">95</item>
+    <item name="bluetooth.on">1.2</item>
+    <item name="wifi.on">1.6</item>
+    <item name="wifi.active">110</item>
+    <item name="wifi.scan">185</item>
+    <item name="dsp.audio">23.25</item>
+    <item name="dsp.video">96.5</item>
+    <item name="camera.avg">316</item>
+    <item name="camera.flashlight">390</item>
+    <item name="gps.on">83</item>
+    <item name="radio.active">84</item>
+    <item name="radio.scanning">115</item>
+    <array name="radio.on">
+        <value>17</value>
+        <value>4</value>
+    </array>
+    <array name="cpu.speeds.cluster0">
+        <value>633600</value>
+        <value>902400</value>
+        <value>1113600</value>
+        <value>1401600</value>
+        <value>1536000</value>
+        <value>1612800</value>
+    </array>
+    <array name="cpu.speeds.cluster1">
+        <value>1113600</value>
+        <value>1401600</value>
+        <value>1747200</value>
+        <value>1804800</value>
+    </array>
+    <item name="cpu.idle">5.4</item>
+    <item name="cpu.awake">15</item>
+    <array name="cpu.active.cluster0">
+        <value>16.65</value>
+        <value>46.31</value>
+        <value>50.77</value>
+        <value>63.93</value>
+        <value>82.85</value>
+        <value>87.9</value>
+    </array>
+    <array name="cpu.active.cluster1">
+        <value>112.1</value>
+        <value>145.9</value>
+        <value>198.3</value>
+        <value>223.5</value>
+    </array>
+    <array name="cpu.clusters.cores">
+        <value>4</value>
+        <value>4</value>
+    </array>
+    <item name="battery.capacity">3650</item>
+    <array name="wifi.batchedscan">
+        <value>.0185</value>
+        <value>.1502</value>
+        <value>1.188</value>
+        <value>9.486</value>
+        <value>75.87</value>
+    </array>
+</device>

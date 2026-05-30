@@ -1,0 +1,10 @@
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+        package="me.phh.treble.overlay.duoqin.qin3ultra"
+        android:versionCode="1"
+        android:versionName="1.0">
+        <overlay android:targetPackage="android"
+                android:requiredSystemPropertyName="ro.product.vendor_dlkm.model"
+                android:requiredSystemPropertyValue="QIN3ULTRA"
+        android:priority="1050"
+        android:isStatic="true" />
+</manifest>

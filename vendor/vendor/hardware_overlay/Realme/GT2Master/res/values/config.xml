@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <bool name="config_useDevInputEventForAudioJack">true</bool>
+    <bool name="config_showNavigationBar">true</bool>
+    <bool name="config_fillMainBuiltInDisplayCutout">false</bool>
+    <bool name="config_dozeAlwaysOnDisplayAvailable">true</bool>
+    <bool name="config_powerDecoupleAutoSuspendModeFromDisplay">true</bool>
+    <bool name="config_powerDecoupleInteractiveModeFromDisplay">true</bool>
+    <bool name="config_enableBurnInProtection">true</bool>
+
+    <dimen name="status_bar_height_default">122px</dimen>
+    <dimen name="status_bar_height">122px</dimen>
+    <dimen name="status_bar_height_portrait">122px</dimen>
+    <dimen name="status_bar_height_landscape">28dp</dimen>
+    <dimen name="quick_qs_offset_height">122px</dimen>
+
+    <integer name="config_screenBrightnessDoze">30</integer>
+    <integer name="config_screenBrightnessSettingMinimum">1</integer>
+
+    <string name="config_mainBuiltInDisplayCutout">M -32,0 L -32,94 L 32,94 L 32,0 Z</string>
+    <string name="config_mainBuiltInDisplayCutoutRectApproximation">M -32,0 L -32,94 L 32,94 L 32,0 Z</string>
+</resources>

@@ -1,0 +1,4 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="config_mainBuiltInDisplayCutout">M 0 0 L 36 0 C 36 30 36 60 37 60 C 42 80 84 80 90 60 L 90 0 Z @left</string>
+</resources>

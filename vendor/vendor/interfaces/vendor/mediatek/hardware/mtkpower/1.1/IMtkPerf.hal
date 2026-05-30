@@ -1,0 +1,5 @@
+package vendor.mediatek.hardware.mtkpower@1.1;
+import @1.0::IMtkPerf;
+interface IMtkPerf extends @1.0::IMtkPerf {
+    perfCusLockHint(int32_t hint, uint32_t duration) generates (int32_t ret);
+};

@@ -1,0 +1,10 @@
+type sysfs_usb_supply, file_type;
+
+allow system_app sysfs_usb_supply:file rw_file_perms;
+
+type hal_fingerprint_oplus, domain;
+allow hal_fingerprint_oplus vendor_default_prop:property_service set;
+
+get_prop(hal_fingerprint_oplus, default_prop);
+get_prop(system_server, vendor_default_prop);
+

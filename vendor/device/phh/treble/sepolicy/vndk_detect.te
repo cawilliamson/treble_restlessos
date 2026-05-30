@@ -1,0 +1,27 @@
+type vndk_detect, coredomain, domain;
+type vndk_detect_exec, exec_type, file_type;
+
+init_daemon_domain(vndk_detect);
+allow vndk_detect sepolicy_file:file r_file_perms;
+set_prop(vndk_detect,system_prop);
+set_prop(vndk_detect,debug_prop);
+
+allow vndk_detect shell_exec:file rx_file_perms;
+allow vndk_detect toolbox_exec:file rx_file_perms;
+#/system/bin/grep
+allow vndk_detect system_file:file rx_file_perms;
+
+#mount -o bind /system/bin/adbd /sbin/adbd
+allow vndk_detect adbd_exec:file { getattr read };
+allow vndk_detect rootfs:file { mounton getattr };
+allow vndk_detect self:capability { sys_admin };
+
+#mount -o bind /system/etc/usb_audio_policy_configuration.xml /vendor/etc/usb_audio_policy_configuration.xml
+allow init vendor_configs_file:file { getattr mounton };
+
+#/sys/module/five
+allow vndk_detect sysfs:file r_file_perms;
+allow vndk_detect sysfs:dir r_dir_perms;
+
+#/proc/filesystems
+allow vndk_detect proc_filesystems:file r_file_perms;

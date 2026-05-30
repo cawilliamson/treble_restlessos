@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string translatable="false" name="config_mainBuiltInDisplayCutout">
+        M -23,52
+        M 23,52
+        A 23,23 0 1,0 -23,52
+        A 23,23 0 1,0 23,52
+        Z
+    </string>
+
+    <!-- Like config_mainBuiltInDisplayCutout, but this path is used to report the
+         one single bounding rect per device edge to the app via
+         {@link DisplayCutout#getBoundingRect}. Note that this path should try to match the visual
+         appearance of the cutout as much as possible, and may be smaller than
+         config_mainBuiltInDisplayCutout
+         -->
+    <string translatable="false" name="config_mainBuiltInDisplayCutoutRectApproximation">
+        M 0,0
+        H -23
+        V 75
+        H 23
+        V 0
+        H 0
+        Z
+    </string>
+    <dimen name="status_bar_height">28dp</dimen>
+    <dimen name="status_bar_height_default">28dp</dimen>
+    <dimen name="status_bar_height_portrait">94px</dimen>
+    <dimen name="status_bar_height_landscape">28dp</dimen>
+</resources>

@@ -1,0 +1,7 @@
+package vendor.mediatek.hardware.radio@2.7;
+
+import vendor.mediatek.hardware.radio@2.6::IRadioIndication;
+
+interface IRadioIndication extends vendor.mediatek.hardware.radio@2.7::IRadioIndication {
+	oneway networkBandInfoInd(int32_t type, vec<int32_t> state);
+};

@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<config>
+
+	<!-- fix voice channels in calls (stop unloading treble-app) -->
+	<allow-in-power-save package="me.phh.treble.app" />
+
+</config>

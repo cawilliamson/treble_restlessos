@@ -1,0 +1,1 @@
+allow system_server fingerprint_hidl_service:service_manager find;

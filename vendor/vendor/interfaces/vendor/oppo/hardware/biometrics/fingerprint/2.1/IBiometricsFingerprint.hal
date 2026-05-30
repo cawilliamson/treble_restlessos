@@ -1,0 +1,57 @@
+/*
+ * Copyright (C) 2017 The Android Open Source Project
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package vendor.oppo.hardware.biometrics.fingerprint@2.1;
+
+import IBiometricsFingerprintClientCallback;
+
+interface IBiometricsFingerprint {
+
+  setNotify(IBiometricsFingerprintClientCallback clientCallback) generates (uint64_t deviceId);
+
+  preEnroll() generates (uint64_t authChallenge);
+
+  enroll(uint8_t[69] hat, uint32_t gid, uint32_t timeoutSec) generates (RequestStatus debugErrno);
+
+  postEnroll() generates (RequestStatus debugErrno);
+
+  getAuthenticatorId() generates (uint64_t AuthenticatorId);
+
+  cancel() generates (RequestStatus debugErrno);
+
+  enumerate() generates (RequestStatus debugErrno);
+
+  remove(uint32_t gid, uint32_t fid) generates (RequestStatus debugErrno);
+
+  setActiveGroup(uint32_t gid, string storePath) generates (RequestStatus debugErrno);
+
+  authenticate(uint64_t operationId, uint32_t gid) generates (RequestStatus debugErrno);
+  authenticateAsType(uint64_t auth, uint32_t type, FingerprintAuthType AuthType) generates (RequestStatus debugErrno);
+  cleanUp() generates (RequestStatus debugErrno);
+  pauseEnroll() generates (RequestStatus debugErrno);
+  continueEnroll() generates (RequestStatus debugErrno);
+  setTouchEventListener() generates (RequestStatus debugErrno);
+  dynamicallyConfigLog(uint32_t log) generates (RequestStatus debugErrno);
+  pauseIdentify() generates (RequestStatus debugErrno);
+  continueIdentify() generates (RequestStatus debugErrno);
+  getAlikeyStatus() generates (RequestStatus debugErrno);
+  getEnrollmentTotalTimes() generates (RequestStatus debugErrno);
+  setScreenState(FingerprintScreenState ScreenState);
+  getEngineeringInfo(uint32_t info) generates (RequestStatus debugErrno);
+  touchDown() generates (RequestStatus debugErrno);
+  touchUp() generates (RequestStatus debugErrno);
+  sendFingerprintCmd(int32_t cmd, vec<int8_t> CmdId) generates (RequestStatus debugErrno);
+};

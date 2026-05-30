@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <integer-array name="config_autoBrightnessLevels">
+        <item>1</item>
+        <item>5</item>
+        <item>30</item>
+        <item>60</item>
+        <item>100</item>
+        <item>150</item>
+        <item>210</item>
+        <item>255</item>
+    </integer-array>
+    <integer-array name="config_autoBrightnessLcdBacklightValues">
+        <item>1</item>
+        <item>5</item>
+        <item>20</item>
+        <item>40</item>
+        <item>70</item>
+        <item>110</item>
+        <item>160</item>
+        <item>200</item>
+        <item>255</item>
+    </integer-array>
+    <string-array name="config_defaultPinnerServiceFiles">
+        <item>/system/framework/arm64/boot-framework.oat</item>
+        <item>/system/framework/arm/boot-framework.oat</item>
+        <item>/apex/com.android.art/javalib/arm64/boot-core-libart.oat</item>
+        <item>/apex/com.android.art/javalib/arm/boot-core-libart.oat</item>
+        <item>/apex/com.android.art/javalib/arm64/boot-okhttp.oat</item>
+        <item>/apex/com.android.art/javalib/arm/boot-okhttp.oat</item>
+        <item>/apex/com.android.art/javalib/arm64/boot.vdex</item>
+        <item>/apex/com.android.art/javalib/arm/boot.vdex</item>
+        <item>/apex/com.android.art/javalib/arm64/boot-core-libart.vdex</item>
+        <item>/apex/com.android.art/javalib/arm/boot-core-libart.vdex</item>
+        <item>/apex/com.android.art/javalib/arm64/boot-core-libart.art</item>
+        <item>/apex/com.android.art/javalib/arm/boot-core-libart.art</item>
+        <item>/system/framework/framework-res.apk</item>
+        <item>/system/lib64/libhwui.so</item>
+        <item>/system/lib/libhwui.so</item>
+        <item>/system/framework/boot-framework.vdex</item>
+        <item>/system/framework/oat/arm64/services.vdex</item>
+        <item>/system/framework/oat/arm64/services.odex</item>
+        <item>/apex/com.android.art/javalib/arm64/boot.oat</item>
+        <item>/apex/com.android.art/javalib/arm/boot.oat</item>
+        <item>/system/framework/telephony-common.jar</item>
+        <item>/system/framework/arm64/boot-telephony-common.art</item>
+        <item>/system/lib64/libsurfaceflinger.so</item>
+        <item>/apex/com.android.art/javalib/core-oj.jar</item>
+        <item>/apex/com.android.art/javalib/core-libart.jar</item>
+    </string-array>
+</resources>

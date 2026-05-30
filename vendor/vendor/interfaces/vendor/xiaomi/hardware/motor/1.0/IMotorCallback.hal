@@ -1,0 +1,5 @@
+package vendor.xiaomi.hardware.motor@1.0;
+
+interface IMotorCallback {
+        oneway onNotify(MotorEvent event);
+};

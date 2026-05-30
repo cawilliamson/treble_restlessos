@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <dimen name="rounded_corner_radius">20.0dip</dimen>
+    <dimen name="status_bar_height_portrait">37.0dip</dimen>
+</resources>

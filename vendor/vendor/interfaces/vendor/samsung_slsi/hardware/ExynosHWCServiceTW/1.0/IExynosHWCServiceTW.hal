@@ -1,0 +1,22 @@
+package vendor.samsung_slsi.hardware.ExynosHWCServiceTW@1.0;
+
+interface IExynosHWCServiceTW {
+    setwfdmode();
+    getwfdmode();
+    getwfdinfo();
+    sendwfdcommand();
+    setbootfinished(); //confirmed no argument, not oneway
+    enablempp();
+    sethwcdebug();
+    sethwcctl();
+    setwfdoutputresolution();
+    setVDSGlesFormat();
+    gethwcdebug();
+    setDDIScaler(uint32_t width, uint32_t height);
+    setsecurevdsmode();
+    setexternalvsyncenabled();
+    setpresentationmode();
+    getexternalhdrcapabilities();
+    getcpuperfinfo();
+    isneedcompressedtargetbuffer();
+};

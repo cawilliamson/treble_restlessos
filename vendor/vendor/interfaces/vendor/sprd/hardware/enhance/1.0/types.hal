@@ -1,0 +1,14 @@
+package vendor.sprd.hardware.enhance@1.0;
+
+enum Status : int32_t {
+    SUCCESS = 0,
+    FAILED = 1,
+    UNKNOWN = 2,
+};
+
+enum Type : int32_t {
+    CMS = 0,
+    SLP = 1,
+    BLP = 2,
+    GAM = 3,
+};

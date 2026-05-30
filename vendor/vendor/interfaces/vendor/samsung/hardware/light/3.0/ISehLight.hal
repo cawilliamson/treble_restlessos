@@ -1,0 +1,8 @@
+package vendor.samsung.hardware.light@3.0;
+
+import android.hardware.light@2.0::ILight;
+import android.hardware.light@2.0::types;
+
+interface ISehLight extends android.hardware.light@2.0::ILight {
+	sehSetLight(SehType i, SehLightState sehLightState) generates (Status status);
+};

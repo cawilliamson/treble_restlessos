@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+  <dimen name="physical_power_button_center_screen_location_y">630px</dimen>
+  <dimen name="status_bar_clock_starting_padding">1dp</dimen>
+  <dimen name="status_bar_padding_start">1dp</dimen>
+</resources>

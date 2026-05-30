@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <dimen name="status_bar_height_default">28.0dip</dimen>
+    <dimen name="status_bar_height">28.0dip</dimen>
+    <dimen name="quick_qs_offset_height">28.0dip</dimen>
+</resources>

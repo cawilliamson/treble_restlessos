@@ -1,0 +1,9 @@
+service fps_hal.oplus.compat /system/bin/hw/android.hardware.biometrics.fingerprint@2.1-service.oplus.compat
+    # "class hal" causes a race condition on some devices due to files created
+    # in /data. As a workaround, postpone startup until later in boot once
+    # /data is mounted.
+    class late_start
+    user system
+    group system input uhid
+    writepid /dev/cpuset/system-background/tasks
+    oneshot

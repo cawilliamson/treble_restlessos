@@ -1,0 +1,103 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string-array name="config_tether_usb_regexs">
+        <item>wlan0</item>
+    </string-array>
+
+    <!--Always On Display-->
+    <bool name="config_dozeAfterScreenOffByDefault">false</bool>
+    <bool name="config_dozeAlwaysOnDisplayAvailable">false</bool>
+    <bool name="config_dozePulsePickup">false</bool>
+    <bool name="config_dozeSupportsAodWallpaper">true</bool>
+
+    <bool name="config_supportSystemNavigationKeys">false</bool>
+
+    <integer-array name="config_keyboardTapVibePattern">
+        <item>40</item>
+    </integer-array>
+
+    <integer-array name="config_longPressVibePattern">
+        <item>0</item>
+        <item>1</item>
+        <item>20</item>
+        <item>21</item>
+    </integer-array>
+
+    <integer-array name="config_virtualKeyVibePattern">
+        <item>0</item>
+        <item>10</item>
+        <item>20</item>
+        <item>30</item>
+    </integer-array>
+
+    <integer name="config_autoBrightnessBrighteningLightDebounce">4000</integer>
+    <integer name="config_screenBrightnessSettingDefault">102</integer>
+    <integer name="config_screenBrightnessSettingMaximum">255</integer>
+    <integer name="config_screenBrightnessSettingMinimum">10</integer>
+    <integer name="config_screenBrightnessDoze">1</integer>
+    <integer name="config_screenBrightnessDark">1</integer>
+
+    <array name="config_autoBrightnessDisplayValuesNits">
+        <item>6</item>
+        <item>6</item>
+        <item>6</item>
+        <item>11</item>
+        <item>79</item>
+        <item>95</item>
+        <item>141</item>
+        <item>183</item>
+        <item>200</item>
+        <item>219</item>
+        <item>255</item>
+        <item>255</item>
+        <item>255</item>
+   </array>
+
+   <integer-array name="config_autoBrightnessLcdBacklightValues">
+        <item>6</item>
+        <item>6</item>
+        <item>6</item>
+        <item>11</item>
+        <item>79</item>
+        <item>95</item>
+        <item>141</item>
+        <item>183</item>
+        <item>200</item>
+        <item>219</item>
+        <item>255</item>
+        <item>255</item>
+        <item>255</item>
+    </integer-array>
+
+    <integer-array name="config_autoBrightnessLevels">
+        <item>1</item>
+        <item>5</item>
+        <item>6</item>
+        <item>50</item>
+        <item>100</item>
+        <item>500</item>
+        <item>1500</item>
+        <item>3000</item>
+        <item>4999</item>
+        <item>5000</item>
+        <item>19999</item>
+        <item>20000</item>
+    </integer-array>
+
+    <integer-array name="config_screenBrightnessBacklight">
+        <item>200</item>
+    </integer-array>
+
+    <array name="config_screenBrightnessNits">
+        <item>200</item>
+    </array>
+
+     <bool name="config_automatic_brightness_available">true</bool>
+     <bool name="config_supportDoubleTapWake">false</bool>
+
+    <!--Fixes to the notifications bar-->
+     <dimen name="status_bar_height_portrait">80.0px</dimen>
+     <dimen name="status_bar_height_landscape">80.0px</dimen>
+     <string name="config_mainBuiltInDisplayCutout">M 0,0 H -25.6 V 28.44444444444444 H 25.6 V 0 H 0 Z @dp</string>
+
+</resources>

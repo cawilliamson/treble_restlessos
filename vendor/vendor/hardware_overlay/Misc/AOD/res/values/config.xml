@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <bool name="config_dozeAlwaysOnDisplayAvailable">true</bool>
+    <bool name="config_dozeSupportsAodWallpaper">false</bool>
+    <bool name="config_displayBlanksAfterDoze">false</bool>
+    <bool name="config_powerDecoupleAutoSuspendModeFromDisplay">true</bool>
+    <bool name="config_powerDecoupleInteractiveModeFromDisplay">true</bool>
+    <integer name="config_screenBrightnessDoze">1</integer>
+    <bool name="config_displayBrightnessBucketsInDoze">false</bool>
+</resources>

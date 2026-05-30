@@ -1,0 +1,12 @@
+type vendor_sysfs_displayfeature, domain, mlstrustedobject;
+allow platform_app vendor_sysfs_displayfeature:dir search;
+
+allow platform_app vendor_sysfs_displayfeature:file write;
+allow platform_app vendor_sysfs_displayfeature:file open;
+allow platform_app vendor_sysfs_displayfeature:file getattr;
+
+type sysfs_tp_fodstatus, property_type;
+allow shell sysfs_tp_fodstatus:file getattr;
+
+allow shell vendor_sysfs_displayfeature:dir search;
+

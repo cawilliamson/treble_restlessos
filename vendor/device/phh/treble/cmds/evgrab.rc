@@ -1,0 +1,8 @@
+on property:sys.boot_completed=1
+    start phh_evgrab
+
+service phh_evgrab /system/bin/evgrab
+    seclabel u:r:phhsu_daemon:s0
+    disabled
+    oneshot
+

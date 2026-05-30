@@ -1,0 +1,21 @@
+/*
+ * Copyright (C) 2022 bengris32
+ * Copyright (C) 2022 LineageOS
+ *
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
+android_app {
+    name: "MtkInCallService",
+
+    srcs: ["src/**/*.java"],
+    resource_dirs: ["res"],
+
+    certificate: "platform",
+    platform_apis: true,
+    privileged: true,
+
+    optimize: {
+        enabled: false,
+    }
+}

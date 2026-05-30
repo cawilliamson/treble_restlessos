@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <integer name="config_screenBrightnessDoze">5</integer>
+    <integer name="config_autoBrightnessBrighteningLightDebounce">2000</integer>
+    <integer name="config_autoBrightnessDarkeningLightDebounce">3000</integer>
+    <integer name="config_defaultPeakRefreshRate">121</integer>
+    <integer name="config_defaultRefreshRate">121</integer>
+</resources>

@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <dimen name="status_bar_padding_start">52px</dimen>
+    <dimen name="status_bar_padding_end">14px</dimen>
+    <dimen name="status_bar_padding_top">0px</dimen>
+  	<dimen name="status_bar_header_height_keyguard">104px</dimen>
+    <dimen name="keyguard_carrier_text_margin">68px</dimen>
+    <dimen name="system_icons_keyguard_padding_end">55px</dimen>
+
+</resources>

@@ -1,0 +1,91 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+**
+** Copyright 2009, The Android Open Source Project
+**
+** Licensed under the Apache License, Version 2.0 (the "License")
+** you may not use this file except in compliance with the License.
+** You may obtain a copy of the License at
+**
+**     http://www.apache.org/licenses/LICENSE-2.0
+**
+** Unless required by applicable law or agreed to in writing, software
+** distributed under the License is distributed on an "AS IS" BASIS,
+** WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+** See the License for the specific language governing permissions and
+** limitations under the License.
+*/
+-->
+<device name="Android">
+  <!-- All values are in mA except as noted -->
+  <item name="none">0</item>
+  <item name="screen.on">135</item> <!-- min brite -->
+  <item name="bluetooth.active">86</item>
+  <item name="bluetooth.on">0.6</item>
+  <item name="bluetooth.at">0.6</item> <!-- TBD -->
+  <item name="screen.full">400</item> <!-- backlight 16 leds -->
+  <item name="wifi.on">0.6</item>
+  <item name="wifi.active">128</item>
+  <item name="wifi.scan">146</item>
+  <item name="dsp.audio">43</item>
+  <item name="dsp.video">176</item>
+  <item name="radio.active">190</item>
+  <item name="gps.on">70</item>
+  <item name="battery.capacity">3400</item> <!-- 3400mAh -->
+  <item name="radio.scanning">65</item> <!-- TBD -->
+  <!-- Current consumed by the radio at different signal strengths, when paging  -->
+  <array name="radio.on"> <!-- 1 entry per signal strength bin, TBD -->
+    <value>13.0</value>
+    <value>10.0</value>
+    <value>10.0</value>
+    <value>10.0</value>
+    <value>10.0</value>
+  </array>
+  <array name="cpu.clusters.cores">
+    <value>4</value> <!-- cluster 0 has cpu0, cpu1, cpu2, cpu3 -->
+    <value>4</value> <!-- cluster 1 has cpu4, cpu5, cpu6, cpu7 -->
+  </array>
+  <array name="cpu.speeds.cluster0">
+    <value>480000</value>  <!-- 480 MHz CPU speed -->
+    <value>960000</value>  <!-- 960 MHz CPU speed -->
+    <value>1152000</value> <!-- 1.1 GHz CPU speed -->
+    <value>1325000</value> <!-- 1.3 GHz CPU speed -->
+    <value>1440000</value> <!-- 1.4 GHz CPU speed -->
+    <value>1536000</value> <!-- 1.5 GHz CPU speed -->
+    <value>1709000</value> <!-- 1.7 GHz CPU speed -->
+  </array>
+  <!-- Power consumption at different speeds -->
+  <array name="cpu.active.cluster0">
+    <value>23</value>
+    <value>61</value>
+    <value>80</value>
+    <value>106</value>
+    <value>126</value>
+    <value>140</value>
+    <value>183</value>
+  </array>
+  <array name="cpu.speeds.cluster1">
+    <value>807000</value> <!-- 807 MHz CPU speed -->
+    <value>1037000</value><!-- 1.0 GHz CPU speed -->
+    <value>1268000</value><!-- 1.2 GHz CPU speed -->
+    <value>1460000</value><!-- 1.4 GHz CPU speed -->
+    <value>1671000</value><!-- 1.6 GHz CPU speed -->
+    <value>1824000</value><!-- 1.8 GHz CPU speed -->
+    <value>1997000</value><!-- 2.0 GHz CPU speed -->
+    <value>2189000</value><!-- 2.2 GHz CPU speed -->
+  </array>
+  <array name="cpu.active.cluster1">
+    <value>119</value>
+    <value>177</value>
+    <value>238</value>
+    <value>313</value>
+    <value>408</value>
+    <value>496</value>
+    <value>608</value>
+    <value>836</value>
+  </array>
+  <!-- Power consumption in suspend -->
+  <item name="cpu.idle">5</item>
+  <!-- Power consumption due to wake lock held -->
+  <item name="cpu.awake">35</item>
+</device>

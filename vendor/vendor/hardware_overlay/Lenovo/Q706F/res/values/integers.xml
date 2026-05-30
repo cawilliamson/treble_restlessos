@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <integer name="config_defaultPeakRefreshRate">240</integer>
+    <integer name="config_defaultRefreshRate">0</integer>
+    <integer name="config_screenBrightnessDoze">17</integer>
+</resources>

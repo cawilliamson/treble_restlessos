@@ -1,0 +1,6 @@
+package vendor.ims.wifiantennamode@1.0;
+
+interface IWifiantennamode {
+getConfig() generates (Mode config);
+setConfig(Mode config);
+};

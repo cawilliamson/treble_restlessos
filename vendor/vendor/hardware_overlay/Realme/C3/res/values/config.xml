@@ -1,0 +1,118 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources xmlns:xliff="urn:oasis:names:tc:xliff:document:1.2">
+     <bool name="config_automatic_brightness_available">true</bool>
+     <bool name="config_carrier_volte_available">true</bool>
+     <bool name="config_carrier_wfc_ims_available">true</bool>
+     <bool name="config_device_volte_available">true</bool>
+     <bool name="config_device_vt_available">true</bool>
+     <bool name="config_device_wfc_ims_available">false</bool>
+     <bool name="config_enableNetworkLocationOverlay">false</bool>
+     <bool name="config_hotswapCapable">true</bool>
+
+     <bool name="config_pinnerCameraApp">false</bool>
+     <bool name="config_pinnerHomeApp">true</bool>
+
+     <bool name="config_powerDecoupleAutoSuspendModeFromDisplay">true</bool>
+     <bool name="config_powerDecoupleInteractiveModeFromDisplay">false</bool>
+
+     <bool name="config_setColorTransformAccelerated">true</bool>
+     <bool name="config_speed_up_audio_on_mt_calls">false</bool>
+     <bool name="config_supportAudioSourceUnprocessed">false</bool>
+     <bool name="config_supportDoubleTapWake">true</bool>
+     <bool name="config_sustainedPerformanceModeSupported">false</bool>
+     <bool name="config_switch_phone_on_voice_reg_state_change">true</bool>
+     <bool name="config_useDevInputEventForAudioJack">true</bool>
+     <bool name="config_wifiDisplaySupportsProtectedBuffers">false</bool>
+     <bool name="skip_restoring_network_selection">false</bool>
+
+     <integer name="config_shutdownBatteryTemperature">680</integer>
+
+     <string name="config_mainBuiltInDisplayCutout">M -38,0 L -38,64 L 38,64 L 38,0 Z</string>
+
+    <integer-array name="config_autoBrightnessLevels">
+        <item>128</item>
+        <item>256</item>
+        <item>384</item>
+        <item>512</item>
+        <item>640</item>
+        <item>768</item>
+        <item>896</item>
+        <item>1024</item>
+        <item>2048</item>
+        <item>4096</item>
+        <item>6144</item>
+        <item>8192</item>
+        <item>10240</item>
+        <item>12288</item>
+        <item>14336</item>
+        <item>16384</item>
+        <item>18432</item>
+    </integer-array>
+    <integer-array name="config_autoBrightnessLcdBacklightValues">
+        <item>8</item>
+        <item>64</item>
+        <item>98</item>
+        <item>104</item>
+        <item>110</item>
+        <item>116</item>
+        <item>122</item>
+        <item>128</item>
+        <item>134</item>
+        <item>182</item>
+        <item>255</item>
+        <item>255</item>
+        <item>255</item>
+        <item>255</item>
+        <item>255</item>
+        <item>255</item>
+        <item>255</item>
+        <item>255</item>
+    </integer-array>
+    <item name="config_screenBrightnessSettingDefaultFloat" format="float" type="dimen">0.4</item>
+    <item name="config_screenBrightnessSettingMaximumFloat" format="float" type="dimen">1.0</item>
+    <item name="config_screenBrightnessSettingMinimumFloat" format="float" type="dimen">0.0</item>
+    <integer name="config_screenBrightnessDoze">5</integer>
+
+    <string-array translatable="false" name="config_defaultPinnerServiceFiles">
+        <item>"/system/framework/framework.jar"</item>
+        <item>"/system/framework/services.jar"</item>
+        <item>"/apex/com.android.art/javalib/core-oj.jar"</item>
+        <item>"/apex/com.android.art/javalib/core-libart.jar"</item>
+        <item>"/system_ext/priv-app/SystemUI/SystemUI.apk"</item>
+        <item>"/system/bin/surfaceflinger"</item>
+    </string-array>
+
+    <string-array name="networkAttributes">
+        <item>wifi,1,1,1,-1,true</item>
+        <item>mobile,0,0,0,-1,true</item>
+        <item>mobile_mms,2,0,2,60000,true</item>
+        <item>mobile_supl,3,0,2,60000,true</item>
+        <item>mobile_dun,4,0,2,60000,true</item>
+        <item>mobile_hipri,5,0,3,60000,true</item>
+        <item>mobile_fota,10,0,2,60000,true</item>
+        <item>mobile_ims,11,0,2,60000,true</item>
+        <item>mobile_cbs,12,0,2,60000,true</item>
+        <item>wifi_p2p,13,1,0,-1,true</item>
+        <item>mobile_ia,14,0,2,-1,true</item>
+        <item>mobile_emergency,15,0,2,-1,true</item>
+    </string-array>
+
+    <string-array name="radioAttributes">
+        <item>1,1</item>
+        <item>0,1</item>
+    </string-array>
+
+    <integer name="config_defaultPeakRefreshRate">60</integer>
+
+    <string-array name="config_biometric_sensors" translatable="false" >
+        <item>0:2:15</item> <!-- ID0:Fingerprint:Strong -->
+    </string-array>
+
+    <bool name="config_nightDisplayAvailable">true</bool>
+
+    <integer-array name="config_availableColorModes">
+        <item>0</item> <!-- COLOR_MODE_NATURAL -->
+        <item>1</item> <!-- COLOR_MODE_BOOSTED -->
+    </integer-array>
+
+</resources>

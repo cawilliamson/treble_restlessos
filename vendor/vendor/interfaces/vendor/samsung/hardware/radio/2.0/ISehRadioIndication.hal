@@ -1,0 +1,32 @@
+package vendor.samsung.hardware.radio@2.0;
+
+interface ISehRadioIndication {
+oneway acbInfoChanged(int32_t type, vec<int32_t> acbInfo);
+oneway csFallback(int32_t type, int32_t state);
+oneway imsPreferenceChanged(int32_t type, vec<int32_t> imsPref);
+oneway voiceRadioBearerHandoverStatusChanged(int32_t type, int32_t state);
+oneway timerStatusChangedInd(int32_t type, vec<int32_t> eventNoti);
+oneway modemCapabilityIndication(int32_t type, vec<int8_t> data);
+oneway needTurnOnRadioIndication(int32_t type);
+oneway simPhonebookReadyIndication(int32_t type);
+oneway phonebookInitCompleteIndication(int32_t type);
+oneway deviceReadyNoti(int32_t type);
+oneway stkSmsSendResultIndication(int32_t type, int32_t result);
+oneway stkCallControlResultIndication(int32_t type, string cmd);
+oneway simSwapStateChangedIndication(int32_t type, int32_t state);
+oneway simCountMismatchedIndication(int32_t type, int32_t state);
+oneway simOnOffStateChangedNotify(int32_t type, int32_t mode);
+oneway releaseCompleteMessageIndication(int32_t type, SehSsReleaseComplete result);
+oneway sapNotify(int32_t type, vec<int8_t> data);
+oneway nrBearerAllocationChanged(int32_t type, int32_t status);
+oneway nrNetworkTypeAdded(int32_t type, int32_t status);
+oneway rrcStateChanged(int32_t type, SehRrcStateInfo state);
+oneway configModemCapabilityChangeNoti(int32_t type, SehConfigModemCapability configModemCapa);
+needApnProfileIndication(string select);//needApnProfileIndication(string select) generates (SehApnProfile apnProf);
+needSettingValueIndication(string key, string table) generates(int32_t xx);
+oneway execute(int32_t type, string cmd);
+// Really not oneway
+signalLevelInfoChanged(int32_t type, SehSignalBar signalBarInfo);
+extendedRegistrationState(int32_t type, SehExtendedRegStateResult state);
+needPacketUsage(string iface) generates (int32_t error, SehPacketUsage usage);
+};

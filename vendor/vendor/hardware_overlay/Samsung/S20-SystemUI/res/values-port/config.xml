@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <dimen name="status_bar_padding_top">0.99mm</dimen>
+    <dimen name="status_bar_header_height">4.68mm</dimen>
+    <dimen name="status_bar_header_height_keyguard">4.68mm</dimen>
+</resources>

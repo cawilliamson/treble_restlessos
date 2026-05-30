@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- I swear it makes sense to set default_minimal_size_resizable_task, and I can completely explain why. -->
+    <dimen name="default_minimal_size_resizable_task">200.0dip</dimen>
+    <dimen name="navigation_bar_height">47.19998dip</dimen>
+    <dimen name="navigation_bar_height_landscape">47.19998dip</dimen>
+</resources>

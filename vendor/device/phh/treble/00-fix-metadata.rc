@@ -1,0 +1,2 @@
+on early-init
+    exec u:r:phhsu_daemon:s0 root -- /system/bin/sh /system/etc/00-fix-metadata.sh

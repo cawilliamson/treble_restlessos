@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+        <string-array name="config_tether_bluetooth_regexs">
+        <item>bt-pan</item>
+    </string-array>
+    <string-array name="networkAttributes">
+        <item>wifi,1,1,1,-1,true</item>
+        <item>mobile,0,0,0,-1,true</item>
+        <item>mobile_mms,2,0,4,60000,true</item>
+        <item>mobile_supl,3,0,2,60000,true</item>
+        <item>mobile_dun,4,0,4,60000,true</item>
+        <item>mobile_hipri,5,0,3,60000,true</item>
+        <item>mobile_fota,10,0,2,60000,true</item>
+        <item>mobile_ims,11,0,2,60000,true</item>
+        <item>mobile_cbs,12,0,2,60000,true</item>
+        <item>wifi_p2p,13,1,0,-1,true</item>
+        <item>mobile_ia,14,0,2,-1,true</item>
+        <item>mobile_emergency,15,0,2,-1,true</item>
+        <item>bluetooth,7,7,1,-1,true</item>
+        <item>mobile_bip0,38,0,3,-1,true</item>
+        <item>mobile_bip1,39,0,3,-1,true</item>
+        <item>mobile_bip2,40,0,3,-1,true</item>
+        <item>mobile_bip3,41,0,3,-1,true</item>
+        <item>mobile_bip4,42,0,3,-1,true</item>
+        <item>mobile_bip5,43,0,3,-1,true</item>
+        <item>mobile_bip6,44,0,3,-1,true</item>
+        <item>mobile_xcap,45,0,2,60000,true</item>
+    </string-array>
+    <string-array name="config_gpsParameters">
+        <item>SUPL_HOST=supl.google.com</item>
+        <item>SUPL_PORT=7276</item>
+        <item>NTP_SERVER=north-america.pool.ntp.org</item>
+    </string-array>
+    <string-array name="config_defaultPinnerServiceFiles">
+        <item>system/framework/arm/boot-hwframework.vdex</item>
+        <item>system/framework/oat/arm64/services.vdex</item>
+        <item>system/framework/arm/boot-bouncycastle.vdex</item>
+        <item>system/framework/oat/arm64/hwServices.vdex</item>
+        <item>system/framework/arm/boot-framework.oat</item>
+        <item>system/framework/arm/boot-core-libart.vdex</item>
+        <item>system/framework/oat/arm64/hwServices.odex</item>
+        <item>system/framework/oat/arm64/services.odex</item>
+        <item>system/framework/arm64/boot-framework.oat</item>
+    </string-array>
+</resources>

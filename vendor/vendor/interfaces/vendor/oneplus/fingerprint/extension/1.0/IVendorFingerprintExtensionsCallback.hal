@@ -1,0 +1,5 @@
+package vendor.oneplus.fingerprint.extension@1.0;
+
+interface IVendorFingerprintExtensionsCallback {
+	oneway onResult(int32_t cmdId, int32_t result, string info);
+};

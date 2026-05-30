@@ -1,0 +1,10 @@
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+        package="me.phh.treble.overlay.oneplus.op9.systemui"
+        android:versionCode="1"
+        android:versionName="1.0">
+        <overlay android:targetPackage="com.android.systemui"
+                android:requiredSystemPropertyName="ro.boot.prjname"
+                android:requiredSystemPropertyValue="+(19825|20851|20852|20853|20854)"
+        android:priority="1983"
+        android:isStatic="true" />
+</manifest>

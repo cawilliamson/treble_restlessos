@@ -1,0 +1,4 @@
+type sysfs_tp, file_type;
+
+#Allow treble_app access to /sys/devices/virtual/touch/tp_dev/gesture_on
+allow system_app sysfs_tp:file rw_file_perms;

@@ -1,0 +1,8 @@
+package vendor.mediatek.hardware.biometrics.fingerprint@2.1;
+
+import android.hardware.biometrics.fingerprint@2.1::IBiometricsFingerprint;
+
+interface ITranBiometricsFingerprint extends android.hardware.biometrics.fingerprint@2.1::IBiometricsFingerprint{
+    sendCommand(uint32_t command, uint32_t extras) generates (uint32_t ret);
+};
+

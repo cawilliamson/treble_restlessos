@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8" standalone="no"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android" package="me.phh.treble.overlay.realme.c2">
+    <overlay 
+	android:isStatic="true" 
+	android:priority="310" 
+	android:targetPackage="android"
+        android:requiredSystemPropertyName="ro.product.vendor.model"
+	android:requiredSystemPropertyValue="+RMX194*" />
+</manifest>

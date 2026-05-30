@@ -1,0 +1,209 @@
+package vendor.samsung.hardware.radio@1.2;
+
+import android.hardware.radio@1.0::AppStatus;
+import android.hardware.radio@1.0::Dial;
+import android.hardware.radio@1.0::OperatorInfo;
+import android.hardware.radio@1.2::AudioQuality;
+import android.hardware.radio@1.2::Call;
+import android.hardware.radio@1.2::SignalStrength;
+import android.hardware.radio@1.2::VoiceRegStateResult;
+import android.hardware.radio@1.2::DataRegStateResult;
+
+struct SecSignalStrength {
+    SignalStrength base;
+    int32_t signalBar;
+};
+
+struct OemSSReleaseComplete {
+    int32_t size;
+    int32_t dataLen;
+    int32_t params;
+    int32_t status;
+    string data;
+};
+
+struct OemSimPBResponse {
+    vec<int32_t> lengthAlphas;
+    vec<int32_t> dataTypeAlphas;
+    vec<string> alphaTags;
+    vec<int32_t> lengthNumbers;
+    vec<int32_t> dataTypeNumbers;
+    vec<string> numbers;
+    int32_t recordIndex;
+    int32_t nextIndex;
+};
+
+struct OemCbConfigArgs {
+    int32_t bCBEnabled;
+    int32_t selectedId;
+    int32_t msgIdMaxCount;
+    int32_t msgIdCount;
+    string msgIDs;
+};
+
+struct SecSendSmsResult {
+    int32_t messageReg;
+    string ackPDU;
+    int32_t errorCode;
+    int32_t errorClass;
+};
+
+struct OemCsgInfo {
+    int32_t csgId;
+    string name;
+    string plmn;
+    int32_t rat;
+    int32_t category;
+    int32_t signalStrength;
+};
+
+struct SecAllowDataParam {
+    int32_t defaultDataPhoneId;
+    int32_t isDataPreferredDuringCall;
+};
+
+enum OemCallType : int32_t {
+    VOICE = 0,
+    VS_TX = 1,
+    TS_RX = 2,
+    VT = 3,
+};
+
+enum OemCallDomain : int32_t {
+    UNKNOWN = 0,
+    CS = 1,
+    PS = 2,
+    AUTOMATIC = 3,
+};
+
+struct OemCallDetails {
+    OemCallType callType;
+    OemCallDomain callDomain;
+    vec<string> extras;
+};
+
+struct OemCallModify {
+    int32_t callIndex;
+    vec<OemCallDetails> callDetails;
+};
+
+struct SecDial {
+    Dial base;
+    vec<OemCallDetails> callDetails;
+};
+
+struct OemPreferredNetworkInfo {
+    int32_t index;
+    string oper;
+    string plmn;
+    int32_t gsmAct;
+    int32_t gsmCompactAct;
+    int32_t utranAct;
+    int32_t mode;
+};
+
+struct OemEncodedUSSD {
+    vec<int8_t> encodedUSSD;
+    int32_t ussdLength;
+    int32_t dcsCode;
+};
+
+struct OemAdnRecord {
+    vec<int8_t> name;
+    int32_t nameDCS;
+    int32_t namelength;
+    string number;
+    vec<int8_t> gsm8bitEmail;
+    int32_t gsm8bitEmaillength;
+    string anr;
+    string anrA;
+    string anrB;
+    string anrC;
+    vec<int8_t> sne;
+    int32_t sneLength;
+    int32_t sneDCS;
+
+};
+
+struct OemImsCall {
+    int32_t state;
+    int32_t type;
+    int32_t isMt;
+    int32_t isMpty;
+    string number;
+};
+
+struct DcParam {
+    int32_t endc_available;
+    int32_t restrict_dcnr;
+};
+
+struct NrSignalStrength {
+    int32_t rsrp;
+    int32_t snr;
+};
+
+struct ApnProfile {
+    string apn;
+    string proto;
+    string roamingProto;
+    string user;
+    string pw;
+    string auth;
+};
+
+struct SecAppStatus {
+    AppStatus base;
+    int32_t pin1NumRetries;
+    int32_t puk1NumRetries;
+    int32_t pin2NumRetries;
+    int32_t puk2NumRetries;
+    int32_t persoUnblockRetries;
+};
+
+struct SecCardStatus {
+    int32_t cardState;
+    int32_t universalPinState;
+    int32_t gsmUmtsSubscriptionAppIndex;
+    int32_t cdmaSubscriptionAppIndex;
+    int32_t imsSubscriptionAppIndex;
+    vec<SecAppStatus> applications;
+    int32_t physicalSlotId;
+    int32_t atr;
+    int32_t iccid;
+};
+
+struct SecVoiceRegStateResult {
+    VoiceRegStateResult base;
+    int32_t lac;
+    int32_t cid;
+    int32_t psVoiceSupport;
+    int32_t imsEmergencyCallSupport;
+    int32_t imsEmergencyCallBarring;
+    int32_t mobileState;
+    int32_t mobileRat;
+    bool isPsOnlyReg;
+};
+
+struct SecDataRegStateResult {
+    DataRegStateResult base;
+    int32_t lac;
+    int32_t cid;
+    int32_t tac;
+    int32_t snapshotStatus;
+    int32_t mobileState;
+    int32_t mobileRat;
+    int32_t mobileOptionalRat;
+};
+
+struct SecCall {
+    Call base;
+    AudioQuality audioQuality;
+    vec<OemCallDetails> callDetails;
+};
+
+struct SecOperatorInfo {
+    OperatorInfo base;
+    string rat;
+    string lac;
+};

@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <integer name="config_overrideHasPermanentMenuKey">2</integer>
+    <integer name="config_shutdownBatteryTemperature">600</integer>
+</resources>

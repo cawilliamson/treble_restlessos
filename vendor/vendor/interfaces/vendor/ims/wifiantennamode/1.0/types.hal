@@ -1,0 +1,10 @@
+package vendor.ims.wifiantennamode@1.0;
+
+enum Mode : uint32_t {
+PORTRAIT = 0,
+LANDSCAPE = 1,
+CAMERA_ON = 2,
+GAMING_MODE_2G = 3,
+GAMING_MODE_5G = 3,
+};
+

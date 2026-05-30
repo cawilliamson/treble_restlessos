@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <integer-array name="config_autoBrightnessLcdBacklightValues">
+        <item>6</item>
+        <item>47</item>
+        <item>150</item>
+        <item>180</item>
+        <item>250</item>
+        <item>255</item>
+    </integer-array>
+    <integer-array name="config_autoBrightnessLevels">
+        <item>8</item>
+        <item>55</item>
+        <item>350</item>
+        <item>1600</item>
+        <item>2550</item>
+    </integer-array>
+    <integer name="config_autoBrightnessLightSensorRate">300</integer>
+    <bool name="config_automatic_brightness_available">true</bool>
+    <bool name="config_bluetooth_hfp_inband_ringing_support">true</bool>
+    <bool name="config_device_volte_available">true</bool>
+    <bool name="config_device_vt_available">true</bool>
+    <bool name="config_device_wfc_ims_available">true</bool>
+    <bool name="config_dynamic_bind_ims">true</bool>
+    <integer name="config_mobile_mtu">1400</integer>
+    <integer name="config_screenBrightnessDark">4</integer>
+    <integer name="config_screenBrightnessDim">6</integer>
+    <integer name="config_screenBrightnessDoze">4</integer>
+    <integer name="config_screenBrightnessSettingDefault">33</integer>
+    <integer name="config_screenBrightnessSettingMinimum">4</integer>
+    <bool name="config_showNavigationBar">true</bool>
+    <bool name="config_wifi_dual_band_support">true</bool>
+    <bool name="skip_restoring_network_selection">true</bool>
+    <dimen name="navigation_bar_height">7.5mm</dimen>
+    <dimen name="navigation_bar_height_landscape">7.5mm</dimen>
+    <dimen name="navigation_bar_width">7.5mm</dimen>
+    <dimen name="notification_header_padding_top">8.0dip</dimen>
+    <dimen name="notification_header_padding_bottom">8.0dip</dimen>
+</resources>

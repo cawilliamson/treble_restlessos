@@ -1,0 +1,5 @@
+package vendor.pixelworks.hardware@1.0;
+
+interface IIrisCallback {
+    onFeatureChanged(int32_t type, vec<int32_t> values);
+};

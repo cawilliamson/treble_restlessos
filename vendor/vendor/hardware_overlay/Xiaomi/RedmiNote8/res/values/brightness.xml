@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <bool name="config_automatic_brightness_available">true</bool>
+    <integer name="config_screenBrightnessDim">10</integer>
+    <integer name="config_screenBrightnessSettingDefault">128</integer>
+    <integer name="config_screenBrightnessSettingMinimum">1</integer>
+    <integer-array name="config_autoBrightnessLevels">
+        <item>1</item> <!-- pitch black -->
+        <item>5</item> <!-- dark indoor -->
+        <item>10</item> <!-- twilight -->
+        <item>50</item> <!-- dim indoor -->
+        <item>100</item> <!-- home -->
+        <item>300</item> <!-- office -->
+        <item>500</item> <!-- sunrise -->
+        <item>1000</item> <!-- overcast -->
+        <item>3000</item> <!-- indirect sun -->
+        <item>10000</item> <!-- daylight -->
+    </integer-array>
+    <integer-array name="config_autoBrightnessLcdBacklightValues">
+        <item>16</item>
+        <item>20</item>
+        <item>24</item>
+        <item>31</item>
+        <item>48</item>
+        <item>74</item>
+        <item>107</item>
+        <item>152</item>
+        <item>194</item>
+        <item>254</item>
+        <item>255</item>
+    </integer-array>
+</resources>

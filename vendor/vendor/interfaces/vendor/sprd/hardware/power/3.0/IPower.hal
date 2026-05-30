@@ -1,0 +1,10 @@
+package vendor.sprd.hardware.power@3.0;
+
+interface IPower {
+    oneway acquirePowerHintBySceneId(lock, string tag, int32_t sceneId);
+    oneway releasePowerHintBySceneId(lock, int32_t sceneId);
+    oneway acquirePowerHintBySceneName(lock, string tag, int32_t sceneName);
+    oneway releasePowerHintBySceneName(lock, string sceneName);
+    getSceneIdByName(string sceneName) generates (int32_t sceneId);
+    oneway controlPowerHint(int32_t enable);
+};

@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <fraction name="config_maximumScreenDimRatio">20.000004%</fraction>
+    <fraction name="config_autoBrightnessAdjustmentMaxGamma">100.0%</fraction>
+    <fraction name="config_screenAutoBrightnessDozeScaleFactor">300.0%</fraction>
+    <integer-array name="config_autoBrightnessLcdBacklightValues">
+        <item>8</item>
+        <item>22</item>
+        <item>48</item>
+        <item>78</item>
+        <item>128</item>
+        <item>206</item>
+        <item>255</item>
+    </integer-array>
+    <integer-array name="config_autoBrightnessLevels">
+        <item>45</item>
+        <item>1025</item>
+        <item>1480</item>
+        <item>2250</item>
+        <item>3300</item>
+        <item>10000</item>
+    </integer-array>
+    <bool name="config_bluetooth_le_peripheral_mode_supported">true</bool>
+    <bool name="config_showNavigationBar">true</bool>
+    <bool name="config_powerDecoupleAutoSuspendModeFromDisplay">true</bool>
+    <bool name="config_useDevInputEventForAudioJack">true</bool>
+    <bool name="config_supportAudioSourceUnprocessed">true</bool>
+    <bool name="config_sustainedPerformanceModeSupported">false</bool>
+    <bool name="config_wifi_batched_scan_supported">false</bool>
+    <bool name="config_lidControlsSleep">false</bool>
+    <bool name="config_device_volte_available">true</bool>
+    <bool name="config_device_vt_available">true</bool>
+    <bool name="config_automatic_brightness_available">true</bool>
+    <bool name="config_allowAutoBrightnessWhileDozing">true</bool>
+    <bool name="config_displayBlanksAfterDoze">true</bool>
+    <bool name="config_dozeAfterScreenOff">true</bool>
+    <bool name="config_dozeAfterScreenOffByDefault">false</bool>
+    <bool name="config_dozeAlwaysOnDisplayAvailable">true</bool>
+    <bool name="config_enableBurnInProtection">true</bool>
+    <integer name="config_shutdownBatteryTemperature">610</integer>
+    <integer name="config_screenBrightnessSettingMinimum">10</integer>
+    <integer name="config_screenBrightnessSettingDefault">102</integer>
+    <integer name="config_screenBrightnessSettingMaximum">255</integer>
+    <integer name="config_screenBrightnessDoze">2</integer>
+    <integer name="config_screenBrightnessDark">2</integer>
+    <integer name="config_screenBrightnessDim">2</integer>
+    <integer name="config_autoBrightnessBrighteningLightDebounce">1000</integer>
+    <integer name="config_autoBrightnessDarkeningLightDebounce">4000</integer>
+    <integer name="config_autoBrightnessInitialLightSensorRate">-1</integer>
+    <integer name="config_autoBrightnessLightSensorRate">500</integer>
+    <integer name="config_bluetooth_operating_voltage_mv">3300</integer>
+</resources>

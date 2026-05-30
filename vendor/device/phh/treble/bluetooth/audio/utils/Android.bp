@@ -1,0 +1,135 @@
+cc_library_shared {
+    name: "libbluetooth_audio_session_system",
+    defaults: ["hidl_defaults"],
+    srcs: [
+        "session/BluetoothAudioSession.cpp",
+        "session/BluetoothAudioSession_2_1.cpp",
+        "session/BluetoothAudioSupportedCodecsDB.cpp",
+        "session/BluetoothAudioSupportedCodecsDB_2_1.cpp",
+    ],
+    export_include_dirs: ["session/"],
+    header_libs: ["libhardware_headers"],
+    shared_libs: [
+        "android.hardware.audio.common@5.0",
+        "android.hardware.bluetooth.audio@2.0",
+        "android.hardware.bluetooth.audio@2.1",
+        "libbase",
+        "libcutils",
+        "libfmq",
+        "libhidlbase",
+        "liblog",
+        "libutils",
+        "libbluetooth_audio_session_aidl_system",
+    ],
+}
+
+cc_library_shared {
+    name: "libbluetooth_audio_session_aidl_system",
+    srcs: [
+        "aidl_session/BluetoothAudioCodecs.cpp",
+        "aidl_session/BluetoothAudioSession.cpp",
+        "aidl_session/HidlToAidlMiddleware.cpp",
+        "aidl_session/BluetoothLeAudioCodecsProvider.cpp",
+        "aidl_session/BluetoothLeAudioAseConfigurationSettingProvider.cpp",
+    ],
+    export_include_dirs: ["aidl_session/"],
+    header_libs: [
+        "libhardware_headers",
+        "libxsdc-utils",
+    ],
+    generated_sources: ["le_audio_codec_capabilities_system"],
+    generated_headers: [
+        "le_audio_codec_capabilities_system",
+        "AIDLLeAudioSetConfigSchemas_h_system",
+    ],
+    defaults: [
+        "latest_android_hardware_bluetooth_audio_ndk_shared",
+    ],
+    shared_libs: [
+        "android.hardware.bluetooth.audio@2.0",
+        "android.hardware.bluetooth.audio@2.1",
+        "libbase",
+        "libcutils",
+        "libbinder_ndk",
+        "libfmq",
+        "liblog",
+        "libhidlbase",
+        "libxml2",
+        "libflatbuffers-cpp",
+    ],
+}
+
+xsd_config {
+    name: "le_audio_codec_capabilities_system",
+    srcs: ["le_audio_codec_capabilities/le_audio_codec_capabilities.xsd"],
+    package_name: "aidl.android.hardware.bluetooth.audio.setting",
+    api_dir: "le_audio_codec_capabilities/schema",
+    root_elements: ["leAudioOffloadSetting"],
+}
+genrule {
+    name: "AIDLLeAudioSetConfigSchemas_h_system",
+    tools: [
+        "flatc",
+    ],
+    cmd: "$(location flatc) -I hardware/interfaces/bluetooth/audio/utils/ -o $(genDir) --cpp $(in) ",
+    srcs: [
+        "le_audio_configuration_set/audio_set_configurations.fbs",
+        "le_audio_configuration_set/audio_set_scenarios.fbs",
+    ],
+    out: [
+        "audio_set_configurations_generated.h",
+        "audio_set_scenarios_generated.h",
+    ],
+}
+// Binary generation
+genrule {
+    name: "AIDLLeAudioSetScenariosSchema_bfbs_system",
+    tools: [
+        "flatc",
+    ],
+    cmd: "$(location flatc) -I device/peter/gsi/bluetooth/audio/utils/ -b --schema -o $(genDir) $(in) ",
+    srcs: [
+        "le_audio_configuration_set/audio_set_scenarios.fbs",
+    ],
+    out: [
+        "audio_set_scenarios.bfbs",
+    ],
+}
+genrule {
+    name: "AIDLLeAudioSetConfigsSchema_bfbs_system",
+    tools: [
+        "flatc",
+    ],
+    cmd: "$(location flatc) -I device/peter/gsi/bluetooth/audio/utils/ -b --schema -o $(genDir) $(in) ",
+    srcs: [
+        "le_audio_configuration_set/audio_set_configurations.fbs",
+    ],
+    out: [
+        "audio_set_configurations.bfbs",
+    ],
+}
+// Add to prebuilt etc
+prebuilt_etc {
+    name: "aidl_audio_set_scenarios_bfbs_system",
+    src: ":AIDLLeAudioSetScenariosSchema_bfbs_system",
+    filename: "aidl_audio_set_scenarios.bfbs",
+    sub_dir: "aidl/le_audio",
+}
+prebuilt_etc {
+    name: "aidl_audio_set_scenarios_json_system",
+    src: "le_audio_configuration_set/audio_set_scenarios.json",
+    filename: "aidl_audio_set_scenarios.json",
+    sub_dir: "aidl/le_audio",
+}
+prebuilt_etc {
+    name: "aidl_audio_set_configurations_bfbs_system",
+    src: ":AIDLLeAudioSetConfigsSchema_bfbs",
+    filename: "aidl_audio_set_configurations.bfbs",
+    sub_dir: "aidl/le_audio",
+}
+prebuilt_etc {
+    name: "aidl_audio_set_configurations_json_system",
+    src: "le_audio_configuration_set/audio_set_configurations.json",
+    filename: "aidl_audio_set_configurations.json",
+    sub_dir: "aidl/le_audio",
+}
