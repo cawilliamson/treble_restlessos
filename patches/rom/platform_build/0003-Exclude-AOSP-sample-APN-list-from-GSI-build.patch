@@ -1,38 +1,29 @@
-From d86efb2b57d61cc219a9e7ccd2482cf00abd813a Mon Sep 17 00:00:00 2001
+From 08f6eb7384e886bcbf88f07a31611f678ad2a968 Mon Sep 17 00:00:00 2001
 From: "Christopher A. Williamson" <contact@chrisaw.io>
-Date: Thu, 24 Apr 2025 00:00:00 +0100
+Date: Sat, 30 May 2026 09:15:07 +0100
 Subject: [PATCH] product: Exclude AOSP sample APN list from GSI build
 
-The AOSP sample APN database (device/sample/etc/apns-full-conf.xml)
-is explicitly a placeholder. Google's own documentation states there
-is "no change in the behavior of Android devices" from it — Pixel
-phones use their own CarrierSettings protobuf data instead.
-
-Our build ships a comprehensive merged APN database derived from
-Google Pixel CarrierSettings, AOSP IMS entries, and LineageOS
-community data, installed via device/phh/treble/base.mk. The AOSP
-sample file should not be installed alongside it, as it would be
-ignored anyway (the merged file takes priority via PRODUCT_COPY_FILES).
-
-This matches the approach taken by TrebleDroid and other custom
-GSI builds.
-
-Change-Id: I76c8d5ef67de73d4558d350a87a9bc317aaad792
+The apns-full-conf.xml includes thousands of carrier APNs that bloat
+the GSI image. Carrier APNs are loaded from the SIM by modern modems
+and Android 12+ auto-configures APNs from the carrier. The full conf
+file is not needed on a GSI.
 ---
- target/product/gsi/Android.bp | 1 -
- 1 file changed, 1 deletion(-)
+ target/product/gsi/Android.bp | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
 
 diff --git a/target/product/gsi/Android.bp b/target/product/gsi/Android.bp
-index a61d544..a57e4a3 100644
+index 82d5705..250be15 100644
 --- a/target/product/gsi/Android.bp
 +++ b/target/product/gsi/Android.bp
-@@ -125,7 +125,6 @@ android_filesystem_defaults {
+@@ -132,7 +132,7 @@ android_filesystem_defaults {
+         "TrichromeChrome",
          "Dialer",
          "LatinIME",
-         "Messaging",
 -        "apns-full-conf.xml",
++        
          "frameworks-base-overlays",
      ],
      multilib: {
 -- 
-2.53.0
+2.54.0
+

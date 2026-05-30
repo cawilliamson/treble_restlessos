@@ -1,25 +1,35 @@
-From 66a65ebc62dcd8d0b4c88323dae4fdd76bdd9d86 Mon Sep 17 00:00:00 2001
+From d0b28ac0bbb498d75add3c207fefa7fb6484a5bd Mon Sep 17 00:00:00 2001
 From: "Christopher A. Williamson" <contact@chrisaw.io>
 Date: Tue, 17 Mar 2026 23:24:50 +0000
-Subject: [PATCH 1/2] Configure build for GrapheneOS GSI apps and packages
+Subject: [PATCH] Configure build for GrapheneOS GSI: apps and packages
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
 
 Adapt the AOSP build configuration for GrapheneOS GSI:
 
 - Replace generic webview module with TrichromeWebView (Vanadium)
-- Use GrapheneOS app module names: TrichromeChrome (browser),
-  Camera (camera), Messaging (messaging)
+- Use GrapheneOS TrichromeChrome as browser (replaces Browser2)
 - Remove QuickSearchBox (not in GrapheneOS)
+- Remove Camera and Messaging from GSI product — users install
+  from GrapheneOS App Store to save system image space
 - Remove packages that are not useful or not desired in GSI builds:
   Calendar (deprecated, CalendarProvider kept), MusicFX, Auditor
   (requires hardware attestation), PdfViewerGOS, InfoApp,
   DeviceDiagnostics, EasterEgg, HardeningTestApp,
-  mtectrl/misctrl (Pixel-specific, can interfere with vendor TEE)
-- Remove SetupWizard2: the full setup wizard causes issues on GSI
-  (missing hardware features, irrelevant OEM unlock prompts); the
-  AOSP Provision stub marks the device as provisioned silently
-- Add LiveWallpapersPicker to enable live wallpaper support for
-  third-party live wallpapers (e.g. from F-Droid or sideloaded)
+  LiveWallpapersPicker (deprecated), PhotoTable, WallpaperPickerGOS,
+  ContactsGOS (use AOSP Contacts), BluetoothViewerGOS, TalkBackGOS
+  (use standard TalkBack included in handheld_product.mk),
+  GrapheneOS Updater (only useful for official GrapheneOS devices)
 ---
+ target/product/base_system.mk         | 3 ---
+ target/product/generic/Android.bp     | 3 +--
+ target/product/gsi/Android.bp         | 7 ++-----
+ target/product/handheld_product.mk    | 5 -----
+ target/product/handheld_system.mk     | 3 ---
+ target/product/handheld_system_ext.mk | 1 -
+ 6 files changed, 3 insertions(+), 19 deletions(-)
+
 diff --git a/target/product/base_system.mk b/target/product/base_system.mk
 index 2f2ccc9..33ce2a6 100644
 --- a/target/product/base_system.mk
@@ -63,25 +73,23 @@ index 1d7dcbf..083dd43 100644
                  "ONS", // telephony_system
                  "PacProcessor", // handheld_system
 diff --git a/target/product/gsi/Android.bp b/target/product/gsi/Android.bp
-index 3fa6e76..4b6ce0a 100644
+index 3fa6e76..82d5705 100644
 --- a/target/product/gsi/Android.bp
 +++ b/target/product/gsi/Android.bp
-@@ -129,11 +129,11 @@ android_filesystem_defaults {
+@@ -129,11 +129,9 @@ android_filesystem_defaults {
          ///////////////////////////////////////////
          // gsi_product
          ///////////////////////////////////////////
 -        "Browser2",
 -        "Camera2",
 +        "TrichromeChrome",
-+        "Camera",
          "Dialer",
          "LatinIME",
 -        "messaging",
-+        "Messaging",
          "apns-full-conf.xml",
          "frameworks-base-overlays",
      ],
-@@ -187,13 +187,12 @@ android_system_image {
+@@ -187,13 +185,12 @@ android_system_image {
  
          // handheld_product
          "AvatarPicker",
@@ -97,16 +105,16 @@ index 3fa6e76..4b6ce0a 100644
          "frameworks-base-overlays",
  
 diff --git a/target/product/handheld_product.mk b/target/product/handheld_product.mk
-index 2a4602d..dc1a1aa 100644
+index 2a4602d..b276cf9 100644
 --- a/target/product/handheld_product.mk
 +++ b/target/product/handheld_product.mk
-@@ -23,17 +23,13 @@ $(call inherit-product, $(SRC_TARGET_DIR)/product/media_product.mk)
+@@ -23,17 +23,12 @@ $(call inherit-product, $(SRC_TARGET_DIR)/product/media_product.mk)
  # /product packages
  PRODUCT_PACKAGES += \
      AppStore \
 -    Auditor \
 -    Calendar \
-     Camera \
+-    Camera \
      Contacts \
      DeskClock \
      ExactCalculator \
@@ -153,4 +161,6 @@ index 529fa6f..cf9b894 100644
      StorageManager \
      SystemUI \
      WallpaperCropper \
+-- 
+2.54.0
 

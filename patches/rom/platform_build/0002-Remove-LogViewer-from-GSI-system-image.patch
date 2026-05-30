@@ -1,7 +1,7 @@
 From 39839020808bcb2b126099639c82a11c5ba9ef08 Mon Sep 17 00:00:00 2001
 From: "Christopher A. Williamson" <contact@chrisaw.io>
 Date: Tue, 7 Apr 2026 08:09:07 +0100
-Subject: [PATCH 2/2] Remove LogViewer from GSI system image
+Subject: [PATCH 2/3] Remove LogViewer from GSI system image
 
 LogViewer (app.grapheneos.logviewer) provides an interface for submitting
 crash reports and logcat output to GrapheneOS servers. This is undesirable
