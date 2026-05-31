@@ -16,7 +16,6 @@ for project in $(cd "$patches"/"$tree"; echo *); do
     [ "$p" == treble/app ] && p=treble_app
     [ "$p" == vendor/hardware/overlay ] && p=vendor/hardware_overlay
     [ "$p" == vendor/partner/gms ] && p=vendor/partner_gms
-    [ -d "$p" ] || { echo "  (directory $p not found, skipping)"; continue; }
     pushd "$p" &>/dev/null
     for patch in "$patches"/"$tree"/"$project"/*.patch; do
         echo ">> ${patch}"
