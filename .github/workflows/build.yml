@@ -367,7 +367,7 @@ jobs:
           for dir in device treble_app vendor; do
             echo "  vendor/${dir} -> src/${dir}"
             mkdir --parents "${dir}"
-            cp --recursive --force ../vendor/"${dir}"/* "${dir}"/
+            cp --recursive --force ../deps/"${dir}"/* "${dir}"/
           done
           echo "Done."
 
