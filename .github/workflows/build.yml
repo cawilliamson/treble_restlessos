@@ -360,11 +360,11 @@ jobs:
           echo "Detected ANDROID_VERSION_TAG: ${ANDROID_VERSION_TAG}"
           echo "${ANDROID_VERSION_TAG}" > ../tmp/.android_version_tag
 
-      - name: Copy deps into tree
+      - name: Copy trebledroid resources into tree
         working-directory: src/
         run: |
-          echo "Syncing deps..."
-          cp --force --recursive --verbose ../deps/* .
+          echo "Syncing trebledroid resources..."
+          cp --force --recursive --verbose ../trebledroid/* .
           echo "Done."
 
       - name: Apply patches
