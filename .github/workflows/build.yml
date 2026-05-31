@@ -131,7 +131,7 @@ jobs:
 
           REGIONS=$(for r in ${CANDIDATE_REGIONS}; do
             echo "${REGION_PRICE[$r]:-99.99} ${r}"
-          done | sort -g | awk '{print $2}')
+          done | sort --general-numeric-sort | awk '{print $2}')
           echo "Region priority (cheapest spot first): ${REGIONS}"
 
           # ------------------------------------------------------------------
@@ -366,14 +366,8 @@ jobs:
           echo "Syncing vendored repos..."
           for dir in device treble_app vendor; do
             echo "  vendor/${dir} -> src/${dir}"
-            if [ "${dir}" = "device" ]; then
-              # merge into existing device/ to preserve synced repos
-              # (e.g. device/generic/common from AOSP manifest)
-              cp -r ../vendor/"${dir}"/* "${dir}"/
-            else
-              rm -rf "${dir}"
-              cp -r ../vendor/"${dir}" "${dir}"
-            fi
+            mkdir --parents "${dir}"
+            cp --recursive --force ../vendor/"${dir}"/* "${dir}"/
           done
           echo "Done."
 
