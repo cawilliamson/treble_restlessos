@@ -360,14 +360,14 @@ jobs:
           echo "Detected ANDROID_VERSION_TAG: ${ANDROID_VERSION_TAG}"
           echo "${ANDROID_VERSION_TAG}" > ../tmp/.android_version_tag
 
-      - name: Copy vendor files into tree
+      - name: Copy deps into tree
         working-directory: src/
         run: |
-          echo "Syncing vendored repos..."
+          echo "Syncing deps..."
           for dir in device treble_app vendor; do
             echo "  vendor/${dir} -> src/${dir}"
             mkdir --parents "${dir}"
-            cp --recursive --force ../deps/"${dir}"/* "${dir}"/
+            cp --force --recursive ../deps/"${dir}"/* "${dir}"/
           done
           echo "Done."
 
