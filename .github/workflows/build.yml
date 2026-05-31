@@ -364,20 +364,8 @@ jobs:
         working-directory: src/
         run: |
           echo "Syncing deps..."
-          for dir in device treble_app vendor; do
-            echo "  deps/${dir} -> src/${dir}"
-            mkdir --parents "${dir}"
-            cp --force --recursive ../deps/"${dir}"/* "${dir}"/
-          done
-          # commit the overlay so git am can apply patches that modify
-          # deps-provided files (e.g. base.mk, rw-system.sh in device/phh/treble)
-          for repo in device/phh/treble device/phh/treble/vendor; do
-            if [ -d "${repo}/.git" ]; then
-              git -C "${repo}" add --all
-              git -C "${repo}" commit --allow-empty \
-                --message="deps overlay" || true
-            fi
-          done
+          cp --force --recursive --verbose ../deps/* .
+          echo "Done."
 
       - name: Apply patches
         working-directory: src/

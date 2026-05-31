@@ -19,7 +19,7 @@ for project in $(cd "$patches"/"$tree"; echo *); do
     pushd "$p" &>/dev/null
     for patch in "$patches"/"$tree"/"$project"/*.patch; do
         echo ">> ${patch}"
-        if git rev-parse --git-dir &>/dev/null; then
+        if test -d .git; then
             git am "$patch" || { git am --abort; exit 1; }
         else
             patch -p1 < "$patch" || exit 1
