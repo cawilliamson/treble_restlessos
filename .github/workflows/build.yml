@@ -366,8 +366,14 @@ jobs:
           echo "Syncing vendored repos..."
           for dir in device treble_app vendor; do
             echo "  vendor/${dir} -> src/${dir}"
-            rm -rf "${dir}"
-            cp -r ../vendor/"${dir}" "${dir}"
+            if [ "${dir}" = "device" ]; then
+              # merge into existing device/ to preserve synced repos
+              # (e.g. device/generic/common from AOSP manifest)
+              cp -r ../vendor/"${dir}"/* "${dir}"/
+            else
+              rm -rf "${dir}"
+              cp -r ../vendor/"${dir}" "${dir}"
+            fi
           done
           echo "Done."
 
