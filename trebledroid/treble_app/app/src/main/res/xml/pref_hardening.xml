@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android">
+    <PreferenceCategory android:title="Hardening">
+        <SwitchPreference
+            android:defaultValue="false"
+            android:key="key_hardening_mte_vendor"
+            android:title="Memory tagging for vendor processes"
+            android:summary="Adds random tags to heap pointers in vendor HAL processes (MTE/TBI). Helps detect memory corruption exploits like use-after-free and buffer overflows.\n\nLikely to break: Fingerprint sensors, DRM/Widevine, and other features that use TEE (Trusted Execution Environment) drivers. Vendor kernel drivers that pass pointers via ioctl may reject tagged addresses with EINVAL errors.\n\nReboot required." />
+        <SwitchPreference
+            android:defaultValue="false"
+            android:key="key_hardening_stack_hardening"
+            android:title="Hardened thread stacks"
+            android:summary="Increases thread stack size from 1MB to 8MB and inserts randomly-sized unmapped guard regions between the stack and thread-local storage. Makes stack clash attacks and address prediction significantly harder.\n\nLikely to break: TEE drivers (fingerprint, KeyMint, Gatekeeper) and other vendor kernel drivers that assume contiguous thread memory layouts. Can cause intermittent failures that vary per boot due to the randomized guard gaps.\n\nReboot required." />
+    </PreferenceCategory>
+</PreferenceScreen>

@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <array name="pref_asus_usb_port_picker">
+	    <item>"Port 1"</item>
+	    <item>"Port 2"</item>
+    </array>
+    <array name="pref_asus_usb_port_picker_values">
+	    <item>"port_1"</item>
+	    <item>"port_2"</item>
+    </array>
+</resources>

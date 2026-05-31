@@ -1,0 +1,75 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+	<array name="pref_nubia_fan">
+		<item>Off</item>
+		<item>Low</item>
+		<item>Middle</item>
+		<item>High</item>
+	</array>
+	<array name="pref_nubia_fan_values">
+		<item>"0"</item>
+		<item>"3"</item>
+		<item>"4"</item>
+		<item>"5"</item>
+	</array>
+
+	<array name="pref_nubia_redmagic_led">
+		<item>Off</item>
+		<item>Scrolling effect 0</item>
+		<item>Scrolling effect 1</item>
+		<item>Scrolling effect 2</item>
+		<item>Scrolling effect 3</item>
+		<item>Scrolling effect 4</item>
+		<item>Scrolling effect 5</item>
+		<item>Scrolling effect 6</item>
+		<item>Scrolling effect 7</item>
+		<item>Scrolling effect 8</item>
+		<item>Blinking slow effect 0</item>
+		<item>Blinking slow effect 1</item>
+		<item>Blinking slow effect 2</item>
+		<item>Blinking slow effect 3</item>
+		<item>Blinking slow effect 4</item>
+		<item>Blinking slow effect 5</item>
+		<item>Blinking slow effect 6</item>
+		<item>Blinking slow effect 7</item>
+		<item>Blinking slow effect 8</item>
+		<item>Blinking fast effect 0</item>
+		<item>Blinking fast effect 1</item>
+		<item>Blinking fast effect 2</item>
+		<item>Blinking fast effect 3</item>
+		<item>Blinking fast effect 4</item>
+		<item>Blinking fast effect 5</item>
+		<item>Blinking fast effect 6</item>
+		<item>Blinking fast effect 7</item>
+		<item>Blinking fast effect 8</item>
+	</array>
+	<array name="pref_nubia_redmagic_led_values">
+		<item>"0"</item>
+		<item>"0xa0"</item>
+		<item>"0xa1"</item>
+		<item>"0xa2"</item>
+		<item>"0xa3"</item>
+		<item>"0xa4"</item>
+		<item>"0xa5"</item>
+		<item>"0xa6"</item>
+		<item>"0xa7"</item>
+		<item>"0xa8"</item>
+		<item>"0x70"</item>
+		<item>"0x71"</item>
+		<item>"0x72"</item>
+		<item>"0x73"</item>
+		<item>"0x74"</item>
+		<item>"0x75"</item>
+		<item>"0x76"</item>
+		<item>"0x77"</item>
+		<item>"0x78"</item>
+		<item>"0x80"</item>
+		<item>"0x81"</item>
+		<item>"0x82"</item>
+		<item>"0x83"</item>
+		<item>"0x85"</item>
+		<item>"0x86"</item>
+		<item>"0x87"</item>
+		<item>"0x88"</item>
+	</array>
+</resources>

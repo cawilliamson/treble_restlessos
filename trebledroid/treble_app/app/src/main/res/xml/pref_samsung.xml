@@ -1,0 +1,72 @@
+<?xml version="1.0" encoding="utf-8"?>
+<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android">
+    <PreferenceCategory android:title="Audio">
+        <SwitchPreference
+            android:defaultValue="false"
+            android:key="key_samsung_alternate_audio_policy"
+            android:title="Use alternate audio policy" />
+        <SwitchPreference
+            android:defaultValue="false"
+            android:key="key_samsung_audio_stereo"
+            android:title="Enable stereo audio mode" />
+        <SwitchPreference
+            android:defaultValue="false"
+            android:key="key_samsung_disable_back_mic"
+            android:title="Disable Built-In Back Mic"
+            android:summary="May fix broken mic on video recording" />
+    </PreferenceCategory>
+    <PreferenceCategory android:title="Screen">
+        <SwitchPreference
+            android:defaultValue="false"
+            android:key="key_samsung_high_brightness"
+            android:title="Enable extended brightness range" />
+        <SwitchPreference
+            android:defaultValue="false"
+            android:key="key_samsung_glove_mode"
+            android:title="Enable glove mode" />
+    </PreferenceCategory>
+    <PreferenceCategory android:title="Misc">
+        <SwitchPreference
+            android:defaultValue="false"
+            android:key="key_samsung_wireless_charging_transmit"
+            android:title="Enable reversed wireless charging(If applicable)" />
+        <SwitchPreference
+            android:defaultValue="false"
+            android:key="key_samsung_double_tap_to_wake"
+            android:title="Enable double tap to wake" />
+        <SwitchPreference
+            android:defaultValue="false"
+            android:key="key_samsung_fod_single_click"
+            android:title="Clicking fingerprint turns device on" />
+        <SwitchPreference
+            android:defaultValue="false"
+            android:key="key_samsung_camera_ids"
+            android:title="Enable access to all cameras"
+            android:summary="Requires Q vendor" />
+        <EditTextPreference
+            android:defaultValue="1"
+            android:key="key_samsung_flash_strength"
+            android:title="Set flash strength"
+            android:summary="Usually values are integers between 1 and 5"
+            android:inputType="number" />
+    </PreferenceCategory>
+    <PreferenceCategory android:title="Workarounds">
+        <SwitchPreference
+            android:defaultValue="false"
+            android:key="key_samsung_extra_sensors"
+            android:title="Enable extra sensors" />
+        <SwitchPreference
+            android:defaultValue="false"
+            android:key="key_samsung_colorspace"
+            android:title="Enable workaround for white-ish screen" />
+        <SwitchPreference
+            android:defaultValue="false"
+            android:key="key_samsung_broken_fingerprint"
+            android:title="Enable workaround for broken fingerprint" />
+        <EditTextPreference
+            android:defaultValue="-1"
+            android:key="key_samsung_backlight_multiplier"
+            android:title="Set backlight scale/max backlight level"
+            android:inputType="number" />
+    </PreferenceCategory>
+</PreferenceScreen>

@@ -1,0 +1,85 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <array name="pref_misc_mobile_signal">
+      <item>Android default</item>
+      <item>Huawei devices/OpenKirin</item>
+      <item>RSSI</item>
+      <item>RSRP</item>
+      <item>RSSNR</item>
+    </array>
+    <array name="pref_misc_mobile_signal_values">
+      <item>default</item>
+      <item>openkirin</item>
+      <item>rssi</item>
+      <item>rsrp</item>
+      <item>rssnr</item>
+    </array>
+
+    <array name="pref_misc_max_aspect_ratio_pre_o">
+      <item>"1.86 (default)"</item>
+      <item>"2.0"</item>
+      <item>"Infinite"</item>
+    </array>
+    <array name="pref_misc_max_aspect_ratio_pre_o_values">
+      <item>"1.86"</item>
+      <item>"2.0"</item>
+      <item>"0.0"</item>
+    </array>
+
+    <array name="pref_misc_bluetooth">
+        <item>"None"</item>
+      <item>"Mediatek"</item>
+      <item>"Huawei"</item>
+    </array>
+    <array name="pref_misc_bluetooth_values">
+      <item>"none"</item>
+      <item>"mediatek"</item>
+      <item>"huawei"</item>
+    </array>
+
+    <array name="pref_misc_display_fps">
+      <item>"Don't force"</item>
+      <item>"60fps"</item>
+    </array>
+    <array name="pref_misc_display_fps_values">
+      <item>"-1"</item>
+      <item>"0"</item>
+    </array>
+
+    <array name="pref_misc_camera_timestamp">
+      <item>"Don't override"</item>
+      <item>"Clock monotonic"</item>
+      <item>"Clock boottime"</item>
+    </array>
+    <array name="pref_misc_camera_timestamp_values">
+      <item>"-1"</item>
+      <item>"0"</item>
+      <item>"1"</item>
+    </array>
+
+    <array name="pref_misc_fod_color">
+      <item>"Green"</item>
+      <item>"Cyan"</item>
+      <item>"White"</item>
+    </array>
+    <array name="pref_misc_fod_color_values">
+      <item>"00ff00"</item>
+      <item>"00ffff"</item>
+      <item>"ffffff"</item>
+    </array>
+
+    <array name="pref_misc_transport_size">
+      <item>"0 (default)"</item>
+      <item>"8"</item>
+      <item>"16"</item>
+      <item>"24"</item>
+      <item>"32"</item>
+    </array>
+    <array name="pref_misc_transport_size_values">
+      <item>"0"</item>
+      <item>"8"</item>
+      <item>"16"</item>
+      <item>"24"</item>
+      <item>"32"</item>
+    </array>
+</resources>

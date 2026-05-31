@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="utf-8"?>
+<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android">
+    <PreferenceCategory android:title="Display">
+        <SwitchPreference
+            android:defaultValue="false"
+            android:key="key_asus_glove_mode"
+            android:title="Enable glove mode" />
+        <SwitchPreference
+            android:defaultValue="false"
+            android:key="key_asus_dt2w"
+            android:title="Enable double tap to wake" />
+    </PreferenceCategory>
+    <PreferenceCategory android:title="Other">
+        <SwitchPreference
+            android:defaultValue="true"
+            android:key="key_asus_fp_wake"
+            android:title="Enable fingerprint wake" />
+        <ListPreference
+            android:defaultValue="-1"
+            android:entries="@array/pref_asus_usb_port_picker"
+            android:entryValues="@array/pref_asus_usb_port_picker_values"
+            android:key="key_asus_usb_port_picker"
+            android:summary="Requires a reboot"
+            android:title="USB port picker" />
+    </PreferenceCategory>
+</PreferenceScreen>

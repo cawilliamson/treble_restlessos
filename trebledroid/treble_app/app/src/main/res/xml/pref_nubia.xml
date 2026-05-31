@@ -1,0 +1,99 @@
+<?xml version="1.0" encoding="utf-8"?>
+<PreferenceScreen xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:android="http://schemas.android.com/apk/res/android">
+    <PreferenceCategory android:title="Touchscreen">
+        <CheckBoxPreference
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:defaultValue="false"
+            android:key="nubia_double_tap_to_wake"
+            android:title="Enable DT2W"
+            app:summary="Double tap to wake up" />
+        <CheckBoxPreference
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:defaultValue="false"
+            android:key="nubia_high_touch_sample_rate"
+            android:title="Enable high touch sample rate"
+            app:summary="Drain more battery." />
+        <CheckBoxPreference
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:defaultValue="false"
+            android:key="nubia_high_touch_sensitivity"
+            android:title="Enable high touch sensitivity"
+            app:summary="While using gloves" />
+    </PreferenceCategory>
+    <PreferenceCategory android:title="Misc">
+        <CheckBoxPreference
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:defaultValue="false"
+            android:key="nubia_touchscreen_game_mode"
+            android:title="Enable game mode"
+            app:summaryOn="Auto stop fan is disabled" />
+        <CheckBoxPreference
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:defaultValue="false"
+            android:key="nubia_shoulder_btn"
+            android:title="Enable shoulder buttons"
+            app:summary="Shoulder buttons/triggers" />
+        <CheckBoxPreference
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:defaultValue="false"
+            android:key="nubia_bypass_charger"
+            android:title="Enable bypass charger"
+            app:summaryOff="Charger -> Battery -> Phone"
+            app:summaryOn="Charger->Phone" />
+        <ListPreference
+            android:defaultValue="0"
+            android:entries="@array/pref_nubia_fan"
+            android:entryValues="@array/pref_nubia_fan_values"
+            android:key="nubia_fan_speed"
+            android:title="FAN speed"
+            app:summary="Support smart charging" />
+    </PreferenceCategory>
+    <PreferenceCategory android:title="LEDs">
+        <CheckBoxPreference
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:defaultValue="false"
+            android:key="nubia_redmagic_logo_breath"
+            android:title="Make Redmagic logo breath" />
+        <ListPreference
+            android:defaultValue="-1"
+            android:entries="@array/pref_nubia_redmagic_led"
+            android:entryValues="@array/pref_nubia_redmagic_led_values"
+            android:key="nubia_redmagic_led"
+            android:title="REDMAGIC RGB" />
+    </PreferenceCategory>
+    <PreferenceCategory android:title="Boosts">
+        <CheckBoxPreference
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:defaultValue="false"
+            android:key="nubia_boost_cpu"
+            android:title="Boost CPU" />
+        <CheckBoxPreference
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:defaultValue="false"
+            android:key="nubia_boost_cache"
+            android:title="Boost caches" />
+        <CheckBoxPreference
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:defaultValue="false"
+            android:key="nubia_boost_gpu"
+            android:title="Boost GPU" />
+        <CheckBoxPreference
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:defaultValue="false"
+            android:key="nubia_boost_ufs"
+            android:title="Boost UFS"
+            app:summaryOn="Increase Read/Write speed" />
+    </PreferenceCategory>
+</PreferenceScreen>

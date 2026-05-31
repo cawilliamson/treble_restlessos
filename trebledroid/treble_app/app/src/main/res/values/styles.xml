@@ -1,0 +1,6 @@
+<resources>
+
+    <style name="Base.Theme.TrebleApp" parent="@android:style/Theme.DeviceDefault.Settings" />
+    <style name="Theme.TrebleApp" parent="Base.Theme.TrebleApp" />
+
+</resources>
