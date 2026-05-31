@@ -364,7 +364,7 @@ jobs:
         working-directory: src/
         run: |
           echo "Syncing trebledroid resources..."
-          cp --force --recursive --verbose ../trebledroid/*/ .
+          rsync --archive --verbose ../trebledroid/ .
           echo "Done."
 
       - name: Apply patches
