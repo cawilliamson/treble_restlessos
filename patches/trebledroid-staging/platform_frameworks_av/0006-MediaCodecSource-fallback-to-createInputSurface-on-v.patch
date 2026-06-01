@@ -1,0 +1,40 @@
+From 86f18dff08763ab7e58ef5dfbb2e0b4c66e86301 Mon Sep 17 00:00:00 2001
+From: "Christopher A. Williamson" <contact@chrisaw.io>
+Date: Mon, 1 Jun 2026 20:06:24 +0100
+Subject: [PATCH 6/6] MediaCodecSource: fallback to createInputSurface when
+ PersistentSurface fails
+
+some vendor HALs (notably MediaTek) report isModeSupported=true for
+PersistentSurface but then reject setInputSurface at runtime with
+'not a PersistentSurface'. this leaves the camera app unable to
+record video with MediaRecorder-based apps.
+
+fall back to createInputSurface() which creates a regular Surface
+internally and avoids the PersistentSurface code path entirely.
+---
+ media/libstagefright/MediaCodecSource.cpp | 9 +++++++++
+ 1 file changed, 9 insertions(+)
+
+diff --git a/media/libstagefright/MediaCodecSource.cpp b/media/libstagefright/MediaCodecSource.cpp
+index fdb3f67..0a8b342 100644
+--- a/media/libstagefright/MediaCodecSource.cpp
++++ b/media/libstagefright/MediaCodecSource.cpp
+@@ -578,6 +578,15 @@ status_t MediaCodecSource::initEncoder() {
+             // consumer, but have to use PersistentSurface as a wrapper to
+             // pass consumer over messages (similar to BufferProducerWrapper)
+             err = mEncoder->setInputSurface(mPersistentSurface);
++            // fallback: some vendor HALs (notably MediaTek) report
++            // isModeSupported for PersistentSurface but then reject
++            // setInputSurface at runtime. fall back to a regular input
++            // surface in that case.
++            if (err != OK) {
++                ALOGW("setInputSurface(PersistentSurface) failed (%d), "
++                      "falling back to createInputSurface", err);
++                err = mEncoder->createInputSurface(&mSurface);
++            }
+         } else {
+             err = mEncoder->createInputSurface(&mSurface);
+         }
+-- 
+2.54.0
+
