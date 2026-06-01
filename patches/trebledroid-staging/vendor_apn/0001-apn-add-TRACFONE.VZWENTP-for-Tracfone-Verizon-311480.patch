@@ -1,0 +1,43 @@
+From 4857e1382f8629d205602504babd93238e5af306 Mon Sep 17 00:00:00 2001
+From: "Christopher A. Williamson" <contact@chrisaw.io>
+Date: Mon, 1 Jun 2026 23:42:03 +0100
+Subject: [PATCH] apn: add TRACFONE.VZWENTP for Tracfone Verizon (311480)
+
+Some Tracfone Verizon devices require TRACFONE.VZWENTP as the data
+APN instead of VZWINTERNET. This is a well-documented Tracfone
+compatibility issue where different devices/SIMs respond to one APN
+value but not the other. stock ROMs ship both entries.
+---
+ US.xml | 16 ++++++++++++++++
+ 1 file changed, 16 insertions(+)
+
+diff --git a/US.xml b/US.xml
+index e7562b6..6a6bd84 100644
+--- a/US.xml
++++ b/US.xml
+@@ -3945,6 +3945,22 @@
+         roaming_protocol="IP"
+         type="default,dun,supl"
+     />
++    <apn
++        mcc="311"
++        mnc="480"
++        carrier="Verizon"
++        apn="TRACFONE.VZWENTP"
++        authtype="0"
++        bearer_bitmask="1|2|3|9|10|11|13|14|15|18|20"
++        carrier_id="1839"
++        max_conns="20"
++        max_conns_time="300"
++        modem_cognitive="true"
++        profile_id="0"
++        protocol="IPV4V6"
++        roaming_protocol="IP"
++        type="default,dun,supl"
++    />
+     <apn
+         mcc="311"
+         mnc="480"
+-- 
+2.54.0
+
