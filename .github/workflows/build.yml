@@ -338,7 +338,7 @@ jobs:
           echo "Resolved latest ${GRAPHENEOS_RELEASE_CHANNEL} tag: ${TAG}"
           echo "${TAG}" > tmp/.grapheneos_tag
 
-      - name: Sync sources
+      - name: Initialise repo
         working-directory: src/
         run: |
           GRAPHENEOS_TAG=$(cat ../tmp/.grapheneos_tag)
@@ -348,11 +348,21 @@ jobs:
             --manifest-url https://github.com/GrapheneOS/platform_manifest.git
           mkdir --parents .repo/local_manifests
           cp --verbose ../configs/manifests/*.xml .repo/local_manifests/
-          SYNC_JOBS=$(( $(nproc --all) > 100 ? 100 : $(nproc --all) ))
-          while ! repo sync --force-sync --jobs=${SYNC_JOBS} --no-clone-bundle --no-tags; do
-            echo "repo sync failed, retrying in 30s..."
-            sleep 30
-          done
+
+      - name: Sync sources
+        uses: nick-fields/retry@v4
+        with:
+          timeout_minutes: 60
+          max_attempts: 20
+          retry_wait_seconds: 30
+          command: |
+            cd src/
+            SYNC_JOBS=$(( $(nproc --all) > 100 ? 100 : $(nproc --all) ))
+            repo sync --force-sync --jobs=${SYNC_JOBS} --no-clone-bundle --no-tags
+
+      - name: Parse version info
+        working-directory: src/
+        run: |
           AOSP_TAG=$(grep --max-count=1 "aosp_revision:" .repo/manifests/config.yml | sed "s/.*: *//")
           ANDROID_VERSION=$(echo "${AOSP_TAG}" | sed "s/android-//;s/_r.*//")
           echo "Detected ANDROID_VERSION: ${ANDROID_VERSION}"
@@ -461,34 +471,22 @@ jobs:
           cat out/CHANGELOG.md
 
       - name: Upload artifacts to build.chrisaw.io
-        run: |
-          RELEASE_NAME="${{ steps.compress.outputs.release_name }}"
-          REMOTE="build.chrisaw.io:/var/www/build.chrisaw.io/${RELEASE_NAME}"
-
-          # retry up to 5 times with exponential backoff -- the img files
-          # are large (~2GB xz) and transfers to build.chrisaw.io sometimes
-          # time out or drop midway through.
-          rsync_retry() {
-            local src="$1" dest="$2" attempts=5 delay=10
-            for i in $(seq 1 "$attempts"); do
-              echo "[rsync] attempt $i/$attempts: $src -> $dest"
-              if rsync --archive --compress --mkpath --verbose \
-                   --timeout=120 --contimeout=30 \
-                   --partial --partial-dir=.rsync-partial \
-                   "$src" "$dest"; then
-                echo "[rsync] succeeded on attempt $i"
-                return 0
-              fi
-              echo "[rsync] attempt $i failed, waiting ${delay}s before retry..."
-              sleep "$delay"
-              delay=$((delay * 2))
-            done
-            echo "[rsync] FAILED after $attempts attempts"
-            return 1
-          }
-
-          rsync_retry "out/*.img.xz out/CHANGELOG.md" "${REMOTE}/"
-          rsync_retry "out/zsync/" "${REMOTE}/zsync/"
+        uses: nick-fields/retry@v4
+        with:
+          timeout_minutes: 30
+          max_attempts: 5
+          retry_wait_seconds: 30
+          command: |
+            RELEASE_NAME="${{ steps.compress.outputs.release_name }}"
+            REMOTE="build.chrisaw.io:/var/www/build.chrisaw.io/${RELEASE_NAME}"
+            rsync --archive --compress --mkpath --verbose \
+              --timeout=120 --contimeout=30 \
+              --partial --partial-dir=.rsync-partial \
+              out/*.img.xz out/CHANGELOG.md "${REMOTE}/"
+            rsync --archive --compress --mkpath --verbose \
+              --timeout=120 --contimeout=30 \
+              --partial --partial-dir=.rsync-partial \
+              out/zsync/ "${REMOTE}/zsync/"
 
       - name: Create GitHub release
         if: env.DEBUG_BUILD != 'true'
