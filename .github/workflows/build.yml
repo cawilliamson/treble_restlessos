@@ -26,7 +26,7 @@ permissions:
 # ---------------------------------------------------------------------------
 env:
   # EC2 provisioning
-  EC2_AMI_OWNER: 099720109477
+  EC2_AMI_OWNER: '099720109477'
   EC2_AMI_PATTERN: ubuntu/images/hvm-ssd-gp3/ubuntu-noble-24.04-amd64-server-*
   EC2_CANDIDATE_REGIONS: eu-west-2 eu-west-1
   EC2_DEFAULT_REGION: eu-west-2
