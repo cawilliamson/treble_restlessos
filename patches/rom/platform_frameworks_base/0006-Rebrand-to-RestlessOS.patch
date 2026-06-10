@@ -1,7 +1,7 @@
 From d6deae54669b3306b3469ef9b2a978a4428fae9c Mon Sep 17 00:00:00 2001
 From: "Christopher A. Williamson" <contact@chrisaw.io>
 Date: Sat, 11 Apr 2026 23:13:36 +0100
-Subject: [PATCH 6/7] Rebrand to RestlessOS
+Subject: [PATCH 6/8] Rebrand to RestlessOS
 
 Replace boot logo images (android-logo-mask.png, android-logo-shine.png)
 and change the system_server notification label from GrapheneOS to

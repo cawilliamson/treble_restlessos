@@ -1,7 +1,7 @@
 From 0a001592f24cea32643e4417fc4e8e567b7dff0d Mon Sep 17 00:00:00 2001
 From: "Christopher A. Williamson" <contact@chrisaw.io>
 Date: Mon, 20 Apr 2026 17:30:09 +0100
-Subject: [PATCH 2/2] sepolicy: allow crash_dump to ptrace init for GSI tombstone
+Subject: [PATCH 2/3] sepolicy: allow crash_dump to ptrace init for GSI tombstone
  capture
 
 On GSI devices, init may crash with SIGSEGV due to vendor
