@@ -1,0 +1,73 @@
+From 3a1bbaf4624b409ac80d66e698564284c923d97d Mon Sep 17 00:00:00 2001
+From: "Christopher A. Williamson" <contact@chrisaw.io>
+Date: Thu, 11 Jun 2026 00:17:47 +0100
+Subject: [PATCH] treble_app: add force software codecs toggle
+
+replaces the old prefer-hw-codecs toggle with inverted logic. the new
+toggle defaults to OFF (hardware codecs enabled for full performance).
+enabling it sets persist.sys.phh.force_sw_codecs=true which triggers
+the vndk.rc property handler to force AIDL C2 HAL selection, promote
+OMX to highest rank, and enable AIDL buffer source fallback for
+createPersistentInputSurface.
+
+this fixes video recording on devices where the vendor HW encoder
+rejects PersistentSurface (camera hangs on video mode switch).
+---
+ app/src/main/java/me/phh/treble/app/Misc.kt         | 5 +++++
+ app/src/main/java/me/phh/treble/app/MiscSettings.kt | 1 +
+ app/src/main/res/xml/pref_misc.xml                  | 5 +++++
+ 3 files changed, 11 insertions(+)
+
+diff --git a/app/src/main/java/me/phh/treble/app/Misc.kt b/app/src/main/java/me/phh/treble/app/Misc.kt
+index 6ae2449..160ba07 100644
+--- a/app/src/main/java/me/phh/treble/app/Misc.kt
++++ b/app/src/main/java/me/phh/treble/app/Misc.kt
+@@ -348,6 +348,10 @@ object Misc: EntryStartup {
+                 val value = sp.getBoolean(key, false)
+                 SystemProperties.set("persist.sys.phh.virtual_sensors_are_real", if (value) "1" else "0")
+             }
++            MiscSettings.forceSwCodecs -> {
++                val value = sp.getBoolean(key, false)
++                SystemProperties.set("persist.sys.phh.force_sw_codecs", if (value) "true" else "false")
++            }
+         }
+     }
+ 
+@@ -374,5 +378,6 @@ object Misc: EntryStartup {
+         spListener.onSharedPreferenceChanged(sp, MiscSettings.noHwcomposer)
+         spListener.onSharedPreferenceChanged(sp, MiscSettings.storageFUSE)
+         spListener.onSharedPreferenceChanged(sp, MiscSettings.dt2w)
++        spListener.onSharedPreferenceChanged(sp, MiscSettings.forceSwCodecs)
+     }
+ }
+diff --git a/app/src/main/java/me/phh/treble/app/MiscSettings.kt b/app/src/main/java/me/phh/treble/app/MiscSettings.kt
+index 030494b..b6e2294 100644
+--- a/app/src/main/java/me/phh/treble/app/MiscSettings.kt
++++ b/app/src/main/java/me/phh/treble/app/MiscSettings.kt
+@@ -52,6 +52,7 @@ object MiscSettings : Settings {
+     val disableSaeUpgrade = "key_misc_disable_sae_upgrade"
+     val escoTransportUnitSize = "key_misc_esco_transport_unit_size"
+     val treatVirtualSensorsAsReal = "key_misc_treat_virtual_sensors_as_real"
++    val forceSwCodecs = "key_misc_force_sw_codecs"
+ 
+     override fun enabled() = true
+ }
+diff --git a/app/src/main/res/xml/pref_misc.xml b/app/src/main/res/xml/pref_misc.xml
+index bb46832..76fda8c 100644
+--- a/app/src/main/res/xml/pref_misc.xml
++++ b/app/src/main/res/xml/pref_misc.xml
+@@ -220,6 +220,11 @@
+             android:key="key_misc_treat_virtual_sensors_as_real"
+             android:title="Treat virtual sensors as real"
+             android:summary="Treat all virtual fingerprint sensors as real\nRequires a reboot" />
++        <SwitchPreference
++            android:defaultValue="false"
++            android:key="key_misc_force_sw_codecs"
++            android:title="Force software codecs"
++            android:summary="Use software encoders for video recording instead of broken vendor hardware encoders\nOnly enable if video recording fails\nRequires reboot" />
+     </PreferenceCategory>
+     <PreferenceCategory android:title="Debugging">
+         <Preference android:title="Debug Sensors">
+-- 
+2.54.0
+

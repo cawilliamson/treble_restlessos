@@ -1,7 +1,7 @@
 From 7931ddeb64f63efb3d3ea6c14acc6e5c3f116423 Mon Sep 17 00:00:00 2001
 From: "Christopher A. Williamson" <contact@chrisaw.io>
 Date: Sat, 23 May 2026 17:19:00 +0100
-Subject: [PATCH 7/8] appswitch: allow dcl restriction toggle for all apps
+Subject: [PATCH 7/7] appswitch: allow dcl restriction toggle for all apps
  including system apps
 
 grapheneos hardening greyed out the 'allow dynamic code loading' toggle

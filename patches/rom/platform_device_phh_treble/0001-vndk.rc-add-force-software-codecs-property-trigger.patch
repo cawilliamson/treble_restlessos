@@ -1,0 +1,39 @@
+From 02d46a358b3bf27d48f64edfbd4e9208aad941a3 Mon Sep 17 00:00:00 2001
+From: "Christopher A. Williamson" <contact@chrisaw.io>
+Date: Thu, 11 Jun 2026 00:15:22 +0100
+Subject: [PATCH] vndk.rc: add force software codecs property trigger
+
+when persist.sys.phh.force_sw_codecs=true, force AIDL C2 HAL
+selection (hiding HIDL vendor codecs), promote OMX to highest rank,
+and enable AIDL buffer source fallback for createPersistentInputSurface.
+this routes video recording through MediaCodecSource (which has its
+own PersistentSurface fallback) instead of the direct setInputSurface
+path that breaks on devices with broken vendor HW encoders.
+
+requires reboot after toggling in TrebleApp.
+---
+ vndk.rc | 11 +++++++++++
+ 1 file changed, 11 insertions(+)
+
+diff --git a/vndk.rc b/vndk.rc
+index 2f56680..87e8a35 100644
+--- a/vndk.rc
++++ b/vndk.rc
+@@ -115,3 +115,14 @@ service watchdogd-gsi /system/bin/watchdogd 10 20
+ on property:persist.sys.phh.adb_secure=1
+     exec u:r:phhsu_daemon:s0 root -- /system/bin/resetprop_phh ro.adb.secure 1
+     restart adbd
++
++# force software codecs: prefer SW/OMX encoders over broken vendor HW encoders.
++# when enabled, c2inputsurface fallback is also activated so that
++# createPersistentInputSurface uses the AIDL buffer source path.
++# uses resetprop_phh -n to patch property area directly before media
++# services read them, matching the timing of CodecFix magisk module.
++on property:persist.sys.phh.force_sw_codecs=true
++    exec u:r:phhsu_daemon:s0 root -- /system/bin/resetprop_phh -n debug.stagefright.c2inputsurface -1
++    exec u:r:phhsu_daemon:s0 root -- /system/bin/resetprop_phh -n debug.stagefright.ccodec 1
++    exec u:r:phhsu_daemon:s0 root -- /system/bin/resetprop_phh -n debug.stagefright.omx_default_rank 0
++    exec u:r:phhsu_daemon:s0 root -- /system/bin/resetprop_phh -n media.c2.hal.selection aidl
+-- 
+2.54.0
+
