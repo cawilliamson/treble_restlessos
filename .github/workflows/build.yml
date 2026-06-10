@@ -38,9 +38,6 @@ env:
   EC2_VOLUME_THROUGHPUT_MBPS: 1000
   EC2_VOLUME_TYPE: gp3
 
-  # build
-  BUILD_TIMEOUT_MINUTES: 120
-
   # repo sync
   SYNC_MAX_ATTEMPTS: 20
   SYNC_RETRY_WAIT_SECONDS: 30
@@ -333,7 +330,7 @@ jobs:
     name: Build ROM
     needs: provision
     runs-on: [ self-hosted, "${{ needs.provision.outputs.runner_label }}" ]
-    timeout-minutes: ${{ env.BUILD_TIMEOUT_MINUTES }}
+    timeout-minutes: 120
 
     env:
       GH_TOKEN: ${{ github.token }}
