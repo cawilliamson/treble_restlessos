@@ -21,6 +21,45 @@ permissions:
   actions: write
   contents: write
 
+# ---------------------------------------------------------------------------
+# tuneable knobs — change these here rather than hunting through the yaml
+# ---------------------------------------------------------------------------
+env:
+  # EC2 provisioning
+  EC2_INSTANCE_TYPE: c7i.48xlarge
+  EC2_VOLUME_SIZE_GB: 1000
+  EC2_VOLUME_TYPE: gp3
+  EC2_VOLUME_IOPS: 16000
+  EC2_VOLUME_THROUGHPUT_MBPS: 1000
+  EC2_CANDIDATE_REGIONS: eu-west-2 eu-west-1
+  EC2_DEFAULT_REGION: eu-west-2
+  EC2_SPOT_DEADLINE_MINUTES: 60
+  EC2_PROJECT_TAG: gsi-build
+  EC2_AMI_OWNER: 099720109477
+  EC2_AMI_PATTERN: ubuntu/images/hvm-ssd-gp3/ubuntu-noble-24.04-amd64-server-*
+
+  # runner registration
+  RUNNER_WAIT_ATTEMPTS: 60
+  RUNNER_WAIT_INTERVAL_SECONDS: 15
+
+  # build
+  BUILD_TIMEOUT_MINUTES: 120
+
+  # repo sync
+  SYNC_TIMEOUT_MINUTES: 60
+  SYNC_MAX_ATTEMPTS: 20
+  SYNC_RETRY_WAIT_SECONDS: 30
+
+  # rsync upload
+  RSYNC_TIMEOUT_MINUTES: 30
+  RSYNC_MAX_ATTEMPTS: 5
+  RSYNC_RETRY_WAIT_SECONDS: 30
+  RSYNC_TRANSFER_TIMEOUT_SECONDS: 120
+  RSYNC_CONNECT_TIMEOUT_SECONDS: 30
+
+  # spot retry
+  SPOT_RETRY_MAX_ATTEMPTS: 5
+
 # only one build at a time - spot instances are expensive
 concurrency:
   group: build
@@ -53,12 +92,12 @@ jobs:
         with:
           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          aws-region: eu-west-2
+          aws-region: ${{ env.EC2_DEFAULT_REGION }}
 
       - name: Generate unique runner label
         id: runner_label
         run: |
-          LABEL="gsi-build-${{ github.run_id }}"
+          LABEL="${{ env.EC2_PROJECT_TAG }}-${{ github.run_id }}"
           echo "label=${LABEL}" >> "$GITHUB_OUTPUT"
           echo "Runner label: ${LABEL}"
 
@@ -98,7 +137,6 @@ jobs:
       - name: Launch EC2 spot instance
         id: launch
         run: |
-          # c7i.48xlarge: 192 vCPUs, 384 GiB RAM
           # InstanceInitiatedShutdownBehavior=terminate ensures the cloud-init
           # safety timer (shutdown -P +120) destroys the instance entirely.
           # ephemeral root volume sized for the full build; instance terminates
@@ -106,7 +144,7 @@ jobs:
 
           # Regions to try. Ordered dynamically below by spot price —
           # cheaper region is assumed quieter / more reliable for spot.
-          CANDIDATE_REGIONS="eu-west-2 eu-west-1"
+          CANDIDATE_REGIONS="${{ env.EC2_CANDIDATE_REGIONS }}"
 
           # ------------------------------------------------------------------
           # Phase 0: rank candidate regions by current spot price
@@ -115,7 +153,7 @@ jobs:
           declare -A REGION_PRICE=()
           for REGION in ${CANDIDATE_REGIONS}; do
             PRICE=$(aws ec2 describe-spot-price-history --region "${REGION}" \
-              --instance-types c7i.48xlarge \
+              --instance-types ${{ env.EC2_INSTANCE_TYPE }} \
               --product-descriptions "Linux/UNIX" \
               --start-time "$(date -u -d '1 hour ago' +%Y-%m-%dT%H:%M:%S)" \
               --query 'SpotPriceHistory[0].SpotPrice' \
@@ -147,10 +185,10 @@ jobs:
 
             AMI_ID=$(aws ec2 describe-images --region "${REGION}" \
               --filters \
-                "Name=name,Values=ubuntu/images/hvm-ssd-gp3/ubuntu-noble-24.04-amd64-server-*" \
+                "Name=name,Values=${{ env.EC2_AMI_PATTERN }}" \
                 "Name=state,Values=available" \
               --output text \
-              --owners 099720109477 \
+              --owners ${{ env.EC2_AMI_OWNER }} \
               --query 'Images | sort_by(@, &CreationDate) | [-1].ImageId')
 
             if [ -z "${AMI_ID}" ]; then
@@ -161,11 +199,11 @@ jobs:
             REGION_AMI["${REGION}"]="${AMI_ID}"
 
             SG_ID=$(aws ec2 describe-security-groups --region "${REGION}" \
-              --filters "Name=group-name,Values=gsi-build" "Name=tag:Project,Values=gsi-build" \
+              --filters "Name=group-name,Values=${{ env.EC2_PROJECT_TAG }}" "Name=tag:Project,Values=${{ env.EC2_PROJECT_TAG }}" \
               --query 'SecurityGroups[0].GroupId' --output text 2>/dev/null) || true
 
             if [ -z "${SG_ID}" ] || [ "${SG_ID}" = "None" ]; then
-              echo "  Security group gsi-build not found, skipping region"
+              echo "  Security group ${{ env.EC2_PROJECT_TAG }} not found, skipping region"
               continue
             fi
             echo "  Security group: ${SG_ID}"
@@ -175,7 +213,7 @@ jobs:
             while IFS= read -r s; do
               [ -n "$s" ] && SUBNET_LIST="${SUBNET_LIST}${s} "
             done < <(aws ec2 describe-subnets --region "${REGION}" \
-              --filters "Name=tag:Project,Values=gsi-build" \
+              --filters "Name=tag:Project,Values=${{ env.EC2_PROJECT_TAG }}" \
               --query 'Subnets[].SubnetId' --output text | tr '\t' '\n')
 
             if [ -z "${SUBNET_LIST}" ]; then
@@ -209,7 +247,7 @@ jobs:
           INSTANCE_ID=""
           LAUNCHED_REGION=""
           ATTEMPT=0
-          DEADLINE=$((SECONDS + 3600))
+          DEADLINE=$((SECONDS + ${{ env.EC2_SPOT_DEADLINE_MINUTES }} * 60))
 
           while [ -z "$INSTANCE_ID" ] && [ "$SECONDS" -lt "$DEADLINE" ]; do
             ATTEMPT=$((ATTEMPT + 1))
@@ -224,13 +262,13 @@ jobs:
                 --image-id "${AMI_ID}" \
                 --instance-initiated-shutdown-behavior terminate \
                 --instance-market-options '{"MarketType":"spot","SpotOptions":{"SpotInstanceType":"one-time","InstanceInterruptionBehavior":"terminate"}}' \
-                --instance-type c7i.48xlarge \
+                --instance-type ${{ env.EC2_INSTANCE_TYPE }} \
                 --output text \
                 --query 'Instances[0].InstanceId' \
                 --security-group-ids "${SG_ID}" \
                 --subnet-id "${SUBNET}" \
-                --tag-specifications "ResourceType=instance,Tags=[{Key=Name,Value=gsi-build-${{ github.run_id }}},{Key=Project,Value=gsi-build},{Key=Ephemeral,Value=true}]" \
-                --block-device-mappings 'DeviceName=/dev/sda1,Ebs={VolumeSize=1000,VolumeType=gp3,Iops=16000,Throughput=1000,DeleteOnTermination=true}' \
+                --tag-specifications "ResourceType=instance,Tags=[{Key=Name,Value=${{ env.EC2_PROJECT_TAG }}-${{ github.run_id }}},{Key=Project,Value=${{ env.EC2_PROJECT_TAG }}},{Key=Ephemeral,Value=true}]" \
+                --block-device-mappings "DeviceName=/dev/sda1,Ebs={VolumeSize=${{ env.EC2_VOLUME_SIZE_GB }},VolumeType=${{ env.EC2_VOLUME_TYPE }},Iops=${{ env.EC2_VOLUME_IOPS }},Throughput=${{ env.EC2_VOLUME_THROUGHPUT_MBPS }},DeleteOnTermination=true}" \
                 --user-data "file:///tmp/user-data.yml" 2>&1) && {
                   LAUNCHED_REGION="${REGION}"
                   break 2
@@ -245,13 +283,13 @@ jobs:
           done
 
           if [ -z "${INSTANCE_ID}" ]; then
-            echo "ERROR: failed to launch spot instance in any region after 1 hour"
+            echo "ERROR: failed to launch spot instance in any region after ${{ env.EC2_SPOT_DEADLINE_MINUTES }} minutes"
             exit 1
           fi
 
           echo "instance_id=${INSTANCE_ID}" >> "$GITHUB_OUTPUT"
           echo "region=${LAUNCHED_REGION}" >> "$GITHUB_OUTPUT"
-          echo "Launched spot instance: ${INSTANCE_ID} (c7i.48xlarge in ${LAUNCHED_REGION})"
+          echo "Launched spot instance: ${INSTANCE_ID} (${{ env.EC2_INSTANCE_TYPE }} in ${LAUNCHED_REGION})"
 
       - name: Wait for instance to reach running state
         run: |
@@ -266,7 +304,7 @@ jobs:
           LABEL="${{ steps.runner_label.outputs.label }}"
           echo "Waiting for runner with label '${LABEL}' to register..."
 
-          for i in $(seq 1 60); do
+          for i in $(seq 1 ${{ env.RUNNER_WAIT_ATTEMPTS }}); do
             ONLINE=$(curl --fail --silent \
               --header "Accept: application/vnd.github+json" \
               --header "Authorization: Bearer ${{ secrets.GH_PAT }}" \
@@ -274,16 +312,16 @@ jobs:
               | jq --arg label "$LABEL" --raw-output \
                 '[.runners[] | select(.labels[].name == $label) | select(.status == "online")] | length')
 
-            echo "  attempt ${i}/60: ${ONLINE} runner(s) online with label '${LABEL}'"
+            echo "  attempt ${i}/${{ env.RUNNER_WAIT_ATTEMPTS }}: ${ONLINE} runner(s) online with label '${LABEL}'"
 
             if [ "${ONLINE}" -ge 1 ] 2>/dev/null; then
               echo "Runner is online and ready"
               exit 0
             fi
-            sleep 15
+            sleep ${{ env.RUNNER_WAIT_INTERVAL_SECONDS }}
           done
 
-          echo "ERROR: runner never came online after 15 minutes"
+          echo "ERROR: runner never came online after $(( ${{ env.RUNNER_WAIT_ATTEMPTS }} * ${{ env.RUNNER_WAIT_INTERVAL_SECONDS }} / 60 )) minutes"
           exit 1
 
   # ---------------------------------------------------------------------------
@@ -295,14 +333,13 @@ jobs:
     name: Build ROM
     needs: provision
     runs-on: [ self-hosted, "${{ needs.provision.outputs.runner_label }}" ]
-    timeout-minutes: 120
+    timeout-minutes: ${{ env.BUILD_TIMEOUT_MINUTES }}
 
     env:
       GH_TOKEN: ${{ github.token }}
       DEBUG_BUILD: ${{ github.event.inputs.debug_build || 'false' }}
       GRAPHENEOS_RELEASE_CHANNEL: ${{ github.event.inputs.release_channel || 'stable' }}
       WEB_DIR: /var/www/build.chrisaw.io
-      REPO_PATH: ${{ github.repository }}
 
     steps:
       - name: Checkout build scripts
@@ -352,9 +389,9 @@ jobs:
       - name: Sync sources
         uses: nick-fields/retry@v4
         with:
-          timeout_minutes: 60
-          max_attempts: 20
-          retry_wait_seconds: 30
+          timeout_minutes: ${{ env.SYNC_TIMEOUT_MINUTES }}
+          max_attempts: ${{ env.SYNC_MAX_ATTEMPTS }}
+          retry_wait_seconds: ${{ env.SYNC_RETRY_WAIT_SECONDS }}
           command: |
             cd src/
             SYNC_JOBS=$(( $(nproc --all) > 100 ? 100 : $(nproc --all) ))
@@ -473,18 +510,18 @@ jobs:
       - name: Upload artifacts to build.chrisaw.io
         uses: nick-fields/retry@v4
         with:
-          timeout_minutes: 30
-          max_attempts: 5
-          retry_wait_seconds: 30
+          timeout_minutes: ${{ env.RSYNC_TIMEOUT_MINUTES }}
+          max_attempts: ${{ env.RSYNC_MAX_ATTEMPTS }}
+          retry_wait_seconds: ${{ env.RSYNC_RETRY_WAIT_SECONDS }}
           command: |
             RELEASE_NAME="${{ steps.compress.outputs.release_name }}"
             REMOTE="build.chrisaw.io:/var/www/build.chrisaw.io/${RELEASE_NAME}"
             rsync --archive --compress --mkpath --verbose \
-              --timeout=120 --contimeout=30 \
+              --timeout=${{ env.RSYNC_TRANSFER_TIMEOUT_SECONDS }} --contimeout=${{ env.RSYNC_CONNECT_TIMEOUT_SECONDS }} \
               --partial --partial-dir=.rsync-partial \
               out/*.img.xz out/CHANGELOG.md "${REMOTE}/"
             rsync --archive --compress --mkpath --verbose \
-              --timeout=120 --contimeout=30 \
+              --timeout=${{ env.RSYNC_TRANSFER_TIMEOUT_SECONDS }} --contimeout=${{ env.RSYNC_CONNECT_TIMEOUT_SECONDS }} \
               --partial --partial-dir=.rsync-partial \
               out/zsync/ "${REMOTE}/zsync/"
 
@@ -522,7 +559,9 @@ jobs:
         with:
           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          aws-region: ${{ needs.provision.outputs.region || 'eu-west-2' }}
+          aws-region: ${{ needs.provision.outputs.region || env.EC2_DEFAULT_REGION }}
+        env:
+          EC2_DEFAULT_REGION: ${{ env.EC2_DEFAULT_REGION }}
 
       - name: Check for spot interruption
         id: check_spot
@@ -544,13 +583,13 @@ jobs:
           echo "Build failed — checking if spot instance was reclaimed..."
           for i in $(seq 1 12); do
             STATE=$(aws ec2 describe-instances \
-              --region "${{ needs.provision.outputs.region || 'eu-west-2' }}" \
+              --region "${{ needs.provision.outputs.region || env.EC2_DEFAULT_REGION }}" \
               --instance-ids "${INSTANCE_ID}" \
               --query 'Reservations[0].Instances[0].State.Name' \
               --output text 2>/dev/null || echo "unknown")
 
             REASON=$(aws ec2 describe-instances \
-              --region "${{ needs.provision.outputs.region || 'eu-west-2' }}" \
+              --region "${{ needs.provision.outputs.region || env.EC2_DEFAULT_REGION }}" \
               --instance-ids "${INSTANCE_ID}" \
               --query 'Reservations[0].Instances[0].StateReason.Code' \
               --output text 2>/dev/null || echo "unknown")
@@ -584,7 +623,7 @@ jobs:
           fi
 
           echo "Terminating instance ${INSTANCE_ID}..."
-          aws ec2 terminate-instances --region "${{ needs.provision.outputs.region || 'eu-west-2' }}" --instance-ids "${INSTANCE_ID}"
+          aws ec2 terminate-instances --region "${{ needs.provision.outputs.region || env.EC2_DEFAULT_REGION }}" --instance-ids "${INSTANCE_ID}"
           echo "Terminate request sent"
 
       - name: Wait for instance termination
@@ -597,12 +636,12 @@ jobs:
 
           echo "Waiting for instance ${INSTANCE_ID} to terminate..."
           aws ec2 wait instance-terminated \
-            --region "${{ needs.provision.outputs.region || 'eu-west-2' }}" \
+            --region "${{ needs.provision.outputs.region || env.EC2_DEFAULT_REGION }}" \
             --instance-ids "${INSTANCE_ID}" \
             || echo "WARNING: wait timed out, instance may still be terminating"
 
           STATE=$(aws ec2 describe-instances \
-            --region "${{ needs.provision.outputs.region || 'eu-west-2' }}" \
+            --region "${{ needs.provision.outputs.region || env.EC2_DEFAULT_REGION }}" \
             --instance-ids "${INSTANCE_ID}" \
             --query 'Reservations[0].Instances[0].State.Name' \
             --output text 2>/dev/null || echo "unknown")
@@ -611,7 +650,7 @@ jobs:
             echo "Confirmed: instance ${INSTANCE_ID} is ${STATE}"
           else
             echo "::error::Instance ${INSTANCE_ID} is in state '${STATE}' - may still be running!"
-            echo "::error::MANUAL ACTION REQUIRED: https://${{ needs.provision.outputs.region || 'eu-west-2' }}.console.aws.amazon.com/ec2"
+            echo "::error::MANUAL ACTION REQUIRED: https://${{ needs.provision.outputs.region || env.EC2_DEFAULT_REGION }}.console.aws.amazon.com/ec2"
             exit 1
           fi
 
@@ -650,10 +689,10 @@ jobs:
             echo "|------|-------|"
             echo "| Build result | ${BUILD_RESULT} |"
             echo "| Spot interrupted | ${SPOT_HIT} |"
-            echo "| Attempt | $((ATTEMPT + 1)) of 5 |"
+            echo "| Attempt | $((ATTEMPT + 1)) of ${{ env.SPOT_RETRY_MAX_ATTEMPTS }} |"
             echo "| Instance ID | ${{ needs.provision.outputs.instance_id }} |"
-            echo "| Instance type | c7i.48xlarge (192 vCPUs) |"
-            echo "| Region | ${{ needs.provision.outputs.region || 'eu-west-2' }} |"
+            echo "| Instance type | ${{ env.EC2_INSTANCE_TYPE }} (192 vCPUs) |"
+            echo "| Region | ${{ needs.provision.outputs.region || env.EC2_DEFAULT_REGION }} |"
             echo "| Runner label | ${{ needs.provision.outputs.runner_label }} |"
             echo "| Instance terminated | yes |"
           } >> "$GITHUB_STEP_SUMMARY"
@@ -661,7 +700,7 @@ jobs:
   # ---------------------------------------------------------------------------
   # job 4: retry on spot interruption
   # if the build failed because AWS reclaimed the spot instance, re-trigger
-  # the workflow automatically (up to 5 attempts).
+  # the workflow automatically (up to SPOT_RETRY_MAX_ATTEMPTS attempts).
   # ---------------------------------------------------------------------------
   retry:
     name: Retry on Spot Interruption
@@ -676,8 +715,8 @@ jobs:
           ATTEMPT="${{ github.event.inputs._retry_attempt || '0' }}"
           NEXT=$((ATTEMPT + 1))
           echo "Current attempt: $((ATTEMPT + 1)), next would be: $((NEXT + 1))"
-          if [ "${NEXT}" -ge 5 ]; then
-            echo "::error::Spot retry budget exhausted (5 attempts). Giving up."
+          if [ "${NEXT}" -ge ${{ env.SPOT_RETRY_MAX_ATTEMPTS }} ]; then
+            echo "::error::Spot retry budget exhausted (${{ env.SPOT_RETRY_MAX_ATTEMPTS }} attempts). Giving up."
             echo "has_budget=false" >> "$GITHUB_OUTPUT"
           else
             echo "has_budget=true" >> "$GITHUB_OUTPUT"
@@ -690,7 +729,7 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         run: |
           NEXT="${{ steps.budget.outputs.next_attempt }}"
-          echo "::warning::Spot instance was reclaimed — retrying (attempt $((NEXT + 1)) of 5)..."
+          echo "::warning::Spot instance was reclaimed — retrying (attempt $((NEXT + 1)) of ${{ env.SPOT_RETRY_MAX_ATTEMPTS }})..."
           gh workflow run build.yml \
             --repo "${{ github.repository }}" \
             --ref "${{ github.ref }}" \
