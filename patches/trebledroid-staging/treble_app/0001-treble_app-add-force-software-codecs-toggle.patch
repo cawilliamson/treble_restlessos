@@ -1,10 +1,11 @@
-From 3a1bbaf4624b409ac80d66e698564284c923d97d Mon Sep 17 00:00:00 2001
+From 80808e2c5ef044da1a78d79f36ab13c280e91c27 Mon Sep 17 00:00:00 2001
 From: "Christopher A. Williamson" <contact@chrisaw.io>
-Date: Thu, 11 Jun 2026 00:17:47 +0100
-Subject: [PATCH] treble_app: add force software codecs toggle
+Date: Thu, 11 Jun 2026 15:40:07 +0100
+Subject: [PATCH] treble_app: replace prefer hw codecs with force sw codecs
+ toggle
 
-replaces the old prefer-hw-codecs toggle with inverted logic. the new
-toggle defaults to OFF (hardware codecs enabled for full performance).
+inverts the old prefer-hw-codecs toggle to force-sw-codecs. the
+default is now OFF (hardware codecs enabled for full performance).
 enabling it sets persist.sys.phh.force_sw_codecs=true which triggers
 the vndk.rc property handler to force AIDL C2 HAL selection, promote
 OMX to highest rank, and enable AIDL buffer source fallback for
@@ -13,27 +14,28 @@ createPersistentInputSurface.
 this fixes video recording on devices where the vendor HW encoder
 rejects PersistentSurface (camera hangs on video mode switch).
 ---
- app/src/main/java/me/phh/treble/app/Misc.kt         | 5 +++++
- app/src/main/java/me/phh/treble/app/MiscSettings.kt | 1 +
- app/src/main/res/xml/pref_misc.xml                  | 5 +++++
- 3 files changed, 11 insertions(+)
+ app/src/main/java/me/phh/treble/app/Misc.kt         | 5 +++--
+ app/src/main/java/me/phh/treble/app/MiscSettings.kt | 2 +-
+ app/src/main/res/xml/pref_misc.xml                  | 6 +++---
+ 3 files changed, 7 insertions(+), 6 deletions(-)
 
 diff --git a/app/src/main/java/me/phh/treble/app/Misc.kt b/app/src/main/java/me/phh/treble/app/Misc.kt
-index 6ae2449..160ba07 100644
+index bfdbd13..51e5c15 100644
 --- a/app/src/main/java/me/phh/treble/app/Misc.kt
 +++ b/app/src/main/java/me/phh/treble/app/Misc.kt
-@@ -348,6 +348,10 @@ object Misc: EntryStartup {
+@@ -410,9 +410,9 @@ object Misc: EntryStartup {
                  val value = sp.getBoolean(key, false)
-                 SystemProperties.set("persist.sys.phh.virtual_sensors_are_real", if (value) "1" else "0")
+                 SystemProperties.set("persist.sys.activity_anim_perf_override", if (value) "true" else "false")
              }
+-            MiscSettings.preferHwCodecs -> {
 +            MiscSettings.forceSwCodecs -> {
-+                val value = sp.getBoolean(key, false)
+                 val value = sp.getBoolean(key, false)
+-                SystemProperties.set("persist.sys.phh.prefer_hw_codecs", if (value) "true" else "false")
 +                SystemProperties.set("persist.sys.phh.force_sw_codecs", if (value) "true" else "false")
-+            }
-         }
-     }
- 
-@@ -374,5 +378,6 @@ object Misc: EntryStartup {
+             }
+             MiscSettings.disableLeApcfExtended -> {
+                 val value = sp.getBoolean(key, false)
+@@ -448,5 +448,6 @@ object Misc: EntryStartup {
          spListener.onSharedPreferenceChanged(sp, MiscSettings.noHwcomposer)
          spListener.onSharedPreferenceChanged(sp, MiscSettings.storageFUSE)
          spListener.onSharedPreferenceChanged(sp, MiscSettings.dt2w)
@@ -41,33 +43,35 @@ index 6ae2449..160ba07 100644
      }
  }
 diff --git a/app/src/main/java/me/phh/treble/app/MiscSettings.kt b/app/src/main/java/me/phh/treble/app/MiscSettings.kt
-index 030494b..b6e2294 100644
+index a517441..ef70c80 100644
 --- a/app/src/main/java/me/phh/treble/app/MiscSettings.kt
 +++ b/app/src/main/java/me/phh/treble/app/MiscSettings.kt
-@@ -52,6 +52,7 @@ object MiscSettings : Settings {
-     val disableSaeUpgrade = "key_misc_disable_sae_upgrade"
-     val escoTransportUnitSize = "key_misc_esco_transport_unit_size"
-     val treatVirtualSensorsAsReal = "key_misc_treat_virtual_sensors_as_real"
+@@ -21,7 +21,7 @@ object MiscSettings : Settings {
+     val disableButtonsBacklight = "key_misc_disable_buttons_backlight"
+     val forceNavbarOff = "key_misc_force_navbar_off"
+     val bluetooth = "key_misc_bluetooth"
+-    val preferHwCodecs = "key_misc_prefer_hw_codecs"
 +    val forceSwCodecs = "key_misc_force_sw_codecs"
- 
-     override fun enabled() = true
- }
+     val activityAnimPerfOverride = "key_misc_activity_anim_perf_override"
+     val securize = "key_misc_securize"
+     val removeTelephony = "key_misc_removetelephony"
 diff --git a/app/src/main/res/xml/pref_misc.xml b/app/src/main/res/xml/pref_misc.xml
-index bb46832..76fda8c 100644
+index b19dcb2..01776c9 100644
 --- a/app/src/main/res/xml/pref_misc.xml
 +++ b/app/src/main/res/xml/pref_misc.xml
-@@ -220,6 +220,11 @@
-             android:key="key_misc_treat_virtual_sensors_as_real"
-             android:title="Treat virtual sensors as real"
-             android:summary="Treat all virtual fingerprint sensors as real\nRequires a reboot" />
-+        <SwitchPreference
-+            android:defaultValue="false"
+@@ -282,9 +282,9 @@
+             android:summary="Use lightweight programmatic activity transitions instead of XML animations\nFixes lag in Settings on low-end MTK devices" />
+         <SwitchPreference
+             android:defaultValue="false"
+-            android:key="key_misc_prefer_hw_codecs"
+-            android:title="Prefer hardware codecs"
+-            android:summary="Use vendor hardware codecs instead of software codecs for video recording\nOnly enable if video recording already works on your device\nRequires reboot" />
 +            android:key="key_misc_force_sw_codecs"
 +            android:title="Force software codecs"
 +            android:summary="Use software encoders for video recording instead of broken vendor hardware encoders\nOnly enable if video recording fails\nRequires reboot" />
-     </PreferenceCategory>
-     <PreferenceCategory android:title="Debugging">
-         <Preference android:title="Debug Sensors">
+         <SwitchPreference
+             android:defaultValue="false"
+             android:key="key_misc_treat_virtual_sensors_as_real"
 -- 
 2.54.0
 

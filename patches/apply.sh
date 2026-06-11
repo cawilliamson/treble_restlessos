@@ -22,7 +22,7 @@ for project in $(cd "$patches"/"$tree"; echo *); do
         if test -d .git; then
             git am "$patch" || { git am --abort; exit 1; }
         else
-            patch -p1 < "$patch" || exit 1
+            patch -p1 --no-backup-if-mismatch < "$patch" || exit 1
         fi
     done
     popd &>/dev/null

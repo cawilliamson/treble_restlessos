@@ -282,9 +282,9 @@
             android:summary="Use lightweight programmatic activity transitions instead of XML animations\nFixes lag in Settings on low-end MTK devices" />
         <SwitchPreference
             android:defaultValue="false"
-            android:key="key_misc_prefer_hw_codecs"
-            android:title="Prefer hardware codecs"
-            android:summary="Use vendor hardware codecs instead of software codecs for video recording\nOnly enable if video recording already works on your device\nRequires reboot" />
+            android:key="key_misc_force_sw_codecs"
+            android:title="Force software codecs"
+            android:summary="Use software encoders for video recording instead of broken vendor hardware encoders\nOnly enable if video recording fails\nRequires reboot" />
         <SwitchPreference
             android:defaultValue="false"
             android:key="key_misc_treat_virtual_sensors_as_real"
