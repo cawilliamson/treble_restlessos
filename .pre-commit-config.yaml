@@ -35,7 +35,7 @@ repos:
     - |
       EXIT=0
       for f in "$@"; do
-        if grep -q '^diff --git a/.*\.patch ' "$f"; then
+        if grep -Pq '^diff --git a/.*\.patch\b' "$f"; then
           echo "[BLOCKED] patch creates or modifies another .patch file: $f"
           echo "        patches must not generate .patch files in the source tree"
           EXIT=1
