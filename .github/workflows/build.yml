@@ -44,7 +44,6 @@ env:
   SYNC_TIMEOUT_MINUTES: 60
 
   # rsync upload
-  RSYNC_CONNECT_TIMEOUT_SECONDS: 30
   RSYNC_MAX_ATTEMPTS: 5
   RSYNC_RETRY_WAIT_SECONDS: 30
   RSYNC_TIMEOUT_MINUTES: 30
@@ -514,11 +513,11 @@ jobs:
             RELEASE_NAME="${{ steps.compress.outputs.release_name }}"
             REMOTE="build.chrisaw.io:/var/www/build.chrisaw.io/${RELEASE_NAME}"
             rsync --archive --compress --mkpath --verbose \
-              --timeout=${{ env.RSYNC_TRANSFER_TIMEOUT_SECONDS }} --contimeout=${{ env.RSYNC_CONNECT_TIMEOUT_SECONDS }} \
+              --timeout=${{ env.RSYNC_TRANSFER_TIMEOUT_SECONDS }} \
               --partial --partial-dir=.rsync-partial \
               out/*.img.xz out/CHANGELOG.md "${REMOTE}/"
             rsync --archive --compress --mkpath --verbose \
-              --timeout=${{ env.RSYNC_TRANSFER_TIMEOUT_SECONDS }} --contimeout=${{ env.RSYNC_CONNECT_TIMEOUT_SECONDS }} \
+              --timeout=${{ env.RSYNC_TRANSFER_TIMEOUT_SECONDS }} \
               --partial --partial-dir=.rsync-partial \
               out/zsync/ "${REMOTE}/zsync/"
 
