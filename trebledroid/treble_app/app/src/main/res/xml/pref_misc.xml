@@ -282,11 +282,6 @@
             android:summary="Use lightweight programmatic activity transitions instead of XML animations\nFixes lag in Settings on low-end MTK devices" />
         <SwitchPreference
             android:defaultValue="false"
-            android:key="key_misc_prefer_hw_codecs"
-            android:title="Prefer hardware codecs"
-            android:summary="Use vendor hardware codecs instead of software codecs for video recording\nOnly enable if video recording already works on your device\nRequires reboot" />
-        <SwitchPreference
-            android:defaultValue="false"
             android:key="key_misc_treat_virtual_sensors_as_real"
             android:title="Treat virtual sensors as real"
             android:summary="Treat all virtual fingerprint sensors as real\nRequires a reboot" />

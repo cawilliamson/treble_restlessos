@@ -74,6 +74,30 @@ if [ -f /vendor/bin/mtkmal ];then
     fi
 fi
 
+# spoof post-boot props
+# should be applied after boot complete to prevent breaking device features
+if [ ! -f /metadata/securize_disable ]; then
+  resetprop_phh ro.build.user nobody
+  resetprop_phh ro.build.host android-build
+  resetprop_phh ro.build.tags release-keys
+  resetprop_phh ro.product.build.tags release-keys
+  resetprop_phh ro.system.build.tags release-keys
+  resetprop_phh ro.system_ext.build.tags release-keys
+  resetprop_phh ro.vendor.build.tags release-keys
+  resetprop_phh ro.boot.vbmeta.device_state locked
+  resetprop_phh vendor.boot.vbmeta.device_state locked
+  resetprop_phh ro.boot.verifiedbootstate green
+  resetprop_phh vendor.boot.verifiedbootstate green
+  resetprop_phh ro.boot.flash.locked 1
+  resetprop_phh ro.boot.veritymode enforcing
+  resetprop_phh ro.boot.warranty_bit 0
+  resetprop_phh ro.vendor.warranty_bit 0
+  resetprop_phh ro.warranty_bit 0
+  resetprop_phh --delete ro.build.selinux
+  resetprop_phh -n sys.oem_unlock_allowed 0
+  resetprop_phh -n init.svc.flash_recovery stopped
+fi
+
 if grep -qF android.hardware.boot /vendor/manifest.xml || grep -qF android.hardware.boot /vendor/etc/vintf/manifest.xml ;then
 	bootctl mark-boot-successful
 fi

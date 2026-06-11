@@ -91,6 +91,24 @@ repos:
     files: '\.patch$'
     pass_filenames: true
 
+  - id: patch-ci-mode-verify
+    name: verify patches apply against trebledroid/ base (CI mirror)
+    entry: bash
+    args:
+    - -c
+    - |
+      if [ ! -d "trebledroid" ]; then exit 0; fi
+      # only run if staged files include patches
+      has_patches=false
+      for f in "$@"; do
+        case "$f" in *.patch) has_patches=true; break ;; esac
+      done
+      $has_patches || exit 0
+      patches/verify.sh --ci-mode
+    language: system
+    files: '\.patch$'
+    pass_filenames: true
+
   - id: patch-diff-path-check
     name: patch diff path sanity check
     entry: bash
