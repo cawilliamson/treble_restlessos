@@ -21,6 +21,7 @@ object MiscSettings : Settings {
     val disableButtonsBacklight = "key_misc_disable_buttons_backlight"
     val forceNavbarOff = "key_misc_force_navbar_off"
     val bluetooth = "key_misc_bluetooth"
+    val forceSwCodecs = "key_misc_force_sw_codecs"
     val activityAnimPerfOverride = "key_misc_activity_anim_perf_override"
     val securize = "key_misc_securize"
     val removeTelephony = "key_misc_removetelephony"

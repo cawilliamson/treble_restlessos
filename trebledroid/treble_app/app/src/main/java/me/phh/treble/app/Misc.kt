@@ -410,6 +410,10 @@ object Misc: EntryStartup {
                 val value = sp.getBoolean(key, false)
                 SystemProperties.set("persist.sys.activity_anim_perf_override", if (value) "true" else "false")
             }
+            MiscSettings.forceSwCodecs -> {
+                val value = sp.getBoolean(key, false)
+                SystemProperties.set("persist.sys.phh.force_sw_codecs", if (value) "true" else "false")
+            }
             MiscSettings.disableLeApcfExtended -> {
                 val value = sp.getBoolean(key, false)
                 SystemProperties.set("persist.sys.bt.le.disable_apcf_extended_features", if (value) "1" else "0")
@@ -444,5 +448,6 @@ object Misc: EntryStartup {
         spListener.onSharedPreferenceChanged(sp, MiscSettings.noHwcomposer)
         spListener.onSharedPreferenceChanged(sp, MiscSettings.storageFUSE)
         spListener.onSharedPreferenceChanged(sp, MiscSettings.dt2w)
+        spListener.onSharedPreferenceChanged(sp, MiscSettings.forceSwCodecs)
     }
 }
