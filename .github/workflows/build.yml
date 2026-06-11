@@ -507,7 +507,7 @@ jobs:
         uses: nick-fields/retry@v4
         with:
           timeout_minutes: ${{ env.RSYNC_TIMEOUT_MINUTES }}
-          max_attempts: ${{ env.RSYNC_MAX_ATTEMPTS }}
+          max_attempts: 10
           retry_wait_seconds: ${{ env.RSYNC_RETRY_WAIT_SECONDS }}
           command: |
             RELEASE_NAME="${{ steps.compress.outputs.release_name }}"
