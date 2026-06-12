@@ -310,7 +310,7 @@ jobs:
 
           sudo mkdir -p ${{ env.EC2_DATA_VOLUME_MOUNT }}
           sudo mount "/dev/${DATA_DEV}" ${{ env.EC2_DATA_VOLUME_MOUNT }}
-          sudo chmod 777 ${{ env.EC2_DATA_VOLUME_MOUNT }}
+          sudo chown github:github ${{ env.EC2_DATA_VOLUME_MOUNT }}
           echo "Data volume mounted at ${{ env.EC2_DATA_VOLUME_MOUNT }}"
 
       - name: Set up source directory
@@ -707,7 +707,7 @@ jobs:
             dmesg --since "5 minutes ago" | tail --lines=20
             exit 1
           fi
-          sudo chmod 777 ${{ env.EC2_DATA_VOLUME_MOUNT }}
+          sudo chown github:github ${{ env.EC2_DATA_VOLUME_MOUNT }}
           echo "Data volume mounted at ${{ env.EC2_DATA_VOLUME_MOUNT }}"
 
       - name: Set up source directory
