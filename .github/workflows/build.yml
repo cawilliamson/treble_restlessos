@@ -323,7 +323,6 @@ jobs:
             --instance-ids "${{ steps.launch.outputs.instance_id }}" \
             --query 'Reservations[0].Instances[0].SubnetId' \
             --output text)
-            --output text)
           echo "subnet_id=${SUBNET_ID}" >> "$GITHUB_OUTPUT"
           echo "Subnet: ${SUBNET_ID}"
 
