@@ -35,7 +35,7 @@ env:
   # EBS data volume -- sources live here; volume is detached from the sync
   # instance and attached to the build instance (same AZ required)
   EC2_SYNC_ROOT_VOLUME_GB: 30
-  EC2_SYNC_DATA_VOLUME_GB: 500
+  EC2_SYNC_DATA_VOLUME_GB: 1000
   EC2_BUILD_ROOT_VOLUME_GB: 100
   EC2_DATA_VOLUME_DEVICE: /dev/sdf
   EC2_DATA_VOLUME_LABEL: builddata
