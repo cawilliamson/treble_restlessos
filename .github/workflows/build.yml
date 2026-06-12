@@ -300,8 +300,8 @@ jobs:
           # format with ext4 and a label for easy mounting on the build instance
           mkfs.ext4 -L ${{ env.EC2_DATA_VOLUME_LABEL }} "/dev/${DATA_DEV}"
 
-          mkdir -p ${{ env.EC2_DATA_VOLUME_MOUNT }}
-          mount "/dev/${DATA_DEV}" ${{ env.EC2_DATA_VOLUME_MOUNT }}
+          sudo mkdir -p ${{ env.EC2_DATA_VOLUME_MOUNT }}
+          sudo mount "/dev/${DATA_DEV}" ${{ env.EC2_DATA_VOLUME_MOUNT }}
           echo "Data volume mounted at ${{ env.EC2_DATA_VOLUME_MOUNT }}"
 
       - name: Set up source directory
@@ -679,8 +679,8 @@ jobs:
           fi
           echo "Data volume device: ${DATA_DEV}"
 
-          mkdir -p ${{ env.EC2_DATA_VOLUME_MOUNT }}
-          if ! mount "${DATA_DEV}" ${{ env.EC2_DATA_VOLUME_MOUNT }}; then
+          sudo mkdir -p ${{ env.EC2_DATA_VOLUME_MOUNT }}
+          if ! sudo mount "${DATA_DEV}" ${{ env.EC2_DATA_VOLUME_MOUNT }}; then
             echo "ERROR: mount failed for ${DATA_DEV} on ${{ env.EC2_DATA_VOLUME_MOUNT }}"
             dmesg --since "5 minutes ago" | tail --lines=20
             exit 1

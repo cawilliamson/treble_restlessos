@@ -79,13 +79,6 @@ write_files:
 
 runcmd:
   # -------------------------------------------------------------------------
-  # mount point for the EBS data volume -- create it ahead of time so the
-  # runner user can mount without sudo. /mnt itself is root-owned and
-  # not user-writable, so the directory must be pre-created here.
-  # -------------------------------------------------------------------------
-  - "mkdir -p /mnt/src && chown github:github /mnt/src"
-
-  # -------------------------------------------------------------------------
   # SAFETY TIMER - armed first, always.
   # shuts the instance down after 2 hours regardless of anything else.
   # with InstanceInitiatedShutdownBehavior=terminate, this destroys the
