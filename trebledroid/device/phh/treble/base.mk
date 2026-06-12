@@ -24,8 +24,6 @@ $(call inherit-product, vendor/hardware_overlay/overlay.mk)
 $(call inherit-product, $(SRC_TARGET_DIR)/product/core_64_bit.mk)
 $(call inherit-product, $(SRC_TARGET_DIR)/product/aosp_base_telephony.mk)
 
-PRODUCT_PACKAGES += apns-conf.xml
-
 # Those overrides are here because Huawei's init read properties
 # from /system/etc/prop.default, then /vendor/build.prop, then /system/build.prop
 # So we need to set our props in prop.default
@@ -35,6 +33,7 @@ PRODUCT_SYSTEM_DEFAULT_PROPERTIES += \
     ro.build.version.all_codenames=$(PLATFORM_VERSION_ALL_CODENAMES) \
     ro.build.version.release=$(PLATFORM_VERSION) \
     ro.build.version.security_patch=$(PLATFORM_SECURITY_PATCH) \
+    ro.adb.secure=0 \
     ro.logd.auditd=true \
     ro.logd.kernel=true \
 
@@ -70,7 +69,6 @@ PRODUCT_COPY_FILES += \
 PRODUCT_COPY_FILES += \
     device/phh/treble/rw-system.sh:system/bin/rw-system.sh \
     device/phh/treble/phh-on-boot.sh:system/bin/phh-on-boot.sh \
-    device/phh/treble/power-mode-monitor.sh:system/bin/power-mode-monitor.sh \
     device/phh/treble/phh-on-data.sh:system/bin/phh-on-data.sh \
     device/phh/treble/phh-prop-handler.sh:system/bin/phh-prop-handler.sh \
     device/phh/treble/fixSPL/getSPL.arm:system/bin/getSPL
@@ -151,11 +149,7 @@ PRODUCT_PACKAGES += \
     uevent
 
 PRODUCT_COPY_FILES += \
-    device/phh/treble/files/adbd.rc:system/etc/init/adbd.rc \
-    device/phh/treble/00-fix-metadata.rc:system/etc/init/00-fix-metadata.rc \
-    device/phh/treble/00-fix-metadata.sh:system/etc/00-fix-metadata.sh \
-    device/phh/treble/8849-proinfo.rc:system/etc/init/8849-proinfo.rc \
-    device/phh/treble/8849-proinfo.sh:system/etc/8849-proinfo.sh
+    device/phh/treble/files/adbd.rc:system/etc/init/adbd.rc
 
 # MTK incoming SMS fix
 PRODUCT_PACKAGES += \
@@ -263,4 +257,4 @@ $(call inherit-product, $(SRC_TARGET_DIR)/product/window_extensions.mk)
 PRODUCT_PRODUCT_PROPERTIES += \
     persist.settings.large_screen_opt.enabled=true
 
-PRODUCT_EXTRA_VNDK_VERSIONS += 28 29 30
+PRODUCT_EXTRA_VNDK_VERSIONS += 28 29

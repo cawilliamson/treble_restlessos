@@ -10,6 +10,48 @@ else
     chmod 0644 /cache/phh/logs
 fi
 
+if [ -f /cache/phh-adb ];then
+    setprop ctl.stop adbd
+    setprop ctl.stop adbd_apex
+    mount -t configfs none /config
+    rm -Rf /config/usb_gadget
+    mkdir -p /config/usb_gadget/g1
+
+    echo 0x12d1 > /config/usb_gadget/g1/idVendor
+    echo 0x103A > /config/usb_gadget/g1/idProduct
+    mkdir -p /config/usb_gadget/g1/strings/0x409
+    echo phh > /config/usb_gadget/g1/strings/0x409/serialnumber
+    echo phh > /config/usb_gadget/g1/strings/0x409/manufacturer
+    echo phh > /config/usb_gadget/g1/strings/0x409/product
+
+    mkdir /config/usb_gadget/g1/functions/ffs.adb
+    mkdir /config/usb_gadget/g1/functions/mtp.gs0
+    mkdir /config/usb_gadget/g1/functions/ptp.gs1
+
+    mkdir /config/usb_gadget/g1/configs/c.1/
+    mkdir /config/usb_gadget/g1/configs/c.1/strings/0x409
+    echo 'ADB MTP' > /config/usb_gadget/g1/configs/c.1/strings/0x409/configuration
+
+    mkdir /dev/usb-ffs
+    chmod 0770 /dev/usb-ffs
+    chown shell:shell /dev/usb-ffs
+    mkdir /dev/usb-ffs/adb/
+    chmod 0770 /dev/usb-ffs/adb
+    chown shell:shell /dev/usb-ffs/adb
+
+    mount -t functionfs -o uid=2000,gid=2000 adb /dev/usb-ffs/adb
+
+    /apex/com.android.adbd/bin/adbd &
+
+    sleep 1
+    echo none > /config/usb_gadget/g1/UDC
+    ln -s /config/usb_gadget/g1/functions/ffs.adb /config/usb_gadget/g1/configs/c.1/f1
+    ls /sys/class/udc |head -n 1 > /config/usb_gadget/g1/UDC
+
+    sleep 2
+    echo 2 > /sys/devices/virtual/android_usb/android0/port_mode
+fi
+
 vndk="$(getprop persist.sys.vndk)"
 [ -z "$vndk" ] && vndk="$(getprop ro.vndk.version |grep -oE '^[0-9]+')"
 
@@ -308,7 +350,7 @@ if [ "$(getprop ro.product.vendor.manufacturer)" = motorola ] && getprop ro.vend
     setprop persist.sys.overlay.devinputjack true
 fi
 
-if ! getprop ro.vendor.build.fingerprint | grep -q -e samsung/;then
+if ! getprop ro.vendor.build.fingerprint |grep samsung/;then
     if mount -o remount,rw /system; then
         resize2fs "$(grep ' /system ' /proc/mounts | cut -d ' ' -f 1)" || true
     else
@@ -333,17 +375,6 @@ for part in /dev/block/bootdevice/by-name/oppodycnvbk  /dev/block/platform/bootd
     fi
 done
 
-# Disable touch firmware update on OPPO/Realme MTK devices to prevent
-# kernel panic from td4320_nf driver during boot.  The driver triggers
-# a kernel panic during firmware change on some devices (notably OPPO F11
-# CPH1911 MT6771).  Writing 0 to the firmware update flag prevents the
-# driver from attempting the update.
-for node in /proc/touchpanel/fw_update /sys/devices/platform/tpd/fw_update; do
-    if [ -f "$node" ]; then
-        echo 0 > "$node" 2>/dev/null
-        log -t rw-system "Disabled touch fw update at $node"
-    fi
-done
 
 mkdir -p /mnt/phh/
 mount -t tmpfs -o rw,nodev,relatime,mode=755,gid=0 none /mnt/phh || true
@@ -351,7 +382,7 @@ mkdir /mnt/phh/empty_dir
 touch /mnt/phh/empty
 touch /mnt/phh/unreadable
 chmod 0 /mnt/phh/unreadable
-if [ -n "$vndk" ] && [ "$vndk" -le 29 ]; then
+if [ "$vndk" -le 29 ]; then
     mount /mnt/phh/unreadable /vendor/etc/seccomp_policy/configstore@1.1.policy
 fi
 if ! getprop ro.product.vendor.model | grep -q -e oppo6771; then
@@ -497,7 +528,7 @@ fi
 if [ "$(getprop ro.vendor.product.manufacturer)" = "motorola" ] || [ "$(getprop ro.product.vendor.manufacturer)" = "motorola" ]; then
     if getprop ro.vendor.product.device | grep -q -e nora -e ali -e hannah -e evert -e jeter -e deen -e james -e pettyl -e jater; then
         setprop  ro.audio.ignore_effects true
-        if [ -n "$vndk" ] && [ "$vndk" -ge 28 ]; then
+        if [ "$vndk" -ge 28 ]; then
             f="/vendor/lib/libeffects.so"
             # shellcheck disable=SC2010
             ctxt="$(ls -lZ $f | grep -oE 'u:object_r:[^:]*:s0')"
@@ -558,18 +589,18 @@ if grep -qF 'PowerVR Rogue GE8100' /vendor/lib/egl/GLESv1_CM_mtk.so ||
 
     setprop debug.hwui.renderer opengl
     setprop ro.skia.ignore_swizzle true
-    if [ -n "$vndk" ] && { [ "$vndk" = 26 ] || [ "$vndk" = 27 ]; }; then
+    if [ "$vndk" = 26 ] || [ "$vndk" = 27 ];then
        setprop debug.hwui.use_buffer_age false
 
     fi
 fi
 
 #If we have both Samsung and AOSP power hal, take Samsung's
-if [ -f /vendor/bin/hw/vendor.samsung.hardware.miscpower@1.0-service ] && [ -n "$vndk" ] && [ "$vndk" -lt 28 ]; then
+if [ -f /vendor/bin/hw/vendor.samsung.hardware.miscpower@1.0-service ] && [ "$vndk" -lt 28 ]; then
     mount -o bind /mnt/phh/empty /vendor/bin/hw/android.hardware.power@1.0-service
 fi
 
-if [ -n "$vndk" ] && { [ "$vndk" = 27 ] || [ "$vndk" = 26 ]; }; then
+if [ "$vndk" = 27 ] || [ "$vndk" = 26 ]; then
     mount -o bind /system/phh/libnfc-nci-oreo.conf /system/etc/libnfc-nci.conf
 fi
 
@@ -637,7 +668,7 @@ if getprop ro.vendor.build.fingerprint | grep -iq -E -e 'huawei|honor' || getpro
     mount -o bind /system/phh/libnfc-nci-huawei.conf /system/etc/libnfc-nci.conf
 fi
 
-if getprop ro.vendor.build.fingerprint | grep -qE -e ".*(crown|star)[q2]*lte.*" -e ".*(SC-0[23]K|SCV3[89]).*" && [ -n "$vndk" ] && [ "$vndk" -lt 28 ]; then
+if getprop ro.vendor.build.fingerprint | grep -qE -e ".*(crown|star)[q2]*lte.*" -e ".*(SC-0[23]K|SCV3[89]).*" && [ "$vndk" -lt 28 ]; then
     for f in /vendor/lib/libfloatingfeature.so /vendor/lib64/libfloatingfeature.so; do
         [ ! -f "$f" ] && continue
         # shellcheck disable=SC2010
@@ -668,7 +699,7 @@ if getprop ro.vendor.build.fingerprint | grep -qiE '^samsung'; then
     fi
 
     if getprop ro.hardware | grep -q -e samsungexynos7870 -e qcom; then
-        if [ -n "$vndk" ] && [ "$vndk" -le 27 ]; then
+        if [ "$vndk" -le 27 ]; then
             setprop persist.sys.phh.sdk_override /vendor/bin/hw/rild=27
         fi
     fi
@@ -711,7 +742,7 @@ if [ -n "$(getprop ro.boot.product.hardware.sku)" ] && [ -z "$(getprop ro.hw.oem
 	setprop ro.hw.oemName "$(getprop ro.boot.product.hardware.sku)"
 fi
 
-if getprop ro.vendor.build.fingerprint | grep -qiE '^samsung/' && [ -n "$vndk" ] && [ "$vndk" -ge 28 ];then
+if getprop ro.vendor.build.fingerprint | grep -qiE '^samsung/' && [ "$vndk" -ge 28 ];then
 	setprop persist.sys.phh.samsung_fingerprint 0
 	#obviously broken perms
 	if [ "$(stat -c '%U' /sys/class/sec/tsp/cmd)" == "root" ] &&
@@ -769,30 +800,7 @@ copyprop() {
         resetprop_phh "$1" "$(getprop "$2")"
     fi
 }
-
-# OPPO/Realme devices with MTK vendor kernels include an oppo_root_check
-# kernel module or init service that detects an unlocked bootloader and forces
-# a reboot to recovery.  set the boot-state properties to "locked" so any
-# userspace component of the check sees a locked device.
-#
-# only apply the bypass if the vendor actually contains the root-check
-# service. custom ROM vendors (e.g. InfinityX) often remove this service,
-# and the property spoofing causes a ~100s boot delay on those devices.
-brand="$(getprop ro.product.vendor.brand)"
-if [ "$brand" = OPPO ] || [ "$brand" = realme ]; then
-    if grep -r -q "oppo_root_check" /vendor/etc/init/ 2>>/dev/null; then
-        resetprop_phh ro.boot.flash.locked 1
-        resetprop_phh ro.boot.vbmeta.device_state locked
-        resetprop_phh ro.boot.verifiedbootstate green
-        resetprop_phh ro.boot.warranty_bit 0
-        resetprop_phh ro.vendor.warranty_bit 0
-        resetprop_phh ro.warranty_bit 0
-        resetprop_phh -n sys.oem_unlock_allowed 0
-        setprop ctl.stop oppo_root_check 2>>/dev/null
-    fi
-fi
-
-if [ ! -f /metadata/securize_disable ] && [ "$(getprop ro.build.type)" != "userdebug" ]; then
+if [ ! -f /metadata/securize_disable ]; then
     # Detect GSI system image changes before securize overwrites fingerprints.
     # PackageManagerService uses PackagePartitions.FINGERPRINT (a SHA-1 digest of
     # all ro.*.build.fingerprint properties) to detect upgrades and set mIsUpgrade.
@@ -804,24 +812,42 @@ if [ ! -f /metadata/securize_disable ] && [ "$(getprop ro.build.type)" != "userd
     # against a persisted value and, when they differ, set persist.pm.mock-upgrade=true
     # which PMS ORs into isDeviceUpgrading().
     #
-    # Storage selection: prefer /metadata if it is a real mountpoint (not tmpfs),
-    # else fall back to /cache/phh (which is a real partition on non-A/B devices
-    # and a symlink to /data/cache on A/B devices where /data is already mounted).
-    gsi_fp_dir=/metadata/phh
-    gsi_fp_file=/metadata/phh/gsi_fingerprint
-    if ! mountpoint -q /metadata 2>/dev/null; then
-        gsi_fp_dir=/cache/phh
-        gsi_fp_file=/cache/phh/gsi_fingerprint
+    # Storage selection: neither /cache nor /metadata is universally available
+    # at the time rw-system.sh runs.
+    #   /metadata: real persistent partition on post-Q A/B devices; tmpfs on
+    #              pre-Q devices without a metadata partition (see 00-fix-metadata.sh).
+    #   /cache:    real persistent partition on non-A/B devices; a symlink to
+    #              /data/cache on A/B devices, but /data is not yet mounted at
+    #              this point in boot so writes would be silently lost.
+    # Strategy: prefer /metadata if it is a real mountpoint (not tmpfs), else
+    # prefer /cache if it is a real mountpoint, else skip persistence (best-effort).
+    gsi_fp="$(getprop ro.system.build.fingerprint)"
+    gsi_fp_dir=""
+    if mountpoint -q /metadata && [ "$(stat -f -c %T /metadata)" != "tmpfs" ]; then
+        gsi_fp_dir="/metadata/phh"
+    elif mountpoint -q /cache; then
+        gsi_fp_dir="/cache/phh"
     fi
-    current_fp="$(getprop ro.system.build.fingerprint)"
-    mkdir -p "$gsi_fp_dir"
-    if [ -f "$gsi_fp_file" ]; then
-        saved_fp="$(cat "$gsi_fp_file")"
-        if [ "$current_fp" != "$saved_fp" ]; then
-            setprop persist.pm.mock-upgrade true
-        fi
+    gsi_fp_file=""
+    prev_gsi_fp=""
+    if [ -n "$gsi_fp_dir" ]; then
+        mkdir -p "$gsi_fp_dir"
+        gsi_fp_file="$gsi_fp_dir/gsi_fingerprint"
+        [ -f "$gsi_fp_file" ] && prev_gsi_fp="$(cat "$gsi_fp_file")"
     fi
-    printf '%s' "$current_fp" > "$gsi_fp_file"
+    if [ -n "$gsi_fp" ] && [ -n "$prev_gsi_fp" ] && [ "$gsi_fp" != "$prev_gsi_fp" ]; then
+        # fingerprint changed: GSI upgrade detected.
+        [ -n "$gsi_fp_file" ] && echo "$gsi_fp" > "$gsi_fp_file"
+        # signal PMS to run post-upgrade steps.
+        resetprop_phh -n persist.pm.mock-upgrade true
+    elif [ -n "$gsi_fp" ] && [ -z "$prev_gsi_fp" ]; then
+        # no prior fingerprint: fresh flash, factory reset, or no persistent storage.
+        [ -n "$gsi_fp_file" ] && echo "$gsi_fp" > "$gsi_fp_file"
+        resetprop_phh -n persist.pm.mock-upgrade false
+    else
+        # same build as last boot: clear upgrade flag.
+        resetprop_phh -n persist.pm.mock-upgrade false
+    fi
 
     copyprop ro.build.device ro.vendor.build.device
     copyprop ro.system.build.fingerprint ro.vendor.build.fingerprint
@@ -835,35 +861,75 @@ if [ ! -f /metadata/securize_disable ] && [ "$(getprop ro.build.type)" != "userd
     copyprop ro.product.system.device ro.product.vendor.device
     copyprop ro.product.device ro.product.vendor.device
     copyprop ro.product.system_ext.device ro.vendor.product.device
-    copyprop ro.product.device ro.vendor.product.device
+    copyprop ro.product.product.device ro.vendor.product.device
+    copyprop ro.product.system_ext.device ro.product.vendor.device
+    copyprop ro.product.product.device ro.product.vendor.device
     copyprop ro.product.system.name ro.vendor.product.name
     copyprop ro.product.name ro.vendor.product.name
-    copyprop ro.product.system.name ro.product.vendor.device
-    copyprop ro.product.name ro.product.vendor.device
+    copyprop ro.product.system.name ro.product.vendor.name
+    copyprop ro.product.name ro.product.vendor.name
+    copyprop ro.product.system_ext.name ro.vendor.product.name
+    copyprop ro.product.product.name ro.vendor.product.name
+    copyprop ro.product.system_ext.name ro.product.vendor.name
+    copyprop ro.product.product.name ro.product.vendor.name
     copyprop ro.system.product.brand ro.vendor.product.brand
     copyprop ro.product.brand ro.vendor.product.brand
+    copyprop ro.product.system.brand ro.vendor.product.brand
+    copyprop ro.product.system_ext.brand ro.vendor.product.brand
+    copyprop ro.product.product.brand ro.product.vendor.brand
+    copyprop ro.system.product.brand ro.product.vendor.brand
+    copyprop ro.product.brand ro.product.vendor.brand
+    copyprop ro.product.system.brand ro.product.vendor.brand
+    copyprop ro.product.system_ext.brand ro.product.vendor.brand
+    copyprop ro.product.product.brand ro.product.vendor.brand
     copyprop ro.product.system.model ro.vendor.product.model
     copyprop ro.product.model ro.vendor.product.model
+    copyprop ro.product.system_ext.model ro.vendor.product.model
+    copyprop ro.product.product.model ro.vendor.product.model
     copyprop ro.product.system.model ro.product.vendor.model
     copyprop ro.product.model ro.product.vendor.model
     copyprop ro.build.product ro.vendor.product.model
     copyprop ro.build.product ro.product.vendor.model
+    copyprop ro.product.system_ext.model ro.product.vendor.model
+    copyprop ro.product.product.model ro.product.vendor.model
     copyprop ro.system.product.manufacturer ro.vendor.product.manufacturer
     copyprop ro.product.manufacturer ro.vendor.product.manufacturer
+    copyprop ro.product.system.manufacturer ro.vendor.product.manufacturer
+    copyprop ro.product.product.manufacturer ro.vendor.product.manufacturer
+    copyprop ro.product.system_ext.manufacturer ro.vendor.product.manufacturer
     copyprop ro.system.product.manufacturer ro.product.vendor.manufacturer
     copyprop ro.product.manufacturer ro.product.vendor.manufacturer
+    copyprop ro.product.system.manufacturer ro.product.vendor.manufacturer
+    copyprop ro.product.product.manufacturer ro.product.vendor.manufacturer
+    copyprop ro.product.system_ext.manufacturer ro.product.vendor.manufacturer
+
     (getprop ro.vendor.build.security_patch; getprop ro.keymaster.xxx.security_patch) |sort |tail -n 1 |while read v;do
         [ -n "$v" ] && resetprop_phh ro.build.version.security_patch "$v"
     done
 
-    # remaining prop spoofing is done post-boot in phh-on-boot.sh
-    # to avoid breaking device features that read props during init
     resetprop_phh ro.boot.vbmeta.device_state locked
     resetprop_phh vendor.boot.vbmeta.device_state locked
     resetprop_phh ro.boot.verifiedbootstate green
     resetprop_phh vendor.boot.verifiedbootstate green
     resetprop_phh ro.boot.flash.locked 1
-    resetprop_phh --delete ro.build.selinux
+
+    # spoof security-sensitive props early so root detection apps cannot read
+    # the real values before phh-on-boot.sh reinforces them post-boot
+    resetprop_phh ro.debuggable 0
+    resetprop_phh ro.secure 1
+
+    # update usb gadget strings so the device appears correctly when connected
+    model="$(getprop ro.product.model)"
+    manufacturer="$(getprop ro.product.manufacturer)"
+    gadget_strings="/config/usb_gadget/g1/strings/0x409"
+    legacy_usb="/sys/class/android_usb/android0"
+    if [ -d "$gadget_strings" ]; then
+        [ -n "$model" ] && echo "$model" > "$gadget_strings/product"
+        [ -n "$manufacturer" ] && echo "$manufacturer" > "$gadget_strings/manufacturer"
+    elif [ -d "$legacy_usb" ]; then
+        [ -n "$model" ] && echo "$model" > "$legacy_usb/iProduct"
+        [ -n "$manufacturer" ] && echo "$manufacturer" > "$legacy_usb/iManufacturer"
+    fi
 
     resetprop_phh ro.adb.secure 1
 
@@ -892,7 +958,7 @@ for abi in "" 64;do
     fi
 done
 
-[ -n "$vndk" ] && setprop ro.product.first_api_level "$vndk"
+setprop ro.product.first_api_level "$vndk"
 
 if getprop ro.boot.boot_devices |grep -v , |grep -qE .;then
     ln -s /dev/block/platform/$(getprop ro.boot.boot_devices) /dev/block/bootdevice
@@ -951,7 +1017,7 @@ if [ -e /dev/sprd-adf-dev ];then
 fi
 
 # Fix sensor services crashing on SPRD devices with Pie vendor
-if getprop ro.hardware.keystore | grep -iq sprd && [ -n "$vndk" ] && [ "$vndk" -le 28 ]; then
+if getprop ro.hardware.keystore | grep -iq sprd && [ "$vndk" -le 28 ]; then
     setprop persist.sys.phh.disable_sensor_direct_report true
 fi
 
@@ -994,7 +1060,7 @@ if getprop ro.build.overlay.deviceid |grep -qE '^RMX';then
     fi
 fi
 
-if [ -n "$vndk" ] && [ "$vndk" -le 28 ] && getprop ro.hardware |grep -q -e mt6761 -e mt6763 -e mt6765 -e mt6785 -e mt8768 -e mt6779 -e mt6771 -e mt8766;then
+if [ "$vndk" -le 28 ] && getprop ro.hardware |grep -q -e mt6761 -e mt6763 -e mt6765 -e mt6785 -e mt8768 -e mt6779 -e mt6771 -e mt8766;then
     setprop debug.stagefright.ccodec 0
 fi
 
@@ -1060,6 +1126,7 @@ if getprop ro.build.overlay.deviceid |grep -iq -e RMX2185 -e RMX1941 -e RMX1945 
     setprop persist.sys.overlay.devinputjack true
 fi
 
+resetprop_phh ro.bluetooth.library_name libbluetooth.so
 
 board="$(getprop ro.board.platform)"
 
@@ -1108,33 +1175,32 @@ if getprop ro.bionic.cpu_variant |grep -q kryo300;then
     setprop dalvik.vm.isa.arm64.features runtime
 fi
 
+resetprop_phh ro.control_privapp_permissions log
 
 if [ -f /vendor/etc/init/vendor.ozoaudio.media.c2@1.0-service.rc ];then
-    if [ -n "$vndk" ] && [ "$vndk" -le 29 ]; then
+    if [ "$vndk" -le 29 ]; then
         mount /system/etc/seccomp_policy/mediacodec.policy /vendor/etc/seccomp_policy/codec2.vendor.base.policy
     fi
 fi
 
-if [ -n "$vndk" ] && [ "$vndk" -le 27 ];then
+if [ "$vndk" -le 27 ];then
     setprop persist.sys.phh.no_present_or_validate true
 fi
 
 [ -d /mnt/vendor/persist ] && mount /mnt/vendor/persist /persist
 
-if [ -e /sys/bus/i2c/drivers/fts_ts ] || [ -e /sys/bus/spi/drivers/fts_ts ]; then
-    for f in $(find /sys -name fts_gesture_mode 2>/dev/null);do
-        setprop persist.sys.phh.focaltech_node "$f"
-    done
-fi
+for f in $(find /sys -name fts_gesture_mode);do
+    setprop persist.sys.phh.focaltech_node "$f"
+done
 
-if [ -n "$vndk" ] && [ "$vndk" -le 27 ] && [ -f /vendor/bin/mnld ];then
+if [ "$vndk" -le 27 ] && [ -f /vendor/bin/mnld ];then
     setprop persist.sys.phh.sdk_override /vendor/bin/mnld=26
 fi
 
-if [ -n "$vndk" ] && [ "$vndk" -le 30 ];then
-	# on older vendors color management was disabled by default; use -n so
-	# we only set a fallback and never override a value already present
-	resetprop_phh -n ro.surface_flinger.use_color_management false
+if [ "$vndk" -le 30 ];then
+	# On older vendor the default behavior was to disable color management
+	# Don't override vendor value, merely add a fallback
+	setprop ro.surface_flinger.use_color_management false
 fi
 
 if [ "$(stat -c '%U'  /dev/nxp_smartpa_dev)" == "root" ] &&
@@ -1235,6 +1301,9 @@ if getprop ro.product.vendor.device | grep -q -e TECNO-LG8n; then
     chown -R system:system /sys/class/leds/vibrator_single/
 fi
 
+# Override media volume steps
+resetprop_phh ro.config.media_vol_steps 25
+resetprop_phh ro.config.media_vol_default 8
 
 # Force disable Sunlight Reading Mode to prevent weird color issues
 if getprop ro.vendor.build.fingerprint | grep -iq -e xiaomi/renoir; then
@@ -1257,6 +1326,4 @@ if getprop ro.vendor.build.fingerprint | grep -iq -e Rebecco/K70_ROW; then
 fi
 
 # Enable pen mode on Lenovo/goodix
-if [ -e /sys/devices/platform/goodix_ts.0/support_pen ]; then
-    echo 1 > /sys/devices/platform/goodix_ts.0/support_pen
-fi
+echo 1 > /sys/devices/platform/goodix_ts.0/support_pen
