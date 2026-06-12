@@ -997,77 +997,59 @@ jobs:
           done
 
       - name: Delete data volume
-        env:
-          DATA_VOLUME_ID: ${{ needs.provision-sync.outputs.data_volume_id }}
-        run: |
-          if [ -z "${DATA_VOLUME_ID}" ] || [ "${DATA_VOLUME_ID}" = "" ]; then
-            echo "No data volume ID found - nothing to delete"
-            exit 0
-          fi
-
-          REGION="${{ needs.provision-sync.outputs.region || env.EC2_DEFAULT_REGION }}"
-
-          # the volume must be detached before it can be deleted. instance
-          # termination is async, so even after 'wait instance-terminated'
-          # the volume may still be attached for a few seconds.
-          echo "Waiting for volume ${DATA_VOLUME_ID} to detach..."
-          for ATTEMPT in $(seq 1 30); do
-            STATE=$(aws ec2 describe-volumes \
-              --region "${REGION}" \
-              --volume-ids "${DATA_VOLUME_ID}" \
-              --query 'Volumes[0].State' --output text 2>/dev/null || echo "unknown")
-            echo "  attempt ${ATTEMPT}/30: volume state=${STATE}"
-            if [ "${STATE}" = "available" ]; then
-              break
-            fi
-            if [ "${STATE}" = "deleted" ]; then
-              echo "Volume already deleted"
+        uses: nick-fields/retry@v4
+        with:
+          timeout_minutes: 10
+          max_attempts: 60
+          retry_wait_seconds: 10
+          command: |
+            DATA_VOLUME_ID="${{ needs.provision-sync.outputs.data_volume_id }}"
+            if [ -z "${DATA_VOLUME_ID}" ] || [ "${DATA_VOLUME_ID}" = "" ]; then
+              echo "No data volume ID found - nothing to delete"
               exit 0
             fi
-            sleep 5
-          done
 
-          if [ "${STATE}" != "available" ]; then
-            echo "::error::Volume ${DATA_VOLUME_ID} stuck in state '${STATE}' -- cannot delete"
-            echo "::error::This WILL cost money. Manual cleanup required:"
-            echo "::error::aws ec2 delete-volume --region ${REGION} --volume-id ${DATA_VOLUME_ID}"
-            exit 1
-          fi
+            REGION="${{ needs.provision-sync.outputs.region || env.EC2_DEFAULT_REGION }}"
 
-          echo "Deleting volume ${DATA_VOLUME_ID}..."
-          if ! aws ec2 delete-volume \
-            --region "${REGION}" \
-            --volume-id "${DATA_VOLUME_ID}"; then
-            echo "::error::Failed to delete volume ${DATA_VOLUME_ID}"
-            echo "::error::This WILL cost money. Manual cleanup required:"
-            echo "::error::aws ec2 delete-volume --region ${REGION} --volume-id ${DATA_VOLUME_ID}"
-            exit 1
-          fi
-
-          # verify the volume is actually gone -- describe-volumes will
-          # return InvalidVolume.NotFound once deletion completes
-          echo "Verifying volume deletion..."
-          for ATTEMPT in $(seq 1 12); do
+            # check if the volume is already gone (e.g. already deleted)
             STATE=$(aws ec2 describe-volumes \
               --region "${REGION}" \
               --volume-ids "${DATA_VOLUME_ID}" \
               --query 'Volumes[0].State' --output text 2>/dev/null || echo "deleted")
-            if [ "${STATE}" = "deleted" ] || [ "${STATE}" = "deleting" ]; then
-              echo "  attempt ${ATTEMPT}/12: volume state=${STATE}"
-            else
-              echo "  attempt ${ATTEMPT}/12: volume state=${STATE}"
-            fi
             if [ "${STATE}" = "deleted" ]; then
-              echo "Volume ${DATA_VOLUME_ID} confirmed deleted"
+              echo "Volume ${DATA_VOLUME_ID} already deleted"
               exit 0
             fi
-            sleep 5
-          done
+            echo "Volume ${DATA_VOLUME_ID} state: ${STATE}"
 
-          echo "::error::Volume ${DATA_VOLUME_ID} still exists after delete + 60s wait"
-          echo "::error::This WILL cost money. Manual cleanup required:"
-          echo "::error::aws ec2 delete-volume --region ${REGION} --volume-id ${DATA_VOLUME_ID}"
-          exit 1
+            # the volume must be detached before it can be deleted.
+            # instance termination is async -- even after wait
+            # instance-terminated, the volume may still be attached.
+            if [ "${STATE}" != "available" ]; then
+              echo "Volume not yet available for deletion -- will retry"
+              exit 1
+            fi
+
+            echo "Deleting volume ${DATA_VOLUME_ID}..."
+            aws ec2 delete-volume \
+              --region "${REGION}" \
+              --volume-id "${DATA_VOLUME_ID}"
+
+            # verify deletion: describe-volumes returns InvalidVolume.NotFound
+            # once deletion completes. the delete-volume call is async so
+            # the volume may be in 'deleting' state for a moment.
+            VERIFY_STATE=$(aws ec2 describe-volumes \
+              --region "${REGION}" \
+              --volume-ids "${DATA_VOLUME_ID}" \
+              --query 'Volumes[0].State' --output text 2>/dev/null || echo "deleted")
+            echo "Post-delete state: ${VERIFY_STATE}"
+            if [ "${VERIFY_STATE}" = "deleted" ] || [ "${VERIFY_STATE}" = "deleting" ]; then
+              echo "Volume ${DATA_VOLUME_ID} deletion confirmed"
+              exit 0
+            fi
+
+            echo "Volume still in state '${VERIFY_STATE}' -- will retry"
+            exit 1
 
       - name: Remove runners
         run: |
