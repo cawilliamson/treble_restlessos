@@ -379,7 +379,7 @@ jobs:
       - name: Flush and unmount data volume
         run: |
           sync
-          umount ${{ env.EC2_DATA_VOLUME_MOUNT }}
+          sudo umount ${{ env.EC2_DATA_VOLUME_MOUNT }}
           echo "Data volume flushed and unmounted -- ready for detach"
 
   # ---------------------------------------------------------------------------
