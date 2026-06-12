@@ -792,16 +792,50 @@ if [ "$brand" = OPPO ] || [ "$brand" = realme ]; then
     fi
 fi
 
-if [ -f /system/phh/secure ] || [ -f /metadata/phh/secure ];then
+if [ ! -f /metadata/securize_disable ] && [ "$(getprop persist.sys.phh.debug_build)" != "true" ]; then
+    # Detect GSI system image changes before securize overwrites fingerprints.
+    # PackageManagerService uses PackagePartitions.FINGERPRINT (a SHA-1 digest of
+    # all ro.*.build.fingerprint properties) to detect upgrades and set mIsUpgrade.
+    # Because securize replaces every system fingerprint property with the vendor
+    # fingerprint, PMS always sees the same digest after first boot and mIsUpgrade
+    # is always false, even after a real GSI upgrade.
+    #
+    # To work around this we compare the original (pre-securize) system fingerprint
+    # against a persisted value and, when they differ, set persist.pm.mock-upgrade=true
+    # which PMS ORs into isDeviceUpgrading().
+    #
+    # Storage selection: prefer /metadata if it is a real mountpoint (not tmpfs),
+    # else fall back to /cache/phh (which is a real partition on non-A/B devices
+    # and a symlink to /data/cache on A/B devices where /data is already mounted).
+    gsi_fp_dir=/metadata/phh
+    gsi_fp_file=/metadata/phh/gsi_fingerprint
+    if ! mountpoint -q /metadata 2>/dev/null; then
+        gsi_fp_dir=/cache/phh
+        gsi_fp_file=/cache/phh/gsi_fingerprint
+    fi
+    current_fp="$(getprop ro.system.build.fingerprint)"
+    mkdir -p "$gsi_fp_dir"
+    if [ -f "$gsi_fp_file" ]; then
+        saved_fp="$(cat "$gsi_fp_file")"
+        if [ "$current_fp" != "$saved_fp" ]; then
+            setprop persist.pm.mock-upgrade true
+        fi
+    fi
+    printf '%s' "$current_fp" > "$gsi_fp_file"
+
     copyprop ro.build.device ro.vendor.build.device
     copyprop ro.system.build.fingerprint ro.vendor.build.fingerprint
     copyprop ro.bootimage.build.fingerprint ro.vendor.build.fingerprint
     copyprop ro.build.fingerprint ro.vendor.build.fingerprint
+    copyprop ro.system_ext.build.fingerprint ro.vendor.build.fingerprint
+    copyprop ro.product.build.fingerprint ro.vendor.build.fingerprint
     copyprop ro.build.device ro.vendor.product.device
     copyprop ro.product.system.device ro.vendor.product.device
     copyprop ro.product.device ro.vendor.product.device
     copyprop ro.product.system.device ro.product.vendor.device
     copyprop ro.product.device ro.product.vendor.device
+    copyprop ro.product.system_ext.device ro.vendor.product.device
+    copyprop ro.product.device ro.vendor.product.device
     copyprop ro.product.system.name ro.vendor.product.name
     copyprop ro.product.name ro.vendor.product.name
     copyprop ro.product.system.name ro.product.vendor.device
@@ -822,24 +856,13 @@ if [ -f /system/phh/secure ] || [ -f /metadata/phh/secure ];then
         [ -n "$v" ] && resetprop_phh ro.build.version.security_patch "$v"
     done
 
-    resetprop_phh ro.build.user nobody
-    resetprop_phh ro.build.host android-build
-    resetprop_phh ro.build.tags release-keys
-    resetprop_phh ro.product.build.tags release-keys
-    resetprop_phh ro.system.build.tags release-keys
-    resetprop_phh ro.system_ext.build.tags release-keys
-    resetprop_phh ro.vendor.build.tags release-keys
+    # remaining prop spoofing is done post-boot in phh-on-boot.sh
+    # to avoid breaking device features that read props during init
     resetprop_phh ro.boot.vbmeta.device_state locked
+    resetprop_phh vendor.boot.vbmeta.device_state locked
     resetprop_phh ro.boot.verifiedbootstate green
+    resetprop_phh vendor.boot.verifiedbootstate green
     resetprop_phh ro.boot.flash.locked 1
-    resetprop_phh ro.boot.veritymode enforcing
-    resetprop_phh ro.boot.warranty_bit 0
-    resetprop_phh ro.warranty_bit 0
-    resetprop_phh ro.build.type user
-    resetprop_phh ro.product.build.type user
-    resetprop_phh ro.system.build.type user
-    resetprop_phh ro.system_ext.build.type user
-    resetprop_phh ro.vendor.build.type user
     resetprop_phh --delete ro.build.selinux
 
     resetprop_phh ro.adb.secure 1

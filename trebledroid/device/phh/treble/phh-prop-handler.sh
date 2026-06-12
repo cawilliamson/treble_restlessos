@@ -297,3 +297,15 @@ if [ "$1" == "persist.bluetooth.system_audio_hal.enabled" ]; then
     restartAudio
     exit
 fi
+
+if [ "$1" == "persist.sys.phh.securize" ]; then
+    if [[ "$prop_value" != "0" && "$prop_value" != "1" ]]; then
+        exit 1
+    fi
+    if [[ "$prop_value" == "0" ]]; then
+        touch /metadata/securize_disable
+    else
+        rm -f /metadata/securize_disable
+    fi
+    exit
+fi

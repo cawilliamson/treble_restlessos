@@ -40,7 +40,6 @@ PRODUCT_SYSTEM_DEFAULT_PROPERTIES += \
 
 # Huawei HiSuite (also other OEM custom programs I guess) it's of no use in AOSP builds
 PRODUCT_SYSTEM_DEFAULT_PROPERTIES += \
-    persist.sys.usb.config=adb \
     ro.cust.cdrom=/dev/null
 
 # VNDK config files
@@ -174,7 +173,6 @@ PRODUCT_PACKAGES += \
     resetprop_phh
 
 PRODUCT_COPY_FILES += \
-    device/phh/treble/phh-securize.sh:system/bin/phh-securize.sh \
     device/phh/treble/files/ota.sh:system/bin/ota.sh \
 
 PRODUCT_COPY_FILES += \
