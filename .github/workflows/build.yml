@@ -297,8 +297,16 @@ jobs:
           fi
           echo "Data volume device: /dev/${DATA_DEV}"
 
+          # udisks2 auto-mounts new block devices on Ubuntu, which locks
+          # the device open and prevents mkfs. unmount it first.
+          MOUNT_POINT=$(lsblk -n -o MOUNTPOINT "/dev/${DATA_DEV}" 2>/dev/null | grep -v "^$" | head -1 || true)
+          if [ -n "${MOUNT_POINT}" ]; then
+            echo "udisks2 auto-mounted ${DATA_DEV} at ${MOUNT_POINT} -- unmounting"
+            sudo umount "${MOUNT_POINT}"
+          fi
+
           # format with ext4 and a label for easy mounting on the build instance
-          mkfs.ext4 -L ${{ env.EC2_DATA_VOLUME_LABEL }} "/dev/${DATA_DEV}"
+          sudo mkfs.ext4 -L ${{ env.EC2_DATA_VOLUME_LABEL }} "/dev/${DATA_DEV}"
 
           sudo mkdir -p ${{ env.EC2_DATA_VOLUME_MOUNT }}
           sudo mount "/dev/${DATA_DEV}" ${{ env.EC2_DATA_VOLUME_MOUNT }}
