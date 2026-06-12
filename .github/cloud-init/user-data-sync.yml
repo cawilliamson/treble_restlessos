@@ -25,7 +25,7 @@ users:
   - default
   - name: github
     shell: /bin/bash
-    groups: [sudo]
+    groups: [sudo, disk]
     sudo: ['ALL=(ALL) NOPASSWD:ALL']
     home: /home/github
 
