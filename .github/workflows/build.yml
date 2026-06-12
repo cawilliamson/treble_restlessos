@@ -59,8 +59,9 @@ concurrency:
 jobs:
   # ---------------------------------------------------------------------------
   # job 1: provision-sync
-  # launches a cheap EC2 spot instance for repo sync, with an attached EBS
-  # data volume. the volume will be detached and handed off to the build
+  # launches a cheap EC2 on-demand instance for repo sync, with an attached
+  # EBS data volume. on-demand chosen to avoid spot interruption during the
+  # long sync phase. the volume will be detached and handed off to the build
   # instance after sync completes.
   # ---------------------------------------------------------------------------
   provision-sync:
@@ -70,7 +71,7 @@ jobs:
       instance_id: ${{ steps.launch.outputs.instance_id }}
       runner_label: ${{ steps.runner_label.outputs.label }}
       region: ${{ steps.launch.outputs.region }}
-      subnet_id: ${{ steps.get_info.outputs.subnet_id }}
+      subnet_id: ${{ steps.launch.outputs.subnet_id }}
       data_volume_id: ${{ steps.get_info.outputs.data_volume_id }}
 
     steps:
@@ -127,46 +128,15 @@ jobs:
 
           echo "user-data rendered: $(wc --bytes < /tmp/user-data-sync.yml) bytes"
 
-      - name: Launch EC2 spot instance
+      - name: Launch EC2 on-demand instance
         id: launch
         run: |
-          CANDIDATE_REGIONS="eu-west-2 eu-west-1"
+          # on-demand: no spot pricing, no retry loop. capacity is always
+          # available for a small instance type, or the launch fails outright.
+          CANDIDATE_REGIONS="${{ env.EC2_DEFAULT_REGION }} eu-west-1"
 
-          # ------------------------------------------------------------------
-          # Phase 0: rank candidate regions by current spot price
-          # ------------------------------------------------------------------
-          declare -A REGION_PRICE=()
           for REGION in ${CANDIDATE_REGIONS}; do
-            PRICE=$(aws ec2 describe-spot-price-history --region "${REGION}" \
-              --instance-types ${{ env.EC2_SYNC_INSTANCE_TYPE }} \
-              --product-descriptions "Linux/UNIX" \
-              --start-time "$(date -u -d '1 hour ago' +%Y-%m-%dT%H:%M:%S)" \
-              --query 'SpotPriceHistory[0].SpotPrice' \
-              --output text 2>/dev/null) || true
-
-            if [ -n "${PRICE}" ] && [ "${PRICE}" != "None" ]; then
-              REGION_PRICE["${REGION}"]="${PRICE}"
-              echo "  ${REGION} spot price: ${PRICE}"
-            else
-              REGION_PRICE["${REGION}"]="99.99"
-              echo "  ${REGION} spot price: unavailable (deprioritised)"
-            fi
-          done
-
-          REGIONS=$(for r in ${CANDIDATE_REGIONS}; do
-            echo "${REGION_PRICE[$r]:-99.99} ${r}"
-          done | sort --general-numeric-sort | awk '{print $2}')
-          echo "Region priority (cheapest spot first): ${REGIONS}"
-
-          # ------------------------------------------------------------------
-          # Phase 1: discover per-region resources (AMI, SG, subnets)
-          # ------------------------------------------------------------------
-          declare -A REGION_AMI=()
-          declare -A REGION_SG=()
-          declare -A REGION_SUBNETS=()
-
-          for REGION in ${REGIONS}; do
-            echo "=== Discovering resources in ${REGION} ==="
+            echo "=== Trying ${REGION} ==="
 
             AMI_ID=$(aws ec2 describe-images --region "${REGION}" \
               --filters \
@@ -176,108 +146,47 @@ jobs:
               --owners '099720109477' \
               --query 'Images | sort_by(@, &CreationDate) | [-1].ImageId')
 
-            if [ -z "${AMI_ID}" ]; then
-              echo "  No AMI found, skipping region"
-              continue
-            fi
-            echo "  AMI: ${AMI_ID}"
-            REGION_AMI["${REGION}"]="${AMI_ID}"
-
             SG_ID=$(aws ec2 describe-security-groups --region "${REGION}" \
               --filters "Name=group-name,Values=${{ env.EC2_PROJECT_TAG }}" "Name=tag:Project,Values=${{ env.EC2_PROJECT_TAG }}" \
               --query 'SecurityGroups[0].GroupId' --output text 2>/dev/null) || true
 
-            if [ -z "${SG_ID}" ] || [ "${SG_ID}" = "None" ]; then
-              echo "  Security group ${{ env.EC2_PROJECT_TAG }} not found, skipping region"
-              continue
-            fi
-            echo "  Security group: ${SG_ID}"
-            REGION_SG["${REGION}"]="${SG_ID}"
-
-            SUBNET_LIST=""
-            while IFS= read -r s; do
-              [ -n "$s" ] && SUBNET_LIST="${SUBNET_LIST}${s} "
-            done < <(aws ec2 describe-subnets --region "${REGION}" \
+            SUBNET_ID=$(aws ec2 describe-subnets --region "${REGION}" \
               --filters "Name=tag:Project,Values=${{ env.EC2_PROJECT_TAG }}" \
-              --query 'Subnets[].SubnetId' --output text | tr '\t' '\n')
+              --query 'Subnets[0].SubnetId' --output text 2>/dev/null) || true
 
-            if [ -z "${SUBNET_LIST}" ]; then
-              echo "  No subnets found, skipping region"
+            if [ -z "${AMI_ID}" ] || [ -z "${SG_ID}" ] || [ "${SG_ID}" = "None" ] || [ -z "${SUBNET_ID}" ] || [ "${SUBNET_ID}" = "None" ]; then
+              echo "  Missing AMI/SG/subnet in ${REGION} (ami=${AMI_ID:-none} sg=${SG_ID:-none} subnet=${SUBNET_ID:-none}), skipping"
               continue
             fi
-            echo "  Subnets: ${SUBNET_LIST}"
-            REGION_SUBNETS["${REGION}"]="${SUBNET_LIST}"
-          done
+            echo "  AMI: ${AMI_ID}, SG: ${SG_ID}, subnet: ${SUBNET_ID}"
 
-          declare -a LAUNCH_PAIRS=()
-          for REGION in ${REGIONS}; do
-            if [ -n "${REGION_AMI[${REGION}]:-}" ]; then
-              for SUBNET in ${REGION_SUBNETS[${REGION}]}; do
-                LAUNCH_PAIRS+=("${REGION}:${SUBNET}")
-              done
-            fi
-          done
+            INSTANCE_ID=$(aws ec2 run-instances --region "${REGION}" \
+              --image-id "${AMI_ID}" \
+              --instance-initiated-shutdown-behavior terminate \
+              --instance-type ${{ env.EC2_SYNC_INSTANCE_TYPE }} \
+              --output text \
+              --query 'Instances[0].InstanceId' \
+              --security-group-ids "${SG_ID}" \
+              --subnet-id "${SUBNET_ID}" \
+              --tag-specifications "ResourceType=instance,Tags=[{Key=Name,Value=${{ env.EC2_PROJECT_TAG }}-sync-${{ github.run_id }}},{Key=Project,Value=${{ env.EC2_PROJECT_TAG }}},{Key=Ephemeral,Value=true}]" \
+              --block-device-mappings \
+                "DeviceName=/dev/sda1,Ebs={VolumeSize=${{ env.EC2_SYNC_ROOT_VOLUME_GB }},VolumeType=gp3,DeleteOnTermination=true}" \
+                "DeviceName=${{ env.EC2_DATA_VOLUME_DEVICE }},Ebs={VolumeSize=${{ env.EC2_SYNC_DATA_VOLUME_GB }},VolumeType=gp3,DeleteOnTermination=true}" \
+              --user-data "file:///tmp/user-data-sync.yml" 2>&1) && break
 
-          if [ "${#LAUNCH_PAIRS[@]}" -eq 0 ]; then
-            echo "ERROR: no usable regions found (missing AMI, SG, or subnets)"
-            exit 1
-          fi
-          echo "Launch attempt order: ${LAUNCH_PAIRS[*]}"
-
-          # ------------------------------------------------------------------
-          # Phase 2: try to launch a spot instance across all region/subnet
-          # ------------------------------------------------------------------
-          INSTANCE_ID=""
-          LAUNCHED_REGION=""
-          LAUNCHED_SUBNET=""
-          ATTEMPT=0
-          DEADLINE=$((SECONDS + ${{ env.EC2_SPOT_DEADLINE_MINUTES }} * 60))
-
-          while [ -z "$INSTANCE_ID" ] && [ "$SECONDS" -lt "$DEADLINE" ]; do
-            ATTEMPT=$((ATTEMPT + 1))
-            for PAIR in "${LAUNCH_PAIRS[@]}"; do
-              REGION="${PAIR%%:*}"
-              SUBNET="${PAIR##*:}"
-              AMI_ID="${REGION_AMI[${REGION}]}"
-              SG_ID="${REGION_SG[${REGION}]}"
-
-              echo "Attempt ${ATTEMPT}: trying ${REGION} subnet ${SUBNET}..."
-              INSTANCE_ID=$(aws ec2 run-instances --region "${REGION}" \
-                --image-id "${AMI_ID}" \
-                --instance-initiated-shutdown-behavior terminate \
-                --instance-market-options '{"MarketType":"spot","SpotOptions":{"SpotInstanceType":"one-time","InstanceInterruptionBehavior":"terminate"}}' \
-                --instance-type ${{ env.EC2_SYNC_INSTANCE_TYPE }} \
-                --output text \
-                --query 'Instances[0].InstanceId' \
-                --security-group-ids "${SG_ID}" \
-                --subnet-id "${SUBNET}" \
-                --tag-specifications "ResourceType=instance,Tags=[{Key=Name,Value=${{ env.EC2_PROJECT_TAG }}-sync-${{ github.run_id }}},{Key=Project,Value=${{ env.EC2_PROJECT_TAG }}},{Key=Ephemeral,Value=true}]" \
-                --block-device-mappings \
-                  "DeviceName=/dev/sda1,Ebs={VolumeSize=${{ env.EC2_SYNC_ROOT_VOLUME_GB }},VolumeType=gp3,DeleteOnTermination=true}" \
-                  "DeviceName=${{ env.EC2_DATA_VOLUME_DEVICE }},Ebs={VolumeSize=${{ env.EC2_SYNC_DATA_VOLUME_GB }},VolumeType=gp3,DeleteOnTermination=true}" \
-                --user-data "file:///tmp/user-data-sync.yml" 2>&1) && {
-                  LAUNCHED_REGION="${REGION}"
-                  LAUNCHED_SUBNET="${SUBNET}"
-                  break 2
-                }
-              echo "  failed: ${INSTANCE_ID}"
-              INSTANCE_ID=""
-            done
-
-            REMAINING=$(( (DEADLINE - SECONDS) / 60 ))
-            echo "All region/subnet combos failed — retrying in 30s (${REMAINING}m remaining)..."
-            sleep 30
+            echo "  Launch failed: ${INSTANCE_ID}"
+            INSTANCE_ID=""
           done
 
           if [ -z "${INSTANCE_ID}" ]; then
-            echo "ERROR: failed to launch sync spot instance in any region after ${{ env.EC2_SPOT_DEADLINE_MINUTES }} minutes"
+            echo "ERROR: failed to launch sync on-demand instance in any region"
             exit 1
           fi
 
           echo "instance_id=${INSTANCE_ID}" >> "$GITHUB_OUTPUT"
-          echo "region=${LAUNCHED_REGION}" >> "$GITHUB_OUTPUT"
-          echo "subnet_id=${LAUNCHED_SUBNET}" >> "$GITHUB_OUTPUT"
-          echo "Launched sync spot instance: ${INSTANCE_ID} (${{ env.EC2_SYNC_INSTANCE_TYPE }} in ${LAUNCHED_REGION}/${LAUNCHED_SUBNET})"
+          echo "region=${REGION}" >> "$GITHUB_OUTPUT"
+          echo "subnet_id=${SUBNET_ID}" >> "$GITHUB_OUTPUT"
+          echo "Launched sync on-demand instance: ${INSTANCE_ID} (${{ env.EC2_SYNC_INSTANCE_TYPE }} in ${REGION})"
 
       - name: Wait for instance to reach running state
         run: |
@@ -287,7 +196,7 @@ jobs:
             --instance-ids "${{ steps.launch.outputs.instance_id }}"
           echo "Instance is running"
 
-      - name: Get instance details
+      - name: Get data volume ID
         id: get_info
         run: |
           # EBS volume attachment is async -- block device mappings may not
@@ -317,14 +226,6 @@ jobs:
           fi
           echo "data_volume_id=${DATA_VOLUME_ID}" >> "$GITHUB_OUTPUT"
           echo "Data volume: ${DATA_VOLUME_ID}"
-
-          SUBNET_ID=$(aws ec2 describe-instances \
-            --region "${{ steps.launch.outputs.region }}" \
-            --instance-ids "${{ steps.launch.outputs.instance_id }}" \
-            --query 'Reservations[0].Instances[0].SubnetId' \
-            --output text)
-          echo "subnet_id=${SUBNET_ID}" >> "$GITHUB_OUTPUT"
-          echo "Subnet: ${SUBNET_ID}"
 
       - name: Wait for runner to register with GitHub Actions
         run: |
@@ -382,10 +283,15 @@ jobs:
 
       - name: Mount data volume
         run: |
-          # find the non-root NVMe device (the attached EBS data volume)
-          DATA_DEV=$(lsblk -d -n -o NAME | grep -v "nvme0n1" | head -1)
+          # find the EBS data volume: a disk device that is not the root NVMe
+          # and not a loop device. lsblk -d lists top-level block devices;
+          # filter to type "disk" to exclude loop/rom devices.
+          DATA_DEV=$(lsblk -d -n -o NAME,TYPE | awk '$2 == "disk" && $1 != "nvme0n1" {print $1}' | head -1)
           if [ -z "${DATA_DEV}" ]; then
-            echo "ERROR: data volume device not found"
+            echo "ERROR: EBS data volume device not found"
+            echo "--- lsblk -d ---"
+            lsblk -d
+            echo "--- lsblk ---"
             lsblk
             exit 1
           fi
