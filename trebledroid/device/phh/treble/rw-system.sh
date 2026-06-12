@@ -792,7 +792,7 @@ if [ "$brand" = OPPO ] || [ "$brand" = realme ]; then
     fi
 fi
 
-if [ ! -f /metadata/securize_disable ] && [ "$(getprop persist.sys.phh.debug_build)" != "true" ]; then
+if [ ! -f /metadata/securize_disable ] && [ "$(getprop ro.build.type)" != "userdebug" ]; then
     # Detect GSI system image changes before securize overwrites fingerprints.
     # PackageManagerService uses PackagePartitions.FINGERPRINT (a SHA-1 digest of
     # all ro.*.build.fingerprint properties) to detect upgrades and set mIsUpgrade.

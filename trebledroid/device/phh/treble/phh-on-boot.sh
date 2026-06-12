@@ -82,7 +82,7 @@ if [ -f /vendor/bin/mtkmal ];then
 fi
 
 # spoof post-boot props for securize (skipped on debug builds)
-if [ ! -f /metadata/securize_disable ] && [ "$(getprop persist.sys.phh.debug_build)" != "true" ]; then
+if [ ! -f /metadata/securize_disable ] && [ "$(getprop ro.build.type)" != "userdebug" ]; then
   resetprop_phh ro.build.user nobody
   resetprop_phh ro.build.host android-build
   resetprop_phh ro.build.tags release-keys
