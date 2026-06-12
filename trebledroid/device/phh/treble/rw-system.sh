@@ -800,7 +800,7 @@ copyprop() {
         resetprop_phh "$1" "$(getprop "$2")"
     fi
 }
-if [ ! -f /metadata/securize_disable ]; then
+if [ ! -f /metadata/securize_disable ] && [ "$(getprop ro.build.type)" != "userdebug" ]; then
     # Detect GSI system image changes before securize overwrites fingerprints.
     # PackageManagerService uses PackagePartitions.FINGERPRINT (a SHA-1 digest of
     # all ro.*.build.fingerprint properties) to detect upgrades and set mIsUpgrade.

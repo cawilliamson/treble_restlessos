@@ -25,7 +25,7 @@ fi
 
 # spoof post-boot props
 # should be applied after boot complete to prevent breaking device features
-if [ ! -f /metadata/securize_disable ]; then
+if [ ! -f /metadata/securize_disable ] && [ "$(getprop ro.build.type)" != "userdebug" ]; then
   resetprop_phh ro.build.user nobody
   resetprop_phh ro.build.host android-build
   resetprop_phh ro.build.tags release-keys
