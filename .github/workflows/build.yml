@@ -446,6 +446,20 @@ jobs:
 
           echo "Volume ${DATA_VOLUME_ID} is available and ready for attach"
 
+      # deprovision the sync instance early -- it's idle from here until
+      # teardown. the runner deregisters itself (ephemeral). if this fails,
+      # the teardown job will terminate it later.
+      - name: Terminate sync instance
+        run: |
+          SYNC_INSTANCE="${{ needs.provision-sync.outputs.instance_id }}"
+          REGION="${{ needs.provision-sync.outputs.region }}"
+          if [ -n "${SYNC_INSTANCE}" ] && [ "${SYNC_INSTANCE}" != "" ]; then
+            echo "Terminating sync instance ${SYNC_INSTANCE} (no longer needed)..."
+            aws ec2 terminate-instances \
+              --region "${REGION}" \
+              --instance-ids "${SYNC_INSTANCE}" || true
+          fi
+
       - name: Generate unique runner label
         id: runner_label
         run: |
