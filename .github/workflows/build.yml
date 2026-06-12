@@ -39,7 +39,7 @@ env:
   EC2_BUILD_ROOT_VOLUME_GB: 100
   EC2_DATA_VOLUME_DEVICE: /dev/sdf
   EC2_DATA_VOLUME_LABEL: builddata
-  EC2_DATA_VOLUME_MOUNT: /home/github/build
+  EC2_DATA_VOLUME_MOUNT: /mnt/src
 
   # rsync upload
   RSYNC_TRANSFER_TIMEOUT_SECONDS: 120
