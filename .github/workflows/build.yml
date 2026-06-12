@@ -342,7 +342,7 @@ jobs:
             --manifest-branch "refs/tags/${GRAPHENEOS_TAG}" \
             --manifest-url https://github.com/GrapheneOS/platform_manifest.git
           mkdir --parents .repo/local_manifests
-          cp --verbose ../configs/manifests/*.xml .repo/local_manifests/
+          cp --verbose ${{ github.workspace }}/configs/manifests/*.xml .repo/local_manifests/
 
       - name: Sync sources
         uses: nick-fields/retry@v4
@@ -373,7 +373,7 @@ jobs:
         working-directory: src/
         run: |
           echo "Syncing trebledroid resources..."
-          rsync --archive --verbose ../trebledroid/ .
+          rsync --archive --verbose ${{ github.workspace }}/trebledroid/ .
           echo "Done."
 
       - name: Flush and unmount data volume
@@ -722,16 +722,16 @@ jobs:
       - name: Apply patches
         working-directory: src/
         run: |
-          ../patches/apply.sh . trebledroid
-          ../patches/apply.sh . trebledroid-staging
-          ../patches/apply.sh . rom
-          ../patches/apply.sh . personal
+          ${{ github.workspace }}/patches/apply.sh . trebledroid
+          ${{ github.workspace }}/patches/apply.sh . trebledroid-staging
+          ${{ github.workspace }}/patches/apply.sh . rom
+          ${{ github.workspace }}/patches/apply.sh . personal
           if [ "${DEBUG_BUILD}" = "true" ]; then
             echo "*** DEBUG BUILD: applying debug-builds tier ***"
-            ../patches/apply.sh . debug-builds
+            ${{ github.workspace }}/patches/apply.sh . debug-builds
           else
             echo "*** RELEASE BUILD: applying release-builds tier ***"
-            ../patches/apply.sh . release-builds
+            ${{ github.workspace }}/patches/apply.sh . release-builds
           fi
 
       - name: Build TrebleApp
@@ -741,9 +741,9 @@ jobs:
       - name: Build ROM image
         working-directory: src/
         run: |
-          ANDROID_VERSION_TAG_VAL=$(cat ../tmp/.android_version_tag)
+          ANDROID_VERSION_TAG_VAL=$(cat ${{ github.workspace }}/tmp/.android_version_tag)
           pushd device/phh/treble
-            cp --force --verbose ../../../../configs/rom/rom.mk .
+            cp --force --verbose ${{ github.workspace }}/configs/rom/rom.mk .
             bash generate.sh rom
           popd
           . build/envsetup.sh
@@ -758,7 +758,7 @@ jobs:
       - name: Sign ROM image
         working-directory: src/
         run: |
-          ANDROID_VERSION_TAG_VAL=$(cat ../tmp/.android_version_tag)
+          ANDROID_VERSION_TAG_VAL=$(cat ${{ github.workspace }}/tmp/.android_version_tag)
           . build/envsetup.sh
           BUILD_VARIANT="user"
           if [ "${DEBUG_BUILD}" = "true" ]; then
@@ -769,7 +769,7 @@ jobs:
           rm --force --verbose "${OUT}/system.img"
           unzip -joq "${OUT}/signed-target_files.zip" IMAGES/system.img -d "${OUT}/"
           rm --force --verbose "${OUT}/signed-target_files.zip"
-          mv --verbose "${OUT}/system.img" ../tmp/system.img
+          mv --verbose "${OUT}/system.img" ${{ github.workspace }}/tmp/system.img
 
       - name: Compress ROM image
         id: compress
