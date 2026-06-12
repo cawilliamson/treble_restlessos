@@ -1,8 +1,9 @@
 #cloud-config
 #
 # restlessos GSI - ephemeral github actions runner bootstrap (AWS EC2)
+# BUILD INSTANCE - full build toolchain
 #
-# placeholders replaced by the GHA "provision" job before sending to EC2:
+# placeholders replaced by the GHA "provision-build" job before sending to EC2:
 #   __RUNNER_TOKEN__   - one-time GHA runner registration token
 #   __RUNNER_LABELS__  - comma-separated labels for this runner
 #   __REPO_URL__       - https://github.com/OWNER/REPO
@@ -162,7 +163,7 @@ runcmd:
     sudo -u github ./config.sh \
       --url "__REPO_URL__" \
       --token "__RUNNER_TOKEN__" \
-      --name "aws-gsi-build-$(hostname)" \
+      --name "aws-gsi-build-$(hostname)" \ \
       --labels "__RUNNER_LABELS__" \
       --unattended \
       --ephemeral
@@ -171,3 +172,4 @@ runcmd:
     systemctl daemon-reload
     systemctl enable --now actions-runner.service
     echo "GitHub Actions runner started via systemd"
+

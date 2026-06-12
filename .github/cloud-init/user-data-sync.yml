@@ -1,0 +1,125 @@
+#cloud-config
+#
+# restlessos GSI - ephemeral github actions runner bootstrap (AWS EC2)
+# SYNC INSTANCE - minimal packages for repo sync only
+#
+# placeholders replaced by the GHA "provision-sync" job before sending to EC2:
+#   __RUNNER_TOKEN__   - one-time GHA runner registration token
+#   __RUNNER_LABELS__  - comma-separated labels for this runner
+#   __REPO_URL__       - https://github.com/OWNER/REPO
+#   __SSH_KEY_B64__    - base64-encoded BUILD_SSH_KEY private key
+
+package_update: true
+package_upgrade: false
+
+packages:
+  - bc
+  - curl
+  - git
+  - git-lfs
+  - jq
+  - python3
+  - rsync
+
+users:
+  - default
+  - name: github
+    shell: /bin/bash
+    groups: [sudo]
+    sudo: ['ALL=(ALL) NOPASSWD:ALL']
+    home: /home/github
+
+write_files:
+  - path: /etc/systemd/system/actions-runner.service
+    permissions: '0644'
+    content: |
+      [Unit]
+      Description=GitHub Actions Runner
+      After=network-online.target
+      Wants=network-online.target
+
+      [Service]
+      Type=simple
+      User=github
+      WorkingDirectory=/opt/actions-runner
+      ExecStart=/opt/actions-runner/run.sh
+      Restart=no
+      StandardOutput=journal
+      StandardError=journal
+
+      [Install]
+      WantedBy=multi-user.target
+
+runcmd:
+  # -------------------------------------------------------------------------
+  # SAFETY TIMER - armed first, always.
+  # shuts the instance down after 2 hours regardless of anything else.
+  # with InstanceInitiatedShutdownBehavior=terminate, this destroys the
+  # instance entirely - no orphaned resources, no surprise bills.
+  # -------------------------------------------------------------------------
+  - "shutdown -P +120 'SAFETY: 2-hour maximum sync time reached. self-destructing.'"
+
+  # -------------------------------------------------------------------------
+  # SSH key + config
+  # -------------------------------------------------------------------------
+  - |
+    mkdir -p /home/github/.ssh
+    echo "__SSH_KEY_B64__" | base64 -d > /home/github/.ssh/build_key
+    chmod 600 /home/github/.ssh/build_key
+    ssh-keygen -y -f /home/github/.ssh/build_key > /home/github/.ssh/build_key.pub
+    cat > /home/github/.ssh/config <<'EOF'
+    Host github.com
+      IdentityFile /home/github/.ssh/build_key
+      StrictHostKeyChecking no
+      User git
+
+    Host build.chrisaw.io
+      IdentityFile /home/github/.ssh/build_key
+      StrictHostKeyChecking no
+      User chrisaw
+    EOF
+    chmod 600 /home/github/.ssh/config
+    chown -R github:github /home/github/.ssh
+
+  # -------------------------------------------------------------------------
+  # repo tool
+  # -------------------------------------------------------------------------
+  - |
+    curl -sf -o /usr/local/bin/repo https://storage.googleapis.com/git-repo-downloads/repo
+    chmod a+x /usr/local/bin/repo
+
+  # -------------------------------------------------------------------------
+  # git identity (required for repo sync)
+  # -------------------------------------------------------------------------
+  - |
+    sudo -u github git config --global user.email 'androidbuild@localhost'
+    sudo -u github git config --global user.name 'androidbuild'
+    sudo -u github git config --global color.ui false
+
+  # -------------------------------------------------------------------------
+  # github actions runner - install, configure, start via systemd
+  # -------------------------------------------------------------------------
+  - |
+    RUNNER_VERSION=$(curl -sf https://api.github.com/repos/actions/runner/releases/latest \
+      | jq -r '.tag_name' | sed 's/^v//')
+    mkdir -p /opt/actions-runner
+    curl -sf -L \
+      "https://github.com/actions/runner/releases/download/v${RUNNER_VERSION}/actions-runner-linux-x64-${RUNNER_VERSION}.tar.gz" \
+      | tar -xz -C /opt/actions-runner
+    /opt/actions-runner/bin/installdependencies.sh
+    chown -R github:github /opt/actions-runner
+
+  - |
+    cd /opt/actions-runner
+    sudo -u github ./config.sh \
+      --url "__REPO_URL__" \
+      --token "__RUNNER_TOKEN__" \
+      --name "aws-gsi-sync-$(hostname)" \
+      --labels "__RUNNER_LABELS__" \
+      --unattended \
+      --ephemeral
+
+  - |
+    systemctl daemon-reload
+    systemctl enable --now actions-runner.service
+    echo "GitHub Actions runner started via systemd"
