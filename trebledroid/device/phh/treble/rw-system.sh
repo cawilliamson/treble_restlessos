@@ -804,24 +804,42 @@ if [ ! -f /metadata/securize_disable ] && [ "$(getprop ro.build.type)" != "userd
     # against a persisted value and, when they differ, set persist.pm.mock-upgrade=true
     # which PMS ORs into isDeviceUpgrading().
     #
-    # Storage selection: prefer /metadata if it is a real mountpoint (not tmpfs),
-    # else fall back to /cache/phh (which is a real partition on non-A/B devices
-    # and a symlink to /data/cache on A/B devices where /data is already mounted).
-    gsi_fp_dir=/metadata/phh
-    gsi_fp_file=/metadata/phh/gsi_fingerprint
-    if ! mountpoint -q /metadata 2>/dev/null; then
-        gsi_fp_dir=/cache/phh
-        gsi_fp_file=/cache/phh/gsi_fingerprint
+    # Storage selection: neither /cache nor /metadata is universally available
+    # at the time rw-system.sh runs.
+    #   /metadata: real persistent partition on post-Q A/B devices; tmpfs on
+    #              pre-Q devices without a metadata partition (see 00-fix-metadata.sh).
+    #   /cache:    real persistent partition on non-A/B devices; a symlink to
+    #              /data/cache on A/B devices, but /data is not yet mounted at
+    #              this point in boot so writes would be silently lost.
+    # Strategy: prefer /metadata if it is a real mountpoint (not tmpfs), else
+    # prefer /cache if it is a real mountpoint, else skip persistence (best-effort).
+    gsi_fp="$(getprop ro.system.build.fingerprint)"
+    gsi_fp_dir=""
+    if mountpoint -q /metadata && [ "$(stat -f -c %T /metadata)" != "tmpfs" ]; then
+        gsi_fp_dir="/metadata/phh"
+    elif mountpoint -q /cache; then
+        gsi_fp_dir="/cache/phh"
     fi
-    current_fp="$(getprop ro.system.build.fingerprint)"
-    mkdir -p "$gsi_fp_dir"
-    if [ -f "$gsi_fp_file" ]; then
-        saved_fp="$(cat "$gsi_fp_file")"
-        if [ "$current_fp" != "$saved_fp" ]; then
-            setprop persist.pm.mock-upgrade true
-        fi
+    gsi_fp_file=""
+    prev_gsi_fp=""
+    if [ -n "$gsi_fp_dir" ]; then
+        mkdir -p "$gsi_fp_dir"
+        gsi_fp_file="$gsi_fp_dir/gsi_fingerprint"
+        [ -f "$gsi_fp_file" ] && prev_gsi_fp="$(cat "$gsi_fp_file")"
     fi
-    printf '%s' "$current_fp" > "$gsi_fp_file"
+    if [ -n "$gsi_fp" ] && [ -n "$prev_gsi_fp" ] && [ "$gsi_fp" != "$prev_gsi_fp" ]; then
+        # fingerprint changed: GSI upgrade detected.
+        [ -n "$gsi_fp_file" ] && echo "$gsi_fp" > "$gsi_fp_file"
+        # signal PMS to run post-upgrade steps.
+        resetprop_phh -n persist.pm.mock-upgrade true
+    elif [ -n "$gsi_fp" ] && [ -z "$prev_gsi_fp" ]; then
+        # no prior fingerprint: fresh flash, factory reset, or no persistent storage.
+        [ -n "$gsi_fp_file" ] && echo "$gsi_fp" > "$gsi_fp_file"
+        resetprop_phh -n persist.pm.mock-upgrade false
+    else
+        # same build as last boot: clear upgrade flag.
+        resetprop_phh -n persist.pm.mock-upgrade false
+    fi
 
     copyprop ro.build.device ro.vendor.build.device
     copyprop ro.system.build.fingerprint ro.vendor.build.fingerprint
@@ -835,23 +853,47 @@ if [ ! -f /metadata/securize_disable ] && [ "$(getprop ro.build.type)" != "userd
     copyprop ro.product.system.device ro.product.vendor.device
     copyprop ro.product.device ro.product.vendor.device
     copyprop ro.product.system_ext.device ro.vendor.product.device
-    copyprop ro.product.device ro.vendor.product.device
+    copyprop ro.product.product.device ro.vendor.product.device
+    copyprop ro.product.system_ext.device ro.product.vendor.device
+    copyprop ro.product.product.device ro.product.vendor.device
     copyprop ro.product.system.name ro.vendor.product.name
     copyprop ro.product.name ro.vendor.product.name
-    copyprop ro.product.system.name ro.product.vendor.device
-    copyprop ro.product.name ro.product.vendor.device
+    copyprop ro.product.system_ext.name ro.vendor.product.name
+    copyprop ro.product.product.name ro.vendor.product.name
+    copyprop ro.product.system.name ro.product.vendor.name
+    copyprop ro.product.name ro.product.vendor.name
+    copyprop ro.product.system_ext.name ro.product.vendor.name
+    copyprop ro.product.product.name ro.product.vendor.name
     copyprop ro.system.product.brand ro.vendor.product.brand
     copyprop ro.product.brand ro.vendor.product.brand
+    copyprop ro.product.system.brand ro.vendor.product.brand
+    copyprop ro.product.system_ext.brand ro.vendor.product.brand
+    copyprop ro.product.product.brand ro.product.vendor.brand
+    copyprop ro.system.product.brand ro.product.vendor.brand
+    copyprop ro.product.brand ro.product.vendor.brand
+    copyprop ro.product.system.brand ro.product.vendor.brand
+    copyprop ro.product.system_ext.brand ro.product.vendor.brand
+    copyprop ro.product.product.brand ro.product.vendor.brand
     copyprop ro.product.system.model ro.vendor.product.model
     copyprop ro.product.model ro.vendor.product.model
+    copyprop ro.product.system_ext.model ro.vendor.product.model
+    copyprop ro.product.product.model ro.vendor.product.model
     copyprop ro.product.system.model ro.product.vendor.model
     copyprop ro.product.model ro.product.vendor.model
     copyprop ro.build.product ro.vendor.product.model
     copyprop ro.build.product ro.product.vendor.model
+    copyprop ro.product.system_ext.model ro.product.vendor.model
+    copyprop ro.product.product.model ro.product.vendor.model
     copyprop ro.system.product.manufacturer ro.vendor.product.manufacturer
     copyprop ro.product.manufacturer ro.vendor.product.manufacturer
+    copyprop ro.product.system.manufacturer ro.vendor.product.manufacturer
+    copyprop ro.product.product.manufacturer ro.vendor.product.manufacturer
+    copyprop ro.product.system_ext.manufacturer ro.vendor.product.manufacturer
     copyprop ro.system.product.manufacturer ro.product.vendor.manufacturer
     copyprop ro.product.manufacturer ro.product.vendor.manufacturer
+    copyprop ro.product.system.manufacturer ro.product.vendor.manufacturer
+    copyprop ro.product.product.manufacturer ro.product.vendor.manufacturer
+    copyprop ro.product.system_ext.manufacturer ro.product.vendor.manufacturer
     (getprop ro.vendor.build.security_patch; getprop ro.keymaster.xxx.security_patch) |sort |tail -n 1 |while read v;do
         [ -n "$v" ] && resetprop_phh ro.build.version.security_patch "$v"
     done
@@ -863,7 +905,24 @@ if [ ! -f /metadata/securize_disable ] && [ "$(getprop ro.build.type)" != "userd
     resetprop_phh ro.boot.verifiedbootstate green
     resetprop_phh vendor.boot.verifiedbootstate green
     resetprop_phh ro.boot.flash.locked 1
-    resetprop_phh --delete ro.build.selinux
+
+    # spoof security-sensitive props early so root detection apps cannot read
+    # the real values before phh-on-boot.sh reinforces them post-boot
+    resetprop_phh ro.debuggable 0
+    resetprop_phh ro.secure 1
+
+    # update usb gadget strings so the device appears correctly when connected
+    model="$(getprop ro.product.model)"
+    manufacturer="$(getprop ro.product.manufacturer)"
+    gadget_strings="/config/usb_gadget/g1/strings/0x409"
+    legacy_usb="/sys/class/android_usb/android0"
+    if [ -d "$gadget_strings" ]; then
+        [ -n "$model" ] && echo "$model" > "$gadget_strings/product"
+        [ -n "$manufacturer" ] && echo "$manufacturer" > "$gadget_strings/manufacturer"
+    elif [ -d "$legacy_usb" ]; then
+        [ -n "$model" ] && echo "$model" > "$legacy_usb/iProduct"
+        [ -n "$manufacturer" ] && echo "$manufacturer" > "$legacy_usb/iManufacturer"
+    fi
 
     resetprop_phh ro.adb.secure 1
 

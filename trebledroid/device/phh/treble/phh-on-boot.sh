@@ -95,7 +95,13 @@ if [ ! -f /metadata/securize_disable ] && [ "$(getprop ro.build.type)" != "userd
   resetprop_phh ro.boot.verifiedbootstate green
   resetprop_phh vendor.boot.verifiedbootstate green
   resetprop_phh ro.boot.flash.locked 1
-  resetprop_phh vendor.boot.vbmeta.device_state locked
+  resetprop_phh ro.boot.veritymode enforcing
+  resetprop_phh ro.boot.warranty_bit 0
+  resetprop_phh ro.vendor.warranty_bit 0
+  resetprop_phh ro.warranty_bit 0
+  resetprop_phh --delete ro.build.selinux
+  resetprop_phh -n sys.oem_unlock_allowed 0
+  resetprop_phh -n init.svc.flash_recovery stopped
 fi
 
 if grep -qF android.hardware.boot /vendor/manifest.xml || grep -qF android.hardware.boot /vendor/etc/vintf/manifest.xml ;then
