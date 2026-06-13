@@ -1,0 +1,22 @@
+name: Reopen issue on author comment
+
+on:
+  issue_comment:
+    types:
+      - created
+
+permissions:
+  issues: write
+
+jobs:
+  reopen:
+    runs-on: ubuntu-latest
+    if: >
+      github.event.issue.state == 'closed' &&
+      github.event.comment.user.login == github.event.issue.user.login
+    steps:
+      - name: Reopen issue
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          ISSUE_NUMBER: ${{ github.event.issue.number }}
+        run: gh issue reopen "$ISSUE_NUMBER"
