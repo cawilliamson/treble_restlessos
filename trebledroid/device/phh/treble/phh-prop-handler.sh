@@ -118,15 +118,20 @@ if [ "$1" == "persist.sys.phh.oppo.gaming_mode" ]; then
     exit
 fi
 
-if [ "$1" == "persist.sys.phh.securize" ]; then
-    if [[ "$prop_value" != "0" && "$prop_value" != "1" ]]; then
-        exit 1
-    fi
-    if [[ "$prop_value" == 1 ]]; then
-        rm -f /metadata/securize_disable
-    else
-        touch /metadata/securize_disable
-    fi
+if [ "$1" == "sys.phh.oplus.fppress" ]; then
+    prop_value=$(getprop sys.phh.oplus.fppress)
+
+    nodes=(
+        "/sys/kernel/oplus_display/oplus_notify_fppress"
+        "/sys/kernel/oppo_display/oppo_notify_fppress"
+    )
+
+    for node in "${nodes[@]}"; do
+        if [ -e "$node" ]; then
+            echo "$prop_value" > "$node"
+        fi
+    done
+    exit
 fi
 
 if [ "$1" == "persist.sys.phh.oppo.usbotg" ]; then
@@ -290,5 +295,17 @@ if [ "$1" == "persist.bluetooth.system_audio_hal.enabled" ]; then
         resetprop_phh --delete ro.bluetooth.a2dp_offload.supported
     fi
     restartAudio
+    exit
+fi
+
+if [ "$1" == "persist.sys.phh.securize" ]; then
+    if [[ "$prop_value" != "0" && "$prop_value" != "1" ]]; then
+        exit 1
+    fi
+    if [[ "$prop_value" == "0" ]]; then
+        touch /metadata/securize_disable
+    else
+        rm -f /metadata/securize_disable
+    fi
     exit
 fi

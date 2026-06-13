@@ -1,9 +1,67 @@
 #!/system/bin/sh
 
+# Disable restricted networking mode on devices without working BPF.
+# Android 14+ uses BPF firewall chains to enforce restricted_networking_mode.
+# On older kernels where BPF maps failed to load, the restricted chain cannot
+# maintain its allowlist, causing all apps to lose network connectivity.
+# The uid_owner_map is the BPF map backing firewall chain rules -- if it does
+# not exist, the restricted chain cannot function and must be disabled.
+if [ ! -e /sys/fs/bpf/netd_shared/map_netd_uid_owner_map ]; then
+    settings put global restricted_networking_mode 0
+    log -t phh-on-boot "Disabled restricted_networking_mode (BPF uid_owner_map absent)"
+fi
+
+# Disable FUSE BPF on devices whose kernels lack fuse-bpf support.
+# Android 16 enables FUSE BPF by default, which requires kernel support for
+# the fuse-bpf program type. On older kernels (< 5.4 without backport),
+# fuseMedia.bpf fails to load and the FuseDaemon falls back to legacy mode
+# but the legacy FUSE path may not work correctly on QPR2+. Setting
+# persist.sys.fuse.bpf.override=false tells the FuseDaemon and vold to
+# use the legacy FUSE path from the start, avoiding the failed BPF load
+# and ensuring bind-mounts for Android/data and Android/obb are set up
+# correctly by vold.
+if [ ! -f /sys/fs/fuse/features/fuse_bpf ]; then
+    setprop persist.sys.fuse.bpf.override false
+    log -t phh-on-boot "Disabled FUSE BPF (kernel fuse_bpf feature absent)"
+fi
+
 vndk="$(getprop persist.sys.vndk)"
 [ -z "$vndk" ] && vndk="$(getprop ro.vndk.version |grep -oE '^[0-9]+')"
 
 [ "$(getprop vold.decrypt)" = "trigger_restart_min_framework" ] && exit 0
+
+# recover USB gadget if the UDC failed to bind during boot.
+# on some exynos devices (e.g. samsung galaxy M33), the dwc3 OTG state
+# machine starts the gadget before init has configured USB functions via
+# configfs, leaving the UDC in a failed state with ENODEV.  cycling
+# sys.usb.config forces the vendor USB init to tear down and rebuild
+# the gadget cleanly.
+#
+# however, on devices with a fingerprint HAL, the USB config cycle can
+# invalidate the TEE session that the fingerprint HAL depends on,
+# breaking fingerprint after every boot without a USB cable.  skip the
+# reset on these devices -- fingerprint is more important than
+# ADB-over-USB on boot (ADB over WiFi still works).
+udc_state="$(cat /config/usb_gadget/g1/UDC 2>/dev/null)"
+if [ -z "$udc_state" ] || [ "$udc_state" = "none" ]; then
+    fp_hal="$(getprop ro.hardware.fingerprint)"
+    if [ -n "$fp_hal" ]; then
+        log -t phh-on-boot "USB gadget not bound, but skipping reset: fingerprint HAL ($fp_hal) detected, reset would break TEE session"
+    else
+        usb_cfg="$(getprop persist.sys.usb.config)"
+        if [ -n "$usb_cfg" ]; then
+            log -t phh-on-boot "USB gadget not bound, retrying config: $usb_cfg"
+            setprop sys.usb.config none
+            sleep 1
+            setprop sys.usb.config "$usb_cfg"
+        fi
+        # Restart fingerprint/biometrics HAL after USB gadget recovery.
+        # The USB config cycle can disconnect the HAL's TEE session,
+        # so restart both services to re-establish it.
+        setprop ctl.restart vendor.fps_hal
+        setprop ctl.restart vendor.biometrics-hal-1
+    fi
+fi
 
 setprop ctl.start media.swcodec
 
@@ -23,8 +81,7 @@ if [ -f /vendor/bin/mtkmal ];then
     fi
 fi
 
-# spoof post-boot props
-# should be applied after boot complete to prevent breaking device features
+# spoof post-boot props for securize (skipped on debug builds)
 if [ ! -f /metadata/securize_disable ] && [ "$(getprop ro.build.type)" != "userdebug" ]; then
   resetprop_phh ro.build.user nobody
   resetprop_phh ro.build.host android-build
@@ -38,13 +95,7 @@ if [ ! -f /metadata/securize_disable ] && [ "$(getprop ro.build.type)" != "userd
   resetprop_phh ro.boot.verifiedbootstate green
   resetprop_phh vendor.boot.verifiedbootstate green
   resetprop_phh ro.boot.flash.locked 1
-  resetprop_phh ro.boot.veritymode enforcing
-  resetprop_phh ro.boot.warranty_bit 0
-  resetprop_phh ro.vendor.warranty_bit 0
-  resetprop_phh ro.warranty_bit 0
-  resetprop_phh --delete ro.build.selinux
-  resetprop_phh -n sys.oem_unlock_allowed 0
-  resetprop_phh -n init.svc.flash_recovery stopped
+  resetprop_phh vendor.boot.vbmeta.device_state locked
 fi
 
 if grep -qF android.hardware.boot /vendor/manifest.xml || grep -qF android.hardware.boot /vendor/etc/vintf/manifest.xml ;then
