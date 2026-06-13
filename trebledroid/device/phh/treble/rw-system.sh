@@ -898,16 +898,13 @@ if [ ! -f /metadata/securize_disable ] && [ "$(getprop ro.build.type)" != "userd
         [ -n "$v" ] && resetprop_phh ro.build.version.security_patch "$v"
     done
 
-    # remaining prop spoofing is done post-boot in phh-on-boot.sh
-    # to avoid breaking device features that read props during init
-    resetprop_phh ro.boot.vbmeta.device_state locked
-    resetprop_phh vendor.boot.vbmeta.device_state locked
-    resetprop_phh ro.boot.verifiedbootstate green
-    resetprop_phh vendor.boot.verifiedbootstate green
-    resetprop_phh ro.boot.flash.locked 1
-
     # spoof security-sensitive props early so root detection apps cannot read
-    # the real values before phh-on-boot.sh reinforces them post-boot
+    # the real values before phh-on-boot.sh reinforces them post-boot.
+    # verified-boot state (ro.boot.verifiedbootstate, ro.boot.vbmeta.device_state,
+    # ro.boot.flash.locked) is intentionally left until phh-on-boot.sh after
+    # sys.boot_completed=1 because xiaomi/POCO keymaster reads these props while
+    # deriving FBE keys; changing them before user0 key unwrap causes
+    # init_user0_failed recovery.
     resetprop_phh ro.debuggable 0
     resetprop_phh ro.secure 1
 
