@@ -1011,45 +1011,22 @@ jobs:
 
             REGION="${{ needs.provision-sync.outputs.region || env.EC2_DEFAULT_REGION }}"
 
-            # check if the volume is already gone (e.g. already deleted)
+            echo "Deleting volume ${DATA_VOLUME_ID}..."
+            aws ec2 delete-volume \
+              --region "${REGION}" \
+              --volume-id "${DATA_VOLUME_ID}" || true
+
             STATE=$(aws ec2 describe-volumes \
               --region "${REGION}" \
               --volume-ids "${DATA_VOLUME_ID}" \
               --query 'Volumes[0].State' --output text 2>/dev/null || echo "deleted")
-            if [ "${STATE}" = "deleted" ]; then
-              echo "Volume ${DATA_VOLUME_ID} already deleted"
-              exit 0
-            fi
-            echo "Volume ${DATA_VOLUME_ID} state: ${STATE}"
 
-            # the volume must be detached before it can be deleted.
-            # instance termination is async -- even after wait
-            # instance-terminated, the volume may still be attached.
-            if [ "${STATE}" != "available" ]; then
-              echo "Volume not yet available for deletion -- will retry"
+            if [ "${STATE}" != "deleted" ] && [ -n "${STATE}" ]; then
+              echo "Volume ${DATA_VOLUME_ID} still in state '${STATE}'"
               exit 1
             fi
 
-            echo "Deleting volume ${DATA_VOLUME_ID}..."
-            aws ec2 delete-volume \
-              --region "${REGION}" \
-              --volume-id "${DATA_VOLUME_ID}"
-
-            # verify deletion: describe-volumes returns InvalidVolume.NotFound
-            # once deletion completes. the delete-volume call is async so
-            # the volume may be in 'deleting' state for a moment.
-            VERIFY_STATE=$(aws ec2 describe-volumes \
-              --region "${REGION}" \
-              --volume-ids "${DATA_VOLUME_ID}" \
-              --query 'Volumes[0].State' --output text 2>/dev/null || echo "deleted")
-            echo "Post-delete state: ${VERIFY_STATE}"
-            if [ "${VERIFY_STATE}" = "deleted" ] || [ "${VERIFY_STATE}" = "deleting" ]; then
-              echo "Volume ${DATA_VOLUME_ID} deletion confirmed"
-              exit 0
-            fi
-
-            echo "Volume still in state '${VERIFY_STATE}' -- will retry"
-            exit 1
+            echo "Volume ${DATA_VOLUME_ID} deleted"
 
       - name: Remove runners
         run: |

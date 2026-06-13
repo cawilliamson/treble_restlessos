@@ -29,6 +29,7 @@ resource "aws_iam_user_policy" "gha_ec2" {
           "ec2:AttachVolume",
           "ec2:CreateTags",
           "ec2:CreateVolume",
+          "ec2:DeleteVolume",
           "ec2:DescribeImages",
           "ec2:DescribeInstanceStatus",
           "ec2:DescribeInstances",
