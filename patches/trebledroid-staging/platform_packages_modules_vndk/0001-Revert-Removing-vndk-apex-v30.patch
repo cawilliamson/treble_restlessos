@@ -9,17 +9,19 @@ VNDK v30 was removed in A16 QPR2, restore it for GSI compatibility.
  1 file changed, 7 insertions(+)
 
 diff --git a/apex/Android.bp b/apex/Android.bp
-index baf8d19..8f194df 100644
 --- a/apex/Android.bp
 +++ b/apex/Android.bp
-@@ -63,3 +63,10 @@ apex_vndk {
-     vndk_version: "31",
+@@ -58,6 +58,13 @@ apex_vndk {
      system_ext_specific: true,
  }
-+
+ 
 +apex_vndk {
 +    name: "com.android.vndk.v30",
 +    defaults: ["vndk-apex-defaults"],
 +    vndk_version: "30",
 +    system_ext_specific: true,
 +}
++
+ apex_vndk {
+     name: "com.android.vndk.v31",
+     defaults: ["vndk-apex-defaults"],
