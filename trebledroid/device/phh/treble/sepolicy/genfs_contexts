@@ -1,4 +1,0 @@
-genfscon sysfs /board_properties u:object_r:sysfs_board_properties:s0
-genfscon sysfs /devices/platform/soc/soc:mtk_leds/leds u:object_r:sysfs_leds:s0
-genfscon sysfs /bus/spi/drivers/fpga_spi u:object_r:sysfs_fpga_spi:s0
-genfscon sysfs /nds03_ctrl u:object_r:sysfs_nds03:s0

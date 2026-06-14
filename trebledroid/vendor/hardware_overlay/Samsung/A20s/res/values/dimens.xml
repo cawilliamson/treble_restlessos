@@ -1,8 +1,0 @@
-<?xml version="1.0" encoding="utf-8"?>
-<resources>
-    <dimen name="rounded_corner_radius">0.0dip</dimen>
-    <dimen name="status_bar_height">30.0dip</dimen>
-    <dimen name="status_bar_height_portrait">30.0dip</dimen>
-    <dimen name="status_bar_height_landscape">24.0dip</dimen>
-    <dimen name="quick_qs_offset_height">46.0dip</dimen>
-</resources>

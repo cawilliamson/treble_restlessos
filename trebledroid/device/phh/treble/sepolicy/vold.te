@@ -1,2 +1,0 @@
-allow vold system_data_file:lnk_file { unlink };
-allow mediaextractor sdcard_type:file read;

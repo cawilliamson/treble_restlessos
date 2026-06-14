@@ -1,5 +1,0 @@
-<?xml version="1.0" encoding="utf-8"?>
-<resources>
-    <dimen name="status_bar_height_portrait">122.000001px</dimen>
-    <dimen name="status_bar_height_landscape">28.000001dp</dimen>
-</resources>

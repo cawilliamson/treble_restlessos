@@ -1,5 +1,0 @@
-package vendor.qti.hardware.radio.qtiradio@1.0;
-
-interface IQtiRadioResponse {
-	oneway getAtrResponse(QtiRadioResponseInfo info, string atr);
-};

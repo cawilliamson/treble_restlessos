@@ -1,7 +1,0 @@
-package vendor.lge.hardware.powercontrol@1.0;
-
-interface IPowercontrolCallback {
-	oneway setMaxBrightness(int32_t id, int32_t brightness);
-	oneway setRecoverBacklight(int32_t id, int32_t data);
-	oneway setThermalState(int32_t id, int32_t data);
-};

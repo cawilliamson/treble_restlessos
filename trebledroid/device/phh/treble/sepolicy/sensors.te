@@ -1,1 +1,0 @@
-allow hal_sensors_server system_server:fd use;

@@ -1,3 +1,0 @@
-<manifest xmlns:android="http://schemas.android.com/apk/res/android" package="me.phh.treble.overlay.sony.pdx206" android:versionCode="1" android:versionName="1.0">
-    <overlay android:targetPackage="android" android:requiredSystemPropertyName="ro.vendor.build.fingerprint" android:requiredSystemPropertyValue="+KDDI/pdx206_kddi/pdx206_kddi*" android:priority="1830" android:isStatic="true" />
-</manifest>

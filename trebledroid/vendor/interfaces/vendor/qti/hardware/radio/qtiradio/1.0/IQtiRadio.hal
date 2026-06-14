@@ -1,9 +1,0 @@
-package vendor.qti.hardware.radio.qtiradio@1.0;
-
-import vendor.qti.hardware.radio.qtiradio@1.0::IQtiRadioIndication;
-import vendor.qti.hardware.radio.qtiradio@1.0::IQtiRadioResponse;
-
-interface IQtiRadio {
-	setCallback(IQtiRadioResponse responseCallback, IQtiRadioIndication indicationCallback);
-	oneway getAtr(int32_t serial);
-};

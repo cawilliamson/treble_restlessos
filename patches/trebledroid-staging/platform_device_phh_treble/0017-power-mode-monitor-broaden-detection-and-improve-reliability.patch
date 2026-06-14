@@ -1,0 +1,123 @@
+From 75ab4b03bd0621a605ca0f95556f7d023a992b8c Mon Sep 17 00:00:00 2001
+From: "Christopher A. Williamson" <contact@chrisaw.io>
+Date: Sun, 14 Jun 2026 02:10:03 +0100
+Subject: [PATCH 17/26] power-mode-monitor: broaden detection and improve reliability
+
+Rewrite the power-mode monitor so it works across more vendors:
+
+- drop the timeout binary dependency and the ro.hardware MTK gate.
+  some Qualcomm and other non-MTK HALs also log unsupported setMode
+  errors that need to be blocked.
+
+- use 15 x 10s periodic logcat dumps instead of a single 90s pipe.
+  this avoids subshell variable scoping problems and makes the script
+  resilient if logcat exits early.
+
+- scan all log buffers and match generic vendor HAL patterns in
+  addition to the mtkpower@impl format.
+
+- never exit early when the property is already populated; late-
+  appearing modes on subsequent boots would otherwise be missed.
+
+Issue: #21
+---
+ power-mode-monitor.sh | 76 ++++++++++++++++++++++++++-----------------
+ 1 file changed, 46 insertions(+), 30 deletions(-)
+ mode change 100644 => 100755 power-mode-monitor.sh
+
+diff --git a/power-mode-monitor.sh b/power-mode-monitor.sh
+old mode 100644
+new mode 100755
+index 47deea9..dfcaf29
+--- a/power-mode-monitor.sh
++++ b/power-mode-monitor.sh
+@@ -1,40 +1,56 @@
+ #!/system/bin/sh
+-# discover unsupported vendor power HAL modes by watching for "unknown type"
+-# errors in logcat.  runs briefly after boot and populates a persist property
+-# so the framework can skip those modes on subsequent boots.
+-# currently only supports MTK devices (mtkpower@impl log format).
++# discover unsupported vendor power HAL modes by monitoring logcat for
++# "unknown type" / "unsupported" errors after boot.  runs briefly after
++# boot and populates a persist property so the framework can skip those
++# modes on subsequent boots.
++#
++# the framework's PowerManagerService reads this property and blocks
++# modes listed in it from being forwarded to the vendor HAL.
+ 
+-# only run on mediatek devices
+-hw="$(getprop ro.hardware)"
+-if ! echo "$hw" | grep -qi mt; then
+-    exit 0
+-fi
+ PROP="persist.sys.phh.blocked_power_modes"
+-TIMEOUT=90
++INTERVAL=10
++MAX_LOOPS=15
+ last_type=""
+ 
+ existing="$(getprop "$PROP")"
++log -t power-mode-monitor "starting (prop=${existing:-empty})"
+ 
+-# monitor the main log buffer for vendor power HAL errors.
+-# the pattern covers MTK's mtkpower@impl and similar vendor tags.
+-timeout "$TIMEOUT" logcat -b main -v raw 2>/dev/null | while IFS= read -r line; do
+-    case "$line" in
+-        *"[setMode] type:"*)
+-            last_type="$(echo "$line" | sed -n 's/.*type:\([0-9]*\).*/\1/p')"
+-            ;;
+-        *"[setMode] unknown"*|*"[setMode] unsupported"*|*"setMode: unknown"*)
+-            if [ -n "$last_type" ]; then
+-                if ! echo ",$existing," | grep -q ",$last_type,"; then
+-                    if [ -z "$existing" ]; then
+-                        existing="$last_type"
+-                    else
+-                        existing="$existing,$last_type"
++i=0
++while [ "$i" -lt "$MAX_LOOPS" ]; do
++    # dump the current log buffer (all buffers) and scan for errors.
++    # use brief format: P/TAG(PID): message
++    logcat -b all -d -v brief 2>/dev/null | while IFS= read -r line; do
++        case "$line" in
++            *"[setMode] type:"*)
++                # extract the type number.  format:
++                # I/mtkpower@impl( 1338): [setMode] type:6, enabled:1
++                last_type="${line##*type:}"
++                last_type="${last_type%%,*}"
++                ;;
++            *"[setMode] unknown"*|\
++            *"[setMode] unsupported"*|\
++            *"setMode: unknown"*|\
++            *"setMode: unsupported"*)
++                if [ -n "$last_type" ]; then
++                    # check whether already blocked
++                    if ! echo ",$existing," | grep -q ",$last_type,"; then
++                        if [ -z "$existing" ]; then
++                            existing="$last_type"
++                        else
++                            existing="$existing,$last_type"
++                        fi
++                        setprop "$PROP" "$existing"
++                        log -t power-mode-monitor \
++                            "blocked unsupported power mode $last_type (prop=$existing)"
+                     fi
+-                    setprop "$PROP" "$existing"
+-                    log -t power-mode-monitor "blocked unsupported power mode $last_type (prop=$existing)"
++                    last_type=""
+                 fi
+-                last_type=""
+-            fi
+-            ;;
+-    esac
++                ;;
++        esac
++    done
++
++    sleep "$INTERVAL"
++    i=$((i + 1))
+ done
++
++log -t power-mode-monitor "finished after $((MAX_LOOPS * INTERVAL))s (prop=$(getprop "$PROP"))"
+-- 
+2.54.0
+

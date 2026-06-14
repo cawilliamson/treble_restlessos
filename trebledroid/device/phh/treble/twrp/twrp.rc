@@ -1,3 +1,0 @@
-on post-fs
-	exec - root -- /system/bin/vndk-detect
-	exec u:r:phhsu_daemon:s0 root -- /system/bin/twrp.sh

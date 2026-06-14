@@ -1,8 +1,0 @@
-package vendor.somc.hardware.superstamina@1.0;
-
-interface ISuperStamina {
-	setSysfs(string path, string value) generates (int32_t ret);
-	getSysfs(string path) generates (string value);
-	setProperty(string name, string value) generates (int32_t ret);
-	getProperty(string name) generates (string value);
-};

@@ -1,9 +1,0 @@
-package vendor.somc.hardware.wifi@2.0;
-
-import vendor.somc.hardware.wifi@2.0::ISomcWifiCallback;
-
-interface ISomcWifi {
-	oneway registerCallback(ISomcWifiCallback cb);
-	startMonitoring() generates (bool success);
-	oneway stopMonitoring();
-};

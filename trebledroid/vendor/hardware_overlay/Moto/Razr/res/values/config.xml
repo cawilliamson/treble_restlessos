@@ -1,8 +1,0 @@
-<?xml version="1.0" encoding="utf-8"?>
-<resources>
-    <bool name="config_powerDecoupleAutoSuspendModeFromDisplay">true</bool>
-    <bool name="config_dozeAlwaysOnDisplayAvailable">true</bool>
-    <bool name="config_displayBlanksAfterDoze">true</bool>
-    <bool name="config_dozeAfterScreenOffByDefault">true</bool>
-    <integer name="config_screenBrightnessDoze">3</integer>
-</resources>

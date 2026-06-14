@@ -1,7 +1,0 @@
-package vendor.sprd.hardware.radio@1.0;
-
-import android.hardware.radio@1.0::RadioIndicationType;
-
-interface IAtcRadioIndication {
-    oneway vsimRSimReqqInd(RadioIndicationType type, string data);
-};

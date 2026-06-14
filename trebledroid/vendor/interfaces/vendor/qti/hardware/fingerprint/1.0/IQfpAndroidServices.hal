@@ -1,9 +1,0 @@
-package vendor.qti.hardware.fingerprint@1.0;
-
-interface IQfpAndroidServices {
-	setTimer(uint32_t timeoutMs);
-	setWakelock(uint8_t acquire, uint8_t isPartialWakelock);
-	checkRequestingAppType() generates (uint32_t type);
-	showLivenessAlert();
-	resetLivenessAlert();
-};

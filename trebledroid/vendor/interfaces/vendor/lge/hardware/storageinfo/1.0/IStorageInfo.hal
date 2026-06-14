@@ -1,8 +1,0 @@
-package vendor.lge.hardware.storageinfo@1.0;
-
-import vendor.lge.hardware.storageinfo@1.0::IStorageInfoNotifier;
-
-interface IStorageInfo {
-	oneway startPeriodicReport(IStorageInfoNotifier notifier, int32_t interval);
-	queryStatus(int32_t type) generates (StorageInfoData retvalue);
-};

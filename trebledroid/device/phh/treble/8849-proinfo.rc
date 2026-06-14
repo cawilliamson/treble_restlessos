@@ -1,2 +1,0 @@
-on post-fs-data
-    exec u:r:phhsu_daemon:s0 root -- /system/bin/sh /system/etc/8849-proinfo.sh

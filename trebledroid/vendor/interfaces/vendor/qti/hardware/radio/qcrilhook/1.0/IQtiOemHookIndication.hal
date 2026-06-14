@@ -1,5 +1,0 @@
-package vendor.qti.hardware.radio.qcrilhook@1.0;
-
-interface IQtiOemHookIndication {
-	oneway oemHookRawIndication(vec<uint8_t> data);
-};

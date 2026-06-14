@@ -1,8 +1,0 @@
-<?xml version="1.0" encoding="utf-8"?>
-<resources>
-    <!-- Whether or not swipe up gesture's opt-in setting is available on this device -->
-    <bool name="config_swipe_up_gesture_setting_available">true</bool>
-    <!-- Flag indicating whether platform level volume adjustments are enabled for remote sessions
-         on grouped devices. -->
-    <bool name="config_volumeAdjustmentForRemoteGroupSessions">true</bool>
-</resources>

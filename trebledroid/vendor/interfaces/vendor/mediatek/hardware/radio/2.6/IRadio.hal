@@ -1,7 +1,0 @@
-package vendor.mediatek.hardware.radio@2.6;
-
-import vendor.mediatek.hardware.radio@2.5::IRadio;
-
-interface IRadio extends vendor.mediatek.hardware.radio@2.5::IRadio {
-	oneway setSmsFwkReady(int32_t ready);
-};

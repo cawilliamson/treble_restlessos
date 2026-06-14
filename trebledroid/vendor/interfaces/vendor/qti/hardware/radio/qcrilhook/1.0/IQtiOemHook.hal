@@ -1,9 +1,0 @@
-package vendor.qti.hardware.radio.qcrilhook@1.0;
-
-import vendor.qti.hardware.radio.qcrilhook@1.0::IQtiOemHookResponse;
-import vendor.qti.hardware.radio.qcrilhook@1.0::IQtiOemHookIndication;
-
-interface IQtiOemHook {
-	setCallback(IQtiOemHookResponse reponseCallback, IQtiOemHookIndication indicationCallback);
-	oemHookRawRequest(int32_t serial, vec<uint8_t> data);
-};
