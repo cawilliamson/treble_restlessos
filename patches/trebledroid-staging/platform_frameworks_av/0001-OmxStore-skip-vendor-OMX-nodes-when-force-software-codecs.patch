@@ -1,0 +1,59 @@
+From 5591459db6c6ec432a47b57ac89b3e98f834ddd6 Mon Sep 17 00:00:00 2001
+From: "Christopher A. Williamson" <contact@chrisaw.io>
+Date: Sun, 14 Jun 2026 23:19:17 +0100
+Subject: [PATCH] OmxStore: skip vendor OMX nodes when force software codecs is
+ enabled
+
+The persist.sys.phh.force_sw_codecs property is meant to disable broken
+vendor hardware codecs on GSI builds. Disabling C2 alone still leaves vendor
+OMX nodes selectable, and some vendor OMX encoders can still crash or fail
+to create PersistentInputSurface.
+
+When the property is true, drop any OMX node whose name does not start with
+OMX.google. from the role list. This leaves only the AOSP software OMX codecs
+available, matching the property name.
+
+This is intended for the platform_frameworks_av patch tier.
+
+Fixes: #33
+
+Fixes: #94
+---
+ media/libstagefright/omx/1.0/OmxStore.cpp | 14 ++++++++++++++
+ 1 file changed, 14 insertions(+)
+
+diff --git a/media/libstagefright/omx/1.0/OmxStore.cpp b/media/libstagefright/omx/1.0/OmxStore.cpp
+index b5c1166..b2f1a79 100644
+--- a/media/libstagefright/omx/1.0/OmxStore.cpp
++++ b/media/libstagefright/omx/1.0/OmxStore.cpp
+@@ -21,6 +21,8 @@
+ 
+ #include <android-base/logging.h>
+ 
++#include <cutils/properties.h>
++
+ #include <media/stagefright/omx/1.0/Conversion.h>
+ #include <media/stagefright/omx/1.0/OmxStore.h>
+ #include <media/stagefright/xmlparser/MediaCodecsXmlParser.h>
+@@ -110,6 +112,18 @@ OmxStore::OmxStore(
+                 }
+                 continue;
+             }
++
++            // when force software codecs is enabled, drop any OMX node that is
++            // not an AOSP/Google software codec. this prevents broken vendor
++            // OMX hardware encoders/decoders from being selected on GSI builds.
++            char propValue[PROPERTY_VALUE_MAX];
++            if (property_get("persist.sys.phh.force_sw_codecs", propValue, "") > 0
++                    && strcmp(propValue, "true") == 0
++                    && strncasecmp(nodePair.second.name.c_str(), "OMX.google.", 11) != 0) {
++                LOG(INFO) << "force_sw_codecs: dropping non-Google node "
++                          << nodePair.second.name.c_str();
++                continue;
++            }
+             NodeInfo node;
+             node.name = nodePair.second.name;
+             node.owner = owner;
+-- 
+2.54.0
+
