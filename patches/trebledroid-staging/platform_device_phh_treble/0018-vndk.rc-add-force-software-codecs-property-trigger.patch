@@ -1,7 +1,7 @@
 From 6f506377a3a6e93ee6bfe979007577b7fd6d5a0c Mon Sep 17 00:00:00 2001
 From: "Christopher A. Williamson" <contact@chrisaw.io>
 Date: Sun, 14 Jun 2026 23:41:41 +0100
-Subject: [PATCH 18/27] vndk.rc: add force software codecs property trigger
+Subject: [PATCH 18/26] vndk.rc: add force software codecs property trigger
 
 When persist.sys.phh.force_sw_codecs=true, disable C2.0 entirely, raise
 the default OMX rank defensively, and activate the c2inputsurface fallback.
