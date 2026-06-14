@@ -1,6 +1,0 @@
-package vendor.semc.hardware.charger@1.0;
-
-interface ICharger {
-	oneway setSmartChargeAction(SmartChargeAction action);
-	oneway setLrcMode(int32_t mode);
-};

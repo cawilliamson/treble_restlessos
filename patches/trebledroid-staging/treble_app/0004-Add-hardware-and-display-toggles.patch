@@ -1,0 +1,114 @@
+From b5997d1e7885993e03f00448bc693b62ead70434 Mon Sep 17 00:00:00 2001
+From: ChonDoit <thphantomblog@gmail.com>
+Date: Mon, 10 Mar 2025 23:08:52 -0300
+Subject: [PATCH 04/9] Add hardware and display toggles
+
+add device-specific hardware and display toggles to the treble app
+for controlling MTK vendor features and display options on GSI.
+
+remove the secure adb toggle since the vndk.rc handler for
+persist.sys.phh.adb_secure was replaced by oem_unlock and adbd
+hiding triggers in release-builds patch 0003.
+---
+ app/src/main/java/me/phh/treble/app/Misc.kt        |  8 ++++++--
+ .../main/java/me/phh/treble/app/MiscSettings.kt    |  3 ++-
+ app/src/main/res/xml/pref_misc.xml                 | 14 +++++++++-----
+ 3 files changed, 17 insertions(+), 8 deletions(-)
+
+diff --git a/app/src/main/java/me/phh/treble/app/Misc.kt b/app/src/main/java/me/phh/treble/app/Misc.kt
+index 6497567..0689955 100644
+--- a/app/src/main/java/me/phh/treble/app/Misc.kt
++++ b/app/src/main/java/me/phh/treble/app/Misc.kt
+@@ -251,6 +251,10 @@ object Misc: EntryStartup {
+                 SystemProperties.set("persist.sys.overlay.aod", if (value) "true" else "false")
+                 OverlayPicker.setOverlayEnabled("me.phh.treble.overlay.misc.aod_systemui", value)
+             }
++            MiscSettings.disableDisplayDozeSuspend -> {
++                val value = sp.getBoolean(key, false)
++                SystemProperties.set("persist.sys.phh.disable_display_doze_suspend", if (value) "true" else "false")
++            }
+             MiscSettings.dt2w -> {
+                 // Asus dt2w
+                 val value = sp.getBoolean(key, false)
+@@ -340,9 +344,9 @@ object Misc: EntryStartup {
+                 val value = sp.getBoolean(key, false)
+                 SystemProperties.set("persist.sys.phh.securize", if (value) "1" else "0")
+             }
+-            MiscSettings.secureAdb -> {
++            MiscSettings.disableLeApcfExtended -> {
+                 val value = sp.getBoolean(key, false)
+-                SystemProperties.set("persist.sys.phh.adb_secure", if (value) "1" else "0")
++                SystemProperties.set("persist.sys.bt.le.disable_apcf_extended_features", if (value) "1" else "0")
+             }
+             MiscSettings.treatVirtualSensorsAsReal -> {
+                 val value = sp.getBoolean(key, false)
+diff --git a/app/src/main/java/me/phh/treble/app/MiscSettings.kt b/app/src/main/java/me/phh/treble/app/MiscSettings.kt
+index 58612c6..9995607 100644
+--- a/app/src/main/java/me/phh/treble/app/MiscSettings.kt
++++ b/app/src/main/java/me/phh/treble/app/MiscSettings.kt
+@@ -22,7 +22,6 @@ object MiscSettings : Settings {
+     val forceNavbarOff = "key_misc_force_navbar_off"
+     val bluetooth = "key_misc_bluetooth"
+     val securize = "key_misc_securize"
+-    val secureAdb = "key_misc_secure_adb"
+     val removeTelephony = "key_misc_removetelephony"
+     val disableAudioEffects = "key_misc_disable_audio_effects"
+     val disableFastAudio = "key_misc_disable_fast_audio"
+@@ -36,6 +35,7 @@ object MiscSettings : Settings {
+     var patchSmsc = "key_misc_patch_smsc";
+     val minimalBrightness = "key_misc_minimal_brightness"
+     val aod = "key_misc_aod"
++    val disableDisplayDozeSuspend = "key_misc_disable_display_doze_suspend"
+     val dt2w = "key_misc_dt2w"
+     val restartSystemUI = "key_misc_restart_systemui"
+     val fodColor = "key_misc_fod_color"
+@@ -50,6 +50,7 @@ object MiscSettings : Settings {
+     val disableSfHwcBackpressure = "key_misc_disable_sf_hwc_backpressure"
+     val disableSaeUpgrade = "key_misc_disable_sae_upgrade"
+     val escoTransportUnitSize = "key_misc_esco_transport_unit_size"
++    val disableLeApcfExtended = "key_misc_disable_le_apcfe"
+     val treatVirtualSensorsAsReal = "key_misc_treat_virtual_sensors_as_real"
+ 
+     override fun enabled() = true
+diff --git a/app/src/main/res/xml/pref_misc.xml b/app/src/main/res/xml/pref_misc.xml
+index 2016122..bd6d439 100644
+--- a/app/src/main/res/xml/pref_misc.xml
++++ b/app/src/main/res/xml/pref_misc.xml
+@@ -69,6 +69,10 @@
+             android:defaultValue="false"
+             android:key="key_misc_aod"
+             android:title="Force allow Always-On Display" />
++        <SwitchPreference
++            android:defaultValue="false"
++            android:key="key_misc_disable_display_doze_suspend"
++            android:title="Force disable display Doze Suspend state to allow AoD on some devices." />
+         <SwitchPreference
+             android:defaultValue="false"
+             android:key="key_misc_mediatek_touch_hint_rotate"
+@@ -146,6 +150,11 @@
+             android:defaultValue="true"
+             android:key="key_misc_dynamic_sysbta"
+             android:title="Use System Wide BT HAL" />
++        <SwitchPreference
++            android:key="key_misc_disable_le_apcfe"
++            android:defaultValue="false"
++            android:title="Disable LE APCF Extended features"
++            android:summary="Fix bluetooth crashing on some devices" />
+         <ListPreference
+             android:defaultValue="0"
+             android:entries="@array/pref_misc_bluetooth"
+@@ -213,11 +222,6 @@
+             android:key="key_misc_securize"
+             android:title="Enable Securize"
+             android:summary="Disabling may fix play services on uncertified devices" />
+-        <SwitchPreference
+-            android:defaultValue="false"
+-            android:key="key_misc_secure_adb"
+-            android:title="Secure adb"
+-            android:summary="Computer requires approval" />
+         <SwitchPreference
+             android:defaultValue="false"
+             android:key="key_misc_treat_virtual_sensors_as_real"
+-- 
+2.53.0
+

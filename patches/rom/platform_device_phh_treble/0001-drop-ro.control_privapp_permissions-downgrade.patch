@@ -1,0 +1,27 @@
+From 3e37ad8fde0c33bee20c3f4eda4bee8f17fd8875 Mon Sep 17 00:00:00 2001
+From: "Christopher A. Williamson" <contact@chrisaw.io>
+Date: Fri, 27 Mar 2026 11:02:47 +0000
+Subject: [PATCH 1/2] drop ro.control_privapp_permissions downgrade
+
+grapheneos ships ro.control_privapp_permissions=enforce for security.
+the unconditional override to 'log' silently downgrades enforcement
+on GSI builds which is undesirable.
+---
+ rw-system.sh | 1 -
+ 1 file changed, 1 deletion(-)
+
+diff --git a/rw-system.sh b/rw-system.sh
+index 592e952..7fd6d6a 100644
+--- a/rw-system.sh
++++ b/rw-system.sh
+@@ -1096,7 +1096,6 @@ if getprop ro.bionic.cpu_variant |grep -q kryo300;then
+     setprop dalvik.vm.isa.arm64.features runtime
+ fi
+ 
+-resetprop_phh ro.control_privapp_permissions log
+ 
+ if [ -f /vendor/etc/init/vendor.ozoaudio.media.c2@1.0-service.rc ];then
+     if [ -n "$vndk" ] && [ "$vndk" -le 29 ]; then
+-- 
+2.53.0
+

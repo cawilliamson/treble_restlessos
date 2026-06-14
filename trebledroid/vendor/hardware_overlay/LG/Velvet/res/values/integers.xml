@@ -1,9 +1,0 @@
-<?xml version="1.0" encoding="utf-8"?>
-<resources>
-    <integer name="config_autoBrightnessBrighteningLightDebounce">2000</integer>
-    <integer name="config_autoBrightnessDarkeningLightDebounce">3000</integer>
-    <integer name="config_bluetooth_operating_voltage_mv">3300</integer>
-    <integer name="config_lightSensorWarmupTime">500</integer>
-    <integer name="config_screenBrightnessDim">50</integer>
-    <integer name="config_screenBrightnessDoze">75</integer>
-</resources>

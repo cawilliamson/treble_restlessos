@@ -1,5 +1,0 @@
-package vendor.lge.hardware.storageinfo@1.0;
-
-interface IStorageInfoNotifier {
-	oneway onNotify(StorageInfoData data, int32_t ret);
-};

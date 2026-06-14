@@ -1,7 +1,0 @@
-<?xml version="1.0" encoding="utf-8"?>
-<resources>
-    <integer name="config_bluetooth_idle_cur_ma">6</integer>
-    <integer name="config_bluetooth_operating_voltage_mv">3700</integer>
-    <integer name="config_bluetooth_rx_cur_ma">28</integer>
-    <integer name="config_bluetooth_tx_cur_ma">36</integer>
-</resources>

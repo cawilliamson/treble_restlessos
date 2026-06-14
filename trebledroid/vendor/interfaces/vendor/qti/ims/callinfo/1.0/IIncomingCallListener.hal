@@ -1,5 +1,0 @@
-package vendor.qti.ims.callinfo@1.0;
-
-interface IIncomingCallListener {
-	oneway onSipInviteAvailable(string iccId, vec<string> sipHeader);
-};

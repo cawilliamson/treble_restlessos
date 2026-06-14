@@ -1,4 +1,0 @@
-package vendor.qti.hardware.data.latency@1.0;
-
-interface IClientToken {
-};

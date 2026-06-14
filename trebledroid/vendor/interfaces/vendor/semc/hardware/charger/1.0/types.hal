@@ -1,8 +1,0 @@
-package vendor.semc.hardware.charger@1.0;
-
-enum SmartChargeAction : int32_t {
-	DEACTIVATE,
-	ACTIVATE, // This is called to start the HAL. Needs to be done once after reboot
-	SUSPEND, // This means to but the charging into constant 20mA. This is meant to be done when reached 90%
-	RESUME, // This means to put back the full battery charge, to raise to 100%. This is meant to be done when user's alarm clock is in 30 minutes.
-};

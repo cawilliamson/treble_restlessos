@@ -1,5 +1,0 @@
-<?xml version="1.0" encoding="utf-8"?>
-<resources>
-    <string name="config_ims_package">com.lge.ims</string>
-    <string name="config_mainBuiltInDisplayCutout">M 0,0 L -23.23, 0 L -23.23, 28.98 L 23.23, 28.98 L 23.23, 0 Z @dp</string>
-</resources>

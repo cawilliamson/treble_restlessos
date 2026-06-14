@@ -1,7 +1,0 @@
-package vendor.somc.hardware.wifi@2.0;
-
-interface ISomcWifiCallback {
-	onMonitoringStarted();
-	onMonitoringStopped();
-	onEventReceived(string event);
-};

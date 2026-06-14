@@ -1,6 +1,0 @@
-package vendor.qti.hardware.data.latency@1.0;
-
-interface ILinkLatencyService {
-	setLevel(int64_t rat, int64_t uplink, int64_t downlink) generates (int64_t status, int64_t effectiveUpLink, int64_t effectiveDownLink);
-	prioritizeDefaultDataSubscription(boolean isEnabled) generates (int64_t status);
-};

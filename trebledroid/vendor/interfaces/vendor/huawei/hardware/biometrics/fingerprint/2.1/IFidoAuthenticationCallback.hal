@@ -1,5 +1,0 @@
-package vendor.huawei.hardware.biometrics.fingerprint@2.1;
-
-interface IFidoAuthenticationCallback {
-	oneway onUserVerificationResult(int32_t result, int64_t opId, vec<int8_t> userId, vec<int8_t> encapsulatedResult);
-};

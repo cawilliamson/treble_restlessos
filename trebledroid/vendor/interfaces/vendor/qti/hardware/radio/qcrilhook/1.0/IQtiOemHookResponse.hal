@@ -1,5 +1,0 @@
-package vendor.qti.hardware.radio.qcrilhook@1.0;
-
-interface IQtiOemHookResponse {
-	oneway oemHookRawResponse(int32_t serial, int32_t error, vec<uint8_t> data);
-};

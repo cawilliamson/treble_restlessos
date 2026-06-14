@@ -1,7 +1,0 @@
-package vendor.mediatek.hardware.radio@2.4;
-
-import vendor.mediatek.hardware.radio@2.3::IRadio;
-
-interface IRadio extends vendor.mediatek.hardware.radio@2.3::IRadio {
-	oneway setWifiPingResult(); //int32_t, int32_t, int32_t, int32_t, int32_t
-};

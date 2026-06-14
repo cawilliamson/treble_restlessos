@@ -254,9 +254,8 @@ jobs:
 
   # ---------------------------------------------------------------------------
   # job 2: sync
-  # runs on the cheap sync instance. fetches sources, copies trebledroid
-  # resources, then flushes and unmounts the data volume for detach/attach
-  # handoff to the build instance.
+  # runs on the cheap sync instance. fetches sources, then flushes and
+  # unmounts the data volume for detach/attach handoff to the build instance.
   # ---------------------------------------------------------------------------
   sync:
     name: Sync Sources
@@ -368,13 +367,6 @@ jobs:
             | sed "s/.*\"\([^\"]*\)\".*/\1/")
           echo "Detected ANDROID_VERSION_TAG: ${ANDROID_VERSION_TAG}"
           echo "android_version_tag=${ANDROID_VERSION_TAG}" >> "$GITHUB_OUTPUT"
-
-      - name: Copy trebledroid resources into tree
-        working-directory: src/
-        run: |
-          echo "Syncing trebledroid resources..."
-          rsync --archive --verbose ${{ github.workspace }}/trebledroid/ .
-          echo "Done."
 
       - name: Flush and unmount data volume
         run: |

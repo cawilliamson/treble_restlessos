@@ -1,9 +1,0 @@
-<manifest xmlns:android="http://schemas.android.com/apk/res/android"
-        package="me.phh.treble.overlay.highpriomisc"
-        android:versionCode="1"
-        android:versionName="1.0">
-        <!-- SUPER OVERLAY -->
-        <overlay android:targetPackage="android"
-            android:priority="8998"
-            android:isStatic="true" />
-</manifest>

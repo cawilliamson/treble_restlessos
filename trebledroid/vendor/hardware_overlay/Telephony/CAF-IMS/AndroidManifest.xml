@@ -1,8 +1,0 @@
-<manifest xmlns:android="http://schemas.android.com/apk/res/android"
-        package="me.phh.treble.overlay.cafims_telephony"
-        android:versionCode="1"
-        android:versionName="1.0">
-        <overlay android:targetPackage="com.android.phone"
-		android:priority="79"
-		/>
-</manifest>

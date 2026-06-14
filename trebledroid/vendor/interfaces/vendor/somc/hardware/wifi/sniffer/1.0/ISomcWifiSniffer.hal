@@ -1,6 +1,0 @@
-package vendor.somc.hardware.wifi.sniffer@1.0;
-
-interface ISomcWifiSniffer {
-	startSniffer(string channel, string bandwidth) generates (bool success);
-	stopSniffer() generates (bool success);
-};

@@ -1,5 +1,0 @@
-package com.quicinc.cne.api@1.1;
-
-interface IApiService extends com.quincinc.cne.api@1.0::IApiService {
-	oneway getCertificate(IApiCertReqCallback certReqCb, int64_t transactionId, vec<uint8_t> dn);
-};

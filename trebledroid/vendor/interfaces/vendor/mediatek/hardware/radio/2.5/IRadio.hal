@@ -1,8 +1,0 @@
-package vendor.mediatek.hardware.radio@2.5;
-
-import vendor.mediatek.hardware.radio@2.4::IRadio;
-
-interface IRadio extends vendor.mediatek.hardware.radio@2.4::IRadio {
-	oneway setResponseFunctionsSubsidyLock(); //ISubsidyLockResponse, ISubsidyLockIndication
-	oneway sendSubsidyLockRequest();// int32_t, int32_t, vec<int8_t>
-};

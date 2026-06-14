@@ -1,0 +1,34 @@
+From e2822db815517f8db96fa4506d96ff6aed4aff2e Mon Sep 17 00:00:00 2001
+From: "Christopher A. Williamson" <contact@chrisaw.io>
+Date: Tue, 17 Feb 2026 16:19:21 +0000
+Subject: [PATCH 3/25] Include LineageOS APN database in build
+
+Use the LineageOS APN database (vendor/apn) which is assembled
+at build time from per-country XML files. This replaces the AOSP
+sample APN file which Google explicitly notes is a placeholder not
+used on actual devices.
+
+LineageOS's database includes carriers like Digi PT (mcc=268,
+mnc=02) that were missing from the AOSP sample, resolving mobile
+data auto-configuration failures for those carriers.
+
+Change-Id: I0000000000000000000000000000000000000016
+---
+ base.mk | 2 ++
+ 1 file changed, 2 insertions(+)
+
+diff --git a/base.mk b/base.mk
+index a29e402..d4c0c3f 100644
+--- a/base.mk
++++ b/base.mk
+@@ -24,6 +24,8 @@ $(call inherit-product, vendor/hardware_overlay/overlay.mk)
+ $(call inherit-product, $(SRC_TARGET_DIR)/product/core_64_bit.mk)
+ $(call inherit-product, $(SRC_TARGET_DIR)/product/aosp_base_telephony.mk)
+ 
++PRODUCT_PACKAGES += apns-conf.xml
++
+ # Those overrides are here because Huawei's init read properties
+ # from /system/etc/prop.default, then /vendor/build.prop, then /system/build.prop
+ # So we need to set our props in prop.default
+-- 
+2.53.0

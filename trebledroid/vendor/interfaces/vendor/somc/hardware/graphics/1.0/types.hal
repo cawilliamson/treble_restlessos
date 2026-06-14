@@ -1,6 +1,0 @@
-package vendor.somc.hardware.graphics@1.0;
-
-enum HDR_STATUS : uint32_t {
-	STOPPED,
-	PLAYING,
-};

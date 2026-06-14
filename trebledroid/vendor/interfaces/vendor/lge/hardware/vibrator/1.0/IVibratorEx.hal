@@ -1,7 +1,0 @@
-package vendor.lge.hardware.vibrator@1.0;
-
-import android.hardware.vibrator@1.0::IVibrator;
-
-interface IVibratorEx extends IVibrator {
-	playEffectWithStrength(vec<int8_t> effectData, int32_t effectIndex, int32_t strength) generates (int32_t status);
-};

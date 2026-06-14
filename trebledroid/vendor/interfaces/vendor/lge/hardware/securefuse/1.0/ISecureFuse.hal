@@ -1,5 +1,0 @@
-package vendor.lge.hardware.securefuse@1.0;
-
-interface ISecureFuse {
-	getStatus() generates (SecureFuseStatus status);
-};

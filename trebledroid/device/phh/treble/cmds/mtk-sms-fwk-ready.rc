@@ -1,3 +1,0 @@
-on property:sys.boot_completed=1
-	exec u:r:phhsu_daemon:s0 root -- /system/bin/mtk-sms-fwk-ready slot1
-	exec u:r:phhsu_daemon:s0 root -- /system/bin/mtk-sms-fwk-ready slot2

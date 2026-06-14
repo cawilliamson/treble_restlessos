@@ -1,5 +1,0 @@
-package vendor.somc.hardware.wifidriver@1.0;
-
-interface ISomcWifiDriver {
-	updateTxPowerParams(string mcc, bool isUpperAntennaUsed) generates (bool success);
-};

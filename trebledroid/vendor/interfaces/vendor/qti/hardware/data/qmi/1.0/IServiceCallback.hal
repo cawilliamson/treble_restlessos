@@ -1,6 +1,0 @@
-package vendor.qti.hardware.data.qmi@1.0;
-
-interface IServiceCallback {
-	oneway onServiceAvailable(int32_t serviceType);
-	oneway onServicesLost();
-};

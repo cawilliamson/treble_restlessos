@@ -1,0 +1,25 @@
+From 160a6b5774d1293ac446fd3e50f2f3f7c6ee987a Mon Sep 17 00:00:00 2001
+From: "Christopher A. Williamson" <contact@chrisaw.io>
+Date: Tue, 24 Mar 2026 12:44:06 +0000
+Subject: [PATCH 2/2] base.mk: add VNDK v30 to PRODUCT_EXTRA_VNDK_VERSIONS
+
+add VNDK v30 so devices shipping with VNDK 30 vendor images find
+matching libraries at runtime. this complements the VNDK v30 apex
+restore in platform_packages_modules_vndk.
+---
+ base.mk | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/base.mk b/base.mk
+index 84cdfac..a88edfc 100644
+--- a/base.mk
++++ b/base.mk
+@@ -263,4 +263,4 @@ $(call inherit-product, $(SRC_TARGET_DIR)/product/window_extensions.mk)
+ PRODUCT_PRODUCT_PROPERTIES += \
+     persist.settings.large_screen_opt.enabled=true
+
+-PRODUCT_EXTRA_VNDK_VERSIONS += 28 29
++PRODUCT_EXTRA_VNDK_VERSIONS += 28 29 30
+-- 
+2.53.0
+

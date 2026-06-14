@@ -1,8 +1,0 @@
-pacakge vendor.qti.hardware.alarm@1.0;
-
-interface IAlarm {
-	setAlarm(int64_t time) generates (int32_t ret);
-	getAlarm() generates (int64_t ret);
-	cancelAlarm() generates (int32_t ret);
-	getRtcTime() generates (int64_t ret);
-};

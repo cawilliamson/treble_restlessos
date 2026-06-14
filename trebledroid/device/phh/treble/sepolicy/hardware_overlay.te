@@ -1,1 +1,0 @@
-allow priv_app overlay_service:service_manager find;
