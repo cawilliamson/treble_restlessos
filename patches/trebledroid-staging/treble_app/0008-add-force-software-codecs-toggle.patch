@@ -1,12 +1,19 @@
-From f45bb0c6b24bddf6d0082790abbee0aeeebad657 Mon Sep 17 00:00:00 2001
+From bad74b7eb77791ac93a3c1f7e69e6bca3de637ee Mon Sep 17 00:00:00 2001
 From: "Christopher A. Williamson" <contact@chrisaw.io>
-Date: Wed, 22 Apr 2026 18:20:16 +0100
-Subject: [PATCH 08/9] add prefer hardware codecs toggle
+Date: Sun, 14 Jun 2026 02:07:09 +0100
+Subject: [PATCH 8/9] treble_app: add force software codecs toggle
 
-add an opt-in toggle for persist.sys.phh.prefer_hw_codecs which
-re-enables vendor C2 input surface for video recording.  defaults to
-off -- the GSI build sets c2inputsurface=-1 for compatibility, but
-users with working vendor HW codecs can opt in for better performance.
+Replace the prefer hardware codecs toggle with inverted logic.
+The new toggle defaults to OFF (hardware codecs enabled for full
+performance). Enabling it sets persist.sys.phh.force_sw_codecs=true
+which triggers the vndk.rc property handler to force AIDL C2 HAL
+selection, promote OMX to highest rank, and enable AIDL buffer source
+fallback for createPersistentInputSurface.
+
+This fixes video recording on devices where the vendor HW encoder
+rejects PersistentSurface (camera hangs on video mode switch).
+
+Issue: #33
 ---
  app/src/main/java/me/phh/treble/app/Misc.kt         | 4 ++++
  app/src/main/java/me/phh/treble/app/MiscSettings.kt | 1 +
@@ -14,34 +21,34 @@ users with working vendor HW codecs can opt in for better performance.
  3 files changed, 10 insertions(+)
 
 diff --git a/app/src/main/java/me/phh/treble/app/Misc.kt b/app/src/main/java/me/phh/treble/app/Misc.kt
-index b4301c1..bfdbd13 100644
+index b4301c1..35540ef 100644
 --- a/app/src/main/java/me/phh/treble/app/Misc.kt
 +++ b/app/src/main/java/me/phh/treble/app/Misc.kt
 @@ -410,6 +410,10 @@ object Misc: EntryStartup {
                  val value = sp.getBoolean(key, false)
                  SystemProperties.set("persist.sys.activity_anim_perf_override", if (value) "true" else "false")
              }
-+            MiscSettings.preferHwCodecs -> {
++            MiscSettings.forceSwCodecs -> {
 +                val value = sp.getBoolean(key, false)
-+                SystemProperties.set("persist.sys.phh.prefer_hw_codecs", if (value) "true" else "false")
++                SystemProperties.set("persist.sys.phh.force_sw_codecs", if (value) "true" else "false")
 +            }
              MiscSettings.disableLeApcfExtended -> {
                  val value = sp.getBoolean(key, false)
                  SystemProperties.set("persist.sys.bt.le.disable_apcf_extended_features", if (value) "1" else "0")
 diff --git a/app/src/main/java/me/phh/treble/app/MiscSettings.kt b/app/src/main/java/me/phh/treble/app/MiscSettings.kt
-index 5ba39c8..a517441 100644
+index 5ba39c8..3ff5e92 100644
 --- a/app/src/main/java/me/phh/treble/app/MiscSettings.kt
 +++ b/app/src/main/java/me/phh/treble/app/MiscSettings.kt
-@@ -21,6 +21,7 @@ object MiscSettings : Settings {
-     val disableButtonsBacklight = "key_misc_disable_buttons_backlight"
+@@ -22,6 +22,7 @@ object MiscSettings : Settings {
      val forceNavbarOff = "key_misc_force_navbar_off"
      val bluetooth = "key_misc_bluetooth"
-+    val preferHwCodecs = "key_misc_prefer_hw_codecs"
      val activityAnimPerfOverride = "key_misc_activity_anim_perf_override"
++    val forceSwCodecs = "key_misc_force_sw_codecs"
      val securize = "key_misc_securize"
      val removeTelephony = "key_misc_removetelephony"
+     val disableAudioEffects = "key_misc_disable_audio_effects"
 diff --git a/app/src/main/res/xml/pref_misc.xml b/app/src/main/res/xml/pref_misc.xml
-index f3c5050..b19dcb2 100644
+index f3c5050..84a0efb 100644
 --- a/app/src/main/res/xml/pref_misc.xml
 +++ b/app/src/main/res/xml/pref_misc.xml
 @@ -280,6 +280,11 @@
@@ -50,12 +57,12 @@ index f3c5050..b19dcb2 100644
              android:summary="Use lightweight programmatic activity transitions instead of XML animations\nFixes lag in Settings on low-end MTK devices" />
 +        <SwitchPreference
 +            android:defaultValue="false"
-+            android:key="key_misc_prefer_hw_codecs"
-+            android:title="Prefer hardware codecs"
-+            android:summary="Use vendor hardware codecs instead of software codecs for video recording\nOnly enable if video recording already works on your device\nRequires reboot" />
++            android:key="key_misc_force_sw_codecs"
++            android:title="Force software codecs"
++            android:summary="Use software/OMX codecs instead of vendor hardware codecs for video recording\nEnable only if video recording fails or hangs on your device\nRequires reboot" />
          <SwitchPreference
              android:defaultValue="false"
              android:key="key_misc_treat_virtual_sensors_as_real"
 -- 
-2.53.0
+2.54.0
 
