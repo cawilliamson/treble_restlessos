@@ -1149,7 +1149,7 @@ jobs:
           lunch "treble_arm64_bvN-${ANDROID_VERSION_TAG}-${BUILD_VARIANT}"
           bash vendor/cawilliamson-priv/keys/sign.sh
           rm --force --verbose "${OUT}/system.img"
-          unzip --jump --quiet "${OUT}/signed-target_files.zip" IMAGES/system.img -d "${OUT}/"
+          unzip -j -q "${OUT}/signed-target_files.zip" IMAGES/system.img -d "${OUT}/"
           rm --force --verbose "${OUT}/signed-target_files.zip"
           mv --verbose "${OUT}/system.img" "${{ github.workspace }}/out/system.img"
 
