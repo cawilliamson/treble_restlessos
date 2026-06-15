@@ -975,7 +975,7 @@ jobs:
             --query 'Instances[0].InstanceId' \
             --security-group-ids "${SG_ID}" \
             --subnet-id "${SUBNET_ID}" \
-            --tag-specifications "ResourceType=instance,Tags=[{Key=Name,Value=${{ env.EC2_PROJECT_TAG }}-sign-${{ github.run_id }}},{Key=Project,Value=${{ env.EC2_PROJECT_TAG }},{Key=Ephemeral,Value=true}]" \
+            --tag-specifications "ResourceType=instance,Tags=[{Key=Name,Value=${{ env.EC2_PROJECT_TAG }}-sign-${{ github.run_id }}},{Key=Project,Value=${{ env.EC2_PROJECT_TAG }}},{Key=Ephemeral,Value=true}]" \
             --block-device-mappings \
               "DeviceName=/dev/sda1,Ebs={VolumeSize=${{ env.EC2_SIGN_ROOT_VOLUME_GB }},VolumeType=gp3,DeleteOnTermination=true}" \
             --user-data "file:///tmp/user-data-sign.yml" 2>&1) || {
