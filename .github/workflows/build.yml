@@ -794,8 +794,8 @@ jobs:
             BUILD_VARIANT="userdebug"
           fi
           lunch "treble_arm64_bvN-${ANDROID_VERSION_TAG}-${BUILD_VARIANT}"
-          make systemimage --jobs="$(nproc --all)"
-          make target-files-package otatools --jobs="$(nproc --all)"
+          make systemimage -j"$(nproc --all)"
+          make target-files-package otatools -j"$(nproc --all)"
 
       - name: Flush and unmount data volume
         run: |
