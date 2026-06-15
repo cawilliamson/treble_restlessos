@@ -1,16 +1,16 @@
-From 817f994d952f07b634808523913e21782ccc2dfe Mon Sep 17 00:00:00 2001
+From 051643fd32ffc9ee6ecb5076787f4c6556792d22 Mon Sep 17 00:00:00 2001
 From: "Christopher A. Williamson" <contact@chrisaw.io>
-Date: Sun, 14 Jun 2026 02:12:28 +0100
+Date: Mon, 15 Jun 2026 11:24:02 +0100
 Subject: [PATCH] securize: rework to property-based toggle with GSI
  fingerprint tracking
 
 ---
  base.mk             |   2 -
  phh-on-boot.sh      |  23 ++++++++
- phh-prop-handler.sh |  12 +++++
- rw-system.sh        | 126 ++++++++++++++++++++++++++++++++++----------
- vndk.rc             |   9 ++--
- 5 files changed, 139 insertions(+), 33 deletions(-)
+ phh-prop-handler.sh |  12 ++++
+ rw-system.sh        | 140 +++++++++++++++++++++++++++++++-------------
+ vndk.rc             |   9 ++-
+ 5 files changed, 139 insertions(+), 47 deletions(-)
 
 diff --git a/base.mk b/base.mk
 index f5177f0..2909d5f 100644
@@ -67,10 +67,10 @@ index 6d7bd02..f1735d4 100644
  vndk="$(getprop persist.sys.vndk)"
  [ -z "$vndk" ] && vndk="$(getprop ro.vndk.version |grep -oE '^[0-9]+')"
 diff --git a/phh-prop-handler.sh b/phh-prop-handler.sh
-index cae90d6..84dc85d 100644
+index eb22c4d..1be364b 100644
 --- a/phh-prop-handler.sh
 +++ b/phh-prop-handler.sh
-@@ -134,6 +134,18 @@ if [ "$1" == "sys.phh.oplus.fppress" ]; then
+@@ -134,6 +134,18 @@ if [ "$1" == "persist.sys.phh.oppo.gaming_mode" ]; then
      exit
  fi
  
@@ -90,10 +90,10 @@ index cae90d6..84dc85d 100644
      if [[ "$prop_value" != "0" && "$prop_value" != "1" ]]; then
          exit 1
 diff --git a/rw-system.sh b/rw-system.sh
-index e04d256..45da31d 100644
+index e04d256..7d9ec0f 100644
 --- a/rw-system.sh
 +++ b/rw-system.sh
-@@ -792,57 +792,127 @@ if [ "$brand" = OPPO ] || [ "$brand" = realme ]; then
+@@ -792,75 +792,131 @@ if [ "$brand" = OPPO ] || [ "$brand" = realme ]; then
      fi
  fi
  
@@ -249,20 +249,41 @@ index e04d256..45da31d 100644
  
      # Hide system/xbin/su
      mount /mnt/phh/empty_dir /system/xbin
+-    mount /mnt/phh/empty_dir /system/app/me.phh.superuser
+-    mount /mnt/phh/empty /system/xbin/phh-su
+-else
+-    mkdir /mnt/phh/xbin
+-    chmod 0755 /mnt/phh/xbin
+-    chcon u:object_r:system_file:s0 /mnt/phh/xbin
+-
+-    #phh-su will bind over this empty file to make a real su
+-    touch /mnt/phh/xbin/su
+-    chcon u:object_r:system_file:s0 /mnt/phh/xbin/su
+-
+-    mount -o bind /mnt/phh/xbin /system/xbin
+ fi
+-
+-for abi in "" 64;do
+     f=/vendor/lib$abi/libstagefright_foundation.so
+     if [ -f "$f" ];then
+         for vndk in 26 27 28 29;do
 diff --git a/vndk.rc b/vndk.rc
-index e4376ec..a6224bf 100644
+index cb9b44c..3a99f4f 100644
 --- a/vndk.rc
 +++ b/vndk.rc
-@@ -44,6 +44,9 @@ on property:persist.sys.phh.oppo.gaming_mode=*
+@@ -40,9 +40,12 @@ on property:persist.sys.phh.oppo.dt2w=*
+ 
+ on property:persist.sys.phh.oppo.gaming_mode=*
+     exec u:r:phhsu_daemon:s0 root -- /system/bin/phh-prop-handler.sh "persist.sys.phh.oppo.gaming_mode"
++
  on property:sys.phh.oplus.fppress=*
      exec u:r:phhsu_daemon:s0 root -- /system/bin/phh-prop-handler.sh "sys.phh.oplus.fppress"
  
 +on property:persist.sys.phh.securize=*
 +    exec u:r:phhsu_daemon:s0 root -- /system/bin/phh-prop-handler.sh "persist.sys.phh.securize"
-+
+ 
  on property:persist.sys.phh.oppo.usbotg=*
      exec u:r:phhsu_daemon:s0 root -- /system/bin/phh-prop-handler.sh "persist.sys.phh.oppo.usbotg"
- 
 @@ -133,9 +136,9 @@ service watchdogd-gsi /system/bin/watchdogd 10 20
      disabled
      seclabel u:r:watchdogd:s0
@@ -274,8 +295,8 @@ index e4376ec..a6224bf 100644
 +on property:sys.oem_unlock_allowed=*
 +    exec u:r:magisk:s0 root root -- /system/bin/resetprop_phh -n sys.oem_unlock_allowed 0
  
- # force software codecs: prefer SW/OMX encoders over broken vendor HW encoders.
- # when enabled, c2inputsurface fallback is also activated so that
+ # force software codecs: disable C2.0 entirely and hide vendor OMX nodes.
+ # when the property is set, C2 is disabled, all vendor (non-OMX.google.)
 -- 
 2.54.0
 

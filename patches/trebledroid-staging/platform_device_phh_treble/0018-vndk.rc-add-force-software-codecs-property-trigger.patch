@@ -17,34 +17,28 @@ Relates-to: #33
 Relates-to: #94
 
 ---
- vndk.rc | 13 +++++++------
- 1 file changed, 7 insertions(+), 6 deletions(-)
+ vndk.rc | 12 ++++++++++++
+ 1 file changed, 12 insertions(+)
 
 diff --git a/vndk.rc b/vndk.rc
-index a965bb6..ff1612a 100644
+index 94c7583..cb9b44c 100644
 --- a/vndk.rc
 +++ b/vndk.rc
-@@ -143,13 +143,14 @@ on property:persist.sys.phh.securize=*
- on property:sys.oem_unlock_allowed=*
-     exec u:r:magisk:s0 root root -- /system/bin/resetprop_phh -n sys.oem_unlock_allowed 0
- 
--# force software codecs: prefer SW/OMX encoders over broken vendor HW encoders.
--# when enabled, c2inputsurface fallback is also activated so that
--# createPersistentInputSurface uses the AIDL buffer source path.
+@@ -136,3 +136,15 @@ service watchdogd-gsi /system/bin/watchdogd 10 20
+ on property:persist.sys.phh.adb_secure=1
+     exec u:r:phhsu_daemon:s0 root -- /system/bin/resetprop_phh ro.adb.secure 1
+     restart adbd
++
 +# force software codecs: disable C2.0 entirely and hide vendor OMX nodes.
 +# when the property is set, C2 is disabled, all vendor (non-OMX.google.)
 +# OMX nodes are dropped from the media codec list, and c2inputsurface
 +# fallback is activated. this forces AOSP software codecs on GSI builds
 +# whose vendor encoders/decoders crash or refuse PersistentInputSurface.
- # uses resetprop_phh -n to patch property area directly before media
- # services read them, matching the timing of CodecFix magisk module.
- on property:persist.sys.phh.force_sw_codecs=true
++# uses resetprop_phh -n to patch property area directly before media
++# services read them, matching the timing of CodecFix magisk module.
++on property:persist.sys.phh.force_sw_codecs=true
 +    exec u:r:phhsu_daemon:s0 root -- /system/bin/resetprop_phh -n debug.stagefright.ccodec 0
 +    exec u:r:phhsu_daemon:s0 root -- /system/bin/resetprop_phh -n debug.stagefright.omx_default_rank 512
-     exec u:r:phhsu_daemon:s0 root -- /system/bin/resetprop_phh -n debug.stagefright.c2inputsurface -1
--    exec u:r:phhsu_daemon:s0 root -- /system/bin/resetprop_phh -n debug.stagefright.ccodec 1
--    exec u:r:phhsu_daemon:s0 root -- /system/bin/resetprop_phh -n debug.stagefright.omx_default_rank 0
--    exec u:r:phhsu_daemon:s0 root -- /system/bin/resetprop_phh -n media.c2.hal.selection hidl
++    exec u:r:phhsu_daemon:s0 root -- /system/bin/resetprop_phh -n debug.stagefright.c2inputsurface -1
 -- 
 2.54.0
-
