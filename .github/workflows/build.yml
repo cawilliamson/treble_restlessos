@@ -276,29 +276,62 @@ jobs:
 
       - name: Mount data volume
         run: |
-          # find the EBS data volume: a disk device that is not the root NVMe
-          # and not a loop device. lsblk -d lists top-level block devices;
-          # filter to type "disk" to exclude loop/rom devices.
-          DATA_DEV=$(lsblk -d -n -o NAME,TYPE | awk '$2 == "disk" && $1 != "nvme0n1" {print $1}' | head -1)
+          # identify the data volume by its AWS volume ID, which is known from
+          # the provision-sync job. on EBS/NVMe instances the controller serial
+          # is the volume ID with dashes stripped.
+          DATA_VOLUME_ID="${{ needs.provision-sync.outputs.data_volume_id }}"
+          if [ -z "${DATA_VOLUME_ID}" ] || [ "${DATA_VOLUME_ID}" = "None" ]; then
+            echo "ERROR: data_volume_id not provided by provision-sync job"
+            exit 1
+          fi
+          EXPECTED_SERIAL=$(echo "${DATA_VOLUME_ID}" | tr -d '-')
+          echo "Looking for data volume ${DATA_VOLUME_ID} (NVMe serial ${EXPECTED_SERIAL})"
+
+          # never touch the root volume; derive its top-level device from the
+          # mountpoint of /
+          ROOT_DEV=$(findmnt -n -o SOURCE / 2>/dev/null | sed 's|^/dev/||;s|p[0-9]*$||' || true)
+          echo "Root disk: /dev/${ROOT_DEV:-unknown}"
+
+          DATA_DEV=""
+          for i in $(seq 1 30); do
+            for ctrl in /sys/class/nvme/nvme*; do
+              [ -d "${ctrl}" ] || continue
+              ctrl_name=$(basename "${ctrl}")
+              dev_node="${ctrl_name}n1"
+              [ "${dev_node}" = "${ROOT_DEV}" ] && continue
+              serial=$(tr -d '[:space:]' < "${ctrl}/serial" 2>/dev/null || true)
+              if [ "${serial}" = "${EXPECTED_SERIAL}" ]; then
+                DATA_DEV="${dev_node}"
+                break 2
+              fi
+            done
+            echo "Waiting for data volume to appear... (attempt ${i}/30)"
+            sleep 5
+          done
+
           if [ -z "${DATA_DEV}" ]; then
-            echo "ERROR: EBS data volume device not found"
-            echo "--- lsblk -d ---"
-            lsblk -d
+            echo "ERROR: data volume device not found for ${DATA_VOLUME_ID}"
+            echo "--- /sys/class/nvme serials ---"
+            for ctrl in /sys/class/nvme/nvme*; do
+              [ -e "${ctrl}/serial" ] || continue
+              echo "$(basename "${ctrl}"): $(cat "${ctrl}/serial")"
+            done
             echo "--- lsblk ---"
             lsblk
+            echo "--- root mount ---"
+            findmnt -n -o SOURCE /
             exit 1
           fi
           echo "Data volume device: /dev/${DATA_DEV}"
 
-          # udisks2 auto-mounts new block devices on Ubuntu, which locks
-          # the device open and prevents mkfs. unmount it first.
+          # udisks2 may auto-mount the data volume; unmount before mkfs
           MOUNT_POINT=$(lsblk -n -o MOUNTPOINT "/dev/${DATA_DEV}" 2>/dev/null | grep -v "^$" | head -1 || true)
           if [ -n "${MOUNT_POINT}" ]; then
             echo "udisks2 auto-mounted ${DATA_DEV} at ${MOUNT_POINT} -- unmounting"
             sudo umount "${MOUNT_POINT}"
           fi
 
-          # format with ext4 and a label for easy mounting on the build instance
+          # format with ext4 and a label for easy mounting on later instances
           sudo mkfs.ext4 -L ${{ env.EC2_DATA_VOLUME_LABEL }} "/dev/${DATA_DEV}"
 
           sudo mkdir -p ${{ env.EC2_DATA_VOLUME_MOUNT }}
