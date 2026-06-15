@@ -398,7 +398,16 @@ jobs:
       - name: Flush and unmount data volume
         run: |
           sync
-          sudo umount ${{ env.EC2_DATA_VOLUME_MOUNT }}
+          # lazy unmount: the self-hosted runner may still hold the mount
+          # namespace open (cwd, file descriptors, repo locks) even though no
+          # further writes are happening. a lazy detach is safe because we have
+          # already synced and the next instance will re-attach the volume.
+          if ! sudo umount -l ${{ env.EC2_DATA_VOLUME_MOUNT }}; then
+            echo "WARN: lazy umount failed, dumping holders for diagnostics"
+            sudo lsof +D ${{ env.EC2_DATA_VOLUME_MOUNT }} 2>/dev/null || true
+            sudo fuser -v ${{ env.EC2_DATA_VOLUME_MOUNT }} 2>/dev/null || true
+            exit 1
+          fi
           echo "Data volume flushed and unmounted -- ready for detach"
 
   # ---------------------------------------------------------------------------
@@ -800,7 +809,16 @@ jobs:
       - name: Flush and unmount data volume
         run: |
           sync
-          sudo umount ${{ env.EC2_DATA_VOLUME_MOUNT }}
+          # lazy unmount: the self-hosted runner may still hold the mount
+          # namespace open (cwd, file descriptors, repo locks) even though no
+          # further writes are happening. a lazy detach is safe because we have
+          # already synced and the next instance will re-attach the volume.
+          if ! sudo umount -l ${{ env.EC2_DATA_VOLUME_MOUNT }}; then
+            echo "WARN: lazy umount failed, dumping holders for diagnostics"
+            sudo lsof +D ${{ env.EC2_DATA_VOLUME_MOUNT }} 2>/dev/null || true
+            sudo fuser -v ${{ env.EC2_DATA_VOLUME_MOUNT }} 2>/dev/null || true
+            exit 1
+          fi
           echo "Data volume flushed and unmounted -- ready for sign instance handoff"
 
 
@@ -1206,7 +1224,16 @@ jobs:
       - name: Flush and unmount data volume
         run: |
           sync
-          sudo umount ${{ env.EC2_DATA_VOLUME_MOUNT }}
+          # lazy unmount: the self-hosted runner may still hold the mount
+          # namespace open (cwd, file descriptors, repo locks) even though no
+          # further writes are happening. a lazy detach is safe because we have
+          # already synced and the teardown job will detach the volume.
+          if ! sudo umount -l ${{ env.EC2_DATA_VOLUME_MOUNT }}; then
+            echo "WARN: lazy umount failed, dumping holders for diagnostics"
+            sudo lsof +D ${{ env.EC2_DATA_VOLUME_MOUNT }} 2>/dev/null || true
+            sudo fuser -v ${{ env.EC2_DATA_VOLUME_MOUNT }} 2>/dev/null || true
+            exit 1
+          fi
           echo "Data volume flushed and unmounted -- ready for teardown"
 
   # ---------------------------------------------------------------------------
