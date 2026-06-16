@@ -1,29 +1,15 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-# shared constants
 REGION="${AWS_REGION:?}"
 REPO="${GITHUB_REPOSITORY:?}"
 GH_API="https://api.github.com/repos/${REPO}"
-
-# retry a command: retry <attempts> <delay_seconds> <cmd...>
-retry() {
-  local n=$1 d=$2; shift 2
-  for i in $(seq 1 "$n"); do
-    "$@" && return 0
-    [ "$i" -eq "$n" ] && return 1
-    echo "  retry ${i}/${n} in ${d}s..." >&2; sleep "$d"
-  done
-}
 
 gh_api() { curl -sf -H "Accept: application/vnd.github+json" -H "Authorization: Bearer ${GH_PAT:?}" "$@"; }
 
 # --------------------------------------------------------------------------
 # provision: launch EC2 instance, bootstrap runner, wait for online
-# env: EC2_INSTANCE_TYPE EC2_SUBNET_ID EC2_SG_ID EC2_AMI_ID GH_PAT
-#      BUILD_SSH_KEY PACKAGES RUNNER_LABEL [EC2_MARKET_TYPE] [EC2_ROOT_VOLUME]
-#      [EC2_DATA_VOLUME] [PROJECT_TAG]
-# outputs: instance_id subnet_id [data_volume_id]
+# retry is handled by nick-fields/retry in the workflow
 # --------------------------------------------------------------------------
 provision() {
   local inst_type="${EC2_INSTANCE_TYPE:?}" subnet="${EC2_SUBNET_ID:?}"
@@ -98,28 +84,20 @@ EOF
 )
   local ud_file; ud_file=$(mktemp); printf '%s' "$userdata" > "$ud_file"
 
-  # 3. launch with retry
+  # 3. launch
   local -a market_args=()
   [ -n "$market" ] && market_args=(--instance-market-options "{\"MarketType\":\"${market}\",\"SpotOptions\":{\"SpotInstanceType\":\"one-time\",\"InstanceInterruptionBehavior\":\"terminate\"}}")
   local -a bdm_args=("DeviceName=/dev/sda1,Ebs={VolumeSize=${root_vol},VolumeType=gp3,DeleteOnTermination=true}")
   [ -n "$data_vol" ] && bdm_args+=("DeviceName=/dev/sdf,Ebs={VolumeSize=${data_vol},VolumeType=gp3,DeleteOnTermination=true}")
 
-  local iid=""
-  for attempt in $(seq 1 10); do
-    echo "Launch attempt ${attempt}/10..."
-    if iid=$(aws ec2 run-instances --region "$REGION" \
-      --image-id "$ami" --instance-type "$inst_type" --subnet-id "$subnet" \
-      --security-group-ids "$sg" --instance-initiated-shutdown-behavior terminate \
-      "${market_args[@]}" --block-device-mappings "${bdm_args[@]}" \
-      --tag-specifications "ResourceType=instance,Tags=[{Key=Name,Value=${tag}-${label}},{Key=Project,Value=${tag}},{Key=Ephemeral,Value=true}]" \
-      --user-data "file://${ud_file}" --query 'Instances[0].InstanceId' --output text 2>&1); then
-      break
-    fi
-    echo "  $iid"
-    iid=""
-    [ "$attempt" -eq 10 ] && { rm -f "$ud_file"; echo "ERROR: launch failed after 10 attempts"; exit 1; }
-    sleep 60
-  done
+  echo "Launching ${inst_type} in ${subnet}..."
+  local iid
+  iid=$(aws ec2 run-instances --region "$REGION" \
+    --image-id "$ami" --instance-type "$inst_type" --subnet-id "$subnet" \
+    --security-group-ids "$sg" --instance-initiated-shutdown-behavior terminate \
+    "${market_args[@]}" --block-device-mappings "${bdm_args[@]}" \
+    --tag-specifications "ResourceType=instance,Tags=[{Key=Name,Value=${tag}-${label}},{Key=Project,Value=${tag}},{Key=Ephemeral,Value=true}]" \
+    --user-data "file://${ud_file}" --query 'Instances[0].InstanceId' --output text)
   rm -f "$ud_file"
 
   # 4. wait running
@@ -140,12 +118,12 @@ EOF
 
   # 6. wait for runner online
   echo "Waiting for runner '${label}' to register..."
-  for i in $(seq 1 60); do
+  for i in $(seq 1 40); do
     local online
     online=$(gh_api "${GH_API}/actions/runners" \
       | jq --arg l "$label" -r '[.runners[]|select(.labels[].name==$l)|select(.status=="online")]|length')
     [ "${online:-0}" -ge 1 ] && { echo "Runner online"; break; }
-    echo "  attempt ${i}/60"; sleep 15
+    echo "  attempt ${i}/40"; sleep 15
   done
 
   # 7. outputs
@@ -159,7 +137,6 @@ EOF
 
 # --------------------------------------------------------------------------
 # kill: terminate instance + deregister runner (best-effort)
-# env: EC2_INSTANCE_ID GH_PAT RUNNER_LABEL
 # --------------------------------------------------------------------------
 kill_runner() {
   local iid="${EC2_INSTANCE_ID:?}" label="${RUNNER_LABEL:-}"

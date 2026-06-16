@@ -77,7 +77,12 @@ jobs:
       - id: label
         run: echo "label=gsi-build-sync-${{ github.run_id }}" >> "$GITHUB_OUTPUT"
       - id: provision
-        run: .github/scripts/ec2.sh provision
+        uses: nick-fields/retry@v4
+        with:
+          max_attempts: 10
+          retry_wait_seconds: 60
+          timeout_minutes: 10
+          command: .github/scripts/ec2.sh provision
         env:
           EC2_INSTANCE_TYPE: ${{ env.EC2_SMALL_INSTANCE }}
           EC2_SUBNET_ID: ${{ needs.infrastructure.outputs.subnet_id }}
@@ -193,7 +198,12 @@ jobs:
       - id: label
         run: echo "label=gsi-build-build-${{ github.run_id }}" >> "$GITHUB_OUTPUT"
       - id: provision
-        run: .github/scripts/ec2.sh provision
+        uses: nick-fields/retry@v4
+        with:
+          max_attempts: 10
+          retry_wait_seconds: 60
+          timeout_minutes: 10
+          command: .github/scripts/ec2.sh provision
         env:
           EC2_INSTANCE_TYPE: ${{ env.EC2_LARGE_INSTANCE }}
           EC2_SUBNET_ID: ${{ needs.infrastructure.outputs.subnet_id }}
@@ -293,7 +303,12 @@ jobs:
       - id: label
         run: echo "label=gsi-build-sign-${{ github.run_id }}" >> "$GITHUB_OUTPUT"
       - id: provision
-        run: .github/scripts/ec2.sh provision
+        uses: nick-fields/retry@v4
+        with:
+          max_attempts: 10
+          retry_wait_seconds: 60
+          timeout_minutes: 10
+          command: .github/scripts/ec2.sh provision
         env:
           EC2_INSTANCE_TYPE: ${{ env.EC2_SMALL_INSTANCE }}
           EC2_SUBNET_ID: ${{ needs.infrastructure.outputs.subnet_id }}
