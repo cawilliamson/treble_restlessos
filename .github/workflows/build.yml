@@ -28,6 +28,10 @@ env:
   AWS_REGION: eu-west-2
   PROJECT_TAG: gsi-build
 
+concurrency:
+  group: build
+  cancel-in-progress: false
+
 jobs:
   # -------------------------------------------------------------------------
   # job 0: ensure shared infrastructure exists and expose ids
