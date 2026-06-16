@@ -77,6 +77,7 @@ jobs:
       label: ${{ steps.start.outputs.label }}
       instance_id: ${{ steps.start.outputs.ec2-instance-id }}
       data_volume_id: ${{ steps.volume.outputs.data_volume_id }}
+      subnet_id: ${{ steps.subnet.outputs.subnet_id }}
     steps:
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v6
@@ -151,6 +152,17 @@ jobs:
           done
           [ -z "${VOLUME_ID}" ] && { echo "ERROR: data volume not found"; exit 1; }
           echo "data_volume_id=${VOLUME_ID}" >> "$GITHUB_OUTPUT"
+
+      - name: Get sync subnet ID
+        id: subnet
+        run: |
+          SUBNET_ID=$(aws ec2 describe-instances \
+            --region "${{ env.AWS_REGION }}" \
+            --instance-ids "${{ steps.start.outputs.ec2-instance-id }}" \
+            --query 'Reservations[0].Instances[0].SubnetId' --output text)
+          [ -z "${SUBNET_ID}" ] && { echo "ERROR: subnet not found"; exit 1; }
+          echo "subnet_id=${SUBNET_ID}" >> "$GITHUB_OUTPUT"
+          echo "Sync subnet: ${SUBNET_ID}"
 
   # -------------------------------------------------------------------------
   # job 2: sync sources
@@ -263,8 +275,8 @@ jobs:
     needs: [infrastructure, start-sync, sync]
     runs-on: ubuntu-latest
     outputs:
-      label: ${{ steps.start.outputs.label }}
-      instance_id: ${{ steps.start.outputs.ec2-instance-id }}
+      label: ${{ fromJSON(steps.start.outputs.outputs).label }}
+      instance_id: ${{ fromJSON(steps.start.outputs.outputs)['ec2-instance-id'] }}
     steps:
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v6
@@ -289,66 +301,79 @@ jobs:
           label: ${{ needs.start-sync.outputs.label }}
           ec2-instance-id: ${{ needs.start-sync.outputs.instance_id }}
 
-      - name: Start build runner
+      - name: Start build runner (with retry)
         id: start
-        uses: machulav/ec2-github-runner@v2
+        uses: Wandalen/wretry.action@v3.8.0
+        env:
+          GH_PAT: ${{ secrets.GH_PAT }}
+          BUILD_SSH_KEY: ${{ secrets.BUILD_SSH_KEY }}
+          AMI_ID: ${{ needs.infrastructure.outputs.ami_id }}
+          SUBNET_ID: ${{ needs.start-sync.outputs.subnet_id }}
+          SG_ID: ${{ needs.infrastructure.outputs.security_group_id }}
         with:
-          mode: start
-          github-token: ${{ secrets.GH_PAT }}
-          use-jit: true
-          ec2-instance-type: ${{ env.EC2_LARGE_INSTANCE }}
-          availability-zones-config: ${{ needs.infrastructure.outputs.availability_zones }}
-          market-type: spot
-          aws-resource-tags: >
-            [
-              {"Key": "Name", "Value": "gsi-build-build-${{ github.run_id }}"},
-              {"Key": "Project", "Value": "gsi-build"},
-              {"Key": "Ephemeral", "Value": "true"}
-            ]
-          block-device-mappings: >
-            [
-              {"DeviceName": "/dev/sda1", "Ebs": {"VolumeSize": 100, "VolumeType": "gp3", "DeleteOnTermination": true}}
-            ]
-          pre-runner-script: |
-            useradd -m -s /bin/bash github 2>/dev/null || true
-            usermod -aG sudo,disk github
-            echo 'github ALL=(ALL) NOPASSWD:ALL' > /etc/sudoers.d/github
-            chmod 440 /etc/sudoers.d/github
-            mkdir -p /home/github/.ssh
-            echo "${{ secrets.BUILD_SSH_KEY }}" > /home/github/.ssh/build_key
-            chmod 600 /home/github/.ssh/build_key
-            cat > /home/github/.ssh/config <<'EOF'
-            Host github.com
-              IdentityFile /home/github/.ssh/build_key
-              StrictHostKeyChecking no
-              User git
-            Host build.chrisaw.io
-              IdentityFile /home/github/.ssh/build_key
-              StrictHostKeyChecking no
-              User chrisaw
-            EOF
-            chmod 600 /home/github/.ssh/config
-            chown -R github:github /home/github/.ssh
-            sudo -u github git config --global user.email 'androidbuild@localhost'
-            sudo -u github git config --global user.name 'androidbuild'
-            sudo -u github git config --global color.ui false
-            curl -sf -o /usr/local/bin/repo https://storage.googleapis.com/git-repo-downloads/repo
-            chmod a+x /usr/local/bin/repo
-            cd /var/tmp
-            curl -sf -O http://launchpadlibrarian.net/648013231/libtinfo5_6.4-2_amd64.deb || true
-            dpkg -i libtinfo5_6.4-2_amd64.deb || true
-            curl -sf -LO http://launchpadlibrarian.net/648013227/libncurses5_6.4-2_amd64.deb || true
-            dpkg -i libncurses5_6.4-2_amd64.deb || true
-            rm -f ./*.deb
-          packages: '["bc","bison","build-essential","ccache","curl","flex","g++-multilib","gcc-multilib","git","git-lfs","gnupg","gperf","imagemagick","jq","lib32readline-dev","lib32z1-dev","liblz4-tool","libssl-dev","libxml2","libxml2-utils","lzop","openjdk-11-jdk","pngcrush","python3","rsync","schedtool","squashfs-tools","unzip","wget","xsltproc","xz-utils","zip","zlib1g-dev","zsync"]'
-          run-runner-as-user: github
-          startup-timeout-minutes: 15
-          runner-debug: true
+          action: machulav/ec2-github-runner@v2
+          attempt_limit: 10
+          attempt_delay: 60000
+          env_context: ${{ toJSON(env) }}
+          with: |
+            mode: start
+            github-token: ${{ env.GH_PAT }}
+            use-jit: true
+            ec2-image-id: ${{ env.AMI_ID }}
+            ec2-instance-type: ${{ env.EC2_LARGE_INSTANCE }}
+            subnet-id: ${{ env.SUBNET_ID }}
+            security-group-id: ${{ env.SG_ID }}
+            market-type: spot
+            aws-resource-tags: >
+              [
+                {"Key": "Name", "Value": "gsi-build-build-${{ github.run_id }}"},
+                {"Key": "Project", "Value": "gsi-build"},
+                {"Key": "Ephemeral", "Value": "true"}
+              ]
+            block-device-mappings: >
+              [
+                {"DeviceName": "/dev/sda1", "Ebs": {"VolumeSize": 100, "VolumeType": "gp3", "DeleteOnTermination": true}}
+              ]
+            pre-runner-script: |
+              useradd -m -s /bin/bash github 2>/dev/null || true
+              usermod -aG sudo,disk github
+              echo 'github ALL=(ALL) NOPASSWD:ALL' > /etc/sudoers.d/github
+              chmod 440 /etc/sudoers.d/github
+              mkdir -p /home/github/.ssh
+              echo "${{ env.BUILD_SSH_KEY }}" > /home/github/.ssh/build_key
+              chmod 600 /home/github/.ssh/build_key
+              cat > /home/github/.ssh/config <<'EOF'
+              Host github.com
+                IdentityFile /home/github/.ssh/build_key
+                StrictHostKeyChecking no
+                User git
+              Host build.chrisaw.io
+                IdentityFile /home/github/.ssh/build_key
+                StrictHostKeyChecking no
+                User chrisaw
+              EOF
+              chmod 600 /home/github/.ssh/config
+              chown -R github:github /home/github/.ssh
+              sudo -u github git config --global user.email 'androidbuild@localhost'
+              sudo -u github git config --global user.name 'androidbuild'
+              sudo -u github git config --global color.ui false
+              curl -sf -o /usr/local/bin/repo https://storage.googleapis.com/git-repo-downloads/repo
+              chmod a+x /usr/local/bin/repo
+              cd /var/tmp
+              curl -sf -O http://launchpadlibrarian.net/648013231/libtinfo5_6.4-2_amd64.deb || true
+              dpkg -i libtinfo5_6.4-2_amd64.deb || true
+              curl -sf -LO http://launchpadlibrarian.net/648013227/libncurses5_6.4-2_amd64.deb || true
+              dpkg -i libncurses5_6.4-2_amd64.deb || true
+              rm -f ./*.deb
+            packages: '["bc","bison","build-essential","ccache","curl","flex","g++-multilib","gcc-multilib","git","git-lfs","gnupg","gperf","imagemagick","jq","lib32readline-dev","lib32z1-dev","liblz4-tool","libssl-dev","libxml2","libxml2-utils","lzop","openjdk-11-jdk","pngcrush","python3","rsync","schedtool","squashfs-tools","unzip","wget","xsltproc","xz-utils","zip","zlib1g-dev","zsync"]'
+            run-runner-as-user: github
+            startup-timeout-minutes: 15
+            runner-debug: true
 
       - name: Attach data volume to build instance
         run: |
           VOLUME_ID="${{ needs.start-sync.outputs.data_volume_id }}"
-          INSTANCE_ID="${{ steps.start.outputs.ec2-instance-id }}"
+          INSTANCE_ID="${{ fromJSON(steps.start.outputs.outputs)['ec2-instance-id'] }}"
           REGION="${{ env.AWS_REGION }}"
           aws ec2 attach-volume --region "${REGION}" --volume-id "${VOLUME_ID}" --instance-id "${INSTANCE_ID}" --device /dev/sdf
           aws ec2 wait volume-in-use --region "${REGION}" --volume-ids "${VOLUME_ID}"
@@ -469,8 +494,10 @@ jobs:
           mode: start
           github-token: ${{ secrets.GH_PAT }}
           use-jit: true
+          ec2-image-id: ${{ needs.infrastructure.outputs.ami_id }}
           ec2-instance-type: ${{ env.EC2_SMALL_INSTANCE }}
-          availability-zones-config: ${{ needs.infrastructure.outputs.availability_zones }}
+          subnet-id: ${{ needs.start-sync.outputs.subnet_id }}
+          security-group-id: ${{ needs.infrastructure.outputs.security_group_id }}
           aws-resource-tags: >
             [
               {"Key": "Name", "Value": "gsi-build-sign-${{ github.run_id }}"},
