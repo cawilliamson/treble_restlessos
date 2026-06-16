@@ -25,23 +25,9 @@ permissions:
 # tuneable knobs -- change these here rather than hunting through the yaml
 # ---------------------------------------------------------------------------
 env:
-  EC2_BUILD_INSTANCE_TYPE: c7i.48xlarge   # big spot instance for compilation
-  EC2_BUILD_ROOT_VOLUME_GB: 100
-  EC2_DATA_VOLUME_DEVICE: /dev/sdf
-  EC2_DATA_VOLUME_LABEL: builddata
-  EC2_DATA_VOLUME_MOUNT: /mnt/src
-  EC2_DEFAULT_REGION: eu-west-2
-  EC2_PROJECT_TAG: gsi-build
-  EC2_SIGN_INSTANCE_TYPE: m7i.xlarge      # cheap on-demand for signing/compress/upload
-  EC2_SIGN_ROOT_VOLUME_GB: 30
-  EC2_SPOT_DEADLINE_MINUTES: 60
-  EC2_SYNC_DATA_VOLUME_GB: 1000
-  EC2_SYNC_INSTANCE_TYPE: m7i.xlarge    # cheap on-demand for repo sync
-  EC2_SYNC_ROOT_VOLUME_GB: 30
-  RSYNC_TRANSFER_TIMEOUT_SECONDS: 120
-  RUNNER_WAIT_ATTEMPTS: 60
-  RUNNER_WAIT_INTERVAL_SECONDS: 15
-  SPOT_RETRY_MAX_ATTEMPTS: 5
+  EC2_SMALL_INSTANCE: m7i.xlarge
+  EC2_LARGE_INSTANCE: c7i.48xlarge
+  EC2_SRC_VOLUME_SIZE: 1000
 
 # only one build at a time - spot instances are expensive
 concurrency:
@@ -78,12 +64,12 @@ jobs:
         with:
           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          aws-region: ${{ env.EC2_DEFAULT_REGION }}
+          aws-region: eu-west-2
 
       - name: Generate unique runner label
         id: runner_label
         run: |
-          LABEL="${{ env.EC2_PROJECT_TAG }}-sync-${{ github.run_id }}"
+          LABEL="gsi-build-sync-${{ github.run_id }}"
           echo "label=${LABEL}" >> "$GITHUB_OUTPUT"
           echo "Runner label: ${LABEL}"
 
@@ -125,7 +111,7 @@ jobs:
         run: |
           # on-demand: no spot pricing, no retry loop. capacity is always
           # available for a small instance type, or the launch fails outright.
-          CANDIDATE_REGIONS="${{ env.EC2_DEFAULT_REGION }} eu-west-1"
+          CANDIDATE_REGIONS="eu-west-2 eu-west-1"
 
           for REGION in ${CANDIDATE_REGIONS}; do
             echo "=== Trying ${REGION} ==="
@@ -139,11 +125,11 @@ jobs:
               --query 'Images | sort_by(@, &CreationDate) | [-1].ImageId')
 
             SG_ID=$(aws ec2 describe-security-groups --region "${REGION}" \
-              --filters "Name=group-name,Values=${{ env.EC2_PROJECT_TAG }}" "Name=tag:Project,Values=${{ env.EC2_PROJECT_TAG }}" \
+              --filters "Name=group-name,Values=gsi-build" "Name=tag:Project,Values=gsi-build" \
               --query 'SecurityGroups[0].GroupId' --output text 2>/dev/null) || true
 
             SUBNET_ID=$(aws ec2 describe-subnets --region "${REGION}" \
-              --filters "Name=tag:Project,Values=${{ env.EC2_PROJECT_TAG }}" \
+              --filters "Name=tag:Project,Values=gsi-build" \
               --query 'Subnets[0].SubnetId' --output text 2>/dev/null) || true
 
             if [ -z "${AMI_ID}" ] || [ -z "${SG_ID}" ] || [ "${SG_ID}" = "None" ] || [ -z "${SUBNET_ID}" ] || [ "${SUBNET_ID}" = "None" ]; then
@@ -155,15 +141,15 @@ jobs:
             INSTANCE_ID=$(aws ec2 run-instances --region "${REGION}" \
               --image-id "${AMI_ID}" \
               --instance-initiated-shutdown-behavior terminate \
-              --instance-type ${{ env.EC2_SYNC_INSTANCE_TYPE }} \
+              --instance-type ${{ env.EC2_SMALL_INSTANCE }} \
               --output text \
               --query 'Instances[0].InstanceId' \
               --security-group-ids "${SG_ID}" \
               --subnet-id "${SUBNET_ID}" \
-              --tag-specifications "ResourceType=instance,Tags=[{Key=Name,Value=${{ env.EC2_PROJECT_TAG }}-sync-${{ github.run_id }}},{Key=Project,Value=${{ env.EC2_PROJECT_TAG }}},{Key=Ephemeral,Value=true}]" \
+              --tag-specifications "ResourceType=instance,Tags=[{Key=Name,Value=gsi-build-sync-${{ github.run_id }}},{Key=Project,Value=gsi-build},{Key=Ephemeral,Value=true}]" \
               --block-device-mappings \
-                "DeviceName=/dev/sda1,Ebs={VolumeSize=${{ env.EC2_SYNC_ROOT_VOLUME_GB }},VolumeType=gp3,DeleteOnTermination=true}" \
-                "DeviceName=${{ env.EC2_DATA_VOLUME_DEVICE }},Ebs={VolumeSize=${{ env.EC2_SYNC_DATA_VOLUME_GB }},VolumeType=gp3,DeleteOnTermination=true}" \
+                "DeviceName=/dev/sda1,Ebs={VolumeSize=30,VolumeType=gp3,DeleteOnTermination=true}" \
+                "DeviceName=/dev/sdf,Ebs={VolumeSize=${{ env.EC2_SRC_VOLUME_SIZE }},VolumeType=gp3,DeleteOnTermination=true}" \
               --user-data "file:///tmp/user-data-sync.yml" 2>&1) && break
 
             echo "  Launch failed: ${INSTANCE_ID}"
@@ -180,7 +166,7 @@ jobs:
             echo "region=${REGION}"
             echo "subnet_id=${SUBNET_ID}"
           } >> "$GITHUB_OUTPUT"
-          echo "Launched sync on-demand instance: ${INSTANCE_ID} (${{ env.EC2_SYNC_INSTANCE_TYPE }} in ${REGION})"
+          echo "Launched sync on-demand instance: ${INSTANCE_ID} (${{ env.EC2_SMALL_INSTANCE }} in ${REGION})"
 
       - name: Wait for instance to reach running state
         run: |
@@ -226,7 +212,7 @@ jobs:
           LABEL="${{ steps.runner_label.outputs.label }}"
           echo "Waiting for runner with label '${LABEL}' to register..."
 
-          for i in $(seq 1 ${{ env.RUNNER_WAIT_ATTEMPTS }}); do
+          for i in $(seq 1 60); do
             ONLINE=$(curl --fail --silent \
               --header "Accept: application/vnd.github+json" \
               --header "Authorization: Bearer ${{ secrets.GH_PAT }}" \
@@ -234,16 +220,16 @@ jobs:
               | jq --arg label "$LABEL" --raw-output \
                 '[.runners[] | select(.labels[].name == $label) | select(.status == "online")] | length')
 
-            echo "  attempt ${i}/${{ env.RUNNER_WAIT_ATTEMPTS }}: ${ONLINE} runner(s) online with label '${LABEL}'"
+            echo "  attempt ${i}/60: ${ONLINE} runner(s) online with label '${LABEL}'"
 
             if [ "${ONLINE}" -ge 1 ] 2>/dev/null; then
               echo "Sync runner is online and ready"
               exit 0
             fi
-            sleep ${{ env.RUNNER_WAIT_INTERVAL_SECONDS }}
+            sleep 15
           done
 
-          echo "ERROR: sync runner never came online after $(( ${{ env.RUNNER_WAIT_ATTEMPTS }} * ${{ env.RUNNER_WAIT_INTERVAL_SECONDS }} / 60 )) minutes"
+          echo "ERROR: sync runner never came online after $(( 60 * 15 / 60 )) minutes"
           exit 1
 
   # ---------------------------------------------------------------------------
@@ -261,9 +247,6 @@ jobs:
       grapheneos_tag: ${{ steps.resolve_tag.outputs.tag }}
       android_version: ${{ steps.parse_version.outputs.android_version }}
       android_version_tag: ${{ steps.parse_version.outputs.android_version_tag }}
-
-    env:
-      GRAPHENEOS_RELEASE_CHANNEL: ${{ github.event.inputs.release_channel || 'stable' }}
 
     steps:
       - name: Checkout build scripts
@@ -332,31 +315,32 @@ jobs:
           fi
 
           # format with ext4 and a label for easy mounting on later instances
-          sudo mkfs.ext4 -L ${{ env.EC2_DATA_VOLUME_LABEL }} "/dev/${DATA_DEV}"
+          sudo mkfs.ext4 -L builddata "/dev/${DATA_DEV}"
 
-          sudo mkdir -p ${{ env.EC2_DATA_VOLUME_MOUNT }}
-          sudo mount "/dev/${DATA_DEV}" ${{ env.EC2_DATA_VOLUME_MOUNT }}
-          sudo chown github:github ${{ env.EC2_DATA_VOLUME_MOUNT }}
-          echo "Data volume mounted at ${{ env.EC2_DATA_VOLUME_MOUNT }}"
+          sudo mkdir -p /mnt/src
+          sudo mount "/dev/${DATA_DEV}" /mnt/src
+          sudo chown github:github /mnt/src
+          echo "Data volume mounted at /mnt/src"
 
       - name: Set up source directory
         run: |
-          ln -s ${{ env.EC2_DATA_VOLUME_MOUNT }} src
-          echo "src/ symlinked to ${{ env.EC2_DATA_VOLUME_MOUNT }}"
+          ln -s /mnt/src src
+          echo "src/ symlinked to /mnt/src"
 
       - name: Resolve latest GrapheneOS tag
         id: resolve_tag
         run: |
-          echo "Fetching latest ${GRAPHENEOS_RELEASE_CHANNEL} tag from grapheneos.org/releases..."
+          CHANNEL="${{ github.event.inputs.release_channel || 'stable' }}"
+          echo "Fetching latest ${CHANNEL} tag from grapheneos.org/releases..."
           RELEASES_HTML=$(curl --fail --silent "https://grapheneos.org/releases")
           TAG=$(echo "${RELEASES_HTML}" \
-            | grep --only-matching --perl-regexp "id=[a-z]+-${GRAPHENEOS_RELEASE_CHANNEL}><td>[^<]+</td><td><a href=#\K[0-9]{10}" \
+            | grep --only-matching --perl-regexp "id=[a-z]+-${CHANNEL}><td>[^<]+</td><td><a href=#\K[0-9]{10}" \
             | sort --numeric-sort --reverse | head --lines=1)
           if [ -z "${TAG}" ]; then
-            echo "ERROR: failed to extract a valid ${GRAPHENEOS_RELEASE_CHANNEL} tag"
+            echo "ERROR: failed to extract a valid ${CHANNEL} tag"
             exit 1
           fi
-          echo "Resolved latest ${GRAPHENEOS_RELEASE_CHANNEL} tag: ${TAG}"
+          echo "Resolved latest ${CHANNEL} tag: ${TAG}"
           echo "tag=${TAG}" >> "$GITHUB_OUTPUT"
 
       - name: Initialise repo
@@ -402,10 +386,10 @@ jobs:
           # namespace open (cwd, file descriptors, repo locks) even though no
           # further writes are happening. a lazy detach is safe because we have
           # already synced and the next instance will re-attach the volume.
-          if ! sudo umount -l ${{ env.EC2_DATA_VOLUME_MOUNT }}; then
+          if ! sudo umount -l /mnt/src; then
             echo "WARN: lazy umount failed, dumping holders for diagnostics"
-            sudo lsof +D ${{ env.EC2_DATA_VOLUME_MOUNT }} 2>/dev/null || true
-            sudo fuser -v ${{ env.EC2_DATA_VOLUME_MOUNT }} 2>/dev/null || true
+            sudo lsof +D /mnt/src 2>/dev/null || true
+            sudo fuser -v /mnt/src 2>/dev/null || true
             exit 1
           fi
           echo "Data volume flushed and unmounted -- ready for detach"
@@ -491,7 +475,7 @@ jobs:
       - name: Generate unique runner label
         id: runner_label
         run: |
-          LABEL="${{ env.EC2_PROJECT_TAG }}-build-${{ github.run_id }}"
+          LABEL="gsi-build-build-${{ github.run_id }}"
           echo "label=${LABEL}" >> "$GITHUB_OUTPUT"
           echo "Runner label: ${LABEL}"
 
@@ -551,11 +535,11 @@ jobs:
           echo "AMI: ${AMI_ID}"
 
           SG_ID=$(aws ec2 describe-security-groups --region "${REGION}" \
-            --filters "Name=group-name,Values=${{ env.EC2_PROJECT_TAG }}" "Name=tag:Project,Values=${{ env.EC2_PROJECT_TAG }}" \
+            --filters "Name=group-name,Values=gsi-build" "Name=tag:Project,Values=gsi-build" \
             --query 'SecurityGroups[0].GroupId' --output text 2>/dev/null) || true
 
           if [ -z "${SG_ID}" ] || [ "${SG_ID}" = "None" ]; then
-            echo "ERROR: security group ${{ env.EC2_PROJECT_TAG }} not found in ${REGION}"
+            echo "ERROR: security group gsi-build not found in ${REGION}"
             exit 1
           fi
           echo "Security group: ${SG_ID}"
@@ -563,7 +547,7 @@ jobs:
           # launch in the same subnet as the sync instance (volume is AZ-scoped)
           INSTANCE_ID=""
           ATTEMPT=0
-          DEADLINE=$((SECONDS + ${{ env.EC2_SPOT_DEADLINE_MINUTES }} * 60))
+          DEADLINE=$((SECONDS + 60 * 60))
 
           while [ -z "$INSTANCE_ID" ] && [ "$SECONDS" -lt "$DEADLINE" ]; do
             ATTEMPT=$((ATTEMPT + 1))
@@ -573,14 +557,14 @@ jobs:
               --image-id "${AMI_ID}" \
               --instance-initiated-shutdown-behavior terminate \
               --instance-market-options '{"MarketType":"spot","SpotOptions":{"SpotInstanceType":"one-time","InstanceInterruptionBehavior":"terminate"}}' \
-              --instance-type ${{ env.EC2_BUILD_INSTANCE_TYPE }} \
+              --instance-type ${{ env.EC2_LARGE_INSTANCE }} \
               --output text \
               --query 'Instances[0].InstanceId' \
               --security-group-ids "${SG_ID}" \
               --subnet-id "${SUBNET_ID}" \
-              --tag-specifications "ResourceType=instance,Tags=[{Key=Name,Value=${{ env.EC2_PROJECT_TAG }}-build-${{ github.run_id }}},{Key=Project,Value=${{ env.EC2_PROJECT_TAG }}},{Key=Ephemeral,Value=true}]" \
+              --tag-specifications "ResourceType=instance,Tags=[{Key=Name,Value=gsi-build-build-${{ github.run_id }}},{Key=Project,Value=gsi-build},{Key=Ephemeral,Value=true}]" \
               --block-device-mappings \
-                "DeviceName=/dev/sda1,Ebs={VolumeSize=${{ env.EC2_BUILD_ROOT_VOLUME_GB }},VolumeType=gp3,DeleteOnTermination=true}" \
+                "DeviceName=/dev/sda1,Ebs={VolumeSize=100,VolumeType=gp3,DeleteOnTermination=true}" \
               --user-data "file:///tmp/user-data-build.yml" 2>&1) && {
                 break
               }
@@ -593,12 +577,12 @@ jobs:
           done
 
           if [ -z "${INSTANCE_ID}" ]; then
-            echo "ERROR: failed to launch build spot instance in ${REGION}/${SUBNET_ID} after ${{ env.EC2_SPOT_DEADLINE_MINUTES }} minutes"
+            echo "ERROR: failed to launch build spot instance in ${REGION}/${SUBNET_ID} after 60 minutes"
             exit 1
           fi
 
           echo "instance_id=${INSTANCE_ID}" >> "$GITHUB_OUTPUT"
-          echo "Launched build spot instance: ${INSTANCE_ID} (${{ env.EC2_BUILD_INSTANCE_TYPE }} in ${REGION}/${SUBNET_ID})"
+          echo "Launched build spot instance: ${INSTANCE_ID} (${{ env.EC2_LARGE_INSTANCE }} in ${REGION}/${SUBNET_ID})"
 
       - name: Wait for instance to reach running state
         run: |
@@ -620,7 +604,7 @@ jobs:
               --region "${REGION}" \
               --volume-id "${DATA_VOLUME_ID}" \
               --instance-id "${BUILD_INSTANCE_ID}" \
-              --device "${{ env.EC2_DATA_VOLUME_DEVICE }}"; then
+              --device "/dev/sdf"; then
               break
             fi
             if [ "${ATTEMPT}" -eq 3 ]; then
@@ -649,7 +633,7 @@ jobs:
           LABEL="${{ steps.runner_label.outputs.label }}"
           echo "Waiting for runner with label '${LABEL}' to register..."
 
-          for i in $(seq 1 ${{ env.RUNNER_WAIT_ATTEMPTS }}); do
+          for i in $(seq 1 60); do
             ONLINE=$(curl --fail --silent \
               --header "Accept: application/vnd.github+json" \
               --header "Authorization: Bearer ${{ secrets.GH_PAT }}" \
@@ -657,16 +641,16 @@ jobs:
               | jq --arg label "$LABEL" --raw-output \
                 '[.runners[] | select(.labels[].name == $label) | select(.status == "online")] | length')
 
-            echo "  attempt ${i}/${{ env.RUNNER_WAIT_ATTEMPTS }}: ${ONLINE} runner(s) online with label '${LABEL}'"
+            echo "  attempt ${i}/60: ${ONLINE} runner(s) online with label '${LABEL}'"
 
             if [ "${ONLINE}" -ge 1 ] 2>/dev/null; then
               echo "Build runner is online and ready"
               exit 0
             fi
-            sleep ${{ env.RUNNER_WAIT_INTERVAL_SECONDS }}
+            sleep 15
           done
 
-          echo "ERROR: build runner never came online after $(( ${{ env.RUNNER_WAIT_ATTEMPTS }} * ${{ env.RUNNER_WAIT_INTERVAL_SECONDS }} / 60 )) minutes"
+          echo "ERROR: build runner never came online after $(( 60 * 15 / 60 )) minutes"
           exit 1
 
   # ---------------------------------------------------------------------------
@@ -687,10 +671,6 @@ jobs:
       build_number: ${{ steps.metadata.outputs.build_number }}
       grapheneos_tag: ${{ needs.sync.outputs.grapheneos_tag }}
 
-    env:
-      DEBUG_BUILD: ${{ github.event.inputs.debug_build || 'false' }}
-      GRAPHENEOS_RELEASE_CHANNEL: ${{ github.event.inputs.release_channel || 'stable' }}
-
     steps:
       - name: Checkout build scripts
         uses: actions/checkout@v6
@@ -705,13 +685,13 @@ jobs:
           # the volume was labelled during sync; find it by label with a
           # retry loop since NVMe device enumeration can lag behind attach
           for i in $(seq 1 30); do
-            DATA_DEV=$(findfs LABEL=${{ env.EC2_DATA_VOLUME_LABEL }} 2>/dev/null) && break
+            DATA_DEV=$(findfs LABEL=builddata 2>/dev/null) && break
             echo "Waiting for data volume to appear... (attempt $i/30)"
             sleep 5
           done
 
           if [ -z "${DATA_DEV}" ]; then
-            echo "ERROR: data volume with label '${{ env.EC2_DATA_VOLUME_LABEL }}' not found after 30 attempts"
+            echo "ERROR: data volume with label 'builddata' not found after 30 attempts"
             echo "--- lsblk -f ---"
             lsblk -f 2>/dev/null || true
             echo "--- blkid ---"
@@ -734,19 +714,19 @@ jobs:
           fi
           echo "Data volume device: ${DATA_DEV}"
 
-          sudo mkdir -p ${{ env.EC2_DATA_VOLUME_MOUNT }}
-          if ! sudo mount "${DATA_DEV}" ${{ env.EC2_DATA_VOLUME_MOUNT }}; then
-            echo "ERROR: mount failed for ${DATA_DEV} on ${{ env.EC2_DATA_VOLUME_MOUNT }}"
+          sudo mkdir -p /mnt/src
+          if ! sudo mount "${DATA_DEV}" /mnt/src; then
+            echo "ERROR: mount failed for ${DATA_DEV} on /mnt/src"
             dmesg --since "5 minutes ago" | tail --lines=20
             exit 1
           fi
-          sudo chown github:github ${{ env.EC2_DATA_VOLUME_MOUNT }}
-          echo "Data volume mounted at ${{ env.EC2_DATA_VOLUME_MOUNT }}"
+          sudo chown github:github /mnt/src
+          echo "Data volume mounted at /mnt/src"
 
       - name: Set up source directory
         run: |
-          ln -s ${{ env.EC2_DATA_VOLUME_MOUNT }} src
-          echo "src/ symlinked to ${{ env.EC2_DATA_VOLUME_MOUNT }}"
+          ln -s /mnt/src src
+          echo "src/ symlinked to /mnt/src"
 
       - name: Record build metadata
         id: metadata
@@ -778,7 +758,7 @@ jobs:
           ${{ github.workspace }}/patches/apply.sh . trebledroid-staging
           ${{ github.workspace }}/patches/apply.sh . rom
           ${{ github.workspace }}/patches/apply.sh . personal
-          if [ "${DEBUG_BUILD}" = "true" ]; then
+          if [ "${{ github.event.inputs.debug_build || 'false' }}" = "true" ]; then
             echo "*** DEBUG BUILD: applying debug-builds tier ***"
             ${{ github.workspace }}/patches/apply.sh . debug-builds
           else
@@ -799,7 +779,7 @@ jobs:
           popd
           . build/envsetup.sh
           BUILD_VARIANT="user"
-          if [ "${DEBUG_BUILD}" = "true" ]; then
+          if [ "${{ github.event.inputs.debug_build || 'false' }}" = "true" ]; then
             BUILD_VARIANT="userdebug"
           fi
           lunch "treble_arm64_bvN-${ANDROID_VERSION_TAG}-${BUILD_VARIANT}"
@@ -813,10 +793,10 @@ jobs:
           # namespace open (cwd, file descriptors, repo locks) even though no
           # further writes are happening. a lazy detach is safe because we have
           # already synced and the next instance will re-attach the volume.
-          if ! sudo umount -l ${{ env.EC2_DATA_VOLUME_MOUNT }}; then
+          if ! sudo umount -l /mnt/src; then
             echo "WARN: lazy umount failed, dumping holders for diagnostics"
-            sudo lsof +D ${{ env.EC2_DATA_VOLUME_MOUNT }} 2>/dev/null || true
-            sudo fuser -v ${{ env.EC2_DATA_VOLUME_MOUNT }} 2>/dev/null || true
+            sudo lsof +D /mnt/src 2>/dev/null || true
+            sudo fuser -v /mnt/src 2>/dev/null || true
             exit 1
           fi
           echo "Data volume flushed and unmounted -- ready for sign instance handoff"
@@ -899,7 +879,7 @@ jobs:
       - name: Generate unique runner label
         id: runner_label
         run: |
-          LABEL="${{ env.EC2_PROJECT_TAG }}-sign-${{ github.run_id }}"
+          LABEL="gsi-build-sign-${{ github.run_id }}"
           echo "label=${LABEL}" >> "$GITHUB_OUTPUT"
           echo "Runner label: ${LABEL}"
 
@@ -958,11 +938,11 @@ jobs:
           echo "AMI: ${AMI_ID}"
 
           SG_ID=$(aws ec2 describe-security-groups --region "${REGION}" \
-            --filters "Name=group-name,Values=${{ env.EC2_PROJECT_TAG }}" "Name=tag:Project,Values=${{ env.EC2_PROJECT_TAG }}" \
+            --filters "Name=group-name,Values=gsi-build" "Name=tag:Project,Values=gsi-build" \
             --query 'SecurityGroups[0].GroupId' --output text 2>/dev/null) || true
 
           if [ -z "${SG_ID}" ] || [ "${SG_ID}" = "None" ]; then
-            echo "ERROR: security group ${{ env.EC2_PROJECT_TAG }} not found in ${REGION}"
+            echo "ERROR: security group gsi-build not found in ${REGION}"
             exit 1
           fi
           echo "Security group: ${SG_ID}"
@@ -970,21 +950,21 @@ jobs:
           INSTANCE_ID=$(aws ec2 run-instances --region "${REGION}" \
             --image-id "${AMI_ID}" \
             --instance-initiated-shutdown-behavior terminate \
-            --instance-type ${{ env.EC2_SIGN_INSTANCE_TYPE }} \
+            --instance-type ${{ env.EC2_SMALL_INSTANCE }} \
             --output text \
             --query 'Instances[0].InstanceId' \
             --security-group-ids "${SG_ID}" \
             --subnet-id "${SUBNET_ID}" \
-            --tag-specifications "ResourceType=instance,Tags=[{Key=Name,Value=${{ env.EC2_PROJECT_TAG }}-sign-${{ github.run_id }}},{Key=Project,Value=${{ env.EC2_PROJECT_TAG }}},{Key=Ephemeral,Value=true}]" \
+            --tag-specifications "ResourceType=instance,Tags=[{Key=Name,Value=gsi-build-sign-${{ github.run_id }}},{Key=Project,Value=gsi-build},{Key=Ephemeral,Value=true}]" \
             --block-device-mappings \
-              "DeviceName=/dev/sda1,Ebs={VolumeSize=${{ env.EC2_SIGN_ROOT_VOLUME_GB }},VolumeType=gp3,DeleteOnTermination=true}" \
+              "DeviceName=/dev/sda1,Ebs={VolumeSize=30,VolumeType=gp3,DeleteOnTermination=true}" \
             --user-data "file:///tmp/user-data-sign.yml" 2>&1) || {
               echo "ERROR: failed to launch sign instance: ${INSTANCE_ID}"
               exit 1
             }
 
           echo "instance_id=${INSTANCE_ID}" >> "$GITHUB_OUTPUT"
-          echo "Launched sign on-demand instance: ${INSTANCE_ID} (${{ env.EC2_SIGN_INSTANCE_TYPE }} in ${REGION}/${SUBNET_ID})"
+          echo "Launched sign on-demand instance: ${INSTANCE_ID} (${{ env.EC2_SMALL_INSTANCE }} in ${REGION}/${SUBNET_ID})"
 
       - name: Wait for instance to reach running state
         run: |
@@ -1006,7 +986,7 @@ jobs:
               --region "${REGION}" \
               --volume-id "${DATA_VOLUME_ID}" \
               --instance-id "${SIGN_INSTANCE_ID}" \
-              --device "${{ env.EC2_DATA_VOLUME_DEVICE }}"; then
+              --device "/dev/sdf"; then
               break
             fi
             if [ "${ATTEMPT}" -eq 3 ]; then
@@ -1035,7 +1015,7 @@ jobs:
           LABEL="${{ steps.runner_label.outputs.label }}"
           echo "Waiting for runner with label '${LABEL}' to register..."
 
-          for i in $(seq 1 ${{ env.RUNNER_WAIT_ATTEMPTS }}); do
+          for i in $(seq 1 60); do
             ONLINE=$(curl --fail --silent \
               --header "Accept: application/vnd.github+json" \
               --header "Authorization: Bearer ${{ secrets.GH_PAT }}" \
@@ -1043,16 +1023,16 @@ jobs:
               | jq --arg label "$LABEL" --raw-output \
                 '[.runners[] | select(.labels[].name == $label) | select(.status == "online")] | length')
 
-            echo "  attempt ${i}/${{ env.RUNNER_WAIT_ATTEMPTS }}: ${ONLINE} runner(s) online with label '${LABEL}'"
+            echo "  attempt ${i}/60: ${ONLINE} runner(s) online with label '${LABEL}'"
 
             if [ "${ONLINE}" -ge 1 ] 2>/dev/null; then
               echo "Sign runner is online and ready"
               exit 0
             fi
-            sleep ${{ env.RUNNER_WAIT_INTERVAL_SECONDS }}
+            sleep 15
           done
 
-          echo "ERROR: sign runner never came online after $(( ${{ env.RUNNER_WAIT_ATTEMPTS }} * ${{ env.RUNNER_WAIT_INTERVAL_SECONDS }} / 60 )) minutes"
+          echo "ERROR: sign runner never came online after $(( 60 * 15 / 60 )) minutes"
           exit 1
 
   # ---------------------------------------------------------------------------
@@ -1064,11 +1044,6 @@ jobs:
     needs: [provision-sign, build]
     runs-on: [ self-hosted, "${{ needs.provision-sign.outputs.runner_label }}" ]
     timeout-minutes: 120
-
-    env:
-      GH_TOKEN: ${{ github.token }}
-      DEBUG_BUILD: ${{ github.event.inputs.debug_build || 'false' }}
-      WEB_DIR: /var/www/build.chrisaw.io
 
     steps:
       - name: Checkout build scripts
@@ -1082,13 +1057,13 @@ jobs:
       - name: Mount data volume
         run: |
           for i in $(seq 1 30); do
-            DATA_DEV=$(findfs LABEL=${{ env.EC2_DATA_VOLUME_LABEL }} 2>/dev/null) && break
+            DATA_DEV=$(findfs LABEL=builddata 2>/dev/null) && break
             echo "Waiting for data volume to appear... (attempt $i/30)"
             sleep 5
           done
 
           if [ -z "${DATA_DEV}" ]; then
-            echo "ERROR: data volume with label '${{ env.EC2_DATA_VOLUME_LABEL }}' not found after 30 attempts"
+            echo "ERROR: data volume with label 'builddata' not found after 30 attempts"
             echo "--- lsblk -f ---"
             lsblk -f 2>/dev/null || true
             echo "--- blkid ---"
@@ -1101,19 +1076,19 @@ jobs:
           fi
           echo "Data volume device: ${DATA_DEV}"
 
-          sudo mkdir -p ${{ env.EC2_DATA_VOLUME_MOUNT }}
-          if ! sudo mount "${DATA_DEV}" ${{ env.EC2_DATA_VOLUME_MOUNT }}; then
-            echo "ERROR: mount failed for ${DATA_DEV} on ${{ env.EC2_DATA_VOLUME_MOUNT }}"
+          sudo mkdir -p /mnt/src
+          if ! sudo mount "${DATA_DEV}" /mnt/src; then
+            echo "ERROR: mount failed for ${DATA_DEV} on /mnt/src"
             dmesg --since "5 minutes ago" | tail --lines=20
             exit 1
           fi
-          sudo chown github:github ${{ env.EC2_DATA_VOLUME_MOUNT }}
-          echo "Data volume mounted at ${{ env.EC2_DATA_VOLUME_MOUNT }}"
+          sudo chown github:github /mnt/src
+          echo "Data volume mounted at /mnt/src"
 
       - name: Set up source directory
         run: |
-          ln -s ${{ env.EC2_DATA_VOLUME_MOUNT }} src
-          echo "src/ symlinked to ${{ env.EC2_DATA_VOLUME_MOUNT }}"
+          ln -s /mnt/src src
+          echo "src/ symlinked to /mnt/src"
 
       - name: Restore build metadata
         run: |
@@ -1136,14 +1111,18 @@ jobs:
           mkdir --parents out/
 
       - name: Verify gh CLI authentication
+        env:
+          GH_TOKEN: ${{ github.token }}
         run: gh auth status
 
       - name: Sign ROM image
         working-directory: src/
+        env:
+          GH_TOKEN: ${{ github.token }}
         run: |
           . build/envsetup.sh
           BUILD_VARIANT="user"
-          if [ "${DEBUG_BUILD}" = "true" ]; then
+          if [ "${{ github.event.inputs.debug_build || 'false' }}" = "true" ]; then
             BUILD_VARIANT="userdebug"
           fi
           lunch "treble_arm64_bvN-${ANDROID_VERSION_TAG}-${BUILD_VARIANT}"
@@ -1157,7 +1136,7 @@ jobs:
         id: compress
         run: |
           VERSION_TAG="${ANDROID_VERSION}-${BUILD_NUMBER}"
-          if [ "${DEBUG_BUILD}" = "true" ]; then
+          if [ "${{ github.event.inputs.debug_build || 'false' }}" = "true" ]; then
             VERSION_TAG="${VERSION_TAG}-debug"
           fi
           cd out/
@@ -1199,16 +1178,18 @@ jobs:
             RELEASE_NAME="${{ steps.compress.outputs.release_name }}"
             REMOTE="build.chrisaw.io:/var/www/build.chrisaw.io/${RELEASE_NAME}"
             rsync --archive --compress --mkpath --verbose \
-              --timeout=${{ env.RSYNC_TRANSFER_TIMEOUT_SECONDS }} \
+              --timeout=120 \
               --partial --partial-dir=.rsync-partial \
               out/*.img.xz out/CHANGELOG.md "${REMOTE}/"
             rsync --archive --compress --mkpath --verbose \
-              --timeout=${{ env.RSYNC_TRANSFER_TIMEOUT_SECONDS }} \
+              --timeout=120 \
               --partial --partial-dir=.rsync-partial \
               out/zsync/ "${REMOTE}/zsync/"
 
       - name: Create GitHub release
-        if: env.DEBUG_BUILD != 'true'
+        if: github.event.inputs.debug_build != 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
         run: |
           VERSION_TAG="${{ steps.compress.outputs.version_tag }}"
           RELEASE_NAME="${{ steps.compress.outputs.release_name }}"
@@ -1228,10 +1209,10 @@ jobs:
           # namespace open (cwd, file descriptors, repo locks) even though no
           # further writes are happening. a lazy detach is safe because we have
           # already synced and the teardown job will detach the volume.
-          if ! sudo umount -l ${{ env.EC2_DATA_VOLUME_MOUNT }}; then
+          if ! sudo umount -l /mnt/src; then
             echo "WARN: lazy umount failed, dumping holders for diagnostics"
-            sudo lsof +D ${{ env.EC2_DATA_VOLUME_MOUNT }} 2>/dev/null || true
-            sudo fuser -v ${{ env.EC2_DATA_VOLUME_MOUNT }} 2>/dev/null || true
+            sudo lsof +D /mnt/src 2>/dev/null || true
+            sudo fuser -v /mnt/src 2>/dev/null || true
             exit 1
           fi
           echo "Data volume flushed and unmounted -- ready for teardown"
@@ -1255,9 +1236,7 @@ jobs:
         with:
           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          aws-region: ${{ needs.provision-sync.outputs.region || env.EC2_DEFAULT_REGION }}
-        env:
-          EC2_DEFAULT_REGION: ${{ env.EC2_DEFAULT_REGION }}
+          aws-region: ${{ needs.provision-sync.outputs.region || 'eu-west-2' }}
 
       - name: Check for spot interruption
         id: check_spot
@@ -1307,7 +1286,7 @@ jobs:
             return 1
           }
 
-          REGION="${{ needs.provision-sync.outputs.region || env.EC2_DEFAULT_REGION }}"
+          REGION="${{ needs.provision-sync.outputs.region || 'eu-west-2' }}"
 
           # check sync instance if sync job failed/cancelled
           if [ "${SYNC_RESULT}" = "failure" ] || [ "${SYNC_RESULT}" = "cancelled" ]; then
@@ -1326,9 +1305,9 @@ jobs:
       - name: Terminate instances
         run: |
           for ENTRY in \
-            "sync:${{ needs.provision-sync.outputs.instance_id }}:${{ needs.provision-sync.outputs.region || env.EC2_DEFAULT_REGION }}" \
-            "build:${{ needs.provision-build.outputs.instance_id }}:${{ needs.provision-build.outputs.region || needs.provision-sync.outputs.region || env.EC2_DEFAULT_REGION }}" \
-            "sign:${{ needs.provision-sign.outputs.instance_id }}:${{ needs.provision-sign.outputs.region || needs.provision-sync.outputs.region || env.EC2_DEFAULT_REGION }}"; do
+            "sync:${{ needs.provision-sync.outputs.instance_id }}:${{ needs.provision-sync.outputs.region || 'eu-west-2' }}" \
+            "build:${{ needs.provision-build.outputs.instance_id }}:${{ needs.provision-build.outputs.region || needs.provision-sync.outputs.region || 'eu-west-2' }}" \
+            "sign:${{ needs.provision-sign.outputs.instance_id }}:${{ needs.provision-sign.outputs.region || needs.provision-sync.outputs.region || 'eu-west-2' }}"; do
             NAME="${ENTRY%%:*}"
             REST="${ENTRY#*:}"
             INSTANCE_ID="${REST%:*}"
@@ -1348,7 +1327,7 @@ jobs:
 
       - name: Wait for instances to terminate
         run: |
-          REGION="${{ needs.provision-sync.outputs.region || env.EC2_DEFAULT_REGION }}"
+          REGION="${{ needs.provision-sync.outputs.region || 'eu-west-2' }}"
           SYNC_INSTANCE="${{ needs.provision-sync.outputs.instance_id }}"
           BUILD_INSTANCE="${{ needs.provision-build.outputs.instance_id }}"
           SIGN_INSTANCE="${{ needs.provision-sign.outputs.instance_id }}"
@@ -1390,7 +1369,7 @@ jobs:
               exit 0
             fi
 
-            REGION="${{ needs.provision-sync.outputs.region || env.EC2_DEFAULT_REGION }}"
+            REGION="${{ needs.provision-sync.outputs.region || 'eu-west-2' }}"
 
             echo "Deleting volume ${DATA_VOLUME_ID}..."
             aws ec2 delete-volume \
@@ -1451,10 +1430,10 @@ jobs:
             echo "|------|-------|"
             echo "| Build result | ${BUILD_RESULT} |"
             echo "| Spot interrupted | ${SPOT_HIT} |"
-            echo "| Attempt | $((ATTEMPT + 1)) of ${{ env.SPOT_RETRY_MAX_ATTEMPTS }} |"
-            echo "| Sync instance | ${{ needs.provision-sync.outputs.instance_id }} (${{ env.EC2_SYNC_INSTANCE_TYPE }}) |"
-            echo "| Build instance | ${{ needs.provision-build.outputs.instance_id }} (${{ env.EC2_BUILD_INSTANCE_TYPE }}, 192 vCPUs) |"
-            echo "| Sign instance | ${{ needs.provision-sign.outputs.instance_id }} (${{ env.EC2_SIGN_INSTANCE_TYPE }}) |"
+            echo "| Attempt | $((ATTEMPT + 1)) of 5 |"
+            echo "| Sync instance | ${{ needs.provision-sync.outputs.instance_id }} (${{ env.EC2_SMALL_INSTANCE }}) |"
+            echo "| Build instance | ${{ needs.provision-build.outputs.instance_id }} (${{ env.EC2_LARGE_INSTANCE }}, 192 vCPUs) |"
+            echo "| Sign instance | ${{ needs.provision-sign.outputs.instance_id }} (${{ env.EC2_SMALL_INSTANCE }}) |"
             echo "| Region | ${{ needs.provision-sync.outputs.region || 'N/A' }} |"
             echo "| Data volume | ${{ needs.provision-sync.outputs.data_volume_id || 'N/A' }} |"
             echo "| Sync runner | ${{ needs.provision-sync.outputs.runner_label }} |"
@@ -1479,12 +1458,12 @@ jobs:
       - name: Check retry budget
         id: budget
         run: |
-          MAX_ATTEMPTS=${{ env.SPOT_RETRY_MAX_ATTEMPTS }}
+          MAX_ATTEMPTS=5
           ATTEMPT=${{ github.event.inputs._retry_attempt || '0' }}
           NEXT=$((ATTEMPT + 1))
           echo "Current attempt: $((ATTEMPT + 1)), next would be: $((NEXT + 1))"
           if [ "$((NEXT >= MAX_ATTEMPTS))" -eq 1 ]; then
-            echo "::error::Spot retry budget exhausted (${{ env.SPOT_RETRY_MAX_ATTEMPTS }} attempts). Giving up."
+            echo "::error::Spot retry budget exhausted (5 attempts). Giving up."
             echo "has_budget=false" >> "$GITHUB_OUTPUT"
           else
             echo "has_budget=true" >> "$GITHUB_OUTPUT"
@@ -1497,7 +1476,7 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         run: |
           NEXT="${{ steps.budget.outputs.next_attempt }}"
-          echo "::warning::Spot instance was reclaimed — retrying (attempt $((NEXT + 1)) of ${{ env.SPOT_RETRY_MAX_ATTEMPTS }})..."
+          echo "::warning::Spot instance was reclaimed — retrying (attempt $((NEXT + 1)) of 5)..."
           gh workflow run build.yml \
             --repo "${{ github.repository }}" \
             --ref "${{ github.ref }}" \
