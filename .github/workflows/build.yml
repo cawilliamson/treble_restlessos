@@ -112,7 +112,7 @@ jobs:
             echo 'github ALL=(ALL) NOPASSWD:ALL' > /etc/sudoers.d/github
             chmod 440 /etc/sudoers.d/github
             mkdir -p /home/github/.ssh
-            echo "${{ secrets.BUILD_SSH_KEY }}" | base64 -d > /home/github/.ssh/build_key || true
+            echo "${{ secrets.BUILD_SSH_KEY }}" > /home/github/.ssh/build_key
             chmod 600 /home/github/.ssh/build_key
             cat > /home/github/.ssh/config <<'EOF'
             Host github.com
@@ -318,7 +318,7 @@ jobs:
             echo 'github ALL=(ALL) NOPASSWD:ALL' > /etc/sudoers.d/github
             chmod 440 /etc/sudoers.d/github
             mkdir -p /home/github/.ssh
-            echo "${{ secrets.BUILD_SSH_KEY }}" | base64 -d > /home/github/.ssh/build_key || true
+            echo "${{ secrets.BUILD_SSH_KEY }}" > /home/github/.ssh/build_key
             chmod 600 /home/github/.ssh/build_key
             cat > /home/github/.ssh/config <<'EOF'
             Host github.com
@@ -492,7 +492,7 @@ jobs:
             echo 'github ALL=(ALL) NOPASSWD:ALL' > /etc/sudoers.d/github
             chmod 440 /etc/sudoers.d/github
             mkdir -p /home/github/.ssh
-            echo "${{ secrets.BUILD_SSH_KEY }}" | base64 -d > /home/github/.ssh/build_key || true
+            echo "${{ secrets.BUILD_SSH_KEY }}" > /home/github/.ssh/build_key
             chmod 600 /home/github/.ssh/build_key
             cat > /home/github/.ssh/config <<'EOF'
             Host github.com
