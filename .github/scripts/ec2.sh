@@ -101,8 +101,8 @@ EOF
   # 3. launch with retry
   local -a market_args=()
   [ -n "$market" ] && market_args=(--instance-market-options "{\"MarketType\":\"${market}\",\"SpotOptions\":{\"SpotInstanceType\":\"one-time\",\"InstanceInterruptionBehavior\":\"terminate\"}}")
-  local bdm="DeviceName=/dev/sda1,Ebs={VolumeSize=${root_vol},VolumeType=gp3,DeleteOnTermination=true}"
-  [ -n "$data_vol" ] && bdm+=" DeviceName=/dev/sdf,Ebs={VolumeSize=${data_vol},VolumeType=gp3,DeleteOnTermination=true}"
+  local -a bdm_args=("DeviceName=/dev/sda1,Ebs={VolumeSize=${root_vol},VolumeType=gp3,DeleteOnTermination=true}")
+  [ -n "$data_vol" ] && bdm_args+=("DeviceName=/dev/sdf,Ebs={VolumeSize=${data_vol},VolumeType=gp3,DeleteOnTermination=true}")
 
   local iid=""
   for attempt in $(seq 1 10); do
@@ -110,7 +110,7 @@ EOF
     if iid=$(aws ec2 run-instances --region "$REGION" \
       --image-id "$ami" --instance-type "$inst_type" --subnet-id "$subnet" \
       --security-group-ids "$sg" --instance-initiated-shutdown-behavior terminate \
-      "${market_args[@]}" --block-device-mappings "$bdm" \
+      "${market_args[@]}" "${bdm_args[@]}" \
       --tag-specifications "ResourceType=instance,Tags=[{Key=Name,Value=${tag}-${label}},{Key=Project,Value=${tag}},{Key=Ephemeral,Value=true}]" \
       --user-data "file://${ud_file}" --query 'Instances[0].InstanceId' --output text 2>&1); then
       break
