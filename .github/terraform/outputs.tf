@@ -1,6 +1,6 @@
 output "subnet_id" {
   description = "build subnet in AZ a (eu-west-2a)"
-  value       = aws_subnet.build["a"].id
+  value       = aws_subnet.build.id
 }
 
 output "security_group_id" {

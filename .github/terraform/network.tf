@@ -15,12 +15,11 @@ resource "aws_internet_gateway" "build" {
 }
 
 resource "aws_subnet" "build" {
-  for_each                = toset(["a", "b", "c"])
   vpc_id                  = aws_vpc.build.id
-  cidr_block              = "10.0.${index(["a", "b", "c"], each.key) + 1}.0/24"
-  availability_zone       = "${var.region}${each.key}"
+  cidr_block              = "10.0.1.0/24"
+  availability_zone       = "${var.region}a"
   map_public_ip_on_launch = true
-  tags                    = { Name = "gsi-build-${each.key}", Project = var.project_tag }
+  tags                    = { Name = "gsi-build-a", Project = var.project_tag }
 }
 
 resource "aws_route_table" "build" {
@@ -34,8 +33,7 @@ resource "aws_route_table" "build" {
 }
 
 resource "aws_route_table_association" "build" {
-  for_each       = aws_subnet.build
-  subnet_id      = each.value.id
+  subnet_id      = aws_subnet.build.id
   route_table_id = aws_route_table.build.id
 }
 
@@ -45,13 +43,10 @@ resource "aws_security_group" "build" {
   vpc_id      = aws_vpc.build.id
   tags        = { Name = "gsi-build", Project = var.project_tag }
 
-  # all outbound (github, upstream repos, build.chrisaw.io rsync)
   egress {
     from_port   = 0
     to_port     = 0
     protocol    = "-1"
     cidr_blocks = ["0.0.0.0/0"]
   }
-
-  # no inbound — runner connects out to github, not the other way round
 }
