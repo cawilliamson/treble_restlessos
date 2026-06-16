@@ -110,7 +110,7 @@ EOF
     if iid=$(aws ec2 run-instances --region "$REGION" \
       --image-id "$ami" --instance-type "$inst_type" --subnet-id "$subnet" \
       --security-group-ids "$sg" --instance-initiated-shutdown-behavior terminate \
-      "${market_args[@]}" "${bdm_args[@]}" \
+      "${market_args[@]}" --block-device-mappings "${bdm_args[@]}" \
       --tag-specifications "ResourceType=instance,Tags=[{Key=Name,Value=${tag}-${label}},{Key=Project,Value=${tag}},{Key=Ephemeral,Value=true}]" \
       --user-data "file://${ud_file}" --query 'Instances[0].InstanceId' --output text 2>&1); then
       break
