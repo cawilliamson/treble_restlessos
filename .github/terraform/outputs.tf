@@ -1,22 +1,18 @@
 # ---------------------------------------------------------------------------
-# values needed for github repository secrets
+# workflow outputs consumed by the build pipeline
 # ---------------------------------------------------------------------------
 
-output "aws_access_key_id" {
-  description = "access key for the gsi-builder-gha IAM user — set as AWS_ACCESS_KEY_ID secret"
-  value       = aws_iam_access_key.gha.id
-  sensitive   = true
-}
-
-output "aws_secret_access_key" {
-  description = "secret key for the gsi-builder-gha IAM user — set as AWS_SECRET_ACCESS_KEY secret"
-  value       = aws_iam_access_key.gha.secret
-  sensitive   = true
+output "subnet_id" {
+  description = "build subnet in primary region"
+  value       = aws_subnet.build["a"].id
 }
 
 output "security_group_id" {
-  description = "build security group — set as AWS_SECURITY_GROUP_ID secret"
+  description = "build security group for ephemeral instances"
   value       = aws_security_group.build.id
 }
 
-
+output "ami_id" {
+  description = "latest canonical ubuntu 24.04 ami in primary region"
+  value       = data.aws_ami.ubuntu.id
+}

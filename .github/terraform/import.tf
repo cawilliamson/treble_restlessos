@@ -102,18 +102,3 @@ import {
   to = aws_iam_service_linked_role.spot
   id = "arn:aws:iam::690475792081:role/aws-service-role/spot.amazonaws.com/AWSServiceRoleForEC2Spot"
 }
-
-import {
-  to = aws_iam_user.gha
-  id = "gsi-builder-gha"
-}
-
-import {
-  to = aws_iam_user_policy.gha_ec2
-  id = "gsi-builder-gha:ec2-spot-build"
-}
-
-import {
-  to = aws_iam_access_key.gha
-  id = "AKIA2BQ4QO3IXA73K6TK"
-}
