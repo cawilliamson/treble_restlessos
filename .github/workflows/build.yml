@@ -36,6 +36,7 @@ jobs:
     name: Ensure Infrastructure
     runs-on: ubuntu-latest
     outputs:
+      availability_zones: ${{ steps.tofu.outputs.availability_zones }}
       subnet_id: ${{ steps.tofu.outputs.subnet_id }}
       security_group_id: ${{ steps.tofu.outputs.security_group_id }}
       ami_id: ${{ steps.tofu.outputs.ami_id }}
@@ -91,10 +92,8 @@ jobs:
           mode: start
           github-token: ${{ secrets.GH_PAT }}
           use-jit: true
-          ec2-image-id: ${{ needs.infrastructure.outputs.ami_id }}
           ec2-instance-type: ${{ env.EC2_SMALL_INSTANCE }}
-          subnet-id: ${{ needs.infrastructure.outputs.subnet_id }}
-          security-group-id: ${{ needs.infrastructure.outputs.security_group_id }}
+          availability-zones-config: ${{ needs.infrastructure.outputs.availability_zones }}
           aws-resource-tags: >
             [
               {"Key": "Name", "Value": "gsi-build-sync-${{ github.run_id }}"},
@@ -297,10 +296,8 @@ jobs:
           mode: start
           github-token: ${{ secrets.GH_PAT }}
           use-jit: true
-          ec2-image-id: ${{ needs.infrastructure.outputs.ami_id }}
           ec2-instance-type: ${{ env.EC2_LARGE_INSTANCE }}
-          subnet-id: ${{ needs.infrastructure.outputs.subnet_id }}
-          security-group-id: ${{ needs.infrastructure.outputs.security_group_id }}
+          availability-zones-config: ${{ needs.infrastructure.outputs.availability_zones }}
           market-type: spot
           aws-resource-tags: >
             [
@@ -472,10 +469,8 @@ jobs:
           mode: start
           github-token: ${{ secrets.GH_PAT }}
           use-jit: true
-          ec2-image-id: ${{ needs.infrastructure.outputs.ami_id }}
           ec2-instance-type: ${{ env.EC2_SMALL_INSTANCE }}
-          subnet-id: ${{ needs.infrastructure.outputs.subnet_id }}
-          security-group-id: ${{ needs.infrastructure.outputs.security_group_id }}
+          availability-zones-config: ${{ needs.infrastructure.outputs.availability_zones }}
           aws-resource-tags: >
             [
               {"Key": "Name", "Value": "gsi-build-sign-${{ github.run_id }}"},
