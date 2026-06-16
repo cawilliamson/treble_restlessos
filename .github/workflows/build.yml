@@ -30,7 +30,7 @@ env:
 
 concurrency:
   group: build
-  cancel-in-progress: false
+  cancel-in-progress: true
 
 jobs:
   # -------------------------------------------------------------------------
