@@ -107,15 +107,12 @@ jobs:
               {"DeviceName": "/dev/sdf", "Ebs": {"VolumeSize": ${{ env.EC2_SRC_VOLUME_SIZE }}, "VolumeType": "gp3", "DeleteOnTermination": true}}
             ]
           pre-runner-script: |
-            export DEBIAN_FRONTEND=noninteractive
-            apt-get update -qq
-            apt-get install -y -q bc curl git git-lfs jq python3 rsync unzip wget xz-utils zip zsync
             useradd -m -s /bin/bash github 2>/dev/null || true
             usermod -aG sudo,disk github
             echo 'github ALL=(ALL) NOPASSWD:ALL' > /etc/sudoers.d/github
             chmod 440 /etc/sudoers.d/github
             mkdir -p /home/github/.ssh
-            echo "${{ secrets.BUILD_SSH_KEY }}" | base64 -d > /home/github/.ssh/build_key
+            echo "${{ secrets.BUILD_SSH_KEY }}" | base64 -d > /home/github/.ssh/build_key || true
             chmod 600 /home/github/.ssh/build_key
             cat > /home/github/.ssh/config <<'EOF'
             Host github.com
@@ -134,9 +131,10 @@ jobs:
             sudo -u github git config --global color.ui false
             curl -sf -o /usr/local/bin/repo https://storage.googleapis.com/git-repo-downloads/repo
             chmod a+x /usr/local/bin/repo
-            shutdown -P +120 'SAFETY: 2-hour sync limit reached'
+          packages: '["bc","curl","git","git-lfs","jq","python3","rsync","unzip","wget","xz-utils","zip","zsync"]'
           run-runner-as-user: github
-          startup-timeout-minutes: 10
+          startup-timeout-minutes: 15
+          runner-debug: true
 
       - name: Get data volume ID
         id: volume
@@ -315,15 +313,12 @@ jobs:
               {"DeviceName": "/dev/sda1", "Ebs": {"VolumeSize": 100, "VolumeType": "gp3", "DeleteOnTermination": true}}
             ]
           pre-runner-script: |
-            export DEBIAN_FRONTEND=noninteractive
-            apt-get update -qq
-            apt-get install -y -q bc bison build-essential ccache curl flex g++-multilib gcc-multilib git git-lfs gnupg gperf imagemagick jq lib32readline-dev lib32z1-dev liblz4-tool libssl-dev libxml2 libxml2-utils lzop openjdk-11-jdk pngcrush python3 rsync schedtool squashfs-tools unzip wget xsltproc xz-utils zip zlib1g-dev zsync
             useradd -m -s /bin/bash github 2>/dev/null || true
             usermod -aG sudo,disk github
             echo 'github ALL=(ALL) NOPASSWD:ALL' > /etc/sudoers.d/github
             chmod 440 /etc/sudoers.d/github
             mkdir -p /home/github/.ssh
-            echo "${{ secrets.BUILD_SSH_KEY }}" | base64 -d > /home/github/.ssh/build_key
+            echo "${{ secrets.BUILD_SSH_KEY }}" | base64 -d > /home/github/.ssh/build_key || true
             chmod 600 /home/github/.ssh/build_key
             cat > /home/github/.ssh/config <<'EOF'
             Host github.com
@@ -343,14 +338,15 @@ jobs:
             curl -sf -o /usr/local/bin/repo https://storage.googleapis.com/git-repo-downloads/repo
             chmod a+x /usr/local/bin/repo
             cd /var/tmp
-            curl -sf -O http://launchpadlibrarian.net/648013231/libtinfo5_6.4-2_amd64.deb
-            dpkg -i libtinfo5_6.4-2_amd64.deb
-            curl -sf -LO http://launchpadlibrarian.net/648013227/libncurses5_6.4-2_amd64.deb
-            dpkg -i libncurses5_6.4-2_amd64.deb
+            curl -sf -O http://launchpadlibrarian.net/648013231/libtinfo5_6.4-2_amd64.deb || true
+            dpkg -i libtinfo5_6.4-2_amd64.deb || true
+            curl -sf -LO http://launchpadlibrarian.net/648013227/libncurses5_6.4-2_amd64.deb || true
+            dpkg -i libncurses5_6.4-2_amd64.deb || true
             rm -f ./*.deb
-            shutdown -P +120 'SAFETY: 2-hour build limit reached'
+          packages: '["bc","bison","build-essential","ccache","curl","flex","g++-multilib","gcc-multilib","git","git-lfs","gnupg","gperf","imagemagick","jq","lib32readline-dev","lib32z1-dev","liblz4-tool","libssl-dev","libxml2","libxml2-utils","lzop","openjdk-11-jdk","pngcrush","python3","rsync","schedtool","squashfs-tools","unzip","wget","xsltproc","xz-utils","zip","zlib1g-dev","zsync"]'
           run-runner-as-user: github
-          startup-timeout-minutes: 10
+          startup-timeout-minutes: 15
+          runner-debug: true
 
       - name: Attach data volume to build instance
         run: |
@@ -491,15 +487,12 @@ jobs:
               {"DeviceName": "/dev/sda1", "Ebs": {"VolumeSize": 30, "VolumeType": "gp3", "DeleteOnTermination": true}}
             ]
           pre-runner-script: |
-            export DEBIAN_FRONTEND=noninteractive
-            apt-get update -qq
-            apt-get install -y -q bc curl git git-lfs gh jq python3 rsync unzip wget xz-utils zip zsync
             useradd -m -s /bin/bash github 2>/dev/null || true
             usermod -aG sudo,disk github
             echo 'github ALL=(ALL) NOPASSWD:ALL' > /etc/sudoers.d/github
             chmod 440 /etc/sudoers.d/github
             mkdir -p /home/github/.ssh
-            echo "${{ secrets.BUILD_SSH_KEY }}" | base64 -d > /home/github/.ssh/build_key
+            echo "${{ secrets.BUILD_SSH_KEY }}" | base64 -d > /home/github/.ssh/build_key || true
             chmod 600 /home/github/.ssh/build_key
             cat > /home/github/.ssh/config <<'EOF'
             Host github.com
@@ -518,9 +511,10 @@ jobs:
             sudo -u github git config --global color.ui false
             curl -sf -o /usr/local/bin/repo https://storage.googleapis.com/git-repo-downloads/repo
             chmod a+x /usr/local/bin/repo
-            shutdown -P +120 'SAFETY: 2-hour sign limit reached'
+          packages: '["bc","curl","git","git-lfs","gh","jq","python3","rsync","unzip","wget","xz-utils","zip","zsync"]'
           run-runner-as-user: github
-          startup-timeout-minutes: 10
+          startup-timeout-minutes: 15
+          runner-debug: true
 
       - name: Attach data volume to sign instance
         run: |
