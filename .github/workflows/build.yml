@@ -33,208 +33,94 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  # -------------------------------------------------------------------------
-  # job 0: ensure shared infrastructure exists and expose ids
-  # -------------------------------------------------------------------------
+
   infrastructure:
     name: Ensure Infrastructure
     runs-on: ubuntu-latest
     outputs:
-      availability_zones: ${{ steps.tofu.outputs.availability_zones }}
       subnet_id: ${{ steps.tofu.outputs.subnet_id }}
       security_group_id: ${{ steps.tofu.outputs.security_group_id }}
       ami_id: ${{ steps.tofu.outputs.ami_id }}
     steps:
-      - name: Checkout
-        uses: actions/checkout@v6
-        with:
-          clean: false
-          lfs: true
-
-      - name: Configure AWS credentials
-        uses: aws-actions/configure-aws-credentials@v6
+      - uses: actions/checkout@v6
+      - uses: aws-actions/configure-aws-credentials@v6
         with:
           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: ${{ env.AWS_REGION }}
-
-      - name: Apply OpenTofu infrastructure
-        id: tofu
+      - id: tofu
         uses: dflook/tofu-apply@v2
         with:
           path: .github/terraform
           auto_approve: true
-          variables: |
-            project_tag = "${{ env.PROJECT_TAG }}"
-            region = "${{ env.AWS_REGION }}"
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
   # -------------------------------------------------------------------------
-  # job 1: start sync instance (on-demand) and discover data volume id
+  # sync instance: provision, sync, patch, stop
   # -------------------------------------------------------------------------
   start-sync:
-    name: Start Sync Runner
+    name: Start Sync Instance
     needs: infrastructure
     runs-on: ubuntu-latest
     outputs:
-      label: ${{ steps.start.outputs.label }}
-      instance_id: ${{ steps.start.outputs.ec2-instance-id }}
-      data_volume_id: ${{ steps.volume.outputs.data_volume_id }}
-      subnet_id: ${{ steps.subnet.outputs.subnet_id }}
+      label: ${{ steps.label.outputs.label }}
+      instance_id: ${{ steps.provision.outputs.instance_id }}
+      data_volume_id: ${{ steps.provision.outputs.data_volume_id }}
     steps:
-      - name: Configure AWS credentials
-        uses: aws-actions/configure-aws-credentials@v6
+      - uses: actions/checkout@v6
+      - uses: aws-actions/configure-aws-credentials@v6
         with:
           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: ${{ env.AWS_REGION }}
+      - id: label
+        run: echo "label=gsi-build-sync-${{ github.run_id }}" >> "$GITHUB_OUTPUT"
+      - id: provision
+        run: .github/scripts/ec2.sh provision
+        env:
+          EC2_INSTANCE_TYPE: ${{ env.EC2_SMALL_INSTANCE }}
+          EC2_SUBNET_ID: ${{ needs.infrastructure.outputs.subnet_id }}
+          EC2_SG_ID: ${{ needs.infrastructure.outputs.security_group_id }}
+          EC2_AMI_ID: ${{ needs.infrastructure.outputs.ami_id }}
+          GH_PAT: ${{ secrets.GH_PAT }}
+          BUILD_SSH_KEY: ${{ secrets.BUILD_SSH_KEY }}
+          PACKAGES: "bc curl git git-lfs jq python3 rsync unzip wget xz-utils zip zsync"
+          RUNNER_LABEL: ${{ steps.label.outputs.label }}
+          EC2_DATA_VOLUME: ${{ env.EC2_SRC_VOLUME_SIZE }}
 
-      - name: Start sync runner
-        id: start
-        uses: machulav/ec2-github-runner@v2
-        with:
-          mode: start
-          github-token: ${{ secrets.GH_PAT }}
-          use-jit: true
-          ec2-instance-type: ${{ env.EC2_SMALL_INSTANCE }}
-          availability-zones-config: ${{ needs.infrastructure.outputs.availability_zones }}
-          aws-resource-tags: >
-            [
-              {"Key": "Name", "Value": "gsi-build-sync-${{ github.run_id }}"},
-              {"Key": "Project", "Value": "gsi-build"},
-              {"Key": "Ephemeral", "Value": "true"}
-            ]
-          block-device-mappings: >
-            [
-              {"DeviceName": "/dev/sda1", "Ebs": {"VolumeSize": 30, "VolumeType": "gp3", "DeleteOnTermination": true}},
-              {"DeviceName": "/dev/sdf", "Ebs": {"VolumeSize": ${{ env.EC2_SRC_VOLUME_SIZE }}, "VolumeType": "gp3", "DeleteOnTermination": true}}
-            ]
-          pre-runner-script: |
-            useradd -m -s /bin/bash github 2>/dev/null || true
-            usermod -aG sudo,disk github
-            echo 'github ALL=(ALL) NOPASSWD:ALL' > /etc/sudoers.d/github
-            chmod 440 /etc/sudoers.d/github
-            mkdir -p /home/github/.ssh
-            echo "${{ secrets.BUILD_SSH_KEY }}" > /home/github/.ssh/build_key
-            chmod 600 /home/github/.ssh/build_key
-            cat > /home/github/.ssh/config <<'EOF'
-            Host github.com
-              IdentityFile /home/github/.ssh/build_key
-              StrictHostKeyChecking no
-              User git
-            Host build.chrisaw.io
-              IdentityFile /home/github/.ssh/build_key
-              StrictHostKeyChecking no
-              User chrisaw
-            EOF
-            chmod 600 /home/github/.ssh/config
-            chown -R github:github /home/github/.ssh
-            sudo -u github git config --global user.email 'androidbuild@localhost'
-            sudo -u github git config --global user.name 'androidbuild'
-            sudo -u github git config --global color.ui false
-            curl -sf -o /usr/local/bin/repo https://storage.googleapis.com/git-repo-downloads/repo
-            chmod a+x /usr/local/bin/repo
-          packages: '["bc","curl","git","git-lfs","jq","python3","rsync","unzip","wget","xz-utils","zip","zsync"]'
-          run-runner-as-user: github
-          startup-timeout-minutes: 15
-          runner-debug: true
-
-      - name: Get data volume ID
-        id: volume
-        run: |
-          VOLUME_ID=""
-          for i in $(seq 1 10); do
-            VOLUME_ID=$(aws ec2 describe-instances \
-              --region "${{ env.AWS_REGION }}" \
-              --instance-ids "${{ steps.start.outputs.ec2-instance-id }}" \
-              --query "Reservations[0].Instances[0].BlockDeviceMappings[?DeviceName!=\`/dev/sda1\`].Ebs.VolumeId" \
-              --output text 2>/dev/null)
-            [ -n "${VOLUME_ID}" ] && [ "${VOLUME_ID}" != "None" ] && break
-            echo "Waiting for data volume... (attempt ${i}/10)"
-            sleep 5
-          done
-          [ -z "${VOLUME_ID}" ] && { echo "ERROR: data volume not found"; exit 1; }
-          echo "data_volume_id=${VOLUME_ID}" >> "$GITHUB_OUTPUT"
-
-      - name: Get sync subnet ID
-        id: subnet
-        run: |
-          SUBNET_ID=$(aws ec2 describe-instances \
-            --region "${{ env.AWS_REGION }}" \
-            --instance-ids "${{ steps.start.outputs.ec2-instance-id }}" \
-            --query 'Reservations[0].Instances[0].SubnetId' --output text)
-          [ -z "${SUBNET_ID}" ] && { echo "ERROR: subnet not found"; exit 1; }
-          echo "subnet_id=${SUBNET_ID}" >> "$GITHUB_OUTPUT"
-          echo "Sync subnet: ${SUBNET_ID}"
-
-  # -------------------------------------------------------------------------
-  # job 2: sync sources
-  # -------------------------------------------------------------------------
   sync:
     name: Sync Sources
     needs: start-sync
-    runs-on: ${{ needs.start-sync.outputs.label }}
+    runs-on: [self-hosted, "${{ needs.start-sync.outputs.label }}"]
     timeout-minutes: 180
     outputs:
       grapheneos_tag: ${{ steps.resolve_tag.outputs.tag }}
       android_version: ${{ steps.parse_version.outputs.android_version }}
       android_version_tag: ${{ steps.parse_version.outputs.android_version_tag }}
     steps:
-      - name: Checkout build scripts
-        uses: actions/checkout@v6
-        with:
-          clean: false
-          lfs: true
-          fetch-depth: 0
-          fetch-tags: true
-
-      - name: Format and mount data volume
-        run: |
-          VOLUME_ID="${{ needs.start-sync.outputs.data_volume_id }}"
-          SERIAL=$(echo "${VOLUME_ID}" | tr -d '-')
-          ROOT_DEV=$(findmnt -n -o SOURCE / 2>/dev/null | sed 's|^/dev/||;s|p[0-9]*$||')
-          DATA_DEV=""
-          for i in $(seq 1 30); do
-            for ctrl in /sys/class/nvme/nvme*; do
-              [ -d "${ctrl}" ] || continue
-              node=$(basename "${ctrl}")n1
-              [ "${node}" = "${ROOT_DEV}" ] && continue
-              [ "$(tr -d '[:space:]' < "${ctrl}/serial" 2>/dev/null)" = "${SERIAL}" ] && { DATA_DEV="${node}"; break 2; }
-            done
-            echo "Waiting for data volume... (attempt ${i}/30)"
-            sleep 5
-          done
-          [ -z "${DATA_DEV}" ] && { echo "ERROR: data volume ${VOLUME_ID} not found"; exit 1; }
-          MP=$(lsblk -n -o MOUNTPOINT "/dev/${DATA_DEV}" 2>/dev/null | grep -v "^$" | head -1 || true)
-          [ -n "${MP}" ] && sudo umount "${MP}"
-          sudo mkfs.ext4 -L builddata "/dev/${DATA_DEV}"
-          sudo mkdir -p /mnt/src
-          sudo mount "/dev/${DATA_DEV}" /mnt/src
-          sudo chown github:github /mnt/src
-          ln -s /mnt/src src
-
-      - name: Resolve latest GrapheneOS tag
-        id: resolve_tag
+      - uses: actions/checkout@v6
+        with: { clean: false, lfs: true, fetch-depth: 0, fetch-tags: true }
+      - run: .github/scripts/ebs.sh mount
+        env:
+          VOLUME_ID: ${{ needs.start-sync.outputs.data_volume_id }}
+      - id: resolve_tag
+        working-directory: src/
         run: |
           CHANNEL="${{ github.event.inputs.release_channel || 'stable' }}"
-          TAG=$(curl --fail --silent "https://grapheneos.org/releases" \
-            | grep --only-matching --perl-regexp "id=[a-z]+-${CHANNEL}><td>[^<]+</td><td><a href=#\K[0-9]{10}" \
-            | sort --numeric-sort --reverse | head -1)
-          [ -z "${TAG}" ] && { echo "ERROR: failed to resolve ${CHANNEL} tag"; exit 1; }
-          echo "tag=${TAG}" >> "$GITHUB_OUTPUT"
-
-      - name: Initialise repo
-        working-directory: src/
+          TAG=$(curl -fsS "https://grapheneos.org/releases" \
+            | grep -oP "id=[a-z]+-${CHANNEL}><td>[^<]+</td><td><a href=#\K[0-9]{10}" \
+            | sort -nr | head -1)
+          [ -z "$TAG" ] && { echo "ERROR: failed to resolve tag"; exit 1; }
+          echo "tag=$TAG" >> "$GITHUB_OUTPUT"
+      - working-directory: src/
         run: |
           repo init --depth=1 --git-lfs \
             --manifest-branch "refs/tags/${{ steps.resolve_tag.outputs.tag }}" \
             --manifest-url https://github.com/GrapheneOS/platform_manifest.git
           mkdir -p .repo/local_manifests
           cp -v ${{ github.workspace }}/configs/manifests/*.xml .repo/local_manifests/
-
-      - name: Sync sources
-        uses: nick-fields/retry@v4
+      - uses: nick-fields/retry@v4
         with:
           timeout_minutes: 120
           max_attempts: 20
@@ -243,9 +129,7 @@ jobs:
             cd src/
             JOBS=$(( $(nproc --all) > 16 ? 16 : $(nproc --all) ))
             repo sync --force-sync --jobs=${JOBS} --no-clone-bundle --no-tags
-
-      - name: Parse version info
-        id: parse_version
+      - id: parse_version
         working-directory: src/
         run: |
           AOSP_TAG=$(grep -m1 "aosp_revision:" .repo/manifests/config.yml | sed "s/.*: *//")
@@ -253,7 +137,6 @@ jobs:
           ANDROID_VERSION_TAG=$(grep -m1 "target:" build/release/release_config_map.textproto | sed 's/.*"\([^"]*\)".*/\1/')
           echo "android_version=${ANDROID_VERSION}" >> "$GITHUB_OUTPUT"
           echo "android_version_tag=${ANDROID_VERSION_TAG}" >> "$GITHUB_OUTPUT"
-
       - name: Apply patches
         working-directory: src/
         run: |
@@ -261,134 +144,76 @@ jobs:
             ${{ github.workspace }}/patches/apply.sh . "${tier}"
           done
           if [ "${{ github.event.inputs.debug_build || 'false' }}" = "true" ]; then
-            echo "*** DEBUG BUILD ***"
             ${{ github.workspace }}/patches/apply.sh . debug-builds
           else
-            echo "*** RELEASE BUILD ***"
             ${{ github.workspace }}/patches/apply.sh . release-builds
           fi
+      - run: .github/scripts/ebs.sh umount
 
-      - name: Unmount data volume
-        run: sudo umount -l /mnt/src
-
-  # -------------------------------------------------------------------------
-  # job 3: detach volume from sync, terminate sync, start build (spot)
-  # -------------------------------------------------------------------------
-  start-build:
-    name: Start Build Runner
-    needs: [infrastructure, start-sync, sync]
+  stop-sync:
+    name: Stop Sync Instance
+    needs: [start-sync, sync]
     runs-on: ubuntu-latest
     outputs:
-      label: ${{ fromJSON(steps.start.outputs.outputs).label }}
-      instance_id: ${{ fromJSON(steps.start.outputs.outputs)['ec2-instance-id'] }}
+      data_volume_id: ${{ needs.start-sync.outputs.data_volume_id }}
     steps:
-      - name: Configure AWS credentials
-        uses: aws-actions/configure-aws-credentials@v6
+      - uses: actions/checkout@v6
+      - uses: aws-actions/configure-aws-credentials@v6
         with:
           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: ${{ env.AWS_REGION }}
-
-      - name: Detach volume from sync instance
-        run: |
-          VOLUME_ID="${{ needs.start-sync.outputs.data_volume_id }}"
-          REGION="${{ env.AWS_REGION }}"
-          aws ec2 detach-volume --region "${REGION}" --volume-id "${VOLUME_ID}" --force
-          aws ec2 wait volume-available --region "${REGION}" --volume-ids "${VOLUME_ID}"
-
-      - name: Stop sync runner
-        uses: machulav/ec2-github-runner@v2
-        with:
-          mode: stop
-          github-token: ${{ secrets.GH_PAT }}
-          use-jit: true
-          label: ${{ needs.start-sync.outputs.label }}
-          ec2-instance-id: ${{ needs.start-sync.outputs.instance_id }}
-
-      - name: Start build runner (with retry)
-        id: start
-        uses: Wandalen/wretry.action@v3.8.0
+      - run: .github/scripts/ebs.sh detach
         env:
+          VOLUME_ID: ${{ needs.start-sync.outputs.data_volume_id }}
+      - run: .github/scripts/ec2.sh kill
+        env:
+          EC2_INSTANCE_ID: ${{ needs.start-sync.outputs.instance_id }}
+          GH_PAT: ${{ secrets.GH_PAT }}
+          RUNNER_LABEL: ${{ needs.start-sync.outputs.label }}
+
+  # -------------------------------------------------------------------------
+  # build instance: provision, build, stop
+  # -------------------------------------------------------------------------
+  start-build:
+    name: Start Build Instance
+    needs: [infrastructure, stop-sync]
+    runs-on: ubuntu-latest
+    outputs:
+      label: ${{ steps.label.outputs.label }}
+      instance_id: ${{ steps.provision.outputs.instance_id }}
+      data_volume_id: ${{ needs.stop-sync.outputs.data_volume_id }}
+    steps:
+      - uses: actions/checkout@v6
+      - uses: aws-actions/configure-aws-credentials@v6
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.AWS_REGION }}
+      - id: label
+        run: echo "label=gsi-build-build-${{ github.run_id }}" >> "$GITHUB_OUTPUT"
+      - id: provision
+        run: .github/scripts/ec2.sh provision
+        env:
+          EC2_INSTANCE_TYPE: ${{ env.EC2_LARGE_INSTANCE }}
+          EC2_SUBNET_ID: ${{ needs.infrastructure.outputs.subnet_id }}
+          EC2_SG_ID: ${{ needs.infrastructure.outputs.security_group_id }}
+          EC2_AMI_ID: ${{ needs.infrastructure.outputs.ami_id }}
           GH_PAT: ${{ secrets.GH_PAT }}
           BUILD_SSH_KEY: ${{ secrets.BUILD_SSH_KEY }}
-          AMI_ID: ${{ needs.infrastructure.outputs.ami_id }}
-          SUBNET_ID: ${{ needs.start-sync.outputs.subnet_id }}
-          SG_ID: ${{ needs.infrastructure.outputs.security_group_id }}
-        with:
-          action: machulav/ec2-github-runner@v2
-          attempt_limit: 10
-          attempt_delay: 60000
-          env_context: ${{ toJSON(env) }}
-          with: |
-            mode: start
-            github-token: ${{ env.GH_PAT }}
-            use-jit: true
-            ec2-image-id: ${{ env.AMI_ID }}
-            ec2-instance-type: ${{ env.EC2_LARGE_INSTANCE }}
-            subnet-id: ${{ env.SUBNET_ID }}
-            security-group-id: ${{ env.SG_ID }}
-            market-type: spot
-            aws-resource-tags: >
-              [
-                {"Key": "Name", "Value": "gsi-build-build-${{ github.run_id }}"},
-                {"Key": "Project", "Value": "gsi-build"},
-                {"Key": "Ephemeral", "Value": "true"}
-              ]
-            block-device-mappings: >
-              [
-                {"DeviceName": "/dev/sda1", "Ebs": {"VolumeSize": 100, "VolumeType": "gp3", "DeleteOnTermination": true}}
-              ]
-            pre-runner-script: |
-              useradd -m -s /bin/bash github 2>/dev/null || true
-              usermod -aG sudo,disk github
-              echo 'github ALL=(ALL) NOPASSWD:ALL' > /etc/sudoers.d/github
-              chmod 440 /etc/sudoers.d/github
-              mkdir -p /home/github/.ssh
-              echo "${{ env.BUILD_SSH_KEY }}" > /home/github/.ssh/build_key
-              chmod 600 /home/github/.ssh/build_key
-              cat > /home/github/.ssh/config <<'EOF'
-              Host github.com
-                IdentityFile /home/github/.ssh/build_key
-                StrictHostKeyChecking no
-                User git
-              Host build.chrisaw.io
-                IdentityFile /home/github/.ssh/build_key
-                StrictHostKeyChecking no
-                User chrisaw
-              EOF
-              chmod 600 /home/github/.ssh/config
-              chown -R github:github /home/github/.ssh
-              sudo -u github git config --global user.email 'androidbuild@localhost'
-              sudo -u github git config --global user.name 'androidbuild'
-              sudo -u github git config --global color.ui false
-              curl -sf -o /usr/local/bin/repo https://storage.googleapis.com/git-repo-downloads/repo
-              chmod a+x /usr/local/bin/repo
-              cd /var/tmp
-              curl -sf -O http://launchpadlibrarian.net/648013231/libtinfo5_6.4-2_amd64.deb || true
-              dpkg -i libtinfo5_6.4-2_amd64.deb || true
-              curl -sf -LO http://launchpadlibrarian.net/648013227/libncurses5_6.4-2_amd64.deb || true
-              dpkg -i libncurses5_6.4-2_amd64.deb || true
-              rm -f ./*.deb
-            packages: '["bc","bison","build-essential","ccache","curl","flex","g++-multilib","gcc-multilib","git","git-lfs","gnupg","gperf","imagemagick","jq","lib32readline-dev","lib32z1-dev","liblz4-tool","libssl-dev","libxml2","libxml2-utils","lzop","openjdk-11-jdk","pngcrush","python3","rsync","schedtool","squashfs-tools","unzip","wget","xsltproc","xz-utils","zip","zlib1g-dev","zsync"]'
-            run-runner-as-user: github
-            startup-timeout-minutes: 15
-            runner-debug: true
+          PACKAGES: "bc bison build-essential ccache curl flex g++-multilib gcc-multilib git git-lfs gnupg gperf imagemagick jq lib32readline-dev lib32z1-dev liblz4-tool libssl-dev libxml2 libxml2-utils lzop openjdk-11-jdk pngcrush python3 rsync schedtool squashfs-tools unzip wget xsltproc xz-utils zip zlib1g-dev zsync"
+          RUNNER_LABEL: ${{ steps.label.outputs.label }}
+          EC2_MARKET_TYPE: spot
+          EC2_ROOT_VOLUME: "100"
+      - run: .github/scripts/ebs.sh attach
+        env:
+          VOLUME_ID: ${{ needs.stop-sync.outputs.data_volume_id }}
+          EC2_INSTANCE_ID: ${{ steps.provision.outputs.instance_id }}
 
-      - name: Attach data volume to build instance
-        run: |
-          VOLUME_ID="${{ needs.start-sync.outputs.data_volume_id }}"
-          INSTANCE_ID="${{ fromJSON(steps.start.outputs.outputs)['ec2-instance-id'] }}"
-          REGION="${{ env.AWS_REGION }}"
-          aws ec2 attach-volume --region "${REGION}" --volume-id "${VOLUME_ID}" --instance-id "${INSTANCE_ID}" --device /dev/sdf
-          aws ec2 wait volume-in-use --region "${REGION}" --volume-ids "${VOLUME_ID}"
-
-  # -------------------------------------------------------------------------
-  # job 4: build
-  # -------------------------------------------------------------------------
   build:
     name: Build ROM
     needs: [start-build, sync]
-    runs-on: ${{ needs.start-build.outputs.label }}
+    runs-on: [self-hosted, "${{ needs.start-build.outputs.label }}"]
     timeout-minutes: 120
     outputs:
       android_version: ${{ needs.sync.outputs.android_version }}
@@ -397,192 +222,102 @@ jobs:
       build_number: ${{ steps.metadata.outputs.build_number }}
       grapheneos_tag: ${{ needs.sync.outputs.grapheneos_tag }}
     steps:
-      - name: Checkout build scripts
-        uses: actions/checkout@v6
-        with:
-          clean: false
-          lfs: true
-          fetch-depth: 0
-          fetch-tags: true
-
-      - name: Mount data volume
+      - uses: actions/checkout@v6
+        with: { clean: false, lfs: true, fetch-depth: 0, fetch-tags: true }
+      - run: .github/scripts/ebs.sh mount
+      - id: metadata
         run: |
-          DATA_DEV=""
-          for i in $(seq 1 30); do
-            DATA_DEV=$(findfs LABEL=builddata 2>/dev/null) && break
-            echo "Waiting for data volume... (attempt ${i}/30)"
-            sleep 5
-          done
-          [ -z "${DATA_DEV}" ] && { echo "ERROR: data volume not found"; exit 1; }
-          sudo mkdir -p /mnt/src
-          sudo mount "${DATA_DEV}" /mnt/src
-          sudo chown github:github /mnt/src
-          ln -s /mnt/src src
-
-      - name: Record build metadata
-        id: metadata
-        run: |
-          BUILD_DATETIME=$(date "+%s")
-          BUILD_NUMBER=$(date "+%Y%m%d%H%M")
           {
-            echo "BUILD_DATETIME=${BUILD_DATETIME}"
-            echo "BUILD_NUMBER=${BUILD_NUMBER}"
+            echo "build_datetime=$(date +%s)"
+            echo "build_number=$(date +%Y%m%d%H%M)"
+          } >> "$GITHUB_OUTPUT"
+          {
             echo "GRAPHENEOS_TAG=${{ needs.sync.outputs.grapheneos_tag }}"
             echo "ANDROID_VERSION=${{ needs.sync.outputs.android_version }}"
             echo "ANDROID_VERSION_TAG=${{ needs.sync.outputs.android_version_tag }}"
           } >> "$GITHUB_ENV"
-          {
-            echo "build_datetime=${BUILD_DATETIME}"
-            echo "build_number=${BUILD_NUMBER}"
-          } >> "$GITHUB_OUTPUT"
-
-      - name: Build TrebleApp
-        working-directory: src/treble_app
+      - working-directory: src/treble_app
         run: bash build.sh release
-
-      - name: Build ROM image
-        working-directory: src/
+      - working-directory: src/
         run: |
           pushd device/phh/treble
             cp -fv ${{ github.workspace }}/configs/rom/rom.mk .
             bash generate.sh rom
           popd
           . build/envsetup.sh
-          VARIANT="user"
-          [ "${{ github.event.inputs.debug_build || 'false' }}" = "true" ] && VARIANT="userdebug"
-          lunch "treble_arm64_bvN-${ANDROID_VERSION_TAG}-${VARIANT}"
+          V="user"; [ "${{ github.event.inputs.debug_build || 'false' }}" = "true" ] && V="userdebug"
+          lunch "treble_arm64_bvN-${ANDROID_VERSION_TAG}-${V}"
           make systemimage -j"$(nproc --all)"
           make target-files-package otatools -j"$(nproc --all)"
+      - run: .github/scripts/ebs.sh umount
 
-      - name: Unmount data volume
-        run: sudo umount -l /mnt/src
-
-  # -------------------------------------------------------------------------
-  # job 5: detach volume from build, terminate build, start sign
-  # -------------------------------------------------------------------------
-  start-sign:
-    name: Start Sign Runner
-    needs: [infrastructure, start-sync, start-build, build]
+  stop-build:
+    name: Stop Build Instance
+    needs: [start-build, build]
     runs-on: ubuntu-latest
     outputs:
-      label: ${{ steps.start.outputs.label }}
-      instance_id: ${{ steps.start.outputs.ec2-instance-id }}
+      data_volume_id: ${{ needs.start-build.outputs.data_volume_id }}
     steps:
-      - name: Configure AWS credentials
-        uses: aws-actions/configure-aws-credentials@v6
+      - uses: actions/checkout@v6
+      - uses: aws-actions/configure-aws-credentials@v6
         with:
           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: ${{ env.AWS_REGION }}
-
-      - name: Detach volume from build instance
-        run: |
-          VOLUME_ID="${{ needs.start-sync.outputs.data_volume_id }}"
-          REGION="${{ env.AWS_REGION }}"
-          aws ec2 detach-volume --region "${REGION}" --volume-id "${VOLUME_ID}" --force
-          aws ec2 wait volume-available --region "${REGION}" --volume-ids "${VOLUME_ID}"
-
-      - name: Stop build runner
-        uses: machulav/ec2-github-runner@v2
-        with:
-          mode: stop
-          github-token: ${{ secrets.GH_PAT }}
-          use-jit: true
-          label: ${{ needs.start-build.outputs.label }}
-          ec2-instance-id: ${{ needs.start-build.outputs.instance_id }}
-
-      - name: Start sign runner
-        id: start
-        uses: machulav/ec2-github-runner@v2
-        with:
-          mode: start
-          github-token: ${{ secrets.GH_PAT }}
-          use-jit: true
-          ec2-image-id: ${{ needs.infrastructure.outputs.ami_id }}
-          ec2-instance-type: ${{ env.EC2_SMALL_INSTANCE }}
-          subnet-id: ${{ needs.start-sync.outputs.subnet_id }}
-          security-group-id: ${{ needs.infrastructure.outputs.security_group_id }}
-          aws-resource-tags: >
-            [
-              {"Key": "Name", "Value": "gsi-build-sign-${{ github.run_id }}"},
-              {"Key": "Project", "Value": "gsi-build"},
-              {"Key": "Ephemeral", "Value": "true"}
-            ]
-          block-device-mappings: >
-            [
-              {"DeviceName": "/dev/sda1", "Ebs": {"VolumeSize": 30, "VolumeType": "gp3", "DeleteOnTermination": true}}
-            ]
-          pre-runner-script: |
-            useradd -m -s /bin/bash github 2>/dev/null || true
-            usermod -aG sudo,disk github
-            echo 'github ALL=(ALL) NOPASSWD:ALL' > /etc/sudoers.d/github
-            chmod 440 /etc/sudoers.d/github
-            mkdir -p /home/github/.ssh
-            echo "${{ secrets.BUILD_SSH_KEY }}" > /home/github/.ssh/build_key
-            chmod 600 /home/github/.ssh/build_key
-            cat > /home/github/.ssh/config <<'EOF'
-            Host github.com
-              IdentityFile /home/github/.ssh/build_key
-              StrictHostKeyChecking no
-              User git
-            Host build.chrisaw.io
-              IdentityFile /home/github/.ssh/build_key
-              StrictHostKeyChecking no
-              User chrisaw
-            EOF
-            chmod 600 /home/github/.ssh/config
-            chown -R github:github /home/github/.ssh
-            sudo -u github git config --global user.email 'androidbuild@localhost'
-            sudo -u github git config --global user.name 'androidbuild'
-            sudo -u github git config --global color.ui false
-            curl -sf -o /usr/local/bin/repo https://storage.googleapis.com/git-repo-downloads/repo
-            chmod a+x /usr/local/bin/repo
-          packages: '["bc","curl","git","git-lfs","gh","jq","python3","rsync","unzip","wget","xz-utils","zip","zsync"]'
-          run-runner-as-user: github
-          startup-timeout-minutes: 15
-          runner-debug: true
-
-      - name: Attach data volume to sign instance
-        run: |
-          VOLUME_ID="${{ needs.start-sync.outputs.data_volume_id }}"
-          INSTANCE_ID="${{ steps.start.outputs.ec2-instance-id }}"
-          REGION="${{ env.AWS_REGION }}"
-          aws ec2 attach-volume --region "${REGION}" --volume-id "${VOLUME_ID}" --instance-id "${INSTANCE_ID}" --device /dev/sdf
-          aws ec2 wait volume-in-use --region "${REGION}" --volume-ids "${VOLUME_ID}"
+      - run: .github/scripts/ebs.sh detach
+        env:
+          VOLUME_ID: ${{ needs.start-build.outputs.data_volume_id }}
+      - run: .github/scripts/ec2.sh kill
+        env:
+          EC2_INSTANCE_ID: ${{ needs.start-build.outputs.instance_id }}
+          GH_PAT: ${{ secrets.GH_PAT }}
+          RUNNER_LABEL: ${{ needs.start-build.outputs.label }}
 
   # -------------------------------------------------------------------------
-  # job 6: sign and release
+  # sign instance: provision, sign, release, stop
   # -------------------------------------------------------------------------
+  start-sign:
+    name: Start Sign Instance
+    needs: [infrastructure, stop-build]
+    runs-on: ubuntu-latest
+    outputs:
+      label: ${{ steps.label.outputs.label }}
+      instance_id: ${{ steps.provision.outputs.instance_id }}
+    steps:
+      - uses: actions/checkout@v6
+      - uses: aws-actions/configure-aws-credentials@v6
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.AWS_REGION }}
+      - id: label
+        run: echo "label=gsi-build-sign-${{ github.run_id }}" >> "$GITHUB_OUTPUT"
+      - id: provision
+        run: .github/scripts/ec2.sh provision
+        env:
+          EC2_INSTANCE_TYPE: ${{ env.EC2_SMALL_INSTANCE }}
+          EC2_SUBNET_ID: ${{ needs.infrastructure.outputs.subnet_id }}
+          EC2_SG_ID: ${{ needs.infrastructure.outputs.security_group_id }}
+          EC2_AMI_ID: ${{ needs.infrastructure.outputs.ami_id }}
+          GH_PAT: ${{ secrets.GH_PAT }}
+          BUILD_SSH_KEY: ${{ secrets.BUILD_SSH_KEY }}
+          PACKAGES: "bc curl git git-lfs gh jq python3 rsync unzip wget xz-utils zip zsync"
+          RUNNER_LABEL: ${{ steps.label.outputs.label }}
+      - run: .github/scripts/ebs.sh attach
+        env:
+          VOLUME_ID: ${{ needs.stop-build.outputs.data_volume_id }}
+          EC2_INSTANCE_ID: ${{ steps.provision.outputs.instance_id }}
+
   sign:
     name: Sign and Release
     needs: [start-sign, build]
-    runs-on: ${{ needs.start-sign.outputs.label }}
+    runs-on: [self-hosted, "${{ needs.start-sign.outputs.label }}"]
     timeout-minutes: 120
     steps:
-      - name: Checkout build scripts
-        uses: actions/checkout@v6
-        with:
-          clean: false
-          lfs: true
-          fetch-depth: 0
-          fetch-tags: true
-
-      - name: Mount data volume
-        run: |
-          DATA_DEV=""
-          for i in $(seq 1 30); do
-            DATA_DEV=$(findfs LABEL=builddata 2>/dev/null) && break
-            echo "Waiting for data volume... (attempt ${i}/30)"
-            sleep 5
-          done
-          [ -z "${DATA_DEV}" ] && { echo "ERROR: data volume not found"; exit 1; }
-          sudo mkdir -p /mnt/src
-          sudo mount "${DATA_DEV}" /mnt/src
-          sudo chown github:github /mnt/src
-          ln -s /mnt/src src
-
-      - name: Restore build metadata
-        run: |
+      - uses: actions/checkout@v6
+        with: { clean: false, lfs: true, fetch-depth: 0, fetch-tags: true }
+      - run: .github/scripts/ebs.sh mount
+      - run: |
           {
             echo "BUILD_DATETIME=${{ needs.build.outputs.build_datetime }}"
             echo "BUILD_NUMBER=${{ needs.build.outputs.build_number }}"
@@ -590,64 +325,48 @@ jobs:
             echo "ANDROID_VERSION=${{ needs.build.outputs.android_version }}"
             echo "ANDROID_VERSION_TAG=${{ needs.build.outputs.android_version_tag }}"
           } >> "$GITHUB_ENV"
-
-      - name: Sign ROM image
-        working-directory: src/
+      - working-directory: src/
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
           . build/envsetup.sh
-          VARIANT="user"
-          [ "${{ github.event.inputs.debug_build || 'false' }}" = "true" ] && VARIANT="userdebug"
-          lunch "treble_arm64_bvN-${ANDROID_VERSION_TAG}-${VARIANT}"
+          V="user"; [ "${{ github.event.inputs.debug_build || 'false' }}" = "true" ] && V="userdebug"
+          lunch "treble_arm64_bvN-${ANDROID_VERSION_TAG}-${V}"
           bash vendor/cawilliamson-priv/keys/sign.sh
           rm -fv "${OUT}/system.img"
           unzip -j -q "${OUT}/signed-target_files.zip" IMAGES/system.img -d "${OUT}/"
           rm -fv "${OUT}/signed-target_files.zip"
           mv -v "${OUT}/system.img" "${{ github.workspace }}/out/system.img"
-
-      - name: Compress ROM image
-        id: compress
+      - id: compress
         run: |
-          VERSION_TAG="${ANDROID_VERSION}-${BUILD_NUMBER}"
-          [ "${{ github.event.inputs.debug_build || 'false' }}" = "true" ] && VERSION_TAG="${VERSION_TAG}-debug"
+          TAG="${ANDROID_VERSION}-${BUILD_NUMBER}"
+          [ "${{ github.event.inputs.debug_build || 'false' }}" = "true" ] && TAG="${TAG}-debug"
           cd out/
-          img="RestlessOS-arm64-ab-${VERSION_TAG}.img"
+          img="RestlessOS-arm64-ab-${TAG}.img"
           mv -v system.img "${img}"
           mkdir -p zsync
-          zyncmake -o "zsync/${img}.zsync" -u "${img}" -v "${img}"
+          zsyncmake -o "zsync/${img}.zsync" -u "${img}" -v "${img}"
           cp -v "${img}" "zsync/${img}"
           xz --best --compress --memlimit-compress=0 --threads=0 -v "${img}"
-          echo "version_tag=${VERSION_TAG}" >> "$GITHUB_OUTPUT"
-          echo "release_name=RestlessOS-ab-${VERSION_TAG}" >> "$GITHUB_OUTPUT"
-
-      - name: Generate changelog
-        id: changelog
-        run: |
-          VERSION_TAG="${{ steps.compress.outputs.version_tag }}"
-          PREV_TAG=$(git tag --sort=-version:refname | grep -v -- '-debug$' | grep -v "^${VERSION_TAG}$" | head -1)
-          [ -n "${PREV_TAG}" ] && RANGE="${PREV_TAG}..HEAD" || RANGE="HEAD"
-          {
-            echo "## Changes"
-            echo ""
-            git log --format='- %s' --no-merges "${RANGE}"
-          } > out/CHANGELOG.md
+          echo "version_tag=${TAG}" >> "$GITHUB_OUTPUT"
+          echo "release_name=RestlessOS-ab-${TAG}" >> "$GITHUB_OUTPUT"
+      - run: |
+          TAG="${{ steps.compress.outputs.version_tag }}"
+          PREV=$(git tag --sort=-version:refname | grep -v -- '-debug$' | grep -v "^${TAG}$" | head -1)
+          [ -n "$PREV" ] && RANGE="${PREV}..HEAD" || RANGE="HEAD"
+          { echo "## Changes"; echo ""; git log --format='- %s' --no-merges "${RANGE}"; } > out/CHANGELOG.md
           cat out/CHANGELOG.md
-
-      - name: Upload artifacts
-        uses: nick-fields/retry@v4
+      - uses: nick-fields/retry@v4
         with:
           timeout_minutes: 30
           max_attempts: 10
           retry_wait_seconds: 30
           command: |
-            RELEASE_NAME="${{ steps.compress.outputs.release_name }}"
-            REMOTE="build.chrisaw.io:/var/www/build.chrisaw.io/${RELEASE_NAME}"
+            R="${{ steps.compress.outputs.release_name }}"
+            REMOTE="build.chrisaw.io:/var/www/build.chrisaw.io/${R}"
             rsync -acvz --mkpath --timeout=120 --partial --partial-dir=.rsync-partial out/*.img.xz out/CHANGELOG.md "${REMOTE}/"
             rsync -acvz --mkpath --timeout=120 --partial --partial-dir=.rsync-partial out/zsync/ "${REMOTE}/zsync/"
-
-      - name: Create GitHub release
-        if: github.event.inputs.debug_build != 'true'
+      - if: github.event.inputs.debug_build != 'true'
         uses: ncipollo/release-action@v1
         with:
           tag: ${{ steps.compress.outputs.version_tag }}
@@ -655,140 +374,86 @@ jobs:
           bodyFile: out/CHANGELOG.md
           artifacts: "out/*.img.xz"
           token: ${{ github.token }}
-
-      - name: Unmount data volume
-        run: sudo umount -l /mnt/src
+      - run: .github/scripts/ebs.sh umount
 
   # -------------------------------------------------------------------------
-  # job 7: teardown
+  # teardown + retry
   # -------------------------------------------------------------------------
   teardown:
     name: Teardown
-    needs: [start-sync, sync, start-build, build, start-sign, sign]
+    needs: [start-sync, sync, stop-sync, start-build, build, stop-build, start-sign, sign]
     runs-on: ubuntu-latest
     if: always()
     outputs:
       spot_interrupted: ${{ steps.check_spot.outputs.spot_interrupted }}
-    env:
-      REGION: eu-west-2
     steps:
-      - name: Configure AWS credentials
-        uses: aws-actions/configure-aws-credentials@v6
+      - uses: actions/checkout@v6
+      - uses: aws-actions/configure-aws-credentials@v6
         with:
           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          aws-region: ${{ env.REGION }}
-
-      - name: Check for spot interruption
-        id: check_spot
+          aws-region: ${{ env.AWS_REGION }}
+      - id: check_spot
         run: |
           SPOT=false
-          for INSTANCE in "${{ needs.start-sync.outputs.instance_id }}" "${{ needs.start-build.outputs.instance_id }}"; do
-            [ -z "${INSTANCE}" ] && continue
-            for i in $(seq 1 12); do
-              echo "Checking ${INSTANCE} for spot termination (attempt ${i}/12)"
-              REASON=$(aws ec2 describe-instances --region "${REGION}" --instance-ids "${INSTANCE}" \
-                --query 'Reservations[0].Instances[0].StateReason.Code' --output text 2>/dev/null || echo "unknown")
-              STATE=$(aws ec2 describe-instances --region "${REGION}" --instance-ids "${INSTANCE}" \
-                --query 'Reservations[0].Instances[0].State.Name' --output text 2>/dev/null || echo "unknown")
-              [ "${REASON}" = "Server.SpotInstanceTermination" ] && { SPOT=true; break 2; }
-              [ "${STATE}" = "terminated" ] || [ "${STATE}" = "shutting-down" ] && { SPOT=true; break 2; }
+          for iid in "${{ needs.start-sync.outputs.instance_id }}" "${{ needs.start-build.outputs.instance_id }}"; do
+            [ -z "$iid" ] && continue
+            for _ in $(seq 1 12); do
+              r=$(aws ec2 describe-instances --region "$AWS_REGION" --instance-ids "$iid" \
+                --query 'Reservations[0].Instances[0].StateReason.Code' --output text 2>/dev/null) || true
+              s=$(aws ec2 describe-instances --region "$AWS_REGION" --instance-ids "$iid" \
+                --query 'Reservations[0].Instances[0].State.Name' --output text 2>/dev/null) || true
+              [ "$r" = "Server.SpotInstanceTermination" ] && { SPOT=true; break 2; }
+              { [ "$s" = "terminated" ] || [ "$s" = "shutting-down" ]; } && { SPOT=true; break 2; }
               sleep 10
             done
           done
           echo "spot_interrupted=${SPOT}" >> "$GITHUB_OUTPUT"
-
-      - name: Stop runners
-        run: |
-          for ENTRY in \
-            "${{ needs.start-sync.outputs.instance_id }}:${{ needs.start-sync.outputs.label }}" \
-            "${{ needs.start-build.outputs.instance_id }}:${{ needs.start-build.outputs.label }}" \
-            "${{ needs.start-sign.outputs.instance_id }}:${{ needs.start-sign.outputs.label }}"; do
-            INSTANCE="${ENTRY%%:*}"
-            LABEL="${ENTRY#*:}"
-            [ -z "${INSTANCE}" ] && continue
-            echo "Terminating ${INSTANCE}..."
-            aws ec2 terminate-instances --region "${REGION}" --instance-ids "${INSTANCE}" || true
-            # JIT runners auto-deregister; clean up just in case
-            RUNNER_ID=$(curl --fail --silent \
-              --header "Accept: application/vnd.github+json" \
-              --header "Authorization: Bearer ${{ secrets.GH_PAT }}" \
-              "https://api.github.com/repos/${{ github.repository }}/actions/runners" \
-              | jq --arg label "${LABEL}" --raw-output '.runners[] | select(.labels[].name == $label) | .id' 2>/dev/null | head -1)
-            [ -n "${RUNNER_ID}" ] && curl --fail --request DELETE --silent \
-              --header "Accept: application/vnd.github+json" \
-              --header "Authorization: Bearer ${{ secrets.GH_PAT }}" \
-              "https://api.github.com/repos/${{ github.repository }}/actions/runners/${RUNNER_ID}" || true
-          done
-
+      - name: Kill sign instance
+        run: .github/scripts/ec2.sh kill
+        env:
+          EC2_INSTANCE_ID: ${{ needs.start-sign.outputs.instance_id }}
+          GH_PAT: ${{ secrets.GH_PAT }}
+          RUNNER_LABEL: ${{ needs.start-sign.outputs.label }}
       - name: Delete data volume
-        uses: nick-fields/retry@v4
-        with:
-          timeout_minutes: 10
-          max_attempts: 60
-          retry_wait_seconds: 10
-          command: |
-            VOLUME_ID="${{ needs.start-sync.outputs.data_volume_id }}"
-            [ -z "${VOLUME_ID}" ] && { echo "No volume to delete"; exit 0; }
-            aws ec2 delete-volume --region "${REGION}" --volume-id "${VOLUME_ID}" || true
-            STATE=$(aws ec2 describe-volumes --region "${REGION}" --volume-ids "${VOLUME_ID}" \
-              --query 'Volumes[0].State' --output text 2>/dev/null || echo "deleted")
-            [ "${STATE}" != "deleted" ] && [ -n "${STATE}" ] && { echo "Volume still ${STATE}"; exit 1; }
-            echo "Volume deleted"
-
-      - name: Build summary
-        if: always()
+        run: .github/scripts/ebs.sh delete
+        env:
+          VOLUME_ID: ${{ needs.start-sync.outputs.data_volume_id }}
+      - if: always()
         run: |
           {
             echo "## Build Summary"
-            echo ""
             echo "| Item | Value |"
             echo "|------|-------|"
             echo "| Build result | ${{ needs.build.result }} |"
             echo "| Spot interrupted | ${{ steps.check_spot.outputs.spot_interrupted }} |"
             echo "| Attempt | $(( ${{ github.event.inputs._retry_attempt || '0' }} + 1 )) of 5 |"
-            echo "| Sync instance | ${{ needs.start-sync.outputs.instance_id }} (${{ env.EC2_SMALL_INSTANCE }}) |"
-            echo "| Build instance | ${{ needs.start-build.outputs.instance_id }} (${{ env.EC2_LARGE_INSTANCE }}) |"
-            echo "| Sign instance | ${{ needs.start-sign.outputs.instance_id }} (${{ env.EC2_SMALL_INSTANCE }}) |"
-            echo "| Region | ${{ env.AWS_REGION }} |"
-            echo "| Data volume | ${{ needs.start-sync.outputs.data_volume_id || 'N/A' }} |"
-            echo "| Sync runner | ${{ needs.start-sync.outputs.label }} |"
-            echo "| Build runner | ${{ needs.start-build.outputs.label }} |"
-            echo "| Sign runner | ${{ needs.start-sign.outputs.label }} |"
           } >> "$GITHUB_STEP_SUMMARY"
 
-  # -------------------------------------------------------------------------
-  # job 8: retry on spot interruption
-  # -------------------------------------------------------------------------
   retry:
     name: Retry on Spot Interruption
     needs: teardown
     runs-on: ubuntu-latest
     if: always() && needs.teardown.outputs.spot_interrupted == 'true'
     steps:
-      - name: Check retry budget
-        id: budget
+      - id: budget
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          ATTEMPT=${{ github.event.inputs._retry_attempt || '0' }}
-          NEXT=$((ATTEMPT + 1))
-          if [ "${NEXT}" -ge 5 ]; then
-            echo "::error::Retry budget exhausted (5 attempts)."
+          a=${{ github.event.inputs._retry_attempt || '0' }}
+          n=$((a + 1))
+          if [ "$n" -ge 5 ]; then
+            echo "::error::Retry budget exhausted"
             echo "has_budget=false" >> "$GITHUB_OUTPUT"
           else
-            echo "next_attempt=${NEXT}" >> "$GITHUB_OUTPUT"
+            echo "next_attempt=${n}" >> "$GITHUB_OUTPUT"
             echo "has_budget=true" >> "$GITHUB_OUTPUT"
           fi
-
-      - name: Re-trigger workflow
-        if: steps.budget.outputs.has_budget == 'true'
+      - if: steps.budget.outputs.has_budget == 'true'
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          gh workflow run build.yml \
-            --repo "${{ github.repository }}" \
-            --ref "${{ github.ref }}" \
+          gh workflow run build.yml --repo "${{ github.repository }}" --ref "${{ github.ref }}" \
             --field release_channel="${{ github.event.inputs.release_channel || 'stable' }}" \
             --field debug_build="${{ github.event.inputs.debug_build || 'false' }}" \
             --field _retry_attempt="${{ steps.budget.outputs.next_attempt }}"
