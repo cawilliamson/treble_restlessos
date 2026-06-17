@@ -3,10 +3,6 @@ name: Build RestlessOS GSI
 on:
   workflow_dispatch:
     inputs:
-      release_channel:
-        description: 'release channel for auto-detection (stable/beta/alpha)'
-        required: false
-        default: 'stable'
       debug_build:
         description: 'enable debug patches (verbose logging, open logcat) -- do not ship'
         required: false
@@ -107,9 +103,8 @@ jobs:
       - id: resolve_tag
         working-directory: src/
         run: |
-          CHANNEL="${{ github.event.inputs.release_channel || 'stable' }}"
           TAG=$(curl -fsS "https://grapheneos.org/releases" \
-            | grep -oP "id=[a-z]+-${CHANNEL}><td>[^<]+</td><td><a href=#\K[0-9]{10}" \
+            | grep -oP "id=[a-z]+-stable><td>[^<]+</td><td><a href=#\K[0-9]{10}" \
             | sort -nr | head -1)
           [ -z "$TAG" ] && { echo "ERROR: failed to resolve tag"; exit 1; }
           echo "tag=$TAG" >> "$GITHUB_OUTPUT"
