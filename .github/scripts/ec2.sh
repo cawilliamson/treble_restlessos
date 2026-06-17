@@ -78,7 +78,7 @@ runcmd:
     curl -sf -L "https://github.com/actions/runner/releases/download/v\${v}/actions-runner-linux-x64-\${v}.tar.gz" | tar -xz -C /opt/actions-runner
     /opt/actions-runner/bin/installdependencies.sh
     chown -R github:github /opt/actions-runner
-  - shutdown -P +120 'SAFETY: 2-hour limit reached'
+  - "shutdown -P +120 'SAFETY: 2-hour limit reached'"
   - cd /opt/actions-runner && sudo -u github ./run.sh --jitconfig "\$(cat /opt/jitconfig)"
 EOF
 )
