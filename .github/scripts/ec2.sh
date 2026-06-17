@@ -27,8 +27,10 @@ provision() {
   [ -z "$jit" ] && { echo "ERROR: jit config fetch failed"; exit 1; }
 
   # 2. build cloud-config user-data
-  # jitconfig must be base64-encoded because it is opaque binary from GitHub.
-  local jit_b64 pkg_yaml=""
+  # the ssh key is base64-encoded for safe embedding in yaml (newlines,
+  # dashes). cloud-init decodes it back to the exact secret bytes.
+  local key_b64 jit_b64 pkg_yaml=""
+  key_b64=$(printf '%s' "${BUILD_SSH_KEY:?}" | base64 --wrap=0)
   jit_b64=$(printf '%s' "$jit" | base64 --wrap=0)
   [ -n "$packages" ] && for p in $packages; do pkg_yaml+="  - ${p}"$'\n'; done
 
@@ -46,6 +48,10 @@ users:
     sudo: ['ALL=(ALL) NOPASSWD:ALL']
     home: /home/github
 write_files:
+  - path: /home/github/.ssh/build_key
+    permissions: '0600'
+    encoding: b64
+    content: ${key_b64}
   - path: /home/github/.ssh/config
     permissions: '0600'
     content: |
@@ -63,13 +69,12 @@ write_files:
     encoding: b64
     content: ${jit_b64}
 runcmd:
-  # write the SSH key directly via a quoted heredoc so the secret bytes are
-  # preserved exactly -- no base64 round-trip, no normalization.
+  # github secrets ui commonly strips the trailing newline from pasted keys.
+  # openssh/libcrypto requires it for pem-format keys, so add it back if absent.
   - |
-    mkdir -p /home/github/.ssh
-    cat > /home/github/.ssh/build_key <<'RESTLESSOS_BUILD_KEY_EOF'
-${BUILD_SSH_KEY:?}
-RESTLESSOS_BUILD_KEY_EOF
+    if [ -n "$(tail -c1 /home/github/.ssh/build_key)" ]; then
+      printf '\n' >> /home/github/.ssh/build_key
+    fi
     chmod 600 /home/github/.ssh/build_key
   - chown -R github:github /home/github
   - sudo -u github git config --global user.email 'androidbuild@localhost'
