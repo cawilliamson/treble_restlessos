@@ -390,31 +390,9 @@ jobs:
           token: ${{ github.token }}
       - run: .github/scripts/ebs.sh umount
 
-  stop-sign:
-    name: Stop Sign Instance
-    needs: [start-sign, sign]
-    runs-on: ubuntu-latest
-    outputs:
-      data_volume_id: ${{ needs.start-sign.outputs.data_volume_id }}
-    steps:
-      - uses: actions/checkout@v6
-      - uses: aws-actions/configure-aws-credentials@v6
-        with:
-          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          aws-region: ${{ env.AWS_REGION }}
-      - run: .github/scripts/ebs.sh detach
-        env:
-          VOLUME_ID: ${{ needs.start-sign.outputs.data_volume_id }}
-      - run: .github/scripts/ec2.sh kill
-        env:
-          EC2_INSTANCE_ID: ${{ needs.start-sign.outputs.instance_id }}
-          GH_PAT: ${{ secrets.GH_PAT }}
-          RUNNER_LABEL: ${{ needs.start-sign.outputs.label }}
-
   destroy-infrastructure:
     name: Destroy Infrastructure
-    needs: [stop-sign]
+    needs: [start-sign, sign]
     runs-on: ubuntu-latest
     if: always()
     steps:
@@ -424,6 +402,15 @@ jobs:
           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: ${{ env.AWS_REGION }}
+      - name: Detach volume and kill sign instance
+        run: |
+          .github/scripts/ebs.sh detach
+          .github/scripts/ec2.sh kill
+        env:
+          VOLUME_ID: ${{ needs.start-sign.outputs.data_volume_id }}
+          EC2_INSTANCE_ID: ${{ needs.start-sign.outputs.instance_id }}
+          GH_PAT: ${{ secrets.GH_PAT }}
+          RUNNER_LABEL: ${{ needs.start-sign.outputs.label }}
       - uses: dflook/tofu-destroy@v2
         with:
           path: .github/terraform
@@ -433,7 +420,7 @@ jobs:
 
   cleanup:
     name: Cleanup
-    needs: [deploy-infrastructure, select-az, start-sync, sync, start-build, build, start-sign, sign, stop-sign, destroy-infrastructure]
+    needs: [deploy-infrastructure, select-az, start-sync, sync, start-build, build, start-sign, sign, destroy-infrastructure]
     runs-on: ubuntu-latest
     if: always()
     steps:
