@@ -101,6 +101,7 @@ mount_vol() {
   sudo mkdir -p "$MOUNT_POINT"
   sudo mount "$dev" "$MOUNT_POINT"
   sudo chown github:github "$MOUNT_POINT"
+  ln -sf "$MOUNT_POINT" src
   echo "Mounted at ${MOUNT_POINT}"
 }
 
