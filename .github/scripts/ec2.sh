@@ -137,14 +137,15 @@ provision() {
   local registered=false
   for i in $(seq 1 40); do
     local online
-    online=$(gh_api "${GH_API}/actions/runners" \
+    online=$(gh_api "${GH_API}/actions/runners?per_page=100" \
       | jq --arg l "$label" -r '[.runners[]|select(.labels[].name==$l)|select(.status=="online")]|length')
+    echo "  attempt ${i}/40: ${online:-0} online runner(s) with label '${label}'"
     if [ "${online:-0}" -ge 1 ] 2>/dev/null; then
       echo "Runner online"
       registered=true
       break
     fi
-    echo "  attempt ${i}/40"; sleep 15
+    sleep 15
   done
 
   # dump console output if runner never came online
