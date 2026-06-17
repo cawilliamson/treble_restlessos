@@ -34,7 +34,9 @@ jobs:
     name: Deploy Infrastructure
     runs-on: ubuntu-latest
     outputs:
-      subnet_id: ${{ steps.tofu.outputs.subnet_id }}
+      subnet_id_a: ${{ steps.tofu.outputs.subnet_id_a }}
+      subnet_id_b: ${{ steps.tofu.outputs.subnet_id_b }}
+      subnet_id_c: ${{ steps.tofu.outputs.subnet_id_c }}
       security_group_id: ${{ steps.tofu.outputs.security_group_id }}
       ami_id: ${{ steps.tofu.outputs.ami_id }}
     steps:
@@ -52,12 +54,48 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
+  scan-capacity:
+    name: Scan Spot Capacity
+    needs: deploy-infrastructure
+    runs-on: ubuntu-latest
+    outputs:
+      target_subnet_id: ${{ steps.scan.outputs.target_subnet_id }}
+    steps:
+      - uses: actions/checkout@v6
+      - uses: aws-actions/configure-aws-credentials@v6
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.AWS_REGION }}
+      - id: scan
+        run: |
+          scores=$(aws ec2 get-spot-placement-scores \
+            --instance-types "${EC2_LARGE_INSTANCE:?}" \
+            --target-capacity 1 \
+            --single-availability-zone \
+            --region "${AWS_REGION:?}" \
+            --output json)
+          echo "spot placement scores:"
+          echo "$scores" | jq .
+
+          best_az=$(echo "$scores" | jq -r '.SpotPlacementScores | max_by(.Score) | .AvailabilityZone')
+          [ -z "$best_az" ] || [ "$best_az" = "null" ] && { echo "ERROR: could not determine best AZ"; exit 1; }
+          echo "best availability zone: $best_az"
+
+          case "$best_az" in
+            *a) subnet="${{ needs.deploy-infrastructure.outputs.subnet_id_a }}" ;;
+            *b) subnet="${{ needs.deploy-infrastructure.outputs.subnet_id_b }}" ;;
+            *c) subnet="${{ needs.deploy-infrastructure.outputs.subnet_id_c }}" ;;
+            *) echo "ERROR: unexpected AZ $best_az"; exit 1 ;;
+          esac
+          echo "target_subnet_id=$subnet" >> "$GITHUB_OUTPUT"
+
   # -------------------------------------------------------------------------
   # sync instance: provision, sync, patch, stop
   # -------------------------------------------------------------------------
   start-sync:
     name: Start Sync Instance
-    needs: deploy-infrastructure
+    needs: [deploy-infrastructure, scan-capacity]
     runs-on: ubuntu-latest
     outputs:
       label: ${{ steps.label.outputs.label }}
@@ -81,7 +119,7 @@ jobs:
           command: .github/scripts/ec2.sh provision
         env:
           EC2_INSTANCE_TYPE: ${{ env.EC2_SMALL_INSTANCE }}
-          EC2_SUBNET_ID: ${{ needs.deploy-infrastructure.outputs.subnet_id }}
+          EC2_SUBNET_ID: ${{ needs.scan-capacity.outputs.target_subnet_id }}
           EC2_SG_ID: ${{ needs.deploy-infrastructure.outputs.security_group_id }}
           EC2_AMI_ID: ${{ needs.deploy-infrastructure.outputs.ami_id }}
           GH_PAT: ${{ secrets.GH_PAT }}
@@ -178,7 +216,7 @@ jobs:
   # -------------------------------------------------------------------------
   start-build:
     name: Start Build Instance
-    needs: [deploy-infrastructure, stop-sync]
+    needs: [deploy-infrastructure, stop-sync, scan-capacity]
     runs-on: ubuntu-latest
     outputs:
       label: ${{ steps.label.outputs.label }}
@@ -202,7 +240,7 @@ jobs:
           command: .github/scripts/ec2.sh provision
         env:
           EC2_INSTANCE_TYPE: ${{ env.EC2_LARGE_INSTANCE }}
-          EC2_SUBNET_ID: ${{ needs.deploy-infrastructure.outputs.subnet_id }}
+          EC2_SUBNET_ID: ${{ needs.scan-capacity.outputs.target_subnet_id }}
           EC2_SG_ID: ${{ needs.deploy-infrastructure.outputs.security_group_id }}
           EC2_AMI_ID: ${{ needs.deploy-infrastructure.outputs.ami_id }}
           GH_PAT: ${{ secrets.GH_PAT }}
@@ -284,7 +322,7 @@ jobs:
   # -------------------------------------------------------------------------
   start-sign:
     name: Start Sign Instance
-    needs: [deploy-infrastructure, stop-build]
+    needs: [deploy-infrastructure, stop-build, scan-capacity]
     runs-on: ubuntu-latest
     outputs:
       label: ${{ steps.label.outputs.label }}
@@ -308,7 +346,7 @@ jobs:
           command: .github/scripts/ec2.sh provision
         env:
           EC2_INSTANCE_TYPE: ${{ env.EC2_SMALL_INSTANCE }}
-          EC2_SUBNET_ID: ${{ needs.deploy-infrastructure.outputs.subnet_id }}
+          EC2_SUBNET_ID: ${{ needs.scan-capacity.outputs.target_subnet_id }}
           EC2_SG_ID: ${{ needs.deploy-infrastructure.outputs.security_group_id }}
           EC2_AMI_ID: ${{ needs.deploy-infrastructure.outputs.ami_id }}
           GH_PAT: ${{ secrets.GH_PAT }}
@@ -428,7 +466,7 @@ jobs:
 
   cleanup:
     name: Cleanup
-    needs: [deploy-infrastructure, start-sync, sync, stop-sync, start-build, build, stop-build, start-sign, sign, stop-sign, destroy-infrastructure]
+    needs: [deploy-infrastructure, scan-capacity, start-sync, sync, stop-sync, start-build, build, stop-build, start-sign, sign, stop-sign, destroy-infrastructure]
     runs-on: ubuntu-latest
     if: always()
     steps:

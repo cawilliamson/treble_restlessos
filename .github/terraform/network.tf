@@ -14,12 +14,28 @@ resource "aws_internet_gateway" "build" {
   tags   = { Name = "gsi-build", Project = var.project_tag }
 }
 
-resource "aws_subnet" "build" {
+resource "aws_subnet" "build_a" {
   vpc_id                  = aws_vpc.build.id
   cidr_block              = "10.0.1.0/24"
   availability_zone       = "${var.region}a"
   map_public_ip_on_launch = true
   tags                    = { Name = "gsi-build-a", Project = var.project_tag }
+}
+
+resource "aws_subnet" "build_b" {
+  vpc_id                  = aws_vpc.build.id
+  cidr_block              = "10.0.2.0/24"
+  availability_zone       = "${var.region}b"
+  map_public_ip_on_launch = true
+  tags                    = { Name = "gsi-build-b", Project = var.project_tag }
+}
+
+resource "aws_subnet" "build_c" {
+  vpc_id                  = aws_vpc.build.id
+  cidr_block              = "10.0.3.0/24"
+  availability_zone       = "${var.region}c"
+  map_public_ip_on_launch = true
+  tags                    = { Name = "gsi-build-c", Project = var.project_tag }
 }
 
 resource "aws_route_table" "build" {
@@ -32,8 +48,18 @@ resource "aws_route_table" "build" {
   }
 }
 
-resource "aws_route_table_association" "build" {
-  subnet_id      = aws_subnet.build.id
+resource "aws_route_table_association" "build_a" {
+  subnet_id      = aws_subnet.build_a.id
+  route_table_id = aws_route_table.build.id
+}
+
+resource "aws_route_table_association" "build_b" {
+  subnet_id      = aws_subnet.build_b.id
+  route_table_id = aws_route_table.build.id
+}
+
+resource "aws_route_table_association" "build_c" {
+  subnet_id      = aws_subnet.build_c.id
   route_table_id = aws_route_table.build.id
 }
 
