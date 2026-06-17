@@ -31,7 +31,7 @@ concurrency:
 jobs:
 
   deploy-infrastructure:
-    name: Deploy Infrastructure + Start Sync
+    name: Deploy Infrastructure
     runs-on: ubuntu-latest
     outputs:
       subnet_id_a: ${{ steps.tofu.outputs.subnet_id_a }}
