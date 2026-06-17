@@ -5,7 +5,7 @@ REGION="${AWS_REGION:?}"
 REPO="${GITHUB_REPOSITORY:?}"
 GH_API="https://api.github.com/repos/${REPO}"
 
-gh_api() { curl -sf -H "Accept: application/vnd.github+json" -H "Authorization: Bearer ${GH_PAT:?}" "$@"; }
+gh_api() { curl -sS --fail-with-body -H "Accept: application/vnd.github+json" -H "Authorization: Bearer ${GH_PAT:?}" "$@"; }
 
 # --------------------------------------------------------------------------
 # provision: launch EC2 instance, bootstrap runner, wait for online
@@ -20,9 +20,10 @@ provision() {
 
   # 1. jit runner config
   echo "Fetching JIT config for label '${label}'..."
-  local jit
+  local jit runner_name
+  runner_name="ec2-${label}-$(date +%s%N)"
   jit=$(gh_api -X POST "${GH_API}/actions/runners/generate-jitconfig" \
-    -d "{\"name\":\"ec2-${label}\",\"runner_group_id\":1,\"labels\":[\"self-hosted\",\"${label}\"]}" \
+    -d "{\"name\":\"${runner_name}\",\"runner_group_id\":1,\"labels\":[\"self-hosted\",\"${label}\"]}" \
     | jq -r '.encoded_jit_config')
   [ -z "$jit" ] && { echo "ERROR: jit config fetch failed"; exit 1; }
 
