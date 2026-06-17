@@ -1,6 +1,16 @@
-output "subnet_id" {
-  description = "build subnet in the AZ with the best spot placement score"
-  value       = data.external.spot_score.result.az == null ? aws_subnet.build_a.id : (endswith(data.external.spot_score.result.az, "a") ? aws_subnet.build_a.id : endswith(data.external.spot_score.result.az, "b") ? aws_subnet.build_b.id : aws_subnet.build_c.id)
+output "subnet_id_a" {
+  description = "build subnet in AZ a"
+  value       = aws_subnet.build_a.id
+}
+
+output "subnet_id_b" {
+  description = "build subnet in AZ b"
+  value       = aws_subnet.build_b.id
+}
+
+output "subnet_id_c" {
+  description = "build subnet in AZ c"
+  value       = aws_subnet.build_c.id
 }
 
 output "security_group_id" {

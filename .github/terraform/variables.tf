@@ -9,9 +9,3 @@ variable "project_tag" {
   type        = string
   default     = "gsi-build"
 }
-
-variable "large_instance_type" {
-  description = "large instance type used to determine best AZ via spot placement score"
-  type        = string
-  default     = "c7i.48xlarge"
-}

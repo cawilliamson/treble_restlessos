@@ -34,7 +34,9 @@ jobs:
     name: Deploy Infrastructure
     runs-on: ubuntu-latest
     outputs:
-      subnet_id: ${{ steps.tofu.outputs.subnet_id }}
+      subnet_id_a: ${{ steps.tofu.outputs.subnet_id_a }}
+      subnet_id_b: ${{ steps.tofu.outputs.subnet_id_b }}
+      subnet_id_c: ${{ steps.tofu.outputs.subnet_id_c }}
       security_group_id: ${{ steps.tofu.outputs.security_group_id }}
       ami_id: ${{ steps.tofu.outputs.ami_id }}
     steps:
@@ -51,20 +53,37 @@ jobs:
           auto_approve: true
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          TERRAFORM_PRE_RUN: |
-            apt-get update -qq
-            apt-get install -y -qq curl unzip jq
-            curl -sf -o /tmp/awscliv2.zip https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip
-            unzip -q /tmp/awscliv2.zip -d /tmp
-            /tmp/aws/install --update
-          TF_VAR_large_instance_type: ${{ env.EC2_LARGE_INSTANCE }}
+
+  select-az:
+    name: Select Best AZ
+    needs: deploy-infrastructure
+    runs-on: ubuntu-latest
+    outputs:
+      target_subnet_id: ${{ steps.select.outputs.target_subnet_id }}
+    steps:
+      - uses: actions/checkout@v6
+      - uses: aws-actions/configure-aws-credentials@v6
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.AWS_REGION }}
+      - id: select
+        run: |
+          subnet=$(.github/scripts/ec2.sh select-az)
+          echo "target_subnet_id=$subnet" >> "$GITHUB_OUTPUT"
+        env:
+          AWS_REGION: ${{ env.AWS_REGION }}
+          EC2_LARGE_INSTANCE: ${{ env.EC2_LARGE_INSTANCE }}
+          EC2_SUBNET_ID_A: ${{ needs.deploy-infrastructure.outputs.subnet_id_a }}
+          EC2_SUBNET_ID_B: ${{ needs.deploy-infrastructure.outputs.subnet_id_b }}
+          EC2_SUBNET_ID_C: ${{ needs.deploy-infrastructure.outputs.subnet_id_c }}
 
   # -------------------------------------------------------------------------
   # sync instance
   # -------------------------------------------------------------------------
   start-sync:
     name: Start Sync Instance
-    needs: deploy-infrastructure
+    needs: [deploy-infrastructure, select-az]
     runs-on: ubuntu-latest
     outputs:
       label: ${{ steps.label.outputs.label }}
@@ -88,7 +107,7 @@ jobs:
           command: .github/scripts/ec2.sh provision
         env:
           EC2_INSTANCE_TYPE: ${{ env.EC2_SMALL_INSTANCE }}
-          EC2_SUBNET_ID: ${{ needs.deploy-infrastructure.outputs.subnet_id }}
+          EC2_SUBNET_ID: ${{ needs.select-az.outputs.target_subnet_id }}
           EC2_SG_ID: ${{ needs.deploy-infrastructure.outputs.security_group_id }}
           EC2_AMI_ID: ${{ needs.deploy-infrastructure.outputs.ami_id }}
           GH_PAT: ${{ secrets.GH_PAT }}
@@ -163,7 +182,7 @@ jobs:
   # -------------------------------------------------------------------------
   start-build:
     name: Swap to Build Instance
-    needs: [deploy-infrastructure, start-sync, sync]
+    needs: [deploy-infrastructure, select-az, start-sync, sync]
     runs-on: ubuntu-latest
     outputs:
       label: ${{ steps.label.outputs.label }}
@@ -195,7 +214,7 @@ jobs:
           command: .github/scripts/ec2.sh provision
         env:
           EC2_INSTANCE_TYPE: ${{ env.EC2_LARGE_INSTANCE }}
-          EC2_SUBNET_ID: ${{ needs.deploy-infrastructure.outputs.subnet_id }}
+          EC2_SUBNET_ID: ${{ needs.select-az.outputs.target_subnet_id }}
           EC2_SG_ID: ${{ needs.deploy-infrastructure.outputs.security_group_id }}
           EC2_AMI_ID: ${{ needs.deploy-infrastructure.outputs.ami_id }}
           GH_PAT: ${{ secrets.GH_PAT }}
@@ -257,7 +276,7 @@ jobs:
   # -------------------------------------------------------------------------
   start-sign:
     name: Swap to Sign Instance
-    needs: [deploy-infrastructure, start-build, build]
+    needs: [deploy-infrastructure, select-az, start-build, build]
     runs-on: ubuntu-latest
     outputs:
       label: ${{ steps.label.outputs.label }}
@@ -289,7 +308,7 @@ jobs:
           command: .github/scripts/ec2.sh provision
         env:
           EC2_INSTANCE_TYPE: ${{ env.EC2_SMALL_INSTANCE }}
-          EC2_SUBNET_ID: ${{ needs.deploy-infrastructure.outputs.subnet_id }}
+          EC2_SUBNET_ID: ${{ needs.select-az.outputs.target_subnet_id }}
           EC2_SG_ID: ${{ needs.deploy-infrastructure.outputs.security_group_id }}
           EC2_AMI_ID: ${{ needs.deploy-infrastructure.outputs.ami_id }}
           GH_PAT: ${{ secrets.GH_PAT }}
@@ -414,7 +433,7 @@ jobs:
 
   cleanup:
     name: Cleanup
-    needs: [deploy-infrastructure, start-sync, sync, start-build, build, start-sign, sign, stop-sign, destroy-infrastructure]
+    needs: [deploy-infrastructure, select-az, start-sync, sync, start-build, build, start-sign, sign, stop-sign, destroy-infrastructure]
     runs-on: ubuntu-latest
     if: always()
     steps:

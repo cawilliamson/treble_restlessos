@@ -167,6 +167,36 @@ provision() {
 }
 
 # --------------------------------------------------------------------------
+# select_az: pick the AZ with the best spot placement score for the large
+# instance type and print the corresponding subnet id.
+# --------------------------------------------------------------------------
+select_az() {
+  local inst_type="${EC2_LARGE_INSTANCE:?}"
+  local subnet_a="${EC2_SUBNET_ID_A:?}"
+  local subnet_b="${EC2_SUBNET_ID_B:?}"
+  local subnet_c="${EC2_SUBNET_ID_C:?}"
+
+  local scores
+  scores=$(aws ec2 get-spot-placement-scores \
+    --instance-types "$inst_type" \
+    --target-capacity 1 \
+    --single-availability-zone \
+    --region "$REGION" \
+    --output json)
+
+  local best_az
+  best_az=$(echo "$scores" | jq -r '.SpotPlacementScores | max_by(.Score) | .AvailabilityZone')
+  [ -z "$best_az" ] || [ "$best_az" = "null" ] && { echo "ERROR: could not determine best AZ" >&2; exit 1; }
+
+  case "$best_az" in
+    *a) echo "$subnet_a" ;;
+    *b) echo "$subnet_b" ;;
+    *c) echo "$subnet_c" ;;
+    *) echo "ERROR: unexpected AZ $best_az" >&2; exit 1 ;;
+  esac
+}
+
+# --------------------------------------------------------------------------
 # kill: terminate instance + deregister runner (best-effort)
 # --------------------------------------------------------------------------
 kill_runner() {
@@ -189,6 +219,7 @@ kill_runner() {
 
 case "${1:-}" in
   provision) shift; provision "$@" ;;
+  select-az) shift; select_az "$@" ;;
   kill)      shift; kill_runner "$@" ;;
-  *) echo "Usage: $0 {provision|kill}"; exit 1 ;;
+  *) echo "Usage: $0 {provision|select-az|kill}"; exit 1 ;;
 esac
