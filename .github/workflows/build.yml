@@ -419,6 +419,7 @@ jobs:
     name: Destroy Infrastructure
     needs: [stop-sign]
     runs-on: ubuntu-latest
+    if: always()
     steps:
       - uses: actions/checkout@v6
       - uses: aws-actions/configure-aws-credentials@v6
