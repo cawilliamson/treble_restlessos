@@ -158,13 +158,11 @@ jobs:
           fi
       - run: .github/scripts/ebs.sh umount
 
-  stop-sync-start-build:
-    name: Swap to Build Instance
+  stop-sync:
+    name: Stop Sync Instance
     needs: [start-sync, sync]
     runs-on: ubuntu-latest
     outputs:
-      label: ${{ steps.label.outputs.label }}
-      instance_id: ${{ steps.provision.outputs.instance_id }}
       data_volume_id: ${{ needs.start-sync.outputs.data_volume_id }}
     steps:
       - uses: actions/checkout@v6
@@ -181,30 +179,6 @@ jobs:
           EC2_INSTANCE_ID: ${{ needs.start-sync.outputs.instance_id }}
           GH_PAT: ${{ secrets.GH_PAT }}
           RUNNER_LABEL: ${{ needs.start-sync.outputs.label }}
-      - id: label
-        run: echo "label=gsi-build-build-${{ github.run_id }}" >> "$GITHUB_OUTPUT"
-      - id: provision
-        uses: nick-fields/retry@v4
-        with:
-          max_attempts: 20
-          retry_wait_seconds: 30
-          timeout_minutes: 20
-          command: .github/scripts/ec2.sh provision
-        env:
-          EC2_INSTANCE_TYPE: ${{ env.EC2_LARGE_INSTANCE }}
-          EC2_SUBNET_ID: ${{ needs.deploy-infrastructure.outputs.subnet_id }}
-          EC2_SG_ID: ${{ needs.deploy-infrastructure.outputs.security_group_id }}
-          EC2_AMI_ID: ${{ needs.deploy-infrastructure.outputs.ami_id }}
-          GH_PAT: ${{ secrets.GH_PAT }}
-          BUILD_SSH_KEY: ${{ secrets.BUILD_SSH_KEY }}
-          PACKAGES: "bc bison build-essential ccache curl flex g++-multilib gcc-multilib git git-lfs gnupg gperf imagemagick jq lib32readline-dev lib32z1-dev liblz4-tool libssl-dev libxml2 libxml2-utils lzop openjdk-11-jdk pngcrush python3 rsync schedtool squashfs-tools unzip wget xsltproc xz-utils zip zlib1g-dev zsync"
-          RUNNER_LABEL: ${{ steps.label.outputs.label }}
-          EC2_MARKET_TYPE: spot
-          EC2_ROOT_VOLUME: "100"
-      - run: .github/scripts/ebs.sh attach
-        env:
-          VOLUME_ID: ${{ needs.start-sync.outputs.data_volume_id }}
-          EC2_INSTANCE_ID: ${{ steps.provision.outputs.instance_id }}
 
   # -------------------------------------------------------------------------
   # build instance: provision, build, stop
@@ -251,8 +225,8 @@ jobs:
 
   build:
     name: Build ROM
-    needs: [stop-sync-start-build, sync]
-    runs-on: [self-hosted, "${{ needs.stop-sync-start-build.outputs.label }}"]
+    needs: [start-build, sync]
+    runs-on: [self-hosted, "${{ needs.start-build.outputs.label }}"]
     timeout-minutes: 120
     outputs:
       android_version: ${{ needs.sync.outputs.android_version }}
@@ -265,7 +239,7 @@ jobs:
         with: { clean: false, lfs: true, fetch-depth: 0, fetch-tags: true }
       - run: .github/scripts/ebs.sh mount
         env:
-          VOLUME_ID: ${{ needs.stop-sync-start-build.outputs.data_volume_id }}
+          VOLUME_ID: ${{ needs.start-build.outputs.data_volume_id }}
       - id: metadata
         run: |
           {
@@ -292,13 +266,11 @@ jobs:
           make target-files-package otatools -j"$(nproc --all)"
       - run: .github/scripts/ebs.sh umount
 
-  stop-build-start-sign:
-    name: Swap to Sign Instance
+  stop-build:
+    name: Stop Build Instance
     needs: [start-build, build]
     runs-on: ubuntu-latest
     outputs:
-      label: ${{ steps.label.outputs.label }}
-      instance_id: ${{ steps.provision.outputs.instance_id }}
       data_volume_id: ${{ needs.start-build.outputs.data_volume_id }}
     steps:
       - uses: actions/checkout@v6
@@ -315,28 +287,6 @@ jobs:
           EC2_INSTANCE_ID: ${{ needs.start-build.outputs.instance_id }}
           GH_PAT: ${{ secrets.GH_PAT }}
           RUNNER_LABEL: ${{ needs.start-build.outputs.label }}
-      - id: label
-        run: echo "label=gsi-build-sign-${{ github.run_id }}" >> "$GITHUB_OUTPUT"
-      - id: provision
-        uses: nick-fields/retry@v4
-        with:
-          max_attempts: 2
-          retry_wait_seconds: 60
-          timeout_minutes: 20
-          command: .github/scripts/ec2.sh provision
-        env:
-          EC2_INSTANCE_TYPE: ${{ env.EC2_SMALL_INSTANCE }}
-          EC2_SUBNET_ID: ${{ needs.deploy-infrastructure.outputs.subnet_id }}
-          EC2_SG_ID: ${{ needs.deploy-infrastructure.outputs.security_group_id }}
-          EC2_AMI_ID: ${{ needs.deploy-infrastructure.outputs.ami_id }}
-          GH_PAT: ${{ secrets.GH_PAT }}
-          BUILD_SSH_KEY: ${{ secrets.BUILD_SSH_KEY }}
-          PACKAGES: "bc curl git git-lfs gh jq python3 rsync unzip wget xz-utils zip zsync"
-          RUNNER_LABEL: ${{ steps.label.outputs.label }}
-      - run: .github/scripts/ebs.sh attach
-        env:
-          VOLUME_ID: ${{ needs.start-build.outputs.data_volume_id }}
-          EC2_INSTANCE_ID: ${{ steps.provision.outputs.instance_id }}
 
   # -------------------------------------------------------------------------
   # sign instance: provision, sign, release, stop
@@ -381,15 +331,15 @@ jobs:
 
   sign:
     name: Sign and Release
-    needs: [stop-build-start-sign, build]
-    runs-on: [self-hosted, "${{ needs.stop-build-start-sign.outputs.label }}"]
+    needs: [start-sign, build]
+    runs-on: [self-hosted, "${{ needs.start-sign.outputs.label }}"]
     timeout-minutes: 120
     steps:
       - uses: actions/checkout@v6
         with: { clean: false, lfs: true, fetch-depth: 0, fetch-tags: true }
       - run: .github/scripts/ebs.sh mount
         env:
-          VOLUME_ID: ${{ needs.stop-build-start-sign.outputs.data_volume_id }}
+          VOLUME_ID: ${{ needs.start-sign.outputs.data_volume_id }}
       - run: |
           {
             echo "BUILD_DATETIME=${{ needs.build.outputs.build_datetime }}"
@@ -450,11 +400,11 @@ jobs:
       - run: .github/scripts/ebs.sh umount
 
   stop-sign:
-    name: Sign and Release
-    needs: [stop-build-start-sign, sign]
+    name: Stop Sign Instance
+    needs: [start-sign, sign]
     runs-on: ubuntu-latest
     outputs:
-      data_volume_id: ${{ needs.stop-build-start-sign.outputs.data_volume_id }}
+      data_volume_id: ${{ needs.start-sign.outputs.data_volume_id }}
     steps:
       - uses: actions/checkout@v6
       - uses: aws-actions/configure-aws-credentials@v6
@@ -464,12 +414,12 @@ jobs:
           aws-region: ${{ env.AWS_REGION }}
       - run: .github/scripts/ebs.sh detach
         env:
-          VOLUME_ID: ${{ needs.stop-build-start-sign.outputs.data_volume_id }}
+          VOLUME_ID: ${{ needs.start-sign.outputs.data_volume_id }}
       - run: .github/scripts/ec2.sh kill
         env:
-          EC2_INSTANCE_ID: ${{ needs.stop-build-start-sign.outputs.instance_id }}
+          EC2_INSTANCE_ID: ${{ needs.start-sign.outputs.instance_id }}
           GH_PAT: ${{ secrets.GH_PAT }}
-          RUNNER_LABEL: ${{ needs.stop-build-start-sign.outputs.label }}
+          RUNNER_LABEL: ${{ needs.start-sign.outputs.label }}
 
   destroy-infrastructure:
     name: Destroy Infrastructure
@@ -491,8 +441,8 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
   cleanup:
-    name: Destroy Infrastructure
-    needs: [deploy-infrastructure, start-sync, sync, stop-sync-start-build, build, stop-build-start-sign, sign, stop-sign, destroy-infrastructure]
+    name: Cleanup
+    needs: [deploy-infrastructure, start-sync, sync, stop-sync, start-build, build, stop-build, start-sign, sign, stop-sign, destroy-infrastructure]
     runs-on: ubuntu-latest
     if: always()
     steps:
@@ -504,7 +454,7 @@ jobs:
           aws-region: ${{ env.AWS_REGION }}
       - name: Kill any remaining instances
         run: |
-          for iid in "${{ needs.start-sync.outputs.instance_id }}" "${{ needs.stop-sync-start-build.outputs.instance_id }}" "${{ needs.stop-build-start-sign.outputs.instance_id }}"; do
+          for iid in "${{ needs.start-sync.outputs.instance_id }}" "${{ needs.start-build.outputs.instance_id }}" "${{ needs.start-sign.outputs.instance_id }}"; do
             [ -z "$iid" ] && continue
             echo "Terminating ${iid} (if still running)..."
             EC2_INSTANCE_ID="$iid" .github/scripts/ec2.sh kill
@@ -524,7 +474,7 @@ jobs:
             echo "|------|-------|"
             echo "| Build result | ${{ needs.build.result }} |"
             echo "| Sync | ${{ needs.start-sync.outputs.instance_id || 'N/A' }} |"
-            echo "| Build | ${{ needs.stop-sync-start-build.outputs.instance_id || 'N/A' }} |"
-            echo "| Sign | ${{ needs.stop-build-start-sign.outputs.instance_id || 'N/A' }} |"
+            echo "| Build | ${{ needs.start-build.outputs.instance_id || 'N/A' }} |"
+            echo "| Sign | ${{ needs.start-sign.outputs.instance_id || 'N/A' }} |"
             echo "| Infrastructure | ${{ needs.deploy-infrastructure.result }} / destroyed: ${{ needs.destroy-infrastructure.result }} |"
           } >> "$GITHUB_STEP_SUMMARY"
