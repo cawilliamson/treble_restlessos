@@ -66,7 +66,7 @@ write_files:
     encoding: b64
     content: ${jit_b64}
 runcmd:
-  - chown -R github:github /home/github/.ssh
+  - chown -R github:github /home/github
   - sudo -u github git config --global user.email 'androidbuild@localhost'
   - sudo -u github git config --global user.name 'androidbuild'
   - sudo -u github git config --global color.ui false
