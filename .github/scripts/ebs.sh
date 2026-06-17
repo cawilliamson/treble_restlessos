@@ -46,7 +46,7 @@ detach() {
 # env: VOLUME_ID
 # --------------------------------------------------------------------------
 delete() {
-  local vid="${VOLUME_ID:?}"
+  local vid="${VOLUME_ID:-}"
   [ -z "$vid" ] && { echo "No volume to delete"; exit 0; }
   echo "Deleting ${vid}..."
   aws ec2 delete-volume --region "$REGION" --volume-id "$vid" || true

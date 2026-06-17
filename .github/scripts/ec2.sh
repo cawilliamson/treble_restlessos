@@ -153,7 +153,8 @@ EOF
 # kill: terminate instance + deregister runner (best-effort)
 # --------------------------------------------------------------------------
 kill_runner() {
-  local iid="${EC2_INSTANCE_ID:?}" label="${RUNNER_LABEL:-}"
+  local iid="${EC2_INSTANCE_ID:-}" label="${RUNNER_LABEL:-}"
+  [ -z "$iid" ] && { echo "No instance to kill"; return 0; }
 
   echo "Terminating ${iid}..."
   aws ec2 terminate-instances --region "$REGION" --instance-ids "$iid" || true

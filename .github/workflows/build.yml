@@ -443,7 +443,7 @@ jobs:
           for iid in "${{ needs.start-sync.outputs.instance_id }}" "${{ needs.start-build.outputs.instance_id }}" "${{ needs.start-sign.outputs.instance_id }}"; do
             [ -z "$iid" ] && continue
             echo "Terminating ${iid} (if still running)..."
-            .github/scripts/ec2.sh kill
+            EC2_INSTANCE_ID="$iid" .github/scripts/ec2.sh kill
           done
         env:
           GH_PAT: ${{ secrets.GH_PAT }}
