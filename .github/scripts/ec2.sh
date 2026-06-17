@@ -192,21 +192,23 @@ select_az() {
 
   echo "spot placement scores: $scores" >&2
 
-  local best_az
-  best_az=$(echo "$scores" | jq -r '.SpotPlacementScores | max_by(.Score) | .AvailabilityZone')
-  if [ -z "$best_az" ] || [ "$best_az" = "null" ]; then
-    echo "WARN: could not determine best AZ, falling back to AZ a" >&2
+  # aws returns availability zone ids (e.g. euw2-az1), not names.
+  # map the id with the highest score to our a/b/c subnets.
+  local best_az_id
+  best_az_id=$(echo "$scores" | jq -r '.SpotPlacementScores | max_by(.Score) | .AvailabilityZoneId')
+  if [ -z "$best_az_id" ] || [ "$best_az_id" = "null" ]; then
+    echo "WARN: could not determine best AZ id, falling back to AZ a" >&2
     echo "$subnet_a"
     return 0
   fi
 
-  echo "best availability zone: $best_az" >&2
+  echo "best availability zone id: $best_az_id" >&2
 
-  case "$best_az" in
-    *a) echo "$subnet_a" ;;
-    *b) echo "$subnet_b" ;;
-    *c) echo "$subnet_c" ;;
-    *) echo "ERROR: unexpected AZ $best_az" >&2; exit 1 ;;
+  case "$best_az_id" in
+    *az1) echo "$subnet_a" ;;
+    *az2) echo "$subnet_b" ;;
+    *az3) echo "$subnet_c" ;;
+    *) echo "ERROR: unexpected AZ id $best_az_id" >&2; exit 1 ;;
   esac
 }
 
