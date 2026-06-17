@@ -63,7 +63,6 @@ jobs:
           result=$(.github/scripts/ec2.sh select-az)
           echo "target_subnet_id=$(echo "$result" | jq -r .subnet)" >> "$GITHUB_OUTPUT"
           echo "target_az=$(echo "$result" | jq -r .az)" >> "$GITHUB_OUTPUT"
-          echo "selected az: $(echo "$result" | jq -r .az)"
         env:
           AWS_REGION: ${{ env.AWS_REGION }}
           EC2_LARGE_INSTANCE: ${{ env.EC2_LARGE_INSTANCE }}
