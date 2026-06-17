@@ -182,6 +182,7 @@ select_az() {
     --target-capacity 1 \
     --single-availability-zone \
     --region "$REGION" \
+    --region-names "$REGION" \
     --output json 2>/tmp/spot-score-stderr.log) || {
     echo "WARN: spot placement score lookup failed, falling back to AZ a" >&2
     cat /tmp/spot-score-stderr.log >&2 || true
