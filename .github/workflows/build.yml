@@ -234,7 +234,7 @@ jobs:
       - id: provision
         uses: nick-fields/retry@v4
         with:
-          max_attempts: 40
+          max_attempts: 20
           retry_wait_seconds: 30
           timeout_minutes: 20
           command: .github/scripts/ec2.sh provision
