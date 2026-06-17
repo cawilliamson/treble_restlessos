@@ -12,10 +12,6 @@ on:
         required: false
         type: boolean
         default: false
-      _retry_attempt:
-        description: 'internal: spot retry counter (do not set manually)'
-        required: false
-        default: '0'
 
 permissions:
   actions: write
@@ -34,8 +30,8 @@ concurrency:
 
 jobs:
 
-  infrastructure:
-    name: Ensure Infrastructure
+  deploy-infrastructure:
+    name: Deploy Infrastructure
     runs-on: ubuntu-latest
     outputs:
       subnet_id: ${{ steps.tofu.outputs.subnet_id }}
@@ -61,7 +57,7 @@ jobs:
   # -------------------------------------------------------------------------
   start-sync:
     name: Start Sync Instance
-    needs: infrastructure
+    needs: deploy-infrastructure
     runs-on: ubuntu-latest
     outputs:
       label: ${{ steps.label.outputs.label }}
@@ -85,9 +81,9 @@ jobs:
           command: .github/scripts/ec2.sh provision
         env:
           EC2_INSTANCE_TYPE: ${{ env.EC2_SMALL_INSTANCE }}
-          EC2_SUBNET_ID: ${{ needs.infrastructure.outputs.subnet_id }}
-          EC2_SG_ID: ${{ needs.infrastructure.outputs.security_group_id }}
-          EC2_AMI_ID: ${{ needs.infrastructure.outputs.ami_id }}
+          EC2_SUBNET_ID: ${{ needs.deploy-infrastructure.outputs.subnet_id }}
+          EC2_SG_ID: ${{ needs.deploy-infrastructure.outputs.security_group_id }}
+          EC2_AMI_ID: ${{ needs.deploy-infrastructure.outputs.ami_id }}
           GH_PAT: ${{ secrets.GH_PAT }}
           BUILD_SSH_KEY: ${{ secrets.BUILD_SSH_KEY }}
           PACKAGES: "bc curl git git-lfs jq python3 rsync unzip wget xz-utils zip zsync"
@@ -182,7 +178,7 @@ jobs:
   # -------------------------------------------------------------------------
   start-build:
     name: Start Build Instance
-    needs: [infrastructure, stop-sync]
+    needs: [deploy-infrastructure, stop-sync]
     runs-on: ubuntu-latest
     outputs:
       label: ${{ steps.label.outputs.label }}
@@ -206,9 +202,9 @@ jobs:
           command: .github/scripts/ec2.sh provision
         env:
           EC2_INSTANCE_TYPE: ${{ env.EC2_LARGE_INSTANCE }}
-          EC2_SUBNET_ID: ${{ needs.infrastructure.outputs.subnet_id }}
-          EC2_SG_ID: ${{ needs.infrastructure.outputs.security_group_id }}
-          EC2_AMI_ID: ${{ needs.infrastructure.outputs.ami_id }}
+          EC2_SUBNET_ID: ${{ needs.deploy-infrastructure.outputs.subnet_id }}
+          EC2_SG_ID: ${{ needs.deploy-infrastructure.outputs.security_group_id }}
+          EC2_AMI_ID: ${{ needs.deploy-infrastructure.outputs.ami_id }}
           GH_PAT: ${{ secrets.GH_PAT }}
           BUILD_SSH_KEY: ${{ secrets.BUILD_SSH_KEY }}
           PACKAGES: "bc bison build-essential ccache curl flex g++-multilib gcc-multilib git git-lfs gnupg gperf imagemagick jq lib32readline-dev lib32z1-dev liblz4-tool libssl-dev libxml2 libxml2-utils lzop openjdk-11-jdk pngcrush python3 rsync schedtool squashfs-tools unzip wget xsltproc xz-utils zip zlib1g-dev zsync"
@@ -288,11 +284,12 @@ jobs:
   # -------------------------------------------------------------------------
   start-sign:
     name: Start Sign Instance
-    needs: [infrastructure, stop-build]
+    needs: [deploy-infrastructure, stop-build]
     runs-on: ubuntu-latest
     outputs:
       label: ${{ steps.label.outputs.label }}
       instance_id: ${{ steps.provision.outputs.instance_id }}
+      data_volume_id: ${{ needs.stop-build.outputs.data_volume_id }}
     steps:
       - uses: actions/checkout@v6
       - uses: aws-actions/configure-aws-credentials@v6
@@ -311,9 +308,9 @@ jobs:
           command: .github/scripts/ec2.sh provision
         env:
           EC2_INSTANCE_TYPE: ${{ env.EC2_SMALL_INSTANCE }}
-          EC2_SUBNET_ID: ${{ needs.infrastructure.outputs.subnet_id }}
-          EC2_SG_ID: ${{ needs.infrastructure.outputs.security_group_id }}
-          EC2_AMI_ID: ${{ needs.infrastructure.outputs.ami_id }}
+          EC2_SUBNET_ID: ${{ needs.deploy-infrastructure.outputs.subnet_id }}
+          EC2_SG_ID: ${{ needs.deploy-infrastructure.outputs.security_group_id }}
+          EC2_AMI_ID: ${{ needs.deploy-infrastructure.outputs.ami_id }}
           GH_PAT: ${{ secrets.GH_PAT }}
           BUILD_SSH_KEY: ${{ secrets.BUILD_SSH_KEY }}
           PACKAGES: "bc curl git git-lfs gh jq python3 rsync unzip wget xz-utils zip zsync"
@@ -391,16 +388,10 @@ jobs:
           token: ${{ github.token }}
       - run: .github/scripts/ebs.sh umount
 
-  # -------------------------------------------------------------------------
-  # teardown + retry
-  # -------------------------------------------------------------------------
-  teardown:
-    name: Teardown
-    needs: [start-sync, sync, stop-sync, start-build, build, stop-build, start-sign, sign]
+  stop-sign:
+    name: Stop Sign Instance
+    needs: [start-sign, sign]
     runs-on: ubuntu-latest
-    if: always()
-    outputs:
-      spot_interrupted: ${{ steps.check_spot.outputs.spot_interrupted }}
     steps:
       - uses: actions/checkout@v6
       - uses: aws-actions/configure-aws-credentials@v6
@@ -408,28 +399,55 @@ jobs:
           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: ${{ env.AWS_REGION }}
-      - id: check_spot
-        run: |
-          SPOT=false
-          for iid in "${{ needs.start-sync.outputs.instance_id }}" "${{ needs.start-build.outputs.instance_id }}"; do
-            [ -z "$iid" ] && continue
-            for _ in $(seq 1 12); do
-              r=$(aws ec2 describe-instances --region "$AWS_REGION" --instance-ids "$iid" \
-                --query 'Reservations[0].Instances[0].StateReason.Code' --output text 2>/dev/null) || true
-              s=$(aws ec2 describe-instances --region "$AWS_REGION" --instance-ids "$iid" \
-                --query 'Reservations[0].Instances[0].State.Name' --output text 2>/dev/null) || true
-              [ "$r" = "Server.SpotInstanceTermination" ] && { SPOT=true; break 2; }
-              { [ "$s" = "terminated" ] || [ "$s" = "shutting-down" ]; } && { SPOT=true; break 2; }
-              sleep 10
-            done
-          done
-          echo "spot_interrupted=${SPOT}" >> "$GITHUB_OUTPUT"
-      - name: Kill sign instance
-        run: .github/scripts/ec2.sh kill
+      - run: .github/scripts/ebs.sh detach
+        env:
+          VOLUME_ID: ${{ needs.start-sign.outputs.data_volume_id }}
+      - run: .github/scripts/ec2.sh kill
         env:
           EC2_INSTANCE_ID: ${{ needs.start-sign.outputs.instance_id }}
           GH_PAT: ${{ secrets.GH_PAT }}
           RUNNER_LABEL: ${{ needs.start-sign.outputs.label }}
+
+  destroy-infrastructure:
+    name: Destroy Infrastructure
+    needs: [stop-sign]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - uses: aws-actions/configure-aws-credentials@v6
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.AWS_REGION }}
+      - uses: dflook/tofu-destroy@v2
+        with:
+          path: .github/terraform
+          auto_approve: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  cleanup:
+    name: Cleanup
+    needs: [deploy-infrastructure, start-sync, sync, stop-sync, start-build, build, stop-build, start-sign, sign, stop-sign, destroy-infrastructure]
+    runs-on: ubuntu-latest
+    if: always()
+    steps:
+      - uses: actions/checkout@v6
+      - uses: aws-actions/configure-aws-credentials@v6
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.AWS_REGION }}
+      - name: Kill any remaining instances
+        run: |
+          for iid in "${{ needs.start-sync.outputs.instance_id }}" "${{ needs.start-build.outputs.instance_id }}" "${{ needs.start-sign.outputs.instance_id }}"; do
+            [ -z "$iid" ] && continue
+            echo "Terminating ${iid} (if still running)..."
+            .github/scripts/ec2.sh kill
+          done
+        env:
+          GH_PAT: ${{ secrets.GH_PAT }}
+          RUNNER_LABEL: ""
       - name: Delete data volume
         run: .github/scripts/ebs.sh delete
         env:
@@ -441,34 +459,8 @@ jobs:
             echo "| Item | Value |"
             echo "|------|-------|"
             echo "| Build result | ${{ needs.build.result }} |"
-            echo "| Spot interrupted | ${{ steps.check_spot.outputs.spot_interrupted }} |"
-            echo "| Attempt | $(( ${{ github.event.inputs._retry_attempt || '0' }} + 1 )) of 5 |"
+            echo "| Sync | ${{ needs.start-sync.outputs.instance_id || 'N/A' }} |"
+            echo "| Build | ${{ needs.start-build.outputs.instance_id || 'N/A' }} |"
+            echo "| Sign | ${{ needs.start-sign.outputs.instance_id || 'N/A' }} |"
+            echo "| Infrastructure | ${{ needs.deploy-infrastructure.result }} / destroyed: ${{ needs.destroy-infrastructure.result }} |"
           } >> "$GITHUB_STEP_SUMMARY"
-
-  retry:
-    name: Retry on Spot Interruption
-    needs: teardown
-    runs-on: ubuntu-latest
-    if: always() && needs.teardown.outputs.spot_interrupted == 'true'
-    steps:
-      - id: budget
-        env:
-          GH_TOKEN: ${{ github.token }}
-        run: |
-          a=${{ github.event.inputs._retry_attempt || '0' }}
-          n=$((a + 1))
-          if [ "$n" -ge 5 ]; then
-            echo "::error::Retry budget exhausted"
-            echo "has_budget=false" >> "$GITHUB_OUTPUT"
-          else
-            echo "next_attempt=${n}" >> "$GITHUB_OUTPUT"
-            echo "has_budget=true" >> "$GITHUB_OUTPUT"
-          fi
-      - if: steps.budget.outputs.has_budget == 'true'
-        env:
-          GH_TOKEN: ${{ github.token }}
-        run: |
-          gh workflow run build.yml --repo "${{ github.repository }}" --ref "${{ github.ref }}" \
-            --field release_channel="${{ github.event.inputs.release_channel || 'stable' }}" \
-            --field debug_build="${{ github.event.inputs.debug_build || 'false' }}" \
-            --field _retry_attempt="${{ steps.budget.outputs.next_attempt }}"
