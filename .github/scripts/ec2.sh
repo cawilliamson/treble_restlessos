@@ -118,13 +118,27 @@ EOF
 
   # 6. wait for runner online
   echo "Waiting for runner '${label}' to register..."
+  local registered=false
   for i in $(seq 1 40); do
     local online
     online=$(gh_api "${GH_API}/actions/runners" \
       | jq --arg l "$label" -r '[.runners[]|select(.labels[].name==$l)|select(.status=="online")]|length')
-    [ "${online:-0}" -ge 1 ] && { echo "Runner online"; break; }
+    if [ "${online:-0}" -ge 1 ] 2>/dev/null; then
+      echo "Runner online"
+      registered=true
+      break
+    fi
     echo "  attempt ${i}/40"; sleep 15
   done
+
+  # dump console output if runner never came online
+  if [ "$registered" = false ]; then
+    echo "=== ERROR: runner did not register — fetching EC2 console output ==="
+    aws ec2 get-console-output --region "$REGION" --instance-id "$iid" \
+      --query 'Output' --output text 2>/dev/null | tail -100 || true
+    echo "=== end console output ==="
+    exit 1
+  fi
 
   # 7. outputs
   {
