@@ -40,6 +40,7 @@ jobs:
       security_group_id: ${{ steps.tofu.outputs.security_group_id }}
       ami_id: ${{ steps.tofu.outputs.ami_id }}
       target_subnet_id: ${{ steps.select-az.outputs.target_subnet_id }}
+      target_az: ${{ steps.select-az.outputs.target_az }}
       sync_label: ${{ steps.sync-label.outputs.label }}
       sync_instance_id: ${{ steps.sync-provision.outputs.instance_id }}
       sync_data_volume_id: ${{ steps.sync-provision.outputs.data_volume_id }}
@@ -59,8 +60,10 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       - id: select-az
         run: |
-          subnet=$(.github/scripts/ec2.sh select-az)
-          echo "target_subnet_id=$subnet" >> "$GITHUB_OUTPUT"
+          result=$(.github/scripts/ec2.sh select-az)
+          echo "target_subnet_id=$(echo "$result" | jq -r .subnet)" >> "$GITHUB_OUTPUT"
+          echo "target_az=$(echo "$result" | jq -r .az)" >> "$GITHUB_OUTPUT"
+          echo "selected az: $(echo "$result" | jq -r .az)"
         env:
           AWS_REGION: ${{ env.AWS_REGION }}
           EC2_LARGE_INSTANCE: ${{ env.EC2_LARGE_INSTANCE }}

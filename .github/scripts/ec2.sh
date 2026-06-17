@@ -198,16 +198,16 @@ select_az() {
   best_az_id=$(echo "$scores" | jq -r '.SpotPlacementScores | max_by(.Score) | .AvailabilityZoneId')
   if [ -z "$best_az_id" ] || [ "$best_az_id" = "null" ]; then
     echo "WARN: could not determine best AZ id, falling back to AZ a" >&2
-    echo "$subnet_a"
+    echo '{"subnet":"'$subnet_a'","az":"'${AWS_REGION:?}a'"}'
     return 0
   fi
 
   echo "best availability zone id: $best_az_id" >&2
 
   case "$best_az_id" in
-    *az1) echo "$subnet_a" ;;
-    *az2) echo "$subnet_b" ;;
-    *az3) echo "$subnet_c" ;;
+    *az1) echo '{"subnet":"'$subnet_a'","az":"'${AWS_REGION:?}a'"}' ;;
+    *az2) echo '{"subnet":"'$subnet_b'","az":"'${AWS_REGION:?}b'"}' ;;
+    *az3) echo '{"subnet":"'$subnet_c'","az":"'${AWS_REGION:?}c'"}' ;;
     *) echo "ERROR: unexpected AZ id $best_az_id" >&2; exit 1 ;;
   esac
 }
