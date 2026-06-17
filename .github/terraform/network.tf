@@ -16,7 +16,7 @@ resource "aws_internet_gateway" "build" {
 
 resource "aws_subnet" "build_a" {
   vpc_id                  = aws_vpc.build.id
-  cidr_block              = "10.0.1.0/24"
+  cidr_block              = "10.0.4.0/24"
   availability_zone       = "${var.region}a"
   map_public_ip_on_launch = true
   tags                    = { Name = "gsi-build-a", Project = var.project_tag }
