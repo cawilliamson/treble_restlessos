@@ -247,7 +247,7 @@ jobs:
   # -------------------------------------------------------------------------
   start-sign:
     name: Swap to Sign Instance
-    needs: [deploy-infrastructure, select-az, start-build, build]
+    needs: [deploy-infrastructure, start-build, build]
     runs-on: ubuntu-latest
     outputs:
       label: ${{ steps.label.outputs.label }}
