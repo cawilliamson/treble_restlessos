@@ -26,73 +26,77 @@ provision() {
     | jq -r '.encoded_jit_config')
   [ -z "$jit" ] && { echo "ERROR: jit config fetch failed"; exit 1; }
 
-  # 2. build cloud-config user-data
-  # the ssh key is base64-encoded for safe embedding in yaml (newlines,
-  # dashes). cloud-init decodes it back to the exact secret bytes.
-  local key_b64 jit_b64 pkg_yaml=""
-  key_b64=$(printf '%s' "${BUILD_SSH_KEY:?}" | base64 --wrap=0)
-  jit_b64=$(printf '%s' "$jit" | base64 --wrap=0)
-  [ -n "$packages" ] && for p in $packages; do pkg_yaml+="  - ${p}"$'\n'; done
+  # 2. build shell user-data
+  # a plain bash script avoids yaml indentation fragility for the ssh key.
+  local ud_file; ud_file=$(mktemp)
+  local key_delim; key_delim="KEY_EOF_$(head -c 32 /dev/urandom | base64 | tr -dc 'A-Za-z0-9' | head -c 32)"
+  {
+    printf '%s\n' '#!/bin/bash' 'set -euo pipefail' ''
+    printf '%s\n' '# create the runner user'
+    printf '%s\n' 'useradd -m -s /bin/bash github 2>/dev/null || true'
+    printf '%s\n' 'usermod -aG sudo,disk github'
+    printf '%s\n' "echo 'github ALL=(ALL) NOPASSWD:ALL' > /etc/sudoers.d/github"
+    printf '%s\n' 'chmod 440 /etc/sudoers.d/github'
+    printf '\n'
 
-  local userdata
-  userdata=$(cat <<EOF
-#cloud-config
-package_update: true
-${pkg_yaml:+packages:
-${pkg_yaml}}
-users:
-  - default
-  - name: github
-    shell: /bin/bash
-    groups: [sudo, disk]
-    sudo: ['ALL=(ALL) NOPASSWD:ALL']
-    home: /home/github
-write_files:
-  - path: /home/github/.ssh/build_key
-    permissions: '0600'
-    encoding: b64
-    content: ${key_b64}
-  - path: /home/github/.ssh/config
-    permissions: '0600'
-    content: |
-      Host github.com
-        IdentityFile /home/github/.ssh/build_key
-        StrictHostKeyChecking no
-        User git
-
-      Host build.chrisaw.io
-        IdentityFile /home/github/.ssh/build_key
-        StrictHostKeyChecking no
-        User chrisaw
-  - path: /opt/jitconfig
-    permissions: '0600'
-    encoding: b64
-    content: ${jit_b64}
-runcmd:
-  # github secrets ui commonly strips the trailing newline from pasted keys.
-  # openssh/libcrypto requires it for pem-format keys, so add it back if absent.
-  - |
-    if [ -n "$(tail -c1 /home/github/.ssh/build_key)" ]; then
-      printf '\n' >> /home/github/.ssh/build_key
+    if [ -n "$packages" ]; then
+      printf '%s\n' '# install requested packages'
+      printf 'DEBIAN_FRONTEND=noninteractive apt-get update && apt-get install -y %s\n' "$packages"
+      printf '\n'
     fi
-    chmod 600 /home/github/.ssh/build_key
-  - chown -R github:github /home/github
-  - sudo -u github git config --global user.email 'androidbuild@localhost'
-  - sudo -u github git config --global user.name 'androidbuild'
-  - sudo -u github git config --global color.ui false
-  - curl -sf -o /usr/local/bin/repo https://storage.googleapis.com/git-repo-downloads/repo
-  - chmod a+x /usr/local/bin/repo
-  - |
-    v=\$(curl -sf https://api.github.com/repos/actions/runner/releases/latest | jq -r '.tag_name' | sed 's/^v//')
-    mkdir -p /opt/actions-runner
-    curl -sf -L "https://github.com/actions/runner/releases/download/v\${v}/actions-runner-linux-x64-\${v}.tar.gz" | tar -xz -C /opt/actions-runner
-    /opt/actions-runner/bin/installdependencies.sh
-    chown -R github:github /opt/actions-runner
-  - "shutdown -P +120 'SAFETY: 2-hour limit reached'"
-  - cd /opt/actions-runner && sudo -u github ./run.sh --jitconfig "\$(cat /opt/jitconfig)"
-EOF
-)
-  local ud_file; ud_file=$(mktemp); printf '%s' "$userdata" > "$ud_file"
+
+    printf '%s\n' '# ssh key and config'
+    printf '%s\n' 'mkdir -p /home/github/.ssh'
+    printf "cat > /home/github/.ssh/build_key <<'%s'\n" "$key_delim"
+    printf '%s\n' "${BUILD_SSH_KEY:?}"
+    printf '%s\n' "$key_delim"
+    printf '%s\n' 'chmod 600 /home/github/.ssh/build_key'
+    printf '%s\n' "cat > /home/github/.ssh/config <<'SSHEOF'"
+    printf '%s\n' 'Host github.com'
+    printf '%s\n' '  IdentityFile /home/github/.ssh/build_key'
+    printf '%s\n' '  StrictHostKeyChecking no'
+    printf '%s\n' '  User git'
+    printf '%s\n' ''
+    printf '%s\n' 'Host build.chrisaw.io'
+    printf '%s\n' '  IdentityFile /home/github/.ssh/build_key'
+    printf '%s\n' '  StrictHostKeyChecking no'
+    printf '%s\n' '  User chrisaw'
+    printf '%s\n' 'SSHEOF'
+    printf '%s\n' 'chmod 600 /home/github/.ssh/config'
+    printf '%s\n' 'chown -R github:github /home/github/.ssh'
+    printf '\n'
+
+    printf '%s\n' '# git identity (required for repo sync)'
+    printf '%s\n' "sudo -u github git config --global user.email 'androidbuild@localhost'"
+    printf '%s\n' "sudo -u github git config --global user.name 'androidbuild'"
+    printf '%s\n' 'sudo -u github git config --global color.ui false'
+    printf '\n'
+
+    printf '%s\n' '# repo tool'
+    printf '%s\n' 'curl -sf -o /usr/local/bin/repo https://storage.googleapis.com/git-repo-downloads/repo'
+    printf '%s\n' 'chmod a+x /usr/local/bin/repo'
+    printf '\n'
+
+    printf '%s\n' '# github actions runner'
+    printf '%s\n' "v=\$(curl -sf https://api.github.com/repos/actions/runner/releases/latest | jq -r '.tag_name' | sed 's/^v//')"
+    printf '%s\n' 'mkdir -p /opt/actions-runner'
+    printf '%s\n' 'curl -sf -L "https://github.com/actions/runner/releases/download/v${v}/actions-runner-linux-x64-${v}.tar.gz" | tar -xz -C /opt/actions-runner'
+    printf '%s\n' '/opt/actions-runner/bin/installdependencies.sh'
+    printf '%s\n' 'chown -R github:github /opt/actions-runner'
+    printf '\n'
+
+    printf '%s\n' '# jit runner config'
+    printf '%s\n' "printf '%s' '$jit' > /opt/jitconfig"
+    printf '%s\n' 'chmod 600 /opt/jitconfig'
+    printf '\n'
+
+    printf '%s\n' '# safety shutdown'
+    printf '%s\n' "shutdown -P +120 'SAFETY: 2-hour limit reached'"
+    printf '\n'
+
+    printf '%s\n' '# start runner'
+    printf '%s\n' 'cd /opt/actions-runner && sudo -u github ./run.sh --jitconfig "$(cat /opt/jitconfig)"'
+  } > "$ud_file"
 
   # 3. launch
   local -a market_args=()
