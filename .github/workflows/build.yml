@@ -75,7 +75,7 @@ jobs:
       - id: provision
         uses: nick-fields/retry@v4
         with:
-          max_attempts: 10
+          max_attempts: 2
           retry_wait_seconds: 60
           timeout_minutes: 20
           command: .github/scripts/ec2.sh provision
@@ -196,7 +196,7 @@ jobs:
       - id: provision
         uses: nick-fields/retry@v4
         with:
-          max_attempts: 10
+          max_attempts: 2
           retry_wait_seconds: 60
           timeout_minutes: 20
           command: .github/scripts/ec2.sh provision
@@ -302,7 +302,7 @@ jobs:
       - id: provision
         uses: nick-fields/retry@v4
         with:
-          max_attempts: 10
+          max_attempts: 2
           retry_wait_seconds: 60
           timeout_minutes: 20
           command: .github/scripts/ec2.sh provision
@@ -371,7 +371,7 @@ jobs:
       - uses: nick-fields/retry@v4
         with:
           timeout_minutes: 30
-          max_attempts: 10
+          max_attempts: 2
           retry_wait_seconds: 30
           command: |
             R="${{ steps.compress.outputs.release_name }}"
