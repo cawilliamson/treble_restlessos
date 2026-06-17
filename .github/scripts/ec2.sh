@@ -182,11 +182,24 @@ select_az() {
     --target-capacity 1 \
     --single-availability-zone \
     --region "$REGION" \
-    --output json)
+    --output json 2>/tmp/spot-score-stderr.log) || {
+    echo "WARN: spot placement score lookup failed, falling back to AZ a" >&2
+    cat /tmp/spot-score-stderr.log >&2 || true
+    echo "$subnet_a"
+    return 0
+  }
+
+  echo "spot placement scores: $scores" >&2
 
   local best_az
   best_az=$(echo "$scores" | jq -r '.SpotPlacementScores | max_by(.Score) | .AvailabilityZone')
-  [ -z "$best_az" ] || [ "$best_az" = "null" ] && { echo "ERROR: could not determine best AZ" >&2; exit 1; }
+  if [ -z "$best_az" ] || [ "$best_az" = "null" ]; then
+    echo "WARN: could not determine best AZ, falling back to AZ a" >&2
+    echo "$subnet_a"
+    return 0
+  fi
+
+  echo "best availability zone: $best_az" >&2
 
   case "$best_az" in
     *a) echo "$subnet_a" ;;
