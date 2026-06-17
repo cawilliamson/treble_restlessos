@@ -105,6 +105,7 @@ provision() {
   local -a bdm_args=("DeviceName=/dev/sda1,Ebs={VolumeSize=${root_vol},VolumeType=gp3,DeleteOnTermination=true}")
   [ -n "$data_vol" ] && bdm_args+=("DeviceName=/dev/sdf,Ebs={VolumeSize=${data_vol},VolumeType=gp3,DeleteOnTermination=true}")
 
+  # 3. launch
   echo "Launching ${inst_type} in ${subnet}..."
   local iid
   iid=$(aws ec2 run-instances --region "$REGION" \
