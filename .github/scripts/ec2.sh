@@ -27,8 +27,8 @@ provision() {
   [ -z "$jit" ] && { echo "ERROR: jit config fetch failed"; exit 1; }
 
   # 2. build cloud-config user-data
-  local key_b64 jit_b64 pkg_yaml=""
-  key_b64=$(printf '%s' "${BUILD_SSH_KEY:?}" | base64 --wrap=0)
+  # jitconfig must be base64-encoded because it is opaque binary from GitHub.
+  local jit_b64 pkg_yaml=""
   jit_b64=$(printf '%s' "$jit" | base64 --wrap=0)
   [ -n "$packages" ] && for p in $packages; do pkg_yaml+="  - ${p}"$'\n'; done
 
@@ -46,10 +46,6 @@ users:
     sudo: ['ALL=(ALL) NOPASSWD:ALL']
     home: /home/github
 write_files:
-  - path: /home/github/.ssh/build_key
-    permissions: '0600'
-    encoding: b64
-    content: ${key_b64}
   - path: /home/github/.ssh/config
     permissions: '0600'
     content: |
@@ -57,6 +53,7 @@ write_files:
         IdentityFile /home/github/.ssh/build_key
         StrictHostKeyChecking no
         User git
+
       Host build.chrisaw.io
         IdentityFile /home/github/.ssh/build_key
         StrictHostKeyChecking no
@@ -66,6 +63,14 @@ write_files:
     encoding: b64
     content: ${jit_b64}
 runcmd:
+  # write the SSH key directly via a quoted heredoc so the secret bytes are
+  # preserved exactly -- no base64 round-trip, no normalization.
+  - |
+    mkdir -p /home/github/.ssh
+    cat > /home/github/.ssh/build_key <<'RESTLESSOS_BUILD_KEY_EOF'
+${BUILD_SSH_KEY:?}
+RESTLESSOS_BUILD_KEY_EOF
+    chmod 600 /home/github/.ssh/build_key
   - chown -R github:github /home/github
   - sudo -u github git config --global user.email 'androidbuild@localhost'
   - sudo -u github git config --global user.name 'androidbuild'
