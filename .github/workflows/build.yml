@@ -60,7 +60,7 @@ jobs:
           TF_VAR_large_instance_type: ${{ env.EC2_LARGE_INSTANCE }}
 
   # -------------------------------------------------------------------------
-  # sync instance: provision, sync, patch, stop
+  # sync instance
   # -------------------------------------------------------------------------
   start-sync:
     name: Start Sync Instance
@@ -158,11 +158,16 @@ jobs:
           fi
       - run: .github/scripts/ebs.sh umount
 
-  stop-sync:
-    name: Stop Sync Instance
-    needs: [start-sync, sync]
+  # -------------------------------------------------------------------------
+  # build instance: stop sync then start build
+  # -------------------------------------------------------------------------
+  start-build:
+    name: Swap to Build Instance
+    needs: [deploy-infrastructure, start-sync, sync]
     runs-on: ubuntu-latest
     outputs:
+      label: ${{ steps.label.outputs.label }}
+      instance_id: ${{ steps.provision.outputs.instance_id }}
       data_volume_id: ${{ needs.start-sync.outputs.data_volume_id }}
     steps:
       - uses: actions/checkout@v6
@@ -179,25 +184,6 @@ jobs:
           EC2_INSTANCE_ID: ${{ needs.start-sync.outputs.instance_id }}
           GH_PAT: ${{ secrets.GH_PAT }}
           RUNNER_LABEL: ${{ needs.start-sync.outputs.label }}
-
-  # -------------------------------------------------------------------------
-  # build instance: provision, build, stop
-  # -------------------------------------------------------------------------
-  start-build:
-    name: Start Build Instance
-    needs: [deploy-infrastructure, stop-sync]
-    runs-on: ubuntu-latest
-    outputs:
-      label: ${{ steps.label.outputs.label }}
-      instance_id: ${{ steps.provision.outputs.instance_id }}
-      data_volume_id: ${{ needs.stop-sync.outputs.data_volume_id }}
-    steps:
-      - uses: actions/checkout@v6
-      - uses: aws-actions/configure-aws-credentials@v6
-        with:
-          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          aws-region: ${{ env.AWS_REGION }}
       - id: label
         run: echo "label=gsi-build-build-${{ github.run_id }}" >> "$GITHUB_OUTPUT"
       - id: provision
@@ -220,7 +206,7 @@ jobs:
           EC2_ROOT_VOLUME: "100"
       - run: .github/scripts/ebs.sh attach
         env:
-          VOLUME_ID: ${{ needs.stop-sync.outputs.data_volume_id }}
+          VOLUME_ID: ${{ needs.start-sync.outputs.data_volume_id }}
           EC2_INSTANCE_ID: ${{ steps.provision.outputs.instance_id }}
 
   build:
@@ -266,11 +252,16 @@ jobs:
           make target-files-package otatools -j"$(nproc --all)"
       - run: .github/scripts/ebs.sh umount
 
-  stop-build:
-    name: Stop Build Instance
-    needs: [start-build, build]
+  # -------------------------------------------------------------------------
+  # sign instance: stop build then start sign
+  # -------------------------------------------------------------------------
+  start-sign:
+    name: Swap to Sign Instance
+    needs: [deploy-infrastructure, start-build, build]
     runs-on: ubuntu-latest
     outputs:
+      label: ${{ steps.label.outputs.label }}
+      instance_id: ${{ steps.provision.outputs.instance_id }}
       data_volume_id: ${{ needs.start-build.outputs.data_volume_id }}
     steps:
       - uses: actions/checkout@v6
@@ -287,25 +278,6 @@ jobs:
           EC2_INSTANCE_ID: ${{ needs.start-build.outputs.instance_id }}
           GH_PAT: ${{ secrets.GH_PAT }}
           RUNNER_LABEL: ${{ needs.start-build.outputs.label }}
-
-  # -------------------------------------------------------------------------
-  # sign instance: provision, sign, release, stop
-  # -------------------------------------------------------------------------
-  start-sign:
-    name: Start Sign Instance
-    needs: [deploy-infrastructure, stop-build]
-    runs-on: ubuntu-latest
-    outputs:
-      label: ${{ steps.label.outputs.label }}
-      instance_id: ${{ steps.provision.outputs.instance_id }}
-      data_volume_id: ${{ needs.stop-build.outputs.data_volume_id }}
-    steps:
-      - uses: actions/checkout@v6
-      - uses: aws-actions/configure-aws-credentials@v6
-        with:
-          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          aws-region: ${{ env.AWS_REGION }}
       - id: label
         run: echo "label=gsi-build-sign-${{ github.run_id }}" >> "$GITHUB_OUTPUT"
       - id: provision
@@ -326,7 +298,7 @@ jobs:
           RUNNER_LABEL: ${{ steps.label.outputs.label }}
       - run: .github/scripts/ebs.sh attach
         env:
-          VOLUME_ID: ${{ needs.stop-build.outputs.data_volume_id }}
+          VOLUME_ID: ${{ needs.start-build.outputs.data_volume_id }}
           EC2_INSTANCE_ID: ${{ steps.provision.outputs.instance_id }}
 
   sign:
@@ -442,7 +414,7 @@ jobs:
 
   cleanup:
     name: Cleanup
-    needs: [deploy-infrastructure, start-sync, sync, stop-sync, start-build, build, stop-build, start-sign, sign, stop-sign, destroy-infrastructure]
+    needs: [deploy-infrastructure, start-sync, sync, start-build, build, start-sign, sign, stop-sign, destroy-infrastructure]
     runs-on: ubuntu-latest
     if: always()
     steps:
