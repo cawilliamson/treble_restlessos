@@ -22,7 +22,7 @@ provision() {
   echo "Fetching JIT config for label '${label}'..."
   local jit
   jit=$(gh_api -X POST "${GH_API}/actions/runners/generate-jitconfig" \
-    -d "{\"name\":\"ec2-${label}\",\"runner_group_id\":1,\"labels\":[\"${label}\"]}" \
+    -d "{\"name\":\"ec2-${label}\",\"runner_group_id\":1,\"labels\":[\"self-hosted\",\"${label}\"]}" \
     | jq -r '.encoded_jit_config')
   [ -z "$jit" ] && { echo "ERROR: jit config fetch failed"; exit 1; }
 
