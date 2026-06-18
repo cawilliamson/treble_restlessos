@@ -183,25 +183,23 @@ select_az() {
     --single-availability-zone \
     --region "$REGION" \
     --region-names "$REGION" \
-    --output json 2>/tmp/spot-score-stderr.log) || {
-    echo "WARN: spot placement score lookup failed; falling back to AZ a" >&2
-    cat /tmp/spot-score-stderr.log >&2
-    echo '{"subnet":"'$subnet_a'","az":"'${AWS_REGION:?}a'"}'
-    return 0
+    --output json) || {
+    echo "ERROR: failed to fetch spot placement scores" >&2
+    exit 1
   }
 
   local best_az_id
   best_az_id=$(echo "$scores" | jq -r '.SpotPlacementScores | max_by(.Score) | .AvailabilityZoneId')
   if [ -z "$best_az_id" ] || [ "$best_az_id" = "null" ]; then
-    echo '{"subnet":"'$subnet_a'","az":"'${AWS_REGION:?}a'"}'
-    return 0
+    echo "ERROR: spot placement scores returned no usable AZ" >&2
+    exit 1
   fi
 
   case "$best_az_id" in
     *az1) echo '{"subnet":"'$subnet_a'","az":"'${AWS_REGION:?}a'"}' ;;
     *az2) echo '{"subnet":"'$subnet_b'","az":"'${AWS_REGION:?}b'"}' ;;
     *az3) echo '{"subnet":"'$subnet_c'","az":"'${AWS_REGION:?}c'"}' ;;
-    *) echo '{"subnet":"'$subnet_a'","az":"'${AWS_REGION:?}a'"}' ;;
+    *) echo "ERROR: unexpected AZ id $best_az_id" >&2; exit 1 ;;
   esac
 }
 
