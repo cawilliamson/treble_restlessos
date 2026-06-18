@@ -188,12 +188,19 @@ select_az() {
     exit 1
   }
 
-  local best_az_id
-  best_az_id=$(echo "$scores" | jq -r '.SpotPlacementScores | max_by(.Score) | .AvailabilityZoneId')
+  echo "$scores" | jq -r '.SpotPlacementScores[] | "\(.AvailabilityZoneId): \(.Score)"' >&2
+
+  local best
+  best=$(echo "$scores" | jq -r '.SpotPlacementScores | max_by(.Score)')
+  local best_az_id score
+  best_az_id=$(echo "$best" | jq -r '.AvailabilityZoneId')
+  score=$(echo "$best" | jq -r '.Score')
   if [ -z "$best_az_id" ] || [ "$best_az_id" = "null" ]; then
     echo "ERROR: spot placement scores returned no usable AZ" >&2
     exit 1
   fi
+
+  echo "selected $best_az_id with score $score" >&2
 
   case "$best_az_id" in
     *az1) echo '{"subnet":"'$subnet_a'","az":"'${AWS_REGION:?}a'"}' ;;
