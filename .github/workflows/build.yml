@@ -41,13 +41,16 @@ jobs:
       sync_instance_id: ${{ steps.sync-provision.outputs.instance_id }}
       sync_data_volume_id: ${{ steps.sync-provision.outputs.data_volume_id }}
     steps:
-      - uses: actions/checkout@v6
-      - uses: aws-actions/configure-aws-credentials@v6
+      - name: Checkout repository
+        uses: actions/checkout@v6
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v6
         with:
           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: ${{ env.AWS_REGION }}
       - id: tofu
+        name: Apply infrastructure (OpenTofu)
         uses: dflook/tofu-apply@v2
         with:
           path: .github/terraform
@@ -55,6 +58,7 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       - id: select-az
+        name: Select availability zone
         run: |
           result=$(.github/scripts/ec2.sh select-az)
           echo "target_subnet_id=$(echo "$result" | jq -r .subnet)" >> "$GITHUB_OUTPUT"
@@ -67,8 +71,10 @@ jobs:
           EC2_SUBNET_ID_B: ${{ steps.tofu.outputs.subnet_id_b }}
           EC2_SUBNET_ID_C: ${{ steps.tofu.outputs.subnet_id_c }}
       - id: sync-label
+        name: Generate sync runner label
         run: echo "label=gsi-build-sync-${{ github.run_id }}" >> "$GITHUB_OUTPUT"
       - id: sync-provision
+        name: Provision sync instance
         uses: nick-fields/retry@v4
         with:
           max_attempts: 2
@@ -96,37 +102,43 @@ jobs:
       android_version: ${{ steps.parse_version.outputs.android_version }}
       android_version_tag: ${{ steps.parse_version.outputs.android_version_tag }}
     steps:
-      - uses: actions/checkout@v6
+      - name: Checkout repository
+        uses: actions/checkout@v6
         with: { clean: false, lfs: true, fetch-depth: 0, fetch-tags: true }
-      - run: .github/scripts/ebs.sh mount
+      - name: Mount sync data volume
+        run: .github/scripts/ebs.sh mount
         env:
           VOLUME_ID: ${{ needs.deploy-infrastructure.outputs.sync_data_volume_id }}
       - id: resolve_tag
-        working-directory: src/
+        name: Resolve latest GrapheneOS tag
+        working-directory: /mnt/src/
         run: |
           TAG=$(curl -fsS "https://grapheneos.org/releases" \
             | grep -oP "id=[a-z]+-stable><td>[^<]+</td><td><a href=#\K[0-9]{10}" \
             | sort -nr | head -1)
           [ -z "$TAG" ] && { echo "ERROR: failed to resolve tag"; exit 1; }
           echo "tag=$TAG" >> "$GITHUB_OUTPUT"
-      - working-directory: src/
+      - name: Initialise repo manifest
+        working-directory: /mnt/src/
         run: |
           repo init --depth=1 --git-lfs \
             --manifest-branch "refs/tags/${{ steps.resolve_tag.outputs.tag }}" \
             --manifest-url https://github.com/GrapheneOS/platform_manifest.git
           mkdir -p .repo/local_manifests
           cp -v ${{ github.workspace }}/configs/manifests/*.xml .repo/local_manifests/
-      - uses: nick-fields/retry@v4
+      - name: Sync AOSP sources
+        uses: nick-fields/retry@v4
         with:
           timeout_minutes: 120
           max_attempts: 20
           retry_wait_seconds: 30
           command: |
-            cd src/
+            cd /mnt/src
             JOBS=$(( $(nproc --all) > 16 ? 16 : $(nproc --all) ))
             repo sync --force-sync --jobs=${JOBS} --no-clone-bundle --no-tags
       - id: parse_version
-        working-directory: src/
+        name: Parse Android version
+        working-directory: /mnt/src/
         run: |
           AOSP_TAG=$(grep -m1 "aosp_revision:" .repo/manifests/config.yml | sed "s/.*: *//")
           ANDROID_VERSION=$(echo "${AOSP_TAG}" | sed "s/android-//;s/_r.*//")
@@ -134,7 +146,7 @@ jobs:
           echo "android_version=${ANDROID_VERSION}" >> "$GITHUB_OUTPUT"
           echo "android_version_tag=${ANDROID_VERSION_TAG}" >> "$GITHUB_OUTPUT"
       - name: Apply patches
-        working-directory: src/
+        working-directory: /mnt/src/
         run: |
           for tier in trebledroid trebledroid-staging rom personal; do
             ${{ github.workspace }}/patches/apply.sh . "${tier}"
@@ -144,7 +156,8 @@ jobs:
           else
             ${{ github.workspace }}/patches/apply.sh . release-builds
           fi
-      - run: .github/scripts/ebs.sh umount
+      - name: Unmount sync data volume
+        run: .github/scripts/ebs.sh umount
 
   # -------------------------------------------------------------------------
   # build instance: stop sync then start build
@@ -158,23 +171,29 @@ jobs:
       instance_id: ${{ steps.provision.outputs.instance_id }}
       data_volume_id: ${{ needs.deploy-infrastructure.outputs.sync_data_volume_id }}
     steps:
-      - uses: actions/checkout@v6
-      - uses: aws-actions/configure-aws-credentials@v6
+      - name: Checkout repository
+        uses: actions/checkout@v6
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v6
         with:
           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: ${{ env.AWS_REGION }}
-      - run: .github/scripts/ebs.sh detach
+      - name: Detach data volume
+        run: .github/scripts/ebs.sh detach
         env:
           VOLUME_ID: ${{ needs.deploy-infrastructure.outputs.sync_data_volume_id }}
-      - run: .github/scripts/ec2.sh kill
+      - name: Terminate sync instance
+        run: .github/scripts/ec2.sh kill
         env:
           EC2_INSTANCE_ID: ${{ needs.deploy-infrastructure.outputs.sync_instance_id }}
           GH_PAT: ${{ secrets.GH_PAT }}
           RUNNER_LABEL: ${{ needs.deploy-infrastructure.outputs.sync_label }}
       - id: label
+        name: Generate build runner label
         run: echo "label=gsi-build-build-${{ github.run_id }}" >> "$GITHUB_OUTPUT"
       - id: provision
+        name: Provision build instance
         uses: nick-fields/retry@v4
         with:
           max_attempts: 20
@@ -192,7 +211,8 @@ jobs:
           RUNNER_LABEL: ${{ steps.label.outputs.label }}
           EC2_MARKET_TYPE: spot
           EC2_ROOT_VOLUME: "100"
-      - run: .github/scripts/ebs.sh attach
+      - name: Attach data volume
+        run: .github/scripts/ebs.sh attach
         env:
           VOLUME_ID: ${{ needs.deploy-infrastructure.outputs.sync_data_volume_id }}
           EC2_INSTANCE_ID: ${{ steps.provision.outputs.instance_id }}
@@ -209,12 +229,15 @@ jobs:
       build_number: ${{ steps.metadata.outputs.build_number }}
       grapheneos_tag: ${{ needs.sync.outputs.grapheneos_tag }}
     steps:
-      - uses: actions/checkout@v6
+      - name: Checkout repository
+        uses: actions/checkout@v6
         with: { clean: false, lfs: true, fetch-depth: 0, fetch-tags: true }
-      - run: .github/scripts/ebs.sh mount
+      - name: Mount data volume
+        run: .github/scripts/ebs.sh mount
         env:
           VOLUME_ID: ${{ needs.start-build.outputs.data_volume_id }}
       - id: metadata
+        name: Capture build metadata
         run: |
           {
             echo "build_datetime=$(date +%s)"
@@ -225,9 +248,11 @@ jobs:
             echo "ANDROID_VERSION=${{ needs.sync.outputs.android_version }}"
             echo "ANDROID_VERSION_TAG=${{ needs.sync.outputs.android_version_tag }}"
           } >> "$GITHUB_ENV"
-      - working-directory: src/treble_app
+      - name: Build treble_app
+        working-directory: /mnt/src/treble_app
         run: bash build.sh release
-      - working-directory: src/
+      - name: Build system image and target files
+        working-directory: /mnt/src/
         run: |
           pushd device/phh/treble
             cp -fv ${{ github.workspace }}/configs/rom/rom.mk .
@@ -238,7 +263,8 @@ jobs:
           lunch "treble_arm64_bvN-${ANDROID_VERSION_TAG}-${V}"
           make systemimage -j"$(nproc --all)"
           make target-files-package otatools -j"$(nproc --all)"
-      - run: .github/scripts/ebs.sh umount
+      - name: Unmount data volume
+        run: .github/scripts/ebs.sh umount
 
   # -------------------------------------------------------------------------
   # sign instance: stop build then start sign
@@ -252,23 +278,29 @@ jobs:
       instance_id: ${{ steps.provision.outputs.instance_id }}
       data_volume_id: ${{ needs.start-build.outputs.data_volume_id }}
     steps:
-      - uses: actions/checkout@v6
-      - uses: aws-actions/configure-aws-credentials@v6
+      - name: Checkout repository
+        uses: actions/checkout@v6
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v6
         with:
           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: ${{ env.AWS_REGION }}
-      - run: .github/scripts/ebs.sh detach
+      - name: Detach data volume
+        run: .github/scripts/ebs.sh detach
         env:
           VOLUME_ID: ${{ needs.start-build.outputs.data_volume_id }}
-      - run: .github/scripts/ec2.sh kill
+      - name: Terminate build instance
+        run: .github/scripts/ec2.sh kill
         env:
           EC2_INSTANCE_ID: ${{ needs.start-build.outputs.instance_id }}
           GH_PAT: ${{ secrets.GH_PAT }}
           RUNNER_LABEL: ${{ needs.start-build.outputs.label }}
       - id: label
+        name: Generate sign runner label
         run: echo "label=gsi-build-sign-${{ github.run_id }}" >> "$GITHUB_OUTPUT"
       - id: provision
+        name: Provision sign instance
         uses: nick-fields/retry@v4
         with:
           max_attempts: 2
@@ -284,7 +316,8 @@ jobs:
           BUILD_SSH_KEY: ${{ secrets.BUILD_SSH_KEY }}
           PACKAGES: "bc curl git git-lfs gh jq python3 rsync unzip wget xz-utils zip zsync"
           RUNNER_LABEL: ${{ steps.label.outputs.label }}
-      - run: .github/scripts/ebs.sh attach
+      - name: Attach data volume
+        run: .github/scripts/ebs.sh attach
         env:
           VOLUME_ID: ${{ needs.start-build.outputs.data_volume_id }}
           EC2_INSTANCE_ID: ${{ steps.provision.outputs.instance_id }}
@@ -295,12 +328,15 @@ jobs:
     runs-on: [self-hosted, "${{ needs.start-sign.outputs.label }}"]
     timeout-minutes: 120
     steps:
-      - uses: actions/checkout@v6
+      - name: Checkout repository
+        uses: actions/checkout@v6
         with: { clean: false, lfs: true, fetch-depth: 0, fetch-tags: true }
-      - run: .github/scripts/ebs.sh mount
+      - name: Mount data volume
+        run: .github/scripts/ebs.sh mount
         env:
           VOLUME_ID: ${{ needs.start-sign.outputs.data_volume_id }}
-      - run: |
+      - name: Set build environment variables
+        run: |
           {
             echo "BUILD_DATETIME=${{ needs.build.outputs.build_datetime }}"
             echo "BUILD_NUMBER=${{ needs.build.outputs.build_number }}"
@@ -308,7 +344,8 @@ jobs:
             echo "ANDROID_VERSION=${{ needs.build.outputs.android_version }}"
             echo "ANDROID_VERSION_TAG=${{ needs.build.outputs.android_version_tag }}"
           } >> "$GITHUB_ENV"
-      - working-directory: src/
+      - name: Sign target files
+        working-directory: /mnt/src/
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
@@ -319,12 +356,13 @@ jobs:
           rm -fv "${OUT}/system.img"
           unzip -j -q "${OUT}/signed-target_files.zip" IMAGES/system.img -d "${OUT}/"
           rm -fv "${OUT}/signed-target_files.zip"
-          mv -v "${OUT}/system.img" "${{ github.workspace }}/out/system.img"
+          mv -v "${OUT}/system.img" "/mnt/src/out/system.img"
       - id: compress
+        name: Compress image and generate zsync
         run: |
           TAG="${ANDROID_VERSION}-${BUILD_NUMBER}"
           [ "${{ github.event.inputs.debug_build || 'false' }}" = "true" ] && TAG="${TAG}-debug"
-          cd out/
+          cd /mnt/src/out
           img="RestlessOS-arm64-ab-${TAG}.img"
           mv -v system.img "${img}"
           mkdir -p zsync
@@ -333,13 +371,15 @@ jobs:
           xz --best --compress --memlimit-compress=0 --threads=0 -v "${img}"
           echo "version_tag=${TAG}" >> "$GITHUB_OUTPUT"
           echo "release_name=RestlessOS-ab-${TAG}" >> "$GITHUB_OUTPUT"
-      - run: |
+      - name: Generate changelog
+        run: |
           TAG="${{ steps.compress.outputs.version_tag }}"
           PREV=$(git tag --sort=-version:refname | grep -v -- '-debug$' | grep -v "^${TAG}$" | head -1)
           [ -n "$PREV" ] && RANGE="${PREV}..HEAD" || RANGE="HEAD"
-          { echo "## Changes"; echo ""; git log --format='- %s' --no-merges "${RANGE}"; } > out/CHANGELOG.md
-          cat out/CHANGELOG.md
-      - uses: nick-fields/retry@v4
+          { echo "## Changes"; echo ""; git log --format='- %s' --no-merges "${RANGE}"; } > /mnt/src/out/CHANGELOG.md
+          cat /mnt/src/out/CHANGELOG.md
+      - name: Upload to build.chrisaw.io
+        uses: nick-fields/retry@v4
         with:
           timeout_minutes: 30
           max_attempts: 2
@@ -347,17 +387,19 @@ jobs:
           command: |
             R="${{ steps.compress.outputs.release_name }}"
             REMOTE="build.chrisaw.io:/var/www/build.chrisaw.io/${R}"
-            rsync -acvz --mkpath --timeout=120 --partial --partial-dir=.rsync-partial out/*.img.xz out/CHANGELOG.md "${REMOTE}/"
-            rsync -acvz --mkpath --timeout=120 --partial --partial-dir=.rsync-partial out/zsync/ "${REMOTE}/zsync/"
+            rsync -acvz --mkpath --timeout=120 --partial --partial-dir=.rsync-partial /mnt/src/out/*.img.xz /mnt/src/out/CHANGELOG.md "${REMOTE}/"
+            rsync -acvz --mkpath --timeout=120 --partial --partial-dir=.rsync-partial /mnt/src/out/zsync/ "${REMOTE}/zsync/"
       - if: github.event.inputs.debug_build != 'true'
+        name: Publish GitHub release
         uses: ncipollo/release-action@v1
         with:
           tag: ${{ steps.compress.outputs.version_tag }}
           name: "RestlessOS ${{ steps.compress.outputs.version_tag }}"
-          bodyFile: out/CHANGELOG.md
-          artifacts: "out/*.img.xz"
+          bodyFile: /mnt/src/out/CHANGELOG.md
+          artifacts: "/mnt/src/out/*.img.xz"
           token: ${{ github.token }}
-      - run: .github/scripts/ebs.sh umount
+      - name: Unmount data volume
+        run: .github/scripts/ebs.sh umount
 
   destroy-infrastructure:
     name: Destroy Infrastructure
@@ -365,8 +407,10 @@ jobs:
     runs-on: ubuntu-latest
     if: always()
     steps:
-      - uses: actions/checkout@v6
-      - uses: aws-actions/configure-aws-credentials@v6
+      - name: Checkout repository
+        uses: actions/checkout@v6
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v6
         with:
           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
@@ -380,7 +424,8 @@ jobs:
           EC2_INSTANCE_ID: ${{ needs.start-sign.outputs.instance_id }}
           GH_PAT: ${{ secrets.GH_PAT }}
           RUNNER_LABEL: ${{ needs.start-sign.outputs.label }}
-      - uses: dflook/tofu-destroy@v2
+      - name: Destroy infrastructure (OpenTofu)
+        uses: dflook/tofu-destroy@v2
         with:
           path: .github/terraform
           auto_approve: true
@@ -401,6 +446,7 @@ jobs:
         env:
           VOLUME_ID: ${{ needs.deploy-infrastructure.outputs.sync_data_volume_id }}
       - if: always()
+        name: Write build summary
         run: |
           {
             echo "## Build Summary"
