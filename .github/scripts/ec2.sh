@@ -176,6 +176,16 @@ select_az() {
   local subnet_b="${EC2_SUBNET_ID_B:?}"
   local subnet_c="${EC2_SUBNET_ID_C:?}"
 
+  local az_map
+  az_map=$(aws ec2 describe-availability-zones \
+    --region "$REGION" \
+    --filters "Name=state,Values=available" \
+    --query 'AvailabilityZones[?starts_with(ZoneName, `'"$REGION"'`)].{id: ZoneId, name: ZoneName}' \
+    --output json) || {
+    echo "ERROR: failed to describe availability zones" >&2
+    exit 1
+  }
+
   local scores
   scores=$(aws ec2 get-spot-placement-scores \
     --instance-types "$inst_type" \
@@ -200,13 +210,20 @@ select_az() {
     exit 1
   fi
 
-  echo "selected $best_az_id with score $score" >&2
+  local best_az_name
+  best_az_name=$(echo "$az_map" | jq -r --arg id "$best_az_id" '.[] | select(.id == $id) | .name')
+  if [ -z "$best_az_name" ] || [ "$best_az_name" = "null" ]; then
+    echo "ERROR: could not map AZ id $best_az_id to a name" >&2
+    exit 1
+  fi
 
-  case "$best_az_id" in
-    *az1) echo '{"subnet":"'$subnet_a'","az":"'${AWS_REGION:?}a'"}' ;;
-    *az2) echo '{"subnet":"'$subnet_b'","az":"'${AWS_REGION:?}b'"}' ;;
-    *az3) echo '{"subnet":"'$subnet_c'","az":"'${AWS_REGION:?}c'"}' ;;
-    *) echo "ERROR: unexpected AZ id $best_az_id" >&2; exit 1 ;;
+  echo "selected $best_az_id ($best_az_name) with score $score" >&2
+
+  case "$best_az_name" in
+    *a) echo '{"subnet":"'$subnet_a'","az":"'$best_az_name'"}' ;;
+    *b) echo '{"subnet":"'$subnet_b'","az":"'$best_az_name'"}' ;;
+    *c) echo '{"subnet":"'$subnet_c'","az":"'$best_az_name'"}' ;;
+    *) echo "ERROR: unexpected AZ name $best_az_name" >&2; exit 1 ;;
   esac
 }
 
