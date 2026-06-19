@@ -77,9 +77,9 @@ jobs:
         name: Provision sync instance
         uses: nick-fields/retry@v4
         with:
-          max_attempts: 2
+          max_attempts: 60
           retry_wait_seconds: 60
-          timeout_minutes: 20
+          timeout_minutes: 1
           command: .github/scripts/ec2.sh provision
         env:
           EC2_INSTANCE_TYPE: ${{ env.EC2_SMALL_INSTANCE }}
@@ -196,9 +196,9 @@ jobs:
         name: Provision build instance
         uses: nick-fields/retry@v4
         with:
-          max_attempts: 20
-          retry_wait_seconds: 30
-          timeout_minutes: 20
+          max_attempts: 60
+          retry_wait_seconds: 60
+          timeout_minutes: 1
           command: .github/scripts/ec2.sh provision
         env:
           EC2_INSTANCE_TYPE: ${{ env.EC2_LARGE_INSTANCE }}
@@ -303,9 +303,9 @@ jobs:
         name: Provision sign instance
         uses: nick-fields/retry@v4
         with:
-          max_attempts: 2
+          max_attempts: 60
           retry_wait_seconds: 60
-          timeout_minutes: 20
+          timeout_minutes: 1
           command: .github/scripts/ec2.sh provision
         env:
           EC2_INSTANCE_TYPE: ${{ env.EC2_SMALL_INSTANCE }}
@@ -428,7 +428,6 @@ jobs:
         uses: dflook/tofu-destroy@v2
         with:
           path: .github/terraform
-          auto_approve: true
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       - name: Kill any remaining instances
