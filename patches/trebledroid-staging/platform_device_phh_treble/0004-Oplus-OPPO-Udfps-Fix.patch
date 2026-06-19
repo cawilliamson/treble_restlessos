@@ -1,6 +1,6 @@
 From 935a4f38010462702c16790b884840d821b176b3 Mon Sep 17 00:00:00 2001
-From: Doze-off <viniciussadxxx@gmail.com>
-Date: Mon, 15 Jun 2026 00:45:15 +0100
+From: Nazar Bilinskyi <nbilinskyi@gmail.com>
+Date: Fri, 6 Feb 2026 14:13:24 +0200
 Subject: [PATCH 4/26] Oplus/OPPO UDFPS fix and sepolicy
 
 ---
