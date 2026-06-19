@@ -22,21 +22,23 @@ This removes:
 Also removes the dangling init_prog_id(globals) call that upstream
 added inside __libc_preinit_impl() in a newer revision.
 ---
- libc/Android.bp                   | 17 +-------
- libc/bionic/heap_tagging.cpp      | 14 +------
- libc/bionic/libc_init_dynamic.cpp | 83 ---------------------------------------
- libc/bionic/malloc_common.h       | 20 ----------
- libc/libc.map.txt                 | 1 -
- 5 files changed, 2 insertions(+), 133 deletions(-)
+ libc/Android.bp                   | 17 +------
+ libc/bionic/heap_tagging.cpp      | 14 +-----
+ libc/bionic/libc_init_dynamic.cpp | 82 -------------------------------
+ libc/bionic/malloc_common.h       | 20 --------
+ libc/libc.map.txt                 |  1 -
+ 5 files changed, 2 insertions(+), 132 deletions(-)
+
 diff --git a/libc/Android.bp b/libc/Android.bp
-index 95a7485..df8bec4 100644
+index 85c39a9..7743c23 100644
 --- a/libc/Android.bp
 +++ b/libc/Android.bp
-@@ -176,25 +176,14 @@ cc_defaults {
+@@ -175,26 +175,15 @@ cc_defaults {
+ 
      header_libs: ["gwp_asan_headers"],
      whole_static_libs: ["libscudo"],
- 
 +    cflags: ["-DUSE_SCUDO"],
+ 
      multilib: {
          lib32: {
 -            cflags: ["-DUSE_SCUDO"],
@@ -46,7 +48,7 @@ index 95a7485..df8bec4 100644
              ],
          },
 -        lib64: {
--            srcs: ["bionic/h_malloc_wrapper.cpp"],
+-            srcs: [":libc_h_malloc_wrapper_src"],
 -            cflags: [
 -                "-DH_MALLOC_PREFIX",
 -                "-DUSE_H_MALLOC",
@@ -64,7 +66,7 @@ index 95a7485..df8bec4 100644
              static_libs: ["libjemalloc5"],
          },
 -        lib64: {
--            srcs: ["bionic/h_malloc_wrapper.cpp"],
+-            srcs: [":libc_h_malloc_wrapper_src"],
 -            static_libs: ["libhardened_malloc"],
 -        },
      },
@@ -115,10 +117,10 @@ index 6b29f8e..c7b6d22 100644
        break;
      case M_HEAP_TAGGING_LEVEL_TBI:
 diff --git a/libc/bionic/libc_init_dynamic.cpp b/libc/bionic/libc_init_dynamic.cpp
-index 913fc06..a3f960c 100644
+index 913fc06..ca37407 100644
 --- a/libc/bionic/libc_init_dynamic.cpp
 +++ b/libc/bionic/libc_init_dynamic.cpp
-@@ -55,20 +55,6 @@
+@@ -55,19 +55,6 @@
  #include "private/bionic_ssp.h"
  #include "private/bionic_tls.h"
  #include "private/KernelArgumentBlock.h"
@@ -135,11 +137,10 @@ index 913fc06..a3f960c 100644
 -}
 -
 -extern "C" const char* __gnu_basename(const char* path);
--
+ 
  extern "C" {
    extern void netdClientInit(void);
-   extern int __cxa_atexit(void (*)(void *), void *, void *);
-@@ -93,74 +79,6 @@ extern "C" __attribute__((weak)) void __hwasan_library_unloaded(ElfW(Addr) base,
+@@ -93,74 +80,6 @@ extern "C" __attribute__((weak)) void __hwasan_library_unloaded(ElfW(Addr) base,
                                                                  const ElfW(Phdr)* phdr,
                                                                  ElfW(Half) phnum);
  
@@ -214,7 +215,7 @@ index 913fc06..a3f960c 100644
  // We need a helper function for __libc_preinit because compiling with LTO may
  // inline functions requiring a stack protector check, but __stack_chk_guard is
  // not initialized at the start of __libc_preinit. __libc_preinit_impl will run
-@@ -193,7 +111,6 @@ static void __libc_preinit_impl() {
+@@ -193,7 +112,6 @@ static void __libc_preinit_impl() {
  
    // Hooks for various libraries to let them know that we're starting up.
    __libc_globals.mutate([](libc_globals* globals) {
@@ -267,3 +268,6 @@ index 7002ee7..950fc4f 100644
      getaddrinfo;
      getauxval;
      getc;
+-- 
+2.54.0
+
