@@ -1,7 +1,7 @@
 From 3df666f6d3eb64f9c27fd337c8f1312849702aa3 Mon Sep 17 00:00:00 2001
 From: "Christopher A. Williamson" <contact@chrisaw.io>
 Date: Sat, 23 May 2026 18:16:06 +0100
-Subject: [PATCH 15/17] voiceinteraction: disable assistant screenshot on kernels
+Subject: [PATCH 15/19] voiceinteraction: disable assistant screenshot on kernels
  below 4.14
 
 QPR2 assist screenshot capture uses ImageReader -> SurfaceFlinger -> GPU
