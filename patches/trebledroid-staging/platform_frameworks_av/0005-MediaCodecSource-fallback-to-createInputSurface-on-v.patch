@@ -1,7 +1,7 @@
 From 86f18dff08763ab7e58ef5dfbb2e0b4c66e86301 Mon Sep 17 00:00:00 2001
 From: "Christopher A. Williamson" <contact@chrisaw.io>
 Date: Mon, 1 Jun 2026 20:06:24 +0100
-Subject: [PATCH] MediaCodecSource: fallback to createInputSurface when
+Subject: [PATCH 5/5] MediaCodecSource: fallback to createInputSurface when
  PersistentSurface fails
 
 some vendor HALs (notably MediaTek) report isModeSupported=true for
