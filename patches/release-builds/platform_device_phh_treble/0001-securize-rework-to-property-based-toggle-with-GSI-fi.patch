@@ -1,4 +1,4 @@
-From 051643fd32ffc9ee6ecb5076787f4c6556792d22 Mon Sep 17 00:00:00 2001
+From 6752fa08c2df7bff32bc3dbe625be73d453855d0 Mon Sep 17 00:00:00 2001
 From: "Christopher A. Williamson" <contact@chrisaw.io>
 Date: Mon, 15 Jun 2026 11:24:02 +0100
 Subject: [PATCH] securize: rework to property-based toggle with GSI
@@ -90,10 +90,10 @@ index eb22c4d..1be364b 100644
      if [[ "$prop_value" != "0" && "$prop_value" != "1" ]]; then
          exit 1
 diff --git a/rw-system.sh b/rw-system.sh
-index e04d256..7d9ec0f 100644
+index 4e5b828..f40e09a 100644
 --- a/rw-system.sh
 +++ b/rw-system.sh
-@@ -792,75 +792,131 @@ if [ "$brand" = OPPO ] || [ "$brand" = realme ]; then
+@@ -796,75 +796,131 @@ if [ "$brand" = OPPO ] || [ "$brand" = realme ]; then
      fi
  fi
  
@@ -268,7 +268,7 @@ index e04d256..7d9ec0f 100644
      if [ -f "$f" ];then
          for vndk in 26 27 28 29;do
 diff --git a/vndk.rc b/vndk.rc
-index cb9b44c..3a99f4f 100644
+index ea4531c..7a01a40 100644
 --- a/vndk.rc
 +++ b/vndk.rc
 @@ -40,9 +40,12 @@ on property:persist.sys.phh.oppo.dt2w=*
@@ -295,8 +295,8 @@ index cb9b44c..3a99f4f 100644
 +on property:sys.oem_unlock_allowed=*
 +    exec u:r:magisk:s0 root root -- /system/bin/resetprop_phh -n sys.oem_unlock_allowed 0
  
- # force software codecs: disable C2.0 entirely and hide vendor OMX nodes.
- # when the property is set, C2 is disabled, all vendor (non-OMX.google.)
+ # force software codecs: keep C2 enabled (the AOSP software codecs such as
+ # c2.android.avc.encoder are themselves C2 components, so disabling C2 would
 -- 
 2.54.0
 
