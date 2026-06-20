@@ -42,25 +42,6 @@ detach() {
 }
 
 # --------------------------------------------------------------------------
-# delete: delete EBS volume (with retry for stuck state)
-# env: VOLUME_ID
-# --------------------------------------------------------------------------
-delete() {
-  local vid="${VOLUME_ID:-}"
-  [ -z "$vid" ] && { echo "No volume to delete"; exit 0; }
-  echo "Deleting ${vid}..."
-  aws ec2 delete-volume --region "$REGION" --volume-id "$vid" || true
-  for i in $(seq 1 60); do
-    local state
-    state=$(aws ec2 describe-volumes --region "$REGION" --volume-ids "$vid" \
-      --query 'Volumes[0].State' --output text 2>/dev/null) || { echo "Volume deleted"; exit 0; }
-    [ "$state" = "deleted" ] && { echo "Volume deleted"; exit 0; }
-    echo "  volume still ${state} (${i}/60)"; sleep 10
-  done
-  echo "ERROR: volume still not deleted"; exit 1
-}
-
-# --------------------------------------------------------------------------
 # mount: find data volume (by label or NVMe serial), format if needed, mount
 # env: [VOLUME_ID] — set for first mount (serial lookup), omit for subsequent
 # --------------------------------------------------------------------------
@@ -119,8 +100,7 @@ umount_vol() {
 case "${1:-}" in
   attach)  shift; attach "$@" ;;
   detach)  shift; detach "$@" ;;
-  delete)  shift; delete "$@" ;;
   mount)   shift; mount_vol "$@" ;;
   umount)  shift; umount_vol "$@" ;;
-  *) echo "Usage: $0 {attach|detach|delete|mount|umount}"; exit 1 ;;
+  *) echo "Usage: $0 {attach|detach|mount|umount}"; exit 1 ;;
 esac
