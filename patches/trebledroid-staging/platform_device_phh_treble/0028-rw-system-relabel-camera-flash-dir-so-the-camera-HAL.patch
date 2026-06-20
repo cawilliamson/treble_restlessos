@@ -1,0 +1,40 @@
+From 974f6483f82107aeda245ac260dcfc747b52b1ac Mon Sep 17 00:00:00 2001
+From: "Christopher A. Williamson" <contact@chrisaw.io>
+Date: Sat, 20 Jun 2026 11:31:51 +0100
+Subject: [PATCH 28/28] rw-system: relabel camera flash dir so the camera HAL can
+ reach the torch
+
+some samsung-family vendors label /sys/class/camera/flash as sysfs_camera
+while only granting hal_camera_default search on sysfs_camera_writable.
+rw-system.sh already relabels the rear_flash file to sysfs_camera_writable,
+but the flash directory itself stays sysfs_camera, so the camera HAL is
+denied search into it and the torch never reaches the LED.
+
+also relabel the flash directory to sysfs_camera_writable. reuses the
+vendor's own type (already granted to hal_camera_default) -- no new
+sepolicy rule or type, and the block is already gated on the device
+exposing /sys/class/camera/flash/rear_flash owned by root.
+
+fixes #78
+---
+ rw-system.sh | 4 ++++
+ 1 file changed, 4 insertions(+)
+
+diff --git a/rw-system.sh b/rw-system.sh
+index 413c6fc..71fb905 100644
+--- a/rw-system.sh
++++ b/rw-system.sh
+@@ -779,6 +779,10 @@ if getprop ro.vendor.build.fingerprint | grep -qiE '^samsung/' && [ -n "$vndk" ]
+ 		[ "$(stat -c '%G' /sys/class/camera/flash/rear_flash)" == "root" ];then
+         chown system:system /sys/class/camera/flash/rear_flash
+         chcon u:object_r:sysfs_camera_writable:s0 /sys/class/camera/flash/rear_flash
++        # relabel the flash dir itself: hal_camera_default needs search on the
++        # dir to reach rear_flash, and vendors only grant search on
++        # sysfs_camera_writable, not the sysfs_camera label the dir ships with
++        chcon u:object_r:sysfs_camera_writable:s0 /sys/class/camera/flash
+     fi
+ fi
+ 
+-- 
+2.54.0
+
