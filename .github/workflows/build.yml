@@ -124,7 +124,7 @@ jobs:
             --manifest-url https://github.com/GrapheneOS/platform_manifest.git
           mkdir -p .repo/local_manifests
           cp -v ${{ github.workspace }}/configs/manifests/*.xml .repo/local_manifests/
-      - name: Sync AOSP sources
+      - name: Sync GrapheneOS sources
         uses: nick-fields/retry@v4
         with:
           timeout_minutes: 120
