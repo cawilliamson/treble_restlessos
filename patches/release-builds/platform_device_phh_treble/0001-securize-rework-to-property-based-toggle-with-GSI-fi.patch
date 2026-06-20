@@ -1,4 +1,4 @@
-From 6752fa08c2df7bff32bc3dbe625be73d453855d0 Mon Sep 17 00:00:00 2001
+From d62030c1a1d06fb89ae7d3e54c4f4c7ea048b4a7 Mon Sep 17 00:00:00 2001
 From: "Christopher A. Williamson" <contact@chrisaw.io>
 Date: Mon, 15 Jun 2026 11:24:02 +0100
 Subject: [PATCH] securize: rework to property-based toggle with GSI
@@ -268,7 +268,7 @@ index 4e5b828..f40e09a 100644
      if [ -f "$f" ];then
          for vndk in 26 27 28 29;do
 diff --git a/vndk.rc b/vndk.rc
-index ea4531c..7a01a40 100644
+index 692bfe4..77923f7 100644
 --- a/vndk.rc
 +++ b/vndk.rc
 @@ -40,9 +40,12 @@ on property:persist.sys.phh.oppo.dt2w=*
@@ -295,8 +295,8 @@ index ea4531c..7a01a40 100644
 +on property:sys.oem_unlock_allowed=*
 +    exec u:r:magisk:s0 root root -- /system/bin/resetprop_phh -n sys.oem_unlock_allowed 0
  
- # force software codecs: keep C2 enabled (the AOSP software codecs such as
- # c2.android.avc.encoder are themselves C2 components, so disabling C2 would
+ # force software codecs: replicate doissM's CodecFix approach to make the
+ # AOSP software codecs (c2.android.*) the only usable encoders/decoders.
 -- 
 2.54.0
 

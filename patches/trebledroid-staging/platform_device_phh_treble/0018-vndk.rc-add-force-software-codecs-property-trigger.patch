@@ -1,49 +1,70 @@
-From f0474e4bd6e6cd5015b65af0956e6dea751499a6 Mon Sep 17 00:00:00 2001
+From eb2425c488bf4b6f647d6b05cd9b9e552054bfa9 Mon Sep 17 00:00:00 2001
 From: "Christopher A. Williamson" <contact@chrisaw.io>
 Date: Sun, 14 Jun 2026 23:41:41 +0100
-Subject: [PATCH 18/29] vndk.rc: force software codecs without disabling C2
+Subject: [PATCH 18/29] vndk.rc: force software codecs via doissM CodecFix approach
+ (opt-in toggle)
 
-the previous force_sw_codecs trigger set debug.stagefright.ccodec=0 to disable
-C2 entirely. that was self-defeating: the AOSP software encoders such as
-c2.android.avc.encoder are themselves C2 components, so disabling C2 made them
-fail to allocate (createComponent -> OMITTED), leaving no AVC encoder at all
-and turning "force software codecs" into "no codecs". users enabling the
-toggle still hit error 7, but from missing-codec rather than PersistentSurface.
+restore the doissM CodecFix properties that were the default codec landscape
+before they were accidentally removed (a 0016 numbering collision on Apr 11,
+one day before issue #33 was reported). wire them as an opt-in toggle so the
+default is all codecs at vendor defaults (full performance), and enabling
+'force software codecs' sets the full CodecFix landscape:
 
-keep C2 enabled. the toggle now only sets debug.stagefright.c2inputsurface=-1
-to activate the AIDL buffer-source fallback so a software encoder can still
-create a PersistentSurface input on vendor kernels lacking the C2 input-surface
-HAL. vendor hardware codec selection is handled by the matching MediaCodecList
-filter (drop non-software codecs) and the OmxStore vendor-node filter, not by
-disabling C2.
+- media.c2.hal.selection=aidl  forces the AIDL C2 HAL (system-side, where
+  c2.android.* live) and hides vendor HIDL C2 HW codecs that don't match
+  the GSI system image.
+- omx_default_rank=0  demotes ALL OMX below C2 SW codecs (rank 0x200).
+- c2inputsurface=-1  AIDL buffer-source fallback for PersistentSurface.
+- ccodec=4  all C2 components at normal ranks (code default, set explicitly).
+
+this is the approach other TrebleDroid-based ROMs (doissM's CodecFix) use and
+that was working before its accidental removal. the previous rework (MediaCodecList
+filter alone) changed codec selection but not the underlying HAL/rank landscape,
+which is why the toggle-ON log still showed 'not a PersistentSurface' -- the
+doissM properties change the landscape at a lower level (AIDL HAL + OMX demotion)
+that apparently makes CameraX take a different (working) code path.
 
 Relates-to: #33
 Relates-to: #94
 ---
- vndk.rc | 13 +++++++++++++
- 1 file changed, 13 insertions(+)
+ vndk.rc | 27 +++++++++++++++++++++++++++
+ 1 file changed, 27 insertions(+)
 
 diff --git a/vndk.rc b/vndk.rc
-index 94c7583..ea4531c 100644
+index 94c7583..c7e4cd0 100644
 --- a/vndk.rc
 +++ b/vndk.rc
-@@ -136,3 +136,16 @@ service watchdogd-gsi /system/bin/watchdogd 10 20
+@@ -136,3 +136,30 @@ service watchdogd-gsi /system/bin/watchdogd 10 20
  on property:persist.sys.phh.adb_secure=1
      exec u:r:phhsu_daemon:s0 root -- /system/bin/resetprop_phh ro.adb.secure 1
      restart adbd
 +
-+# force software codecs: keep C2 enabled (the AOSP software codecs such as
-+# c2.android.avc.encoder are themselves C2 components, so disabling C2 would
-+# also disable them) but route selection around vendor hardware via the
-+# matching MediaCodecList filter, which drops non-software codecs when this
-+# property is set. the OmxStore filter additionally drops vendor OMX nodes.
-+# c2inputsurface=-1 activates the AIDL buffer-source fallback so a software
-+# encoder can still create a PersistentSurface input for camera recording on
-+# vendor kernels that lack the C2 input-surface HAL.
-+# uses resetprop_phh -n to patch property area directly before media
-+# services read them, matching the timing of CodecFix magisk module.
++# force software codecs: replicate doissM's CodecFix approach to make the
++# AOSP software codecs (c2.android.*) the only usable encoders/decoders.
++# this was the default codec landscape before it was accidentally removed
++# (a 0016 numbering collision on Apr 11); restoring it as an opt-in toggle.
++#
++# media.c2.hal.selection=aidl  forces the AIDL C2 HAL (system-side, where
++#   c2.android.* live) and hides vendor HIDL C2 HW codecs that don't match
++#   the GSI system image.
++# omx_default_rank=0  demotes ALL OMX (vendor HW + OMX.google SW) below
++#   C2 SW codecs (rank 0x200), so c2.android.* is preferred.
++# c2inputsurface=-1  activates the AIDL buffer-source fallback so a software
++#   encoder can still create a PersistentSurface input on vendor kernels
++#   that lack the C2 input-surface HAL.
++# ccodec=4  all C2 components at normal ranks (the code default; set
++#   explicitly to override any vendor prop that might change it).
++#
++# when the toggle is OFF (default): no properties are set, all codecs are
++# available at vendor defaults for full performance.
++#
++# uses resetprop_phh -n to patch the property area directly before media
++# services read them, matching the timing of doissM's CodecFix magisk module.
 +on property:persist.sys.phh.force_sw_codecs=true
 +    exec u:r:phhsu_daemon:s0 root -- /system/bin/resetprop_phh -n debug.stagefright.c2inputsurface -1
++    exec u:r:phhsu_daemon:s0 root -- /system/bin/resetprop_phh -n debug.stagefright.ccodec 4
++    exec u:r:phhsu_daemon:s0 root -- /system/bin/resetprop_phh -n debug.stagefright.omx_default_rank 0
++    exec u:r:phhsu_daemon:s0 root -- /system/bin/resetprop_phh -n media.c2.hal.selection aidl
 -- 
 2.54.0
 
