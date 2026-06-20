@@ -17,8 +17,6 @@ env:
   EC2_SMALL_INSTANCE: m7i.xlarge
   EC2_LARGE_INSTANCE: c7i.48xlarge
   EC2_SRC_VOLUME_SIZE: 1000
-  AWS_REGION: eu-west-2
-  PROJECT_TAG: gsi-build
 
 concurrency:
   group: build
@@ -48,7 +46,7 @@ jobs:
         with:
           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          aws-region: ${{ env.AWS_REGION }}
+          aws-region: eu-west-2
       - id: tofu
         name: Apply infrastructure (OpenTofu)
         uses: dflook/tofu-apply@v2
@@ -65,7 +63,7 @@ jobs:
           echo "target_az=$(echo "$result" | jq -r .az)" >> "$GITHUB_OUTPUT"
           echo "selected az: $(echo "$result" | jq -r .az)"
         env:
-          AWS_REGION: ${{ env.AWS_REGION }}
+          AWS_REGION: eu-west-2
           EC2_LARGE_INSTANCE: ${{ env.EC2_LARGE_INSTANCE }}
           EC2_SUBNET_ID_A: ${{ steps.tofu.outputs.subnet_id_a }}
           EC2_SUBNET_ID_B: ${{ steps.tofu.outputs.subnet_id_b }}
@@ -134,8 +132,7 @@ jobs:
           retry_wait_seconds: 30
           command: |
             cd /mnt/src
-            JOBS=$(( $(nproc --all) > 16 ? 16 : $(nproc --all) ))
-            repo sync --force-sync --jobs=${JOBS} --no-clone-bundle --no-tags
+            repo sync --force-sync --jobs=4 --no-clone-bundle --no-tags
       - id: parse_version
         name: Parse Android version
         working-directory: /mnt/src/
@@ -178,7 +175,7 @@ jobs:
         with:
           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          aws-region: ${{ env.AWS_REGION }}
+          aws-region: eu-west-2
       - name: Detach data volume
         run: .github/scripts/ebs.sh detach
         env:
@@ -285,7 +282,7 @@ jobs:
         with:
           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          aws-region: ${{ env.AWS_REGION }}
+          aws-region: eu-west-2
       - name: Detach data volume
         run: .github/scripts/ebs.sh detach
         env:
@@ -414,7 +411,7 @@ jobs:
         with:
           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          aws-region: ${{ env.AWS_REGION }}
+          aws-region: eu-west-2
       - name: Detach volume and kill sign instance
         run: |
           .github/scripts/ebs.sh detach

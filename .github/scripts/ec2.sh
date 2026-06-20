@@ -16,7 +16,7 @@ provision() {
   local sg="${EC2_SG_ID:?}" ami="${EC2_AMI_ID:?}"
   local label="${RUNNER_LABEL:?}" packages="${PACKAGES:-}"
   local market="${EC2_MARKET_TYPE:-}" root_vol="${EC2_ROOT_VOLUME:-30}"
-  local data_vol="${EC2_DATA_VOLUME:-}" tag="${PROJECT_TAG:-gsi-build}"
+  local data_vol="${EC2_DATA_VOLUME:-}" tag="gsi-build"
 
   # 1. jit runner config
   echo "Fetching JIT config for label '${label}'..."
