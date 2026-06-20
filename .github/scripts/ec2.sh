@@ -113,6 +113,7 @@ provision() {
     --security-group-ids "$sg" --instance-initiated-shutdown-behavior terminate \
     "${market_args[@]}" --block-device-mappings "${bdm_args[@]}" \
     --tag-specifications "ResourceType=instance,Tags=[{Key=Name,Value=${tag}-${label}},{Key=Project,Value=${tag}},{Key=Ephemeral,Value=true}]" \
+                    "ResourceType=volume,Tags=[{Key=Project,Value=${tag}},{Key=Ephemeral,Value=true}]" \
     --user-data "file://${ud_file}" --query 'Instances[0].InstanceId' --output text)
   rm -f "$ud_file"
 
@@ -131,12 +132,6 @@ provision() {
     [ -n "$vid" ] && [ "$vid" != "None" ] && break
     sleep 5
   done
-
-  # tag the data volume so the destroy sweep can locate and delete it
-  if [ -n "$vid" ] && [ "$vid" != "None" ]; then
-    aws ec2 create-tags --region "$REGION" --resources "$vid" \
-      --tags Key=Name,Value=${tag}-data Key=Project,Value=${tag} Key=Ephemeral,Value=true 2>/dev/null || true
-  fi
 
   # 6. wait for runner online
   echo "Waiting for runner '${label}' to register..."
