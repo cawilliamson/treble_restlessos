@@ -1,7 +1,7 @@
 From f0474e4bd6e6cd5015b65af0956e6dea751499a6 Mon Sep 17 00:00:00 2001
 From: "Christopher A. Williamson" <contact@chrisaw.io>
 Date: Sun, 14 Jun 2026 23:41:41 +0100
-Subject: [PATCH 18/28] vndk.rc: force software codecs without disabling C2
+Subject: [PATCH 18/29] vndk.rc: force software codecs without disabling C2
 
 the previous force_sw_codecs trigger set debug.stagefright.ccodec=0 to disable
 C2 entirely. that was self-defeating: the AOSP software encoders such as

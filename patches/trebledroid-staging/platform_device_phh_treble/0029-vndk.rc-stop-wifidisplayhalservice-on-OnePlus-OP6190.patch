@@ -1,0 +1,48 @@
+From 448814b1c1bfc27ae6ba8f6959773a28d579833a Mon Sep 17 00:00:00 2001
+From: "Christopher A. Williamson" <contact@chrisaw.io>
+Date: Sat, 20 Jun 2026 19:11:52 +0100
+Subject: [PATCH 29/29] vndk.rc: stop wifidisplayhalservice on OnePlus OP6190L1 to
+ fix boot stall
+
+on this sm8750 device vendor_wifidisplayhalservice_qti looks up
+android.hardware.audio.core.IModule/default at boot, which lazy-starts the
+QTI audio HAL before it has finished parsing ACDB config. the half-init'd
+HAL null-derefs (SIGSEGV at 0x18 in libaudiocorehal.qti.so makeIModuleDefaultQti)
+and crash-loops, blocking system_server's StartAudioService so the device
+sticks at the boot animation and never reaches boot_completed.
+
+the audioserver-class-main workaround does not help because audioserver starts
+after the HAL has already been crashed by wifidisplay's early lookup.
+
+stop wifidisplayhalservice the moment it starts, gated to ro.product.device=OP6190L1
+so only this affected device is touched (first-boot safe, no toggle needed).
+wireless display (Miracast) is lost on this device, which beats not booting;
+broaden the gate to other sm8750 OPPO/OnePlus models if they report the same.
+
+Relates-to: #44
+---
+ vndk.rc | 11 +++++++++++
+ 1 file changed, 11 insertions(+)
+
+diff --git a/vndk.rc b/vndk.rc
+index ea4531c..60c6d38 100644
+--- a/vndk.rc
++++ b/vndk.rc
+@@ -149,3 +149,14 @@ on property:persist.sys.phh.adb_secure=1
+ # services read them, matching the timing of CodecFix magisk module.
+ on property:persist.sys.phh.force_sw_codecs=true
+     exec u:r:phhsu_daemon:s0 root -- /system/bin/resetprop_phh -n debug.stagefright.c2inputsurface -1
++
++# OnePlus/OPPO sm8750 (OP6190L1): the QTI wifidisplay HAL looks up
++# android.hardware.audio.core.IModule/default at boot, which lazy-starts the
++# QTI audio HAL before it has finished parsing ACDB config. the half-init'd
++# HAL null-derefs (SIGSEGV at 0x18 in libaudiocorehal.qti.so) and crash-loops,
++# blocking system_server's StartAudioService -> stuck at bootanimation.
++# stop wifidisplayhalservice the moment it starts on this device so the audio
++# HAL can init without the early binder call. wireless display (Miracast) is
++# lost on this device, which beats not booting.
++on property:init.svc.wifidisplayhalservice=running && property:ro.product.device=OP6190L1
++    stop wifidisplayhalservice
+-- 
+2.54.0
+
