@@ -132,6 +132,12 @@ provision() {
     sleep 5
   done
 
+  # tag the data volume so the destroy sweep can locate and delete it
+  if [ -n "$vid" ] && [ "$vid" != "None" ]; then
+    aws ec2 create-tags --region "$REGION" --resources "$vid" \
+      --tags Key=Name,Value=${tag}-data Key=Project,Value=${tag} Key=Ephemeral,Value=true 2>/dev/null || true
+  fi
+
   # 6. wait for runner online
   echo "Waiting for runner '${label}' to register..."
   local registered=false

@@ -412,27 +412,10 @@ jobs:
           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: eu-west-2
-      - name: Terminate all build instances
-        run: |
-          set +e
-          kill_instance() {
-            [ -z "$1" ] && { echo "no instance id; skipping"; return 0; }
-            echo "Terminating $1 (label=${2:-none})..."
-            EC2_INSTANCE_ID="$1" RUNNER_LABEL="$2" .github/scripts/ec2.sh kill
-          }
-          kill_instance "${{ needs.deploy-infrastructure.outputs.sync_instance_id }}" "${{ needs.deploy-infrastructure.outputs.sync_label }}"
-          kill_instance "${{ needs.start-build.outputs.instance_id }}" "${{ needs.start-build.outputs.label }}"
-          kill_instance "${{ needs.start-sign.outputs.instance_id }}" "${{ needs.start-sign.outputs.label }}"
-          # give EC2 a moment to terminate and force-detach the data volume
-          sleep 15
-          exit 0
+      - name: Sweep ephemeral build resources (instances, volumes, runners)
+        run: .github/scripts/destroy.sh
         env:
           GH_PAT: ${{ secrets.GH_PAT }}
-      - name: Delete data volume
-        continue-on-error: true
-        run: .github/scripts/ebs.sh delete
-        env:
-          VOLUME_ID: ${{ needs.deploy-infrastructure.outputs.sync_data_volume_id }}
       - if: always()
         name: Destroy infrastructure (OpenTofu)
         uses: dflook/tofu-destroy@v2
