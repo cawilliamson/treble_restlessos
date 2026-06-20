@@ -77,7 +77,7 @@ jobs:
         with:
           max_attempts: 60
           retry_wait_seconds: 60
-          timeout_minutes: 1
+          timeout_minutes: 10
           command: .github/scripts/ec2.sh provision
         env:
           EC2_INSTANCE_TYPE: ${{ env.EC2_SMALL_INSTANCE }}
@@ -195,7 +195,7 @@ jobs:
         with:
           max_attempts: 60
           retry_wait_seconds: 60
-          timeout_minutes: 1
+          timeout_minutes: 10
           command: .github/scripts/ec2.sh provision
         env:
           EC2_INSTANCE_TYPE: ${{ env.EC2_LARGE_INSTANCE }}
@@ -302,7 +302,7 @@ jobs:
         with:
           max_attempts: 60
           retry_wait_seconds: 60
-          timeout_minutes: 1
+          timeout_minutes: 10
           command: .github/scripts/ec2.sh provision
         env:
           EC2_INSTANCE_TYPE: ${{ env.EC2_SMALL_INSTANCE }}
