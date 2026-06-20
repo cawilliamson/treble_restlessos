@@ -49,15 +49,24 @@ delete() {
   local vid="${VOLUME_ID:-}"
   [ -z "$vid" ] && { echo "No volume to delete"; exit 0; }
   echo "Deleting ${vid}..."
-  aws ec2 delete-volume --region "$REGION" --volume-id "$vid" || true
+  # the volume is force-detached when its instance terminates, so wait for it
+  # to reach available before deleting (retrying, since the transition takes a
+  # few seconds and delete-volume fails while in-use).
   for i in $(seq 1 60); do
     local state
     state=$(aws ec2 describe-volumes --region "$REGION" --volume-ids "$vid" \
-      --query 'Volumes[0].State' --output text 2>/dev/null) || { echo "Volume deleted"; exit 0; }
-    [ "$state" = "deleted" ] && { echo "Volume deleted"; exit 0; }
-    echo "  volume still ${state} (${i}/60)"; sleep 10
+      --query 'Volumes[0].State' --output text 2>/dev/null) || { echo "Volume ${vid} no longer exists"; exit 0; }
+    case "$state" in
+      deleted) echo "Volume deleted"; exit 0 ;;
+      available)
+        if aws ec2 delete-volume --region "$REGION" --volume-id "$vid" 2>/dev/null; then
+          echo "Volume deleted"; exit 0
+        fi
+        echo "  delete-volume failed (${state}), retrying (${i}/60)"; sleep 10 ;;
+      *) echo "  volume ${state} (${i}/60), waiting for available"; sleep 10 ;;
+    esac
   done
-  echo "ERROR: volume still not deleted"; exit 1
+  echo "ERROR: volume ${vid} still not deleted after 60 attempts"; exit 1
 }
 
 # --------------------------------------------------------------------------

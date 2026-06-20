@@ -400,7 +400,7 @@ jobs:
 
   destroy-infrastructure:
     name: Destroy Infrastructure
-    needs: [start-sign, sign]
+    needs: [deploy-infrastructure, start-build, start-sign, build, sign]
     runs-on: ubuntu-latest
     if: always()
     steps:
@@ -412,45 +412,31 @@ jobs:
           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: eu-west-2
-      - name: Detach volume and kill sign instance
+      - name: Terminate all build instances
         run: |
-          .github/scripts/ebs.sh detach
-          .github/scripts/ec2.sh kill
+          set +e
+          kill_instance() {
+            [ -z "$1" ] && { echo "no instance id; skipping"; return 0; }
+            echo "Terminating $1 (label=${2:-none})..."
+            EC2_INSTANCE_ID="$1" RUNNER_LABEL="$2" .github/scripts/ec2.sh kill
+          }
+          kill_instance "${{ needs.deploy-infrastructure.outputs.sync_instance_id }}" "${{ needs.deploy-infrastructure.outputs.sync_label }}"
+          kill_instance "${{ needs.start-build.outputs.instance_id }}" "${{ needs.start-build.outputs.label }}"
+          kill_instance "${{ needs.start-sign.outputs.instance_id }}" "${{ needs.start-sign.outputs.label }}"
+          # give EC2 a moment to terminate and force-detach the data volume
+          sleep 15
+          exit 0
         env:
-          VOLUME_ID: ${{ needs.start-sign.outputs.data_volume_id }}
-          EC2_INSTANCE_ID: ${{ needs.start-sign.outputs.instance_id }}
           GH_PAT: ${{ secrets.GH_PAT }}
-          RUNNER_LABEL: ${{ needs.start-sign.outputs.label }}
-      - name: Destroy infrastructure (OpenTofu)
+      - name: Delete data volume
+        continue-on-error: true
+        run: .github/scripts/ebs.sh delete
+        env:
+          VOLUME_ID: ${{ needs.deploy-infrastructure.outputs.sync_data_volume_id }}
+      - if: always()
+        name: Destroy infrastructure (OpenTofu)
         uses: dflook/tofu-destroy@v2
         with:
           path: .github/terraform
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      - name: Kill any remaining instances
-        run: |
-          for iid in "${{ needs.deploy-infrastructure.outputs.sync_instance_id }}" "${{ needs.start-build.outputs.instance_id }}" "${{ needs.start-sign.outputs.instance_id }}"; do
-            [ -z "$iid" ] && continue
-            echo "Terminating ${iid} (if still running)..."
-            EC2_INSTANCE_ID="$iid" .github/scripts/ec2.sh kill
-          done
-        env:
-          GH_PAT: ${{ secrets.GH_PAT }}
-          RUNNER_LABEL: ""
-      - name: Delete data volume
-        run: .github/scripts/ebs.sh delete
-        env:
-          VOLUME_ID: ${{ needs.deploy-infrastructure.outputs.sync_data_volume_id }}
-      - if: always()
-        name: Write build summary
-        run: |
-          {
-            echo "## Build Summary"
-            echo "| Item | Value |"
-            echo "|------|-------|"
-            echo "| Build result | ${{ needs.build.result }} |"
-            echo "| Sync | ${{ needs.deploy-infrastructure.outputs.sync_instance_id || 'N/A' }} |"
-            echo "| Build | ${{ needs.start-build.outputs.instance_id || 'N/A' }} |"
-            echo "| Sign | ${{ needs.start-sign.outputs.instance_id || 'N/A' }} |"
-            echo "| Infrastructure | ${{ needs.deploy-infrastructure.result }} / destroyed: ${{ job.status }} |"
-          } >> "$GITHUB_STEP_SUMMARY"
