@@ -373,7 +373,13 @@ jobs:
           TAG="${{ steps.compress.outputs.version_tag }}"
           PREV=$(git tag --sort=-version:refname | grep -v -- '-debug$' | grep -v "^${TAG}$" | head -1)
           [ -n "$PREV" ] && RANGE="${PREV}..HEAD" || RANGE="HEAD"
-          { echo "## Changes"; echo ""; git log --format='- %s' --no-merges "${RANGE}"; } > /mnt/src/out/CHANGELOG.md
+          {
+            echo "Based on GrapheneOS \`${GRAPHENEOS_TAG}\`"
+            echo ""
+            echo "## Changes"
+            echo ""
+            git log --format='- %s' --no-merges "${RANGE}"
+          } > /mnt/src/out/CHANGELOG.md
           cat /mnt/src/out/CHANGELOG.md
       - name: Upload to build.chrisaw.io
         uses: nick-fields/retry@v4
