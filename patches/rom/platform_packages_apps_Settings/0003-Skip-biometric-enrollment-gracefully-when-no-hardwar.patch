@@ -1,7 +1,7 @@
 From 4393240c25182b04aed484724e19154bf23779cf Mon Sep 17 00:00:00 2001
 From: "Christopher A. Williamson" <contact@chrisaw.io>
 Date: Sat, 28 Mar 2026 19:18:28 +0000
-Subject: [PATCH 3/3] Skip biometric enrollment gracefully when no hardware is
+Subject: [PATCH 3/4] Skip biometric enrollment gracefully when no hardware is
  available
 
 On GSI builds where no biometric sensor is properly configured,

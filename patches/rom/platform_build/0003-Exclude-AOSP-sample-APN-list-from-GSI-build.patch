@@ -1,7 +1,7 @@
 From 08f6eb7384e886bcbf88f07a31611f678ad2a968 Mon Sep 17 00:00:00 2001
 From: "Christopher A. Williamson" <contact@chrisaw.io>
 Date: Sat, 30 May 2026 09:15:07 +0100
-Subject: [PATCH] product: Exclude AOSP sample APN list from GSI build
+Subject: [PATCH 3/3] product: Exclude AOSP sample APN list from GSI build
 
 The apns-full-conf.xml includes thousands of carrier APNs that bloat
 the GSI image. Carrier APNs are loaded from the SIM by modern modems

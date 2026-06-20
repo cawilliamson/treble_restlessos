@@ -1,7 +1,7 @@
 From eadca6367dc4c0157060bdbb91c3493baa7f218f Mon Sep 17 00:00:00 2001
 From: "Christopher A. Williamson" <contact@chrisaw.io>
 Date: Thu, 28 May 2026 10:32:32 +0100
-Subject: [PATCH] AppPermissionPreference: warn when BPF-based firewall is
+Subject: [PATCH 4/4] AppPermissionPreference: warn when BPF-based firewall is
  unavailable
 
 Many GSI/legacy kernels lack full eBPF support. When our fallback

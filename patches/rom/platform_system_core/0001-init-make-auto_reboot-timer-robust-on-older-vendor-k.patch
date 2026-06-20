@@ -1,7 +1,7 @@
 From b7a9b4acaf30226c03c3a2f14cd0664f58815409 Mon Sep 17 00:00:00 2001
 From: "Christopher A. Williamson" <contact@chrisaw.io>
 Date: Wed, 25 Mar 2026 09:01:11 +0000
-Subject: [PATCH] init: make auto_reboot timer robust on older vendor kernels
+Subject: [PATCH 1/2] init: make auto_reboot timer robust on older vendor kernels
 
 GrapheneOS's auto-reboot feature uses CLOCK_BOOTTIME_ALARM which may not
 be available on some vendor kernels. Fall back to CLOCK_BOOTTIME which
