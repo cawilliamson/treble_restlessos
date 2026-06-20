@@ -30,3 +30,13 @@ for vid in $vids; do
     sleep 5
   done
 done
+
+# deregister stale offline self-hosted runners (the EC2 host is gone; the
+# registration is free but tidy it up). no concurrent runs share this repo.
+if command -v gh >/dev/null && [ -n "${GH_TOKEN:-}" ]; then
+  for rid in $(gh api "/repos/${GITHUB_REPOSITORY}/actions/runners?per_page=100" \
+      --jq '.runners[] | select(.status=="offline") | .id' 2>/dev/null); do
+    echo "Deregistering offline runner ${rid}"
+    gh api -X DELETE "/repos/${GITHUB_REPOSITORY}/actions/runners/${rid}" 2>/dev/null || true
+  done
+fi

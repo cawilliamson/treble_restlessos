@@ -415,7 +415,7 @@ jobs:
       - name: Sweep ephemeral build resources (instances, volumes, runners)
         run: .github/scripts/destroy.sh
         env:
-          GH_PAT: ${{ secrets.GH_PAT }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       - if: always()
         name: Destroy infrastructure (OpenTofu)
         uses: dflook/tofu-destroy@v2
