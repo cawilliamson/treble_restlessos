@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-REGION="eu-west-2"
+REGION="${AWS_REGION:?}"
 MOUNT_POINT="/mnt/src"
 LABEL="builddata"
 

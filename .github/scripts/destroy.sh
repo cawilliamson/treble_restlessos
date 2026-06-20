@@ -4,7 +4,7 @@
 # never ran). the terraform-managed VPC etc. is torn down by the workflow's
 # tofu-destroy step. nothing here is fatal.
 set -uo pipefail
-REGION="eu-west-2"
+REGION="${AWS_REGION:?}"
 FILTER=("Name=tag:Project,Values=gsi-build" "Name=tag:Ephemeral,Values=true")
 
 # terminate leftover instances

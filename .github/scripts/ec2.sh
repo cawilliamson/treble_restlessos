@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-REGION="eu-west-2"
+REGION="${AWS_REGION:?}"
 REPO="${GITHUB_REPOSITORY:?}"
 GH_API="https://api.github.com/repos/${REPO}"
 
