@@ -1,7 +1,7 @@
 From 8b037719fc5edff3b6ba4d150e8b99ffa2dcadf1 Mon Sep 17 00:00:00 2001
 From: "Christopher A. Williamson" <contact@chrisaw.io>
 Date: Sun, 14 Jun 2026 02:10:03 +0100
-Subject: [PATCH 12/29] phh-on-boot: skip USB gadget reset on devices with
+Subject: [PATCH 12/30] phh-on-boot: skip USB gadget reset on devices with
  fingerprint HAL
 
 The USB gadget recovery code cycles sys.usb.config when the UDC is not

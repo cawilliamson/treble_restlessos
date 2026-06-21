@@ -1,0 +1,48 @@
+From 02c9db30cd04179e8b789506347baa12d73a2282 Mon Sep 17 00:00:00 2001
+From: "Christopher A. Williamson" <contact@chrisaw.io>
+Date: Sun, 21 Jun 2026 19:11:49 +0100
+Subject: [PATCH 30/30] allow MTK fuelgauged_nvram to load battery gauge calibration
+
+the MTK fuel-gauge NVRAM loader (fuelgauged_nvram) needs to traverse the
+DT firmware sysfs tree to load gauge calibration. the GSI system policy
+has no allow for this, so SELinux denies the search in enforcing mode and
+the gauge reports a hardcoded 48% at boot until coulomb counters resync.
+
+sysfs_dt_firmware_android is a system-public type (declared in
+system/sepolicy/public/file.te and already allowed for gsid/lpdumpd/
+fastbootd), so the target is present on every device. fuelgauged_nvram is
+an MTK vendor domain, re-declared here so the allow is visible to
+system_ext; secilc -m unifies it with the vendor's own declaration at
+boot, preserving the vendor's existing rules for the domain. on non-MTK
+vendors the type is unused so the rule is a harmless no-op.
+
+Fixes: #69
+---
+ sepolicy/mediatek.te | 14 ++++++++++++++
+ 1 file changed, 14 insertions(+)
+
+diff --git a/sepolicy/mediatek.te b/sepolicy/mediatek.te
+index 98303b9..09ccd9d 100644
+--- a/sepolicy/mediatek.te
++++ b/sepolicy/mediatek.te
+@@ -37,3 +37,17 @@ allow platform_app sysfs_leds:file r_file_perms;
+ 
+ # Needed for headphone detection when opening /bus/platform/drivers/pmic-codec-accdet/state
+ allow mtk_hal_audio sysfs:file r_file_perms;
++
++# MTK fuel-gauge NVRAM loader (fuelgauged_nvram) traverses the DT firmware
++# sysfs tree to load gauge calibration. the GSI system policy lacks the allow,
++# so SELinux denies the search and the gauge reports a hardcoded 48% until
++# coulomb counters resync (#69). sysfs_dt_firmware_android is system-public
++# (system/sepolicy/public/file.te); fuelgauged_nvram is an MTK vendor domain
++# re-declared here so the allow is visible to system_ext -- secilc -m unifies
++# it with the vendor's own declaration at boot, so the vendor's existing rules
++# for the domain are preserved. on non-MTK vendors the type is unused (no
++# process is assigned to it) so this is a harmless no-op.
++type fuelgauged_nvram, domain;
++allow fuelgauged_nvram sysfs_dt_firmware_android:dir r_dir_perms;
++allow fuelgauged_nvram sysfs_dt_firmware_android:file r_file_perms;
++allow fuelgauged_nvram sysfs_dt_firmware_android:lnk_file r_file_perms;
+-- 
+2.54.0
+
