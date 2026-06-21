@@ -1,7 +1,7 @@
 From 8f3fc1cf9b9adf3e3d85d23918e54dd81fc610a9 Mon Sep 17 00:00:00 2001
 From: "Christopher A. Williamson" <contact@chrisaw.io>
 Date: Sun, 21 Jun 2026 21:24:22 +0100
-Subject: [PATCH 10/10] treble_app: add an lmk_tweaks toggle to the Misc settings
+Subject: [PATCH 10/11] treble_app: add an lmk_tweaks toggle to the Misc settings
 
 add a "Aggressive memory management (lmk tweaks)" switch to the Misc
 settings screen that sets persist.sys.phh.lmk_tweaks, wiring the

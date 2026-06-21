@@ -1,7 +1,7 @@
 From a6db3b9e972a498222aa4b1deb0622b0504a8f1a Mon Sep 17 00:00:00 2001
 From: "Christopher A. Williamson" <contact@chrisaw.io>
 Date: Tue, 19 May 2026 10:14:15 +0100
-Subject: [PATCH 9/10] Catch IMS download failures instead of crashing the app
+Subject: [PATCH 9/11] Catch IMS download failures instead of crashing the app
 
 The treble.phh.me SSL certificate expired, causing DownloadManager to
 throw an exception during IMS APK download. The unhandled exception

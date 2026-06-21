@@ -1,7 +1,7 @@
 From f5473d34eff3e7dfbf3d4061d833df8f81df910e Mon Sep 17 00:00:00 2001
 From: Doze-off <viniciussadxxx@gmail.com>
 Date: Wed, 25 Mar 2026 09:41:33 +0000
-Subject: [PATCH 6/10] add SurfaceFlinger latch unsignaled and backpressure
+Subject: [PATCH 6/11] add SurfaceFlinger latch unsignaled and backpressure
  toggles
 
 add three new toggles to the misc settings for SurfaceFlinger control:
