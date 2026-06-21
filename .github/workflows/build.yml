@@ -248,7 +248,7 @@ jobs:
       - name: Build treble_app
         working-directory: /mnt/src/treble_app
         run: bash build.sh release
-      - name: Build system image
+      - name: Build system image and target files
         working-directory: /mnt/src/
         run: |
           pushd device/phh/treble
