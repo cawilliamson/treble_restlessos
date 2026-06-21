@@ -1,0 +1,65 @@
+From 8ea9b07e1c9a2f9836aaf19cf796fa0873db380f Mon Sep 17 00:00:00 2001
+From: "Christopher A. Williamson" <contact@chrisaw.io>
+Date: Sun, 21 Jun 2026 22:25:34 +0100
+Subject: [PATCH 34/34] trebledroid-staging: suppress garbled charger ui on xiaomi
+ pad6 (pipa)
+
+on the xiaomi pad6 (pipa) the aosp healthd offline charger renders a garbled
+screen. the charger service is /system/bin/charger (class charger, see
+charger.rc) and uses minui, whose drm backend mismatches this 1800x2880
+sde/dsi panel. ro.minui.pixel_format is already correctly set to RGBX_8888
+by the vendor, so the garble is not a pixel-format mismatch but a
+mode/stride/backend issue in the shared recovery minui code that cannot be
+safely fixed without a dev device to verify.
+
+until a proper render fix is developed, set ro.charger.no_ui on pipa so
+charger.cpp runs healthd_charger_nops: charging continues with no ui,
+avoiding the garbled screen.
+
+loading: this must take effect in charger mode, before class_start charger
+(rootdir/init.rc). rw-system.sh cannot be used: it runs at on post-fs,
+which is triggered by late-init, and init.cpp queues on charger instead of
+late-init in charger mode, so post-fs never fires and rw-system.sh never
+runs. instead set the prop from charger.rc at on init, which fires in both
+charger and normal boot (init.cpp queues it before the charger/late-init
+branch). ro.product.device is loaded from build.prop before on init fires,
+and setprop is an init builtin so no /system exec is needed. init property
+triggers only support exact match or '*' (any), so gate on the exact value
+ro.product.device=pipa rather than a fingerprint glob.
+---
+ charger.rc | 19 +++++++++++++++++++
+ 1 file changed, 19 insertions(+)
+
+diff --git a/charger.rc b/charger.rc
+index b52e93b..f082dda 100644
+--- a/charger.rc
++++ b/charger.rc
+@@ -12,6 +12,25 @@ service charger /system/bin/charger
+     capabilities SYS_BOOT
+     seclabel u:r:charger:s0
+ 
++# xiaomi pad6 (pipa) offline charging renders a garbled screen: the aosp
++# healthd charger's minui drm path mismatches this 1800x2880 sde/dsi panel
++# (ro.minui.pixel_format is already correct, so the garble is in mode/stride/
++# backend selection in shared recovery minui code, not safely fixable blind).
++# until a proper render fix is developed on a dev device, suppress the charger
++# ui so charging proceeds without the garbled screen.
++#
++# this must run in charger mode, before class_start charger (rootdir/init.rc).
++# rw-system.sh is no use here: it runs at on post-fs, which is triggered by
++# late-init, and init.cpp queues on charger instead of late-init in charger
++# mode, so post-fs never fires and rw-system.sh never runs. on init fires in
++# both charger and normal boot (init.cpp queues it before the charger/
++# late-init branch), ro.product.device is loaded from build.prop before on
++# init fires, and setprop is an init builtin so no /system exec is needed.
++# ro.charger.no_ui makes charger.cpp run healthd_charger_nops (no rendering,
++# charging continues).
++on init && property:ro.product.device=pipa
++    setprop ro.charger.no_ui true
++
+ on charger && property:ro.hardware=mt*
+     write /sys/class/leds/lcd-backlight/trigger "backlight"
+     write /sys/class/android_usb/android0/enable 1
+-- 
+2.54.0
+

@@ -1,7 +1,7 @@
 From 4d0d688b117494868216d928ee8259eb5ee2ee9b Mon Sep 17 00:00:00 2001
 From: "Christopher A. Williamson" <contact@chrisaw.io>
 Date: Fri, 10 Apr 2026 00:38:55 +0100
-Subject: [PATCH 16/32] base: disable C2 input surface by default for GSI
+Subject: [PATCH 16/34] base: disable C2 input surface by default for GSI
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
 Content-Transfer-Encoding: 8bit

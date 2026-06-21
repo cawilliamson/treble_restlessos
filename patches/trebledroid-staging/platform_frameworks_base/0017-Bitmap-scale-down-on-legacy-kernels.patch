@@ -1,7 +1,7 @@
 From 3e746e253dfb97926a1836402070e8345803c245 Mon Sep 17 00:00:00 2001
 From: "Christopher A. Williamson" <contact@chrisaw.io>
 Date: Fri, 29 May 2026 22:48:46 +0100
-Subject: [PATCH 17/19] Bitmap: scale down bitmaps in writeToParcel on legacy kernels
+Subject: [PATCH 17/20] Bitmap: scale down bitmaps in writeToParcel on legacy kernels
  (< 4.14)
 
 On kernel < 4.14 devices, the binder transaction buffer is limited to

@@ -1,7 +1,7 @@
 From 935a4f38010462702c16790b884840d821b176b3 Mon Sep 17 00:00:00 2001
 From: Nazar Bilinskyi <nbilinskyi@gmail.com>
 Date: Fri, 6 Feb 2026 14:13:24 +0200
-Subject: [PATCH 4/32] Oplus/OPPO UDFPS fix and sepolicy
+Subject: [PATCH 4/34] Oplus/OPPO UDFPS fix and sepolicy
 
 ---
  phh-prop-handler.sh        | 16 ++++++++++++++++

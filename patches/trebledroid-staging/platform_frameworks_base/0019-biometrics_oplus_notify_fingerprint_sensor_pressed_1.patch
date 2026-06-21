@@ -1,7 +1,7 @@
 From aaae20204026b002c6ba37f35c21457c7ea65977 Mon Sep 17 00:00:00 2001
 From: dozeofffff <dozeoffff@dozeoffff>
 Date: Sun, 10 May 2026 23:55:47 +0000
-Subject: [PATCH 19/19] biometrics_oplus_notify_fingerprint_sensor_pressed_1
+Subject: [PATCH 19/20] biometrics_oplus_notify_fingerprint_sensor_pressed_1
 
 ---
  .../com/android/systemui/biometrics/AuthController.java    | 7 +++++++

@@ -1,7 +1,7 @@
 From b7a23ac114b6c2edf08fada3954152100f7cd893 Mon Sep 17 00:00:00 2001
 From: "Christopher A. Williamson" <contact@chrisaw.io>
 Date: Sun, 21 Jun 2026 20:56:27 +0100
-Subject: [PATCH 31/32] trebledroid-staging: set up zram swap as a fallback when the
+Subject: [PATCH 31/34] trebledroid-staging: set up zram swap as a fallback when the
  vendor hasn't
 
 the GSI itself does not configure zram -- AOSP's init.rc only chowns

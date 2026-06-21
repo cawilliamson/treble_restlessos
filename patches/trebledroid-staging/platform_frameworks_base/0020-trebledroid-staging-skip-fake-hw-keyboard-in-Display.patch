@@ -1,0 +1,63 @@
+From 06b3e3d20319d796308b4253de87d81e3ff8dad6 Mon Sep 17 00:00:00 2001
+From: "Christopher A. Williamson" <contact@chrisaw.io>
+Date: Sun, 21 Jun 2026 21:50:07 +0100
+Subject: [PATCH 20/20] trebledroid-staging: skip fake hw-keyboard in DisplayContent
+ config
+
+DisplayContent.computeConfiguration sets Configuration.keyboard=KEYBOARD_QWERTY
+for any input device whose keyboardType is ALPHABETIC. on the xiaomi pad6
+(pipa) the vendor.xiaomi.hardware.keyboardnanoapp CHRE nanoapp, driven by a
+hall sensor, registers an alphabetic device named "Xiaomi Keyboard"
+(Classes KEYBOARD | ALPHAKEY, KeyboardType 2) even when the magnetic
+keyboard cover is detached.
+
+that forces Configuration.keyboard=QWERTY with hardKeyboardHidden=NO for
+every app, which makes soft IMEs suppress their key views. LatinIME's
+KeyboardSwitcher.setMainKeyboardFrame hides mKeyboardView based only on
+mHasHardwareKeyboard && toggleState==HIDDEN and does not consult
+Settings.Secure.SHOW_IME_WITH_HARD_KEYBOARD, so the trebledroid toggle
+only makes the framework show the IME window while the IME blanks the
+keys. user-installed IMEs (e.g. Fossify) hit the same path and cannot be
+patched from the GSI tree.
+
+when persist.sys.phh.disable_fake_hw_keyboard is set, skip alphabetic
+devices named "Xiaomi Keyboard" so Configuration.keyboard stays NOKEYS
+and soft input works for all IMEs. physical key events from an attached
+cover still flow through; only the configuration flag changes. the
+property is set per-device from rw-system.sh.
+---
+ .../java/com/android/server/wm/DisplayContent.java    | 11 +++++++++++
+ 1 file changed, 11 insertions(+)
+
+diff --git a/services/core/java/com/android/server/wm/DisplayContent.java b/services/core/java/com/android/server/wm/DisplayContent.java
+index 27427724f..fcf1d753b 100644
+--- a/services/core/java/com/android/server/wm/DisplayContent.java
++++ b/services/core/java/com/android/server/wm/DisplayContent.java
+@@ -196,6 +196,7 @@ import android.os.Message;
+ import android.os.PowerManager;
+ import android.os.RemoteCallbackList;
+ import android.os.RemoteException;
++import android.os.SystemProperties;
+ import android.os.Trace;
+ import android.os.UserHandle;
+ import android.os.UserManager;
+@@ -2618,6 +2619,16 @@ class DisplayContent extends RootDisplayArea implements WindowManagerPolicy.Disp
+             }
+ 
+             if (device.getKeyboardType() == InputDevice.KEYBOARD_TYPE_ALPHABETIC) {
++                // some devices ship a vendor nanoapp that registers an alphabetic input
++                // device even with no physical keyboard attached, which forces
++                // Configuration.keyboard=QWERTY and makes soft IMEs hide their keys.
++                // when the property is set, skip such devices so the configuration stays
++                // NOKEYS and soft input works. physical key events still flow through.
++                if (SystemProperties.getBoolean(
++                        "persist.sys.phh.disable_fake_hw_keyboard", false)
++                        && device.getName().equalsIgnoreCase("Xiaomi Keyboard")) {
++                    continue;
++                }
+                 config.keyboard = Configuration.KEYBOARD_QWERTY;
+                 keyboardPresence |= presenceFlag;
+             }
+-- 
+2.54.0
+

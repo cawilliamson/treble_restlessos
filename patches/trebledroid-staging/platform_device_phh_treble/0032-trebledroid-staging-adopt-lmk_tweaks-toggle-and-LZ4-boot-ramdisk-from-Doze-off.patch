@@ -1,7 +1,7 @@
 From a7d08f54c06a42a9ac5a51923cb27ff23a5209c5 Mon Sep 17 00:00:00 2001
 From: Doze-off <viniciussadxxx@gmail.com>
 Date: Sun, 21 Jun 2026 21:29:59 +0100
-Subject: [PATCH 32/32] trebledroid-staging: adopt lmk_tweaks toggle and LZ4 boot
+Subject: [PATCH 32/34] trebledroid-staging: adopt lmk_tweaks toggle and LZ4 boot
  ramdisk from Doze-off
 
 two small tweaks adopted from Doze-off's device_phh_treble fork, combined

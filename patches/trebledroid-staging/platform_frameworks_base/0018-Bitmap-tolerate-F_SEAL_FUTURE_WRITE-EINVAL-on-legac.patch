@@ -1,7 +1,7 @@
 From b7575cd5823976c5a2513e4063f052d512884312 Mon Sep 17 00:00:00 2001
 From: "Christopher A. Williamson" <contact@chrisaw.io>
 Date: Sat, 30 May 2026 20:52:32 +0100
-Subject: [PATCH 18/19] Bitmap: tolerate F_SEAL_FUTURE_WRITE EINVAL on legacy kernels
+Subject: [PATCH 18/20] Bitmap: tolerate F_SEAL_FUTURE_WRITE EINVAL on legacy kernels
  (< 5.1)
 
 GrapheneOS added F_SEAL_FUTURE_WRITE to the ashmem sealing path in

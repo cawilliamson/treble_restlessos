@@ -1,0 +1,52 @@
+From 6a1e02d96ca6e3750e4290476cf1fe5741c46d3a Mon Sep 17 00:00:00 2001
+From: "Christopher A. Williamson" <contact@chrisaw.io>
+Date: Sun, 21 Jun 2026 21:48:15 +0100
+Subject: [PATCH 33/34] trebledroid-staging: gate fake hw-keyboard skip on xiaomi
+ pad6 (pipa)
+
+xiaomi pad6 (pipa) ships vendor.xiaomi.hardware.keyboardnanoapp, a CHRE
+nanoapp driven by a hall sensor, that registers two alphabetic
+(KEYBOARD_TYPE_ALPHABETIC) input devices even when the magnetic keyboard
+cover is detached. DisplayContent.computeConfiguration treats any
+alphabetic input device as a real hardware keyboard and sets
+Configuration.keyboard=KEYBOARD_QWERTY with hardKeyboardHidden=NO for
+every app.
+
+that configuration makes soft IMEs suppress their key views: LatinIME's
+KeyboardSwitcher.setMainKeyboardFrame hides mKeyboardView based only on
+mHasHardwareKeyboard && toggleState==HIDDEN and does not consult
+Settings.Secure.SHOW_IME_WITH_HARD_KEYBOARD, so the trebledroid toggle
+only makes the framework show the IME window while the IME itself blanks
+the keys. user-installed IMEs (e.g. Fossify) hit the same path and cannot
+be patched from the GSI tree.
+
+set persist.sys.phh.disable_fake_hw_keyboard on pipa so the
+DisplayContent patch can skip the nanoapp keyboards and keep
+Configuration.keyboard=KEYBOARD_NOKEYS, restoring soft input for all
+IMEs.
+---
+ rw-system.sh | 8 ++++++++
+ 1 file changed, 8 insertions(+)
+
+diff --git a/rw-system.sh b/rw-system.sh
+index 71fb905..3ab5e42 100644
+--- a/rw-system.sh
++++ b/rw-system.sh
+@@ -202,6 +202,14 @@ changeKeylayout() {
+         changed=true
+     fi
+ 
++    # xiaomi pad6 (pipa) ships a CHRE keyboardnanoapp + hall sensor that register
++    # two alphabetic input devices even with the keyboard cover detached, which
++    # forces Configuration.keyboard=QWERTY and makes soft IMEs hide their keys.
++    # gate the DisplayContent workaround behind this property.
++    if getprop ro.vendor.build.fingerprint | grep -iq -e xiaomi/pipa; then
++        setprop persist.sys.phh.disable_fake_hw_keyboard true
++    fi
++
+     if getprop ro.vendor.build.fingerprint |grep -iq -e samsung/a10sxx;then
+         mkdir -p /data/vendor/mcRegistry
+         chown system /data/vendor/mcRegistry
+-- 
+2.54.0
+
