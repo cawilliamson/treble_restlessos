@@ -1,7 +1,7 @@
-From a03b9ee0417645a2c0005edc227e9c241aaf4a5c Mon Sep 17 00:00:00 2001
+From dbccdc9eb949546e3732db6c32c4aa5008576722 Mon Sep 17 00:00:00 2001
 From: "Christopher A. Williamson" <contact@chrisaw.io>
-Date: Sun, 21 Jun 2026 20:36:41 +0100
-Subject: [PATCH 31/31] trebledroid-staging: set up zram swap as a fallback when the
+Date: Sun, 21 Jun 2026 20:56:27 +0100
+Subject: [PATCH 31/33] trebledroid-staging: set up zram swap as a fallback when the
  vendor hasn't
 
 the GSI itself does not configure zram -- AOSP's init.rc only chowns
@@ -18,23 +18,31 @@ device at ~half of RAM (lz4 when available). running it at boot_completed
 (not during early init) means a vendor that already configured zram is
 left untouched -- the guard skips when /proc/swaps already has an entry.
 
+once zram is active, also raise vm.swappiness to 100 (so the kernel
+actually swaps cold anon pages to the fast in-RAM zram instead of just
+dropping cache) and lower vm.dirty_ratio/dirty_background_ratio so less
+RAM is held by dirty pages. these vm sysctls are written directly to
+/proc/sys/vm (not as Android properties, which the kernel ignores) and
+only when the fallback activates, so devices with vendor zram or no zram
+keep their default vm sysctls.
+
 no-op when the kernel has no zram support (/sys/block/zram0 absent) or
 /proc/meminfo is unreadable, so devices that can't support zram are
 unaffected. no sepolicy companion is needed: phhsu_daemon already holds
 rw_file_perms on dev_type:blk_file (covers ram_device, the label of
 /dev/block/zram0), rwx_file_perms on sysfs_type:file (covers sysfs_zram),
-and capability sys_admin for swapon.
+proc_type writes for /proc/sys/vm, and capability sys_admin for swapon.
 
 Refs: #92
 ---
- phh-on-boot.sh | 28 ++++++++++++++++++++++++++++
- 1 file changed, 28 insertions(+)
+ phh-on-boot.sh | 36 ++++++++++++++++++++++++++++++++++++
+ 1 file changed, 36 insertions(+)
 
 diff --git a/phh-on-boot.sh b/phh-on-boot.sh
-index 6d7bd02..35d4e32 100644
+index 6d7bd02..5952ec0 100644
 --- a/phh-on-boot.sh
 +++ b/phh-on-boot.sh
-@@ -92,6 +92,34 @@ fi
+@@ -92,6 +92,42 @@ fi
  
  setprop ctl.stop storageproxyd
  
@@ -49,9 +57,14 @@ index 6d7bd02..35d4e32 100644
 +# no-op when the kernel has no zram support (/sys/block/zram0 absent) or no
 +# RAM read is available. zram is compressed swap in RAM; disksize is half of
 +# MemTotal, lz4 when the kernel exposes it (else the zram default, usually
-+# lzo). this runs in the phhsu_daemon domain, which already holds rw_file_perms
-+# on dev_type:blk_file (ram_device) and rwx_file_perms on sysfs_type:file
-+# (sysfs_zram) plus capability sys_admin, so no sepolicy companion is needed.
++# lzo). once zram is active, raise swappiness so the kernel actually swaps
++# cold anon pages to it (zram is fast/in-RAM, so high swappiness is a net
++# win) and lower the dirty ratios so less RAM is held by dirty pages -- both
++# only when the fallback activates, so devices with vendor zram (or no zram)
++# keep their default vm sysctls. this runs in the phhsu_daemon domain, which
++# already holds rw_file_perms on dev_type:blk_file (ram_device) and
++# rwx_file_perms on sysfs_type:file (sysfs_zram) + proc_type writes +
++# capability sys_admin, so no sepolicy companion is needed.
 +if [ -e /sys/block/zram0 ] && ! grep -qE '^/' /proc/swaps 2>/dev/null; then
 +    echo 1 > /sys/block/zram0/reset 2>/dev/null || true
 +    if grep -qw lz4 /sys/block/zram0/comp_algorithm 2>/dev/null; then
@@ -62,7 +75,10 @@ index 6d7bd02..35d4e32 100644
 +        echo $((memtotal_kb * 1024 / 2)) > /sys/block/zram0/disksize 2>/dev/null || true
 +        mkswap /dev/block/zram0 >/dev/null 2>&1 || true
 +        swapon /dev/block/zram0 2>/dev/null || true
-+        log -t phh-on-boot "zram swap fallback active (disksize ~half of RAM)"
++        echo 100 > /proc/sys/vm/swappiness 2>/dev/null || true
++        echo 10 > /proc/sys/vm/dirty_ratio 2>/dev/null || true
++        echo 5 > /proc/sys/vm/dirty_background_ratio 2>/dev/null || true
++        log -t phh-on-boot "zram swap fallback active (swappiness=100, disksize ~half of RAM)"
 +    fi
 +fi
 +

@@ -1,0 +1,97 @@
+From 620be7670c4ea4bbe7b7b9debf894f20f96516f9 Mon Sep 17 00:00:00 2001
+From: "Christopher A. Williamson" <contact@chrisaw.io>
+Date: Sun, 21 Jun 2026 20:59:09 +0100
+Subject: [PATCH 32/33] trebledroid-staging: add an opt-in lmk_tweaks property toggle
+
+add a persist.sys.phh.lmk_tweaks toggle (set via the TrebleDroid app or
+`setprop persist.sys.phh.lmk_tweaks true`) that applies an aggressive lmkd
+preset + tighter background-app limits, to free foreground headroom on
+low-RAM devices (e.g. kernel-4.9 GSIs where isolated PDF/WebView renderers
+get OOM-reaped, #92).
+
+aggressive mode (true): ro.lmk.use_minfree_levels=true, low kill thresholds
+(low=1001/medium=800/critical=0), kill_timeout_ms=100, kill_heaviest_task,
+upgrade/downgrade_pressure, psi stall thresholds, and bg-app limits
+(ro.sys.fw.bg_apps_limit=16, ro.config.max_starting_bg=8). off mode (false)
+--deletes the overrides so the GSI's system.prop lmkd defaults
+(trebledroid-staging 0014) apply again. lmkd is restarted via ctl.restart so
+it re-reads ro.lmk.* (the ro.zram writeback props from the upstream version
+of this toggle are deliberately omitted -- they need a zram backing device
+the GSI fallback doesn't set up).
+
+wired with a vndk.rc property trigger that execs phh-prop-handler.sh in the
+phhsu_daemon domain (the same pattern as the other phh toggles). the prop
+uses the default property context like the other persist.sys.phh.* toggles,
+so no property_contexts/sepolicy change is needed. a TrebleDroid-app UI
+toggle is a follow-up in the treble_app repo.
+
+Refs: #92
+---
+ phh-prop-handler.sh | 42 ++++++++++++++++++++++++++++++++++++++++++
+ vndk.rc             |  3 +++
+ 2 files changed, 45 insertions(+)
+
+diff --git a/phh-prop-handler.sh b/phh-prop-handler.sh
+index eb22c4d..cbd3005 100644
+--- a/phh-prop-handler.sh
++++ b/phh-prop-handler.sh
+@@ -297,3 +297,45 @@ if [ "$1" == "persist.bluetooth.system_audio_hal.enabled" ]; then
+     restartAudio
+     exit
+ fi
++
++if [ "$1" == "persist.sys.phh.lmk_tweaks" ]; then
++    if [[ "$prop_value" != "false" && "$prop_value" != "true" ]]; then
++        exit 1
++    fi
++    if [[ "$prop_value" == "true" ]]; then
++        # aggressive lmkd + background-app limits: free foreground headroom on
++        # low-RAM devices (e.g. kernel-4.9 GSIs where isolated renderers get
++        # OOM-reaped, #92). overrides the GSI's system.prop lmkd defaults.
++        resetprop_phh ro.lmk.use_minfree_levels true
++        resetprop_phh ro.lmk.kill_timeout_ms 100
++        resetprop_phh ro.lmk.low 1001
++        resetprop_phh ro.lmk.medium 800
++        resetprop_phh ro.lmk.critical 0
++        resetprop_phh ro.lmk.kill_heaviest_task true
++        resetprop_phh ro.lmk.critical_upgrade false
++        resetprop_phh ro.lmk.upgrade_pressure 100
++        resetprop_phh ro.lmk.downgrade_pressure 250
++        resetprop_phh ro.lmk.psi_partial_stall_ms 200
++        resetprop_phh ro.lmk.psi_complete_stall_ms 700
++        resetprop_phh ro.sys.fw.bg_apps_limit 16
++        resetprop_phh ro.config.max_starting_bg 8
++    else
++        # off: remove the overrides so the GSI's system.prop lmkd defaults
++        # (trebledroid-staging 0014) apply again.
++        resetprop_phh --delete ro.lmk.use_minfree_levels
++        resetprop_phh --delete ro.lmk.kill_timeout_ms
++        resetprop_phh --delete ro.lmk.low
++        resetprop_phh --delete ro.lmk.medium
++        resetprop_phh --delete ro.lmk.critical
++        resetprop_phh --delete ro.lmk.kill_heaviest_task
++        resetprop_phh --delete ro.lmk.critical_upgrade
++        resetprop_phh --delete ro.lmk.upgrade_pressure
++        resetprop_phh --delete ro.lmk.downgrade_pressure
++        resetprop_phh --delete ro.lmk.psi_partial_stall_ms
++        resetprop_phh --delete ro.lmk.psi_complete_stall_ms
++        resetprop_phh --delete ro.sys.fw.bg_apps_limit
++        resetprop_phh --delete ro.config.max_starting_bg
++    fi
++    setprop ctl.restart lmkd
++    exit
++fi
+diff --git a/vndk.rc b/vndk.rc
+index fbac009..2bf8894 100644
+--- a/vndk.rc
++++ b/vndk.rc
+@@ -173,3 +173,6 @@ on property:persist.sys.phh.force_sw_codecs=true
+ # lost on this device, which beats not booting.
+ on property:init.svc.wifidisplayhalservice=running && property:ro.product.device=OP6190L1
+     stop wifidisplayhalservice
++
++on property:persist.sys.phh.lmk_tweaks=*
++    exec u:r:phhsu_daemon:s0 root -- /system/bin/phh-prop-handler.sh "persist.sys.phh.lmk_tweaks"
+-- 
+2.54.0
+
