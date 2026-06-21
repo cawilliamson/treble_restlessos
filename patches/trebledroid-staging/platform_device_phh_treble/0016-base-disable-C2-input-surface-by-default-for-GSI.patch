@@ -1,30 +1,45 @@
-From 8124df107decd67642941441f06cd3dda0124a8f Mon Sep 17 00:00:00 2001
+From 6eaada66eac21553df6d3b1e1bdc5265e4c9dad3 Mon Sep 17 00:00:00 2001
 From: "Christopher A. Williamson" <contact@chrisaw.io>
 Date: Fri, 10 Apr 2026 00:38:55 +0100
 Subject: [PATCH 16/29] base: disable C2 input surface by default for GSI
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
 
-set debug.stagefright.c2inputsurface=-1 as a build-time default so
-camera video recording uses the more compatible OMX path.  vendor C2
-input surfaces are unreliable on GSI because the system image doesn't
-match the vendor partition.
+set debug.stagefright.c2inputsurface=-1 as a build-time default via
+PRODUCT_SYSTEM_DEFAULT_PROPERTIES so camera video recording uses the
+AIDL GraphicBufferSource fallback instead of the OMX fallback.
 
-add a vndk.rc property trigger for persist.sys.phh.prefer_hw_codecs
-to re-enable vendor HW codecs for users who know theirs work.
+on GSI builds, Codec2Client::CreateInputSurface() returns null (disabled
+by the NO_C2_INPUT_SURFACE build flag). without c2inputsurface=-1, the
+code falls through to the OMX fallback in MediaCodec::CreatePersistentInputSurface,
+which has a bug: it creates a PersistentSurface with a null surface pointer
+(surface=0x0) because the OMX createInputSurface fills igbp/bufferSource
+but never populates the surface variable. the JNI then fails to convert
+the null surface to a Java Surface, returns null, and CameraX's
+setInputSurface(null) throws 'not a PersistentSurface' — error code 7.
+
+with c2inputsurface=-1, the AIDL GraphicBufferSource fallback is used
+instead, which creates a valid PersistentSurface with a non-null surface.
+this is what LineageOS-based GSIs do (the property is set in their build
+defaults) and is what makes camera video recording work on their builds
+but not on GrapheneOS-based GSIs where the property was never actually
+set despite the original commit message claiming it was.
 
 add power-mode-monitor.sh: a logcat monitor that runs for 90 seconds
-after boot to detect vendor power HAL modes that log "unknown type"
-errors.  discovered mode IDs are written to the persist property
+after boot to detect vendor power HAL modes that log 'unknown type'
+errors. discovered mode IDs are written to the persist property
 persist.sys.phh.blocked_power_modes so the framework can skip them
 on subsequent boots.
 ---
- base.mk               |  1 +
+ base.mk               |  2 ++
  power-mode-monitor.sh | 40 ++++++++++++++++++++++++++++++++++++++++
  vndk.rc               |  5 +++++
- 3 files changed, 46 insertions(+)
+ 3 files changed, 47 insertions(+)
  create mode 100644 power-mode-monitor.sh
 
 diff --git a/base.mk b/base.mk
-index 6522d4c..571c0d6 100644
+index 86f179f..432cfb4 100644
 --- a/base.mk
 +++ b/base.mk
 @@ -72,6 +72,7 @@ PRODUCT_COPY_FILES += \
@@ -35,6 +50,14 @@ index 6522d4c..571c0d6 100644
      device/phh/treble/phh-on-data.sh:system/bin/phh-on-data.sh \
      device/phh/treble/phh-prop-handler.sh:system/bin/phh-prop-handler.sh \
      device/phh/treble/fixSPL/getSPL.arm:system/bin/getSPL
+@@ -210,6 +211,7 @@ PRODUCT_PACKAGES += \
+ 
+ PRODUCT_SYSTEM_DEFAULT_PROPERTIES += \
+     debug.fdsan=warn_once \
++    debug.stagefright.c2inputsurface=-1 \
+     persist.sys.fflag.override.settings_provider_model=false \
+     ro.setupwizard.mode=OPTIONAL \
+ 
 diff --git a/power-mode-monitor.sh b/power-mode-monitor.sh
 new file mode 100644
 index 0000000..47deea9
@@ -82,7 +105,7 @@ index 0000000..47deea9
 +    esac
 +done
 diff --git a/vndk.rc b/vndk.rc
-index a0488e2..6af5cd4 100644
+index 9e9f4a5..94c7583 100644
 --- a/vndk.rc
 +++ b/vndk.rc
 @@ -16,8 +16,13 @@ service phh_on_boot /system/bin/phh-on-boot.sh
@@ -100,5 +123,5 @@ index a0488e2..6af5cd4 100644
      chown system wifi /data/misc/wifi/hostapd.conf
  
 -- 
-2.53.0
+2.54.0
 
