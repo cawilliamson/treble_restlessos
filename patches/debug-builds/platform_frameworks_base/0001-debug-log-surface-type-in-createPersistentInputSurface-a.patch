@@ -1,0 +1,53 @@
+From bad7e7b8af41d306b3d08ed5f089717ad98764ec Mon Sep 17 00:00:00 2001
+From: "Christopher A. Williamson" <contact@chrisaw.io>
+Date: Sun, 21 Jun 2026 06:04:20 +0100
+Subject: [PATCH] debug: log surface type in createPersistentInputSurface and
+ setInputSurface
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+diagnostic patch for issue #33 — logs the actual class name and
+instanceof PersistentSurface result for the surface passed to
+setInputSurface, and the return value of createPersistentInputSurface.
+this will tell us whether createPersistentInputSurface returns null
+(-> the AIDL GraphicBufferSource initCheck fails), returns a non-
+PersistentSurface (-> classloader/wrapping issue), or returns a valid
+PersistentSurface but instanceof fails (-> classloader issue).
+
+debug-builds only — do not ship.
+---
+ media/java/android/media/MediaCodec.java | 10 +++++++++-
+ 1 file changed, 9 insertions(+), 1 deletion(-)
+
+diff --git a/media/java/android/media/MediaCodec.java b/media/java/android/media/MediaCodec.java
+index fc4dbb22d..9af3fcb44 100644
+--- a/media/java/android/media/MediaCodec.java
++++ b/media/java/android/media/MediaCodec.java
+@@ -2704,7 +2704,11 @@ final public class MediaCodec {
+      */
+     @NonNull
+     public static Surface createPersistentInputSurface() {
+-        return native_createPersistentInputSurface();
++        Surface s = native_createPersistentInputSurface();
++        Log.w(TAG, "createPersistentInputSurface: returned=" + s
++                + " class=" + (s != null ? s.getClass().getName() : "null")
++                + " isPersistent=" + (s instanceof PersistentSurface));
++        return s;
+     }
+ 
+     static class PersistentSurface extends Surface {
+@@ -2731,6 +2735,10 @@ final public class MediaCodec {
+      *           {@link #createPersistentInputSurface}.
+      */
+     public void setInputSurface(@NonNull Surface surface) {
++        Log.w(TAG, "setInputSurface: surface=" + surface
++                + " class=" + (surface != null ? surface.getClass().getName() : "null")
++                + " isPersistent=" + (surface instanceof PersistentSurface)
++                + " hashCode=" + (surface != null ? surface.hashCode() : -1));
+         if (!(surface instanceof PersistentSurface)) {
+             throw new IllegalArgumentException("not a PersistentSurface");
+         }
+-- 
+2.54.0
+
