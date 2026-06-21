@@ -33,7 +33,13 @@ done
 
 # deregister stale offline self-hosted runners (the EC2 host is gone; the
 # registration is free but tidy it up). no concurrent runs share this repo.
-if command -v gh >/dev/null && [ -n "${GH_TOKEN:-}" ]; then
+# runner administration needs the repo "Administration: write" permission,
+# which the default GITHUB_TOKEN lacks (403 "Resource not accessible by
+# integration" on both list and delete), so prefer GH_PAT -- the same PAT
+# that ec2.sh uses to jit-provision runners.
+token="${GH_PAT:-${GH_TOKEN:-}}"
+if command -v gh >/dev/null && [ -n "$token" ]; then
+  export GH_TOKEN="$token"
   for rid in $(gh api "/repos/${GITHUB_REPOSITORY}/actions/runners?per_page=100" \
       --jq '.runners[] | select(.status=="offline") | .id' 2>/dev/null); do
     echo "Deregistering offline runner ${rid}"
