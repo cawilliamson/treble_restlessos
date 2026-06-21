@@ -1,4 +1,4 @@
-From bad7e7b8af41d306b3d08ed5f089717ad98764ec Mon Sep 17 00:00:00 2001
+From 1b720d5d4b31b12e9630951f832f1c0c849b1e6b Mon Sep 17 00:00:00 2001
 From: "Christopher A. Williamson" <contact@chrisaw.io>
 Date: Sun, 21 Jun 2026 06:04:20 +0100
 Subject: [PATCH] debug: log surface type in createPersistentInputSurface and
@@ -7,24 +7,27 @@ MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
 Content-Transfer-Encoding: 8bit
 
-diagnostic patch for issue #33 — logs the actual class name and
-instanceof PersistentSurface result for the surface passed to
-setInputSurface, and the return value of createPersistentInputSurface.
-this will tell us whether createPersistentInputSurface returns null
-(-> the AIDL GraphicBufferSource initCheck fails), returns a non-
-PersistentSurface (-> classloader/wrapping issue), or returns a valid
-PersistentSurface but instanceof fails (-> classloader issue).
+diagnostic patch for issue #33. logs the full chain:
+- Java: createPersistentInputSurface return value (class, isPersistent, hashCode)
+- Java: setInputSurface surface argument (class, isPersistent, hashCode)
+- JNI: each null-check failure point in native_createPersistentInputSurface
+
+comparing hashCodes tells us whether the surface passed to setInputSurface
+is the same object returned by createPersistentInputSurface, or if it was
+replaced by something else (e.g. the camera framework providing a regular
+Surface to the CameraX SurfaceInput before getSurface runs).
 
 debug-builds only — do not ship.
 ---
- media/java/android/media/MediaCodec.java | 10 +++++++++-
- 1 file changed, 9 insertions(+), 1 deletion(-)
+ media/java/android/media/MediaCodec.java | 11 ++++++++++-
+ media/jni/android_media_MediaCodec.cpp   |  5 +++++
+ 2 files changed, 15 insertions(+), 1 deletion(-)
 
 diff --git a/media/java/android/media/MediaCodec.java b/media/java/android/media/MediaCodec.java
-index fc4dbb22d..9af3fcb44 100644
+index fc4dbb22d..42871c0cd 100644
 --- a/media/java/android/media/MediaCodec.java
 +++ b/media/java/android/media/MediaCodec.java
-@@ -2704,7 +2704,11 @@ final public class MediaCodec {
+@@ -2704,7 +2704,12 @@ final public class MediaCodec {
       */
      @NonNull
      public static Surface createPersistentInputSurface() {
@@ -32,12 +35,13 @@ index fc4dbb22d..9af3fcb44 100644
 +        Surface s = native_createPersistentInputSurface();
 +        Log.w(TAG, "createPersistentInputSurface: returned=" + s
 +                + " class=" + (s != null ? s.getClass().getName() : "null")
-+                + " isPersistent=" + (s instanceof PersistentSurface));
++                + " isPersistent=" + (s instanceof PersistentSurface)
++                + " hashCode=" + (s != null ? s.hashCode() : -1));
 +        return s;
      }
  
      static class PersistentSurface extends Surface {
-@@ -2731,6 +2735,10 @@ final public class MediaCodec {
+@@ -2731,6 +2736,10 @@ final public class MediaCodec {
       *           {@link #createPersistentInputSurface}.
       */
      public void setInputSurface(@NonNull Surface surface) {
@@ -48,6 +52,30 @@ index fc4dbb22d..9af3fcb44 100644
          if (!(surface instanceof PersistentSurface)) {
              throw new IllegalArgumentException("not a PersistentSurface");
          }
+diff --git a/media/jni/android_media_MediaCodec.cpp b/media/jni/android_media_MediaCodec.cpp
+index 58113da5e..81253f16f 100644
+--- a/media/jni/android_media_MediaCodec.cpp
++++ b/media/jni/android_media_MediaCodec.cpp
+@@ -1934,14 +1934,19 @@ static jobject android_media_MediaCodec_createPersistentInputSurface(
+         MediaCodec::CreatePersistentInputSurface();
+ 
+     if (persistentSurface == NULL) {
++        ALOGE("createPersistentInputSurface JNI: CreatePersistentInputSurface returned NULL");
+         return NULL;
+     }
++    ALOGE("createPersistentInputSurface JNI: got PersistentSurface type=%d surface=%p",
++          persistentSurface->getType(), persistentSurface->getSurface().get());
+ 
+     sp<Surface> surface = mediaflagtools::surfaceTypeToSurface(
+         persistentSurface->getSurface(), true);
+     if (surface == NULL) {
++        ALOGE("createPersistentInputSurface JNI: surfaceTypeToSurface returned NULL");
+         return NULL;
+     }
++    ALOGE("createPersistentInputSurface JNI: surface converted OK surface=%p", surface.get());
+ 
+     jobject object = env->NewObject(
+             gPersistentSurfaceClassInfo.clazz,
 -- 
 2.54.0
 

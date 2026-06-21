@@ -1,0 +1,85 @@
+From 2b35ecb4380cd6dbc0f56c4a59ee60e169167e05 Mon Sep 17 00:00:00 2001
+From: "Christopher A. Williamson" <contact@chrisaw.io>
+Date: Sun, 21 Jun 2026 06:10:44 +0100
+Subject: [PATCH] debug: log every branch of CreatePersistentInputSurface /
+ CreateInputSurface
+
+log each step of the persistent input surface creation chain:
+- CCodec::CreateInputSurface: Codec2Client result, AIDL initCheck, final
+- MediaCodec::CreatePersistentInputSurface: CCodec result, OMX fallback
+
+debug-builds only.
+---
+ media/codec2/sfplugin/CCodec.cpp    | 8 ++++++--
+ media/libstagefright/MediaCodec.cpp | 5 ++++-
+ 2 files changed, 10 insertions(+), 3 deletions(-)
+
+diff --git a/media/codec2/sfplugin/CCodec.cpp b/media/codec2/sfplugin/CCodec.cpp
+index ea44e12..991674c 100644
+--- a/media/codec2/sfplugin/CCodec.cpp
++++ b/media/codec2/sfplugin/CCodec.cpp
+@@ -3409,21 +3409,24 @@ PersistentSurface *CCodec::CreateInputSurface() {
+     std::shared_ptr<Codec2Client::InputSurface> inputSurface =
+             Codec2Client::CreateInputSurface();
+     if (inputSurface) {
++        ALOGE("CCodec::CreateInputSurface: Codec2Client returned non-null");
+         ::ndk::SpAIBinder interface = inputSurface->getHalInterface();
+         ANativeWindow *window = inputSurface->getNativeWindow();
+         return new PersistentSurface(PersistentSurface::TYPE_INPUTSURFACE,
+                 mediaflagtools::nativeWindowToSurfaceType(window),
+                 interface);
+     }
++    ALOGE("CCodec::CreateInputSurface: Codec2Client returned null, c2inputsurface=%d",
++          property_get_int32("debug.stagefright.c2inputsurface", 0));
+     if (property_get_int32("debug.stagefright.c2inputsurface", 0) == -1) {
+         sp<IGraphicBufferProducer> gbp;
+         sp<AidlGraphicBufferSource> gbs = new AidlGraphicBufferSource();
+         status_t err = gbs->initCheck();
+         if (err != OK) {
+-            ALOGE("Failed to create persistent input surface: error %d", err);
++            ALOGE("CCodec::CreateInputSurface: AIDL GraphicBufferSource initCheck failed: error %d", err);
+             return nullptr;
+         }
+-        ALOGD("aidl based PersistentSurface created");
++        ALOGE("CCodec::CreateInputSurface: AIDL GraphicBufferSource initCheck OK, creating PersistentSurface");
+         std::shared_ptr<WAidlGraphicBufferSource> wrapper =
+                 ::ndk::SharedRefBase::make<WAidlGraphicBufferSource>(gbs);
+ 
+@@ -3433,6 +3436,7 @@ PersistentSurface *CCodec::CreateInputSurface() {
+               mediaflagtools::igbpToSurfaceType(gbs->getIGraphicBufferProducer()),
+               wrapper->asBinder());
+     } else {
++        ALOGE("CCodec::CreateInputSurface: c2inputsurface != -1, returning null");
+         return nullptr;
+     }
+ }
+diff --git a/media/libstagefright/MediaCodec.cpp b/media/libstagefright/MediaCodec.cpp
+index a2e7a8d..fe557cd 100644
+--- a/media/libstagefright/MediaCodec.cpp
++++ b/media/libstagefright/MediaCodec.cpp
+@@ -1265,8 +1265,10 @@ sp<MediaCodec> MediaCodec::CreateByComponentName(
+ sp<PersistentSurface> MediaCodec::CreatePersistentInputSurface() {
+     sp<PersistentSurface> pluginSurface = CCodec::CreateInputSurface();
+     if (pluginSurface != nullptr) {
++        ALOGE("CreatePersistentInputSurface: CCodec returned non-null type=%d", pluginSurface->getType());
+         return pluginSurface;
+     }
++    ALOGE("CreatePersistentInputSurface: CCodec returned null, trying OMX fallback");
+ 
+     OMXClient client;
+     if (client.connect() != OK) {
+@@ -1284,9 +1286,10 @@ sp<PersistentSurface> MediaCodec::CreatePersistentInputSurface() {
+     status_t err = omx->createInputSurface(&igbp, &bufferSource);
+ 
+     if (err != OK) {
+-        ALOGE("Failed to create persistent input surface.");
++        ALOGE("Failed to create persistent input surface. err=%d", err);
+         return NULL;
+     }
++    ALOGE("CreatePersistentInputSurface: OMX fallback succeeded");
+ 
+     return new PersistentSurface(surface, bufferSource);
+ }
+-- 
+2.54.0
+
