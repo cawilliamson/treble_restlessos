@@ -1,7 +1,7 @@
-From 8d29489c4b203610d13f741fcc928d8b32a52325 Mon Sep 17 00:00:00 2001
+From 6080b0c347e6ca5618b7fe9e35b76cbb9c02a3fa Mon Sep 17 00:00:00 2001
 From: "Christopher A. Williamson" <contact@chrisaw.io>
 Date: Sun, 21 Jun 2026 22:37:21 +0100
-Subject: [PATCH 3/3] device/phh/treble: add custom bootanimation
+Subject: [PATCH] device/phh/treble: add custom bootanimation
 
 Add a self-contained bootanimation/ directory with source frames
 (desc.txt + part0/part1/part2 PNGs) and an Android.mk that zips them
@@ -12,7 +12,7 @@ the trebledroid dynamic-resize patch (frameworks/base 0025) scales the
 animation to the device screen, so a single 448x605 source set covers
 all gsi targets.
 ---
- bootanimation/Android.mk    |  25 +++++++++++++++++++++++++
+ bootanimation/Android.mk    |  29 +++++++++++++++++++++++++++++
  bootanimation/desc.txt      |   4 ++++
  bootanimation/part0/001.png | Bin 0 -> 113 bytes
  bootanimation/part0/002.png | Bin 0 -> 113 bytes
@@ -426,7 +426,7 @@ all gsi targets.
  bootanimation/part2/410.png | Bin 0 -> 24892 bytes
  bootanimation/part2/411.png | Bin 0 -> 24892 bytes
  bootanimation/part2/412.png | Bin 0 -> 24892 bytes
- 414 files changed, 29 insertions(+)
+ 414 files changed, 33 insertions(+)
  create mode 100644 bootanimation/Android.mk
  create mode 100644 bootanimation/desc.txt
  create mode 100644 bootanimation/part0/001.png
@@ -844,10 +844,10 @@ all gsi targets.
 
 diff --git a/bootanimation/Android.mk b/bootanimation/Android.mk
 new file mode 100644
-index 0000000..2e67456
+index 0000000..9827817
 --- /dev/null
 +++ b/bootanimation/Android.mk
-@@ -0,0 +1,25 @@
+@@ -0,0 +1,29 @@
 +# custom boot animation for restlessos
 +# builds bootanimation.zip from source frames at build time and installs it
 +# to /system/media, where the bootanimation binary reads it by default.
@@ -855,7 +855,11 @@ index 0000000..2e67456
 +# device screen, so a single 448x605 source set covers all targets.
 +
 +local_dir := $(LOCAL_PATH)
-+generated_zip := $(call intermediates-dir-for,ETC,bootanimation.zip)/bootanimation.zip
++# generate the archive as bootanimation.src.zip under the module intermediates
++# dir, then let BUILD_PREBUILT copy it to bootanimation.zip. generating straight
++# to bootanimation.zip collides with the prebuilt copy rule that targets the
++# same path, producing "overriding commands for target" kati failures.
++generated_zip := $(call intermediates-dir-for,ETC,bootanimation.zip)/bootanimation.src.zip
 +
 +source_files := \
 +    $(local_dir)/desc.txt \
