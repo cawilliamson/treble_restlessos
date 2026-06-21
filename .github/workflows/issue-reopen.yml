@@ -16,7 +16,34 @@ jobs:
       github.event.issue.state == 'closed' &&
       github.event.comment.user.login == github.event.issue.user.login
     steps:
+      - name: Check comment was added after close settled
+        id: settled
+        env:
+          CLOSED_AT: ${{ github.event.issue.closed_at }}
+          COMMENT_AT: ${{ github.event.comment.created_at }}
+        run: |
+          # GitHub returns ISO-8601 timestamps; convert to epoch seconds.
+          closed_epoch=$(date -u -d "$CLOSED_AT" +%s 2>/dev/null || echo 0)
+          comment_epoch=$(date -u -d "$COMMENT_AT" +%s 2>/dev/null || echo 0)
+
+          # treat unparseable close time as "not settled" so we don't reopen
+          if [ "$closed_epoch" -eq 0 ]; then
+            echo "settled=false" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          diff=$((comment_epoch - closed_epoch))
+          echo "diff_seconds=$diff" >> "$GITHUB_OUTPUT"
+
+          # only reopen once the comment lands more than 2s after close,
+          # so "close with comment" (same instant) does not trigger a reopen
+          if [ "$diff" -gt 2 ]; then
+            echo "settled=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "settled=false" >> "$GITHUB_OUTPUT"
+          fi
       - name: Reopen issue
+        if: steps.settled.outputs.settled == 'true'
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           GH_REPO: ${{ github.repository }}
