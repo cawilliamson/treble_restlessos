@@ -1,4 +1,4 @@
-From 6eaada66eac21553df6d3b1e1bdc5265e4c9dad3 Mon Sep 17 00:00:00 2001
+From 4d0d688b117494868216d928ee8259eb5ee2ee9b Mon Sep 17 00:00:00 2001
 From: "Christopher A. Williamson" <contact@chrisaw.io>
 Date: Fri, 10 Apr 2026 00:38:55 +0100
 Subject: [PATCH 16/29] base: disable C2 input surface by default for GSI
@@ -7,30 +7,22 @@ Content-Type: text/plain; charset=UTF-8
 Content-Transfer-Encoding: 8bit
 
 set debug.stagefright.c2inputsurface=-1 as a build-time default via
-PRODUCT_SYSTEM_DEFAULT_PROPERTIES so camera video recording uses the
-AIDL GraphicBufferSource fallback instead of the OMX fallback.
+PRODUCT_SYSTEM_DEFAULT_PROPERTIES in base.mk.
 
 on GSI builds, Codec2Client::CreateInputSurface() returns null (disabled
 by the NO_C2_INPUT_SURFACE build flag). without c2inputsurface=-1, the
 code falls through to the OMX fallback in MediaCodec::CreatePersistentInputSurface,
-which has a bug: it creates a PersistentSurface with a null surface pointer
-(surface=0x0) because the OMX createInputSurface fills igbp/bufferSource
-but never populates the surface variable. the JNI then fails to convert
-the null surface to a Java Surface, returns null, and CameraX's
+which creates a PersistentSurface with a null surface pointer (surface=0x0)
+because OMX createInputSurface fills igbp/bufferSource but never populates
+the surface variable. the JNI then returns null, and CameraX's
 setInputSurface(null) throws 'not a PersistentSurface' — error code 7.
 
 with c2inputsurface=-1, the AIDL GraphicBufferSource fallback is used
-instead, which creates a valid PersistentSurface with a non-null surface.
-this is what LineageOS-based GSIs do (the property is set in their build
-defaults) and is what makes camera video recording work on their builds
-but not on GrapheneOS-based GSIs where the property was never actually
-set despite the original commit message claiming it was.
+instead, which creates a valid PersistentSurface. this is what
+LineageOS-based GSIs do and is what makes camera video recording work
+on their builds.
 
-add power-mode-monitor.sh: a logcat monitor that runs for 90 seconds
-after boot to detect vendor power HAL modes that log 'unknown type'
-errors. discovered mode IDs are written to the persist property
-persist.sys.phh.blocked_power_modes so the framework can skip them
-on subsequent boots.
+also includes power-mode-monitor.sh for vendor power HAL mode detection.
 ---
  base.mk               |  2 ++
  power-mode-monitor.sh | 40 ++++++++++++++++++++++++++++++++++++++++
