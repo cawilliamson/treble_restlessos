@@ -86,12 +86,14 @@ mount_vol() {
 }
 
 # --------------------------------------------------------------------------
-# umount: sync + lazy unmount
+# umount: sync + safe unmount (lazy fallback only if busy)
 # --------------------------------------------------------------------------
 umount_vol() {
   sync
-  if sudo umount -l "$MOUNT_POINT"; then
+  if sudo umount "$MOUNT_POINT"; then
     echo "Unmounted ${MOUNT_POINT}"
+  elif sudo umount -l "$MOUNT_POINT"; then
+    echo "WARN: busy mount, lazy-unmounted ${MOUNT_POINT}"
   else
     echo "WARN: umount failed"; exit 1
   fi
