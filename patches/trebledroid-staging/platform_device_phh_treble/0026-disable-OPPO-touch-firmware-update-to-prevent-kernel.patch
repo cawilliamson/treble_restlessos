@@ -1,7 +1,7 @@
 From 437fa3aca0ce8037c2c9c34c2add86518cb1fb46 Mon Sep 17 00:00:00 2001
 From: "Christopher A. Williamson" <contact@chrisaw.io>
 Date: Fri, 24 Apr 2026 20:56:08 +0100
-Subject: [PATCH 26/33] rw-system: disable OPPO touch firmware update on MT6771
+Subject: [PATCH 26/32] rw-system: disable OPPO touch firmware update on MT6771
  to prevent kernel panic
 
 The OPPO F11 (CPH1911, MT6771/Helio P70) bootloops because the

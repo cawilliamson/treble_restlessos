@@ -1,32 +1,43 @@
-From ee375eeda5b3fdec02a960033d7c0068ccce97e7 Mon Sep 17 00:00:00 2001
+From a7d08f54c06a42a9ac5a51923cb27ff23a5209c5 Mon Sep 17 00:00:00 2001
 From: Doze-off <viniciussadxxx@gmail.com>
-Date: Sun, 21 Jun 2026 21:22:42 +0100
-Subject: [PATCH 32/33] trebledroid-staging: add an opt-in lmk_tweaks property toggle
+Date: Sun, 21 Jun 2026 21:29:59 +0100
+Subject: [PATCH 32/32] trebledroid-staging: adopt lmk_tweaks toggle and LZ4 boot
+ ramdisk from Doze-off
 
-adapted from Doze-off's lmk_tweaks prop-handler (device_phh_treble commit
-055fa81fb7). changes vs the original:
+two small tweaks adopted from Doze-off's device_phh_treble fork, combined
+into one patch (both are Doze-off-authored and part of the #92 low-RAM
+headroom work):
 
-- dropped the ro.zram.mark_idle_delay_mins / first_wb_delay_mins /
-  periodic_wb_delay_hours props -- they tune zram writeback, which needs a
-  zram backing device the GSI fallback doesn't set up, so they'd be no-ops.
-- fixed `stop lmkd; start lmkd` -> `setprop ctl.restart lmkd` (stop/start are
-  not toybox applets, so the original was broken; this matches the handler's
-  existing ctl.restart pattern used by the audio toggles).
-- restructured the off branch to --delete the overrides so the GSI's
-  system.prop lmkd defaults (trebledroid-staging 0014) apply again, instead
-  of setting a conflicting "default" preset.
+1. lmk_tweaks toggle (from commit 055fa81fb7) -- a persist.sys.phh.lmk_tweaks
+   prop-handler (aggressive lmkd thresholds + tighter bg-app limits; off mode
+   --deletes the overrides so the GSI's system.prop lmkd defaults, 0014, apply
+   again) wired with a vndk.rc property trigger that execs phh-prop-handler.sh
+   in the phhsu_daemon domain. a TrebleDroid-app UI toggle is added separately
+   in treble_app. adaptations vs the original: dropped the ro.zram.*_wb_*
+   writeback props (no zram backing device), fixed `stop lmkd; start lmkd` ->
+   `setprop ctl.restart lmkd` (stop/start are not toybox applets), restructured
+   the off branch to --delete overrides.
 
-wired with a vndk.rc property trigger that execs phh-prop-handler.sh in the
-phhsu_daemon domain (same pattern as the other phh toggles). the prop uses
-the default property context like the other persist.sys.phh.* toggles, so no
-property_contexts/sepolicy change is needed. the TrebleDroid-app UI toggle is
-added in treble_app (separate patch).
+2. LZ4 boot ramdisk (from commits c4075221a9 / 9ad5d58714) --
+   BOARD_RAMDISK_USE_LZ4 := true so the boot initramfs is LZ4-compressed
+   instead of gzip (faster boot decompression; ramdisk marginally larger).
+
+an earlier draft also adopted Doze-off's dexpreopt / image-size flags
+(PRODUCT_DEX_PREOPT_DEFAULT_COMPILER_FILTER := verify,
+WITH_DEXPREOPT_BOOT_IMG_AND_SYSTEM_SERVER_ONLY := true, ART/java debug-info
+stripping); those were dropped because WITH_DEXPREOPT_BOOT_IMG_AND_SYSTEM_SERVER_ONLY
+is already set in configs/rom/rom.mk (issue #76), PRODUCT_DEX_PREOPT_DEFAULT_COMPILER_FILTER
+is a no-op given that restriction (boot image + system_server use their own
+filters) and would conflict with the on-device pm.dexopt.*=speed (AOT) filters,
+and the debug-info flags are already AOSP release defaults (no-op on release,
+and would strip debug capability from debug builds).
 
 Refs: #92
 ---
- phh-prop-handler.sh | 42 ++++++++++++++++++++++++++++++++++++++++++
- vndk.rc             |  3 +++
- 2 files changed, 45 insertions(+)
+ phh-prop-handler.sh           | 42 +++++++++++++++++++++++++++++++++++
+ tdgsi_arm64_ab/BoardConfig.mk |  5 +++++
+ vndk.rc                       |  3 +++
+ 3 files changed, 50 insertions(+)
 
 diff --git a/phh-prop-handler.sh b/phh-prop-handler.sh
 index eb22c4d..cbd3005 100644
@@ -78,6 +89,19 @@ index eb22c4d..cbd3005 100644
 +    setprop ctl.restart lmkd
 +    exit
 +fi
+diff --git a/tdgsi_arm64_ab/BoardConfig.mk b/tdgsi_arm64_ab/BoardConfig.mk
+index 2fddc52..9108b4e 100644
+--- a/tdgsi_arm64_ab/BoardConfig.mk
++++ b/tdgsi_arm64_ab/BoardConfig.mk
+@@ -6,3 +6,8 @@ BOARD_SYSTEMIMAGE_PARTITION_SIZE := 2147483648
+ else
+ BOARD_SYSTEMIMAGE_PARTITION_RESERVED_SIZE := 33554432
+ endif
++
++# compress the boot initramfs with LZ4 (faster decompression at boot than the
++# default gzip; LZ4's ratio is slightly worse so the ramdisk is marginally
++# larger, but boot-time decompression is the win).
++BOARD_RAMDISK_USE_LZ4 := true
 diff --git a/vndk.rc b/vndk.rc
 index fbac009..2bf8894 100644
 --- a/vndk.rc

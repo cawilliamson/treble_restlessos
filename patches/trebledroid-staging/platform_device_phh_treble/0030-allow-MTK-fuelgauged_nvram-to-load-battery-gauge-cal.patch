@@ -1,7 +1,7 @@
 From 02c9db30cd04179e8b789506347baa12d73a2282 Mon Sep 17 00:00:00 2001
 From: "Christopher A. Williamson" <contact@chrisaw.io>
 Date: Sun, 21 Jun 2026 19:11:49 +0100
-Subject: [PATCH 30/33] allow MTK fuelgauged_nvram to load battery gauge calibration
+Subject: [PATCH 30/32] allow MTK fuelgauged_nvram to load battery gauge calibration
 
 the MTK fuel-gauge NVRAM loader (fuelgauged_nvram) needs to traverse the
 DT firmware sysfs tree to load gauge calibration. the GSI system policy
