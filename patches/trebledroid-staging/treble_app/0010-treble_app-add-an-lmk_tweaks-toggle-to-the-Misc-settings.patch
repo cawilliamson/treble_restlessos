@@ -1,0 +1,66 @@
+From e1c6a793788cc8cb2512afcf0078e7f86ac95d9e Mon Sep 17 00:00:00 2001
+From: "Christopher A. Williamson" <contact@chrisaw.io>
+Date: Sun, 21 Jun 2026 21:24:22 +0100
+Subject: [PATCH 10/10] treble_app: add an lmk_tweaks toggle to the Misc settings
+
+add a "Aggressive memory management (lmk tweaks)" switch to the Misc
+settings screen that sets persist.sys.phh.lmk_tweaks, wiring the
+device_phh_treble lmk_tweaks prop-handler (trebledroid-staging 0032) to a
+user-facing toggle instead of requiring `setprop` from adb.
+
+off by default; when enabled the handler applies the aggressive lmkd +
+bg-app-limit preset, when disabled it --deletes the overrides so the GSI's
+system.prop lmkd defaults (0014) apply again.
+
+Refs: #92
+---
+ app/src/main/java/me/phh/treble/app/Misc.kt         | 4 ++++
+ app/src/main/java/me/phh/treble/app/MiscSettings.kt | 1 +
+ app/src/main/res/xml/pref_misc.xml                  | 4 ++++
+ 3 files changed, 9 insertions(+)
+
+diff --git a/app/src/main/java/me/phh/treble/app/Misc.kt b/app/src/main/java/me/phh/treble/app/Misc.kt
+index 35540ef..4169761 100644
+--- a/app/src/main/java/me/phh/treble/app/Misc.kt
++++ b/app/src/main/java/me/phh/treble/app/Misc.kt
+@@ -215,6 +215,10 @@ object Misc: EntryStartup {
+                 val value = sp.getBoolean(key, false)
+                 SystemProperties.set("persist.sys.phh.disable_fast_audio", if (value) "1" else "0")
+             }
++            MiscSettings.lmkTweaks -> {
++                val value = sp.getBoolean(key, false)
++                SystemProperties.set("persist.sys.phh.lmk_tweaks", if (value) "true" else "false")
++            }
+             MiscSettings.sysbta -> {
+                 val value = sp.getBoolean(key, false)
+                 SystemProperties.set("persist.bluetooth.system_audio_hal.enabled", if (value) "true" else "false")
+diff --git a/app/src/main/java/me/phh/treble/app/MiscSettings.kt b/app/src/main/java/me/phh/treble/app/MiscSettings.kt
+index 3ff5e92..5a36de0 100644
+--- a/app/src/main/java/me/phh/treble/app/MiscSettings.kt
++++ b/app/src/main/java/me/phh/treble/app/MiscSettings.kt
+@@ -27,6 +27,7 @@ object MiscSettings : Settings {
+     val removeTelephony = "key_misc_removetelephony"
+     val disableAudioEffects = "key_misc_disable_audio_effects"
+     val disableFastAudio = "key_misc_disable_fast_audio"
++    val lmkTweaks = "key_misc_lmk_tweaks"
+     val cameraTimestampOverride = "key_misc_camera_timestamp"
+     val sysbta = "key_misc_dynamic_sysbta"
+     val noHwcomposer = "key_misc_no_hwcomposer"
+diff --git a/app/src/main/res/xml/pref_misc.xml b/app/src/main/res/xml/pref_misc.xml
+index 84a0efb..0efcfa8 100644
+--- a/app/src/main/res/xml/pref_misc.xml
++++ b/app/src/main/res/xml/pref_misc.xml
+@@ -32,6 +32,10 @@
+             android:defaultValue="false"
+             android:key="key_misc_disable_fast_audio"
+             android:title="Disable fast audio" />
++        <SwitchPreference
++            android:defaultValue="false"
++            android:key="key_misc_lmk_tweaks"
++            android:title="Aggressive memory management (lmk tweaks)" />
+     </PreferenceCategory>
+     <PreferenceCategory android:title="User interface">
+         <EditTextPreference
+-- 
+2.54.0
+

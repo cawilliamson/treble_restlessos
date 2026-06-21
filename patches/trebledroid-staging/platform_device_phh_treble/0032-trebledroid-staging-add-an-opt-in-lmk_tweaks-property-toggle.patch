@@ -1,29 +1,26 @@
-From 620be7670c4ea4bbe7b7b9debf894f20f96516f9 Mon Sep 17 00:00:00 2001
-From: "Christopher A. Williamson" <contact@chrisaw.io>
-Date: Sun, 21 Jun 2026 20:59:09 +0100
+From ee375eeda5b3fdec02a960033d7c0068ccce97e7 Mon Sep 17 00:00:00 2001
+From: Doze-off <viniciussadxxx@gmail.com>
+Date: Sun, 21 Jun 2026 21:22:42 +0100
 Subject: [PATCH 32/33] trebledroid-staging: add an opt-in lmk_tweaks property toggle
 
-add a persist.sys.phh.lmk_tweaks toggle (set via the TrebleDroid app or
-`setprop persist.sys.phh.lmk_tweaks true`) that applies an aggressive lmkd
-preset + tighter background-app limits, to free foreground headroom on
-low-RAM devices (e.g. kernel-4.9 GSIs where isolated PDF/WebView renderers
-get OOM-reaped, #92).
+adapted from Doze-off's lmk_tweaks prop-handler (device_phh_treble commit
+055fa81fb7). changes vs the original:
 
-aggressive mode (true): ro.lmk.use_minfree_levels=true, low kill thresholds
-(low=1001/medium=800/critical=0), kill_timeout_ms=100, kill_heaviest_task,
-upgrade/downgrade_pressure, psi stall thresholds, and bg-app limits
-(ro.sys.fw.bg_apps_limit=16, ro.config.max_starting_bg=8). off mode (false)
---deletes the overrides so the GSI's system.prop lmkd defaults
-(trebledroid-staging 0014) apply again. lmkd is restarted via ctl.restart so
-it re-reads ro.lmk.* (the ro.zram writeback props from the upstream version
-of this toggle are deliberately omitted -- they need a zram backing device
-the GSI fallback doesn't set up).
+- dropped the ro.zram.mark_idle_delay_mins / first_wb_delay_mins /
+  periodic_wb_delay_hours props -- they tune zram writeback, which needs a
+  zram backing device the GSI fallback doesn't set up, so they'd be no-ops.
+- fixed `stop lmkd; start lmkd` -> `setprop ctl.restart lmkd` (stop/start are
+  not toybox applets, so the original was broken; this matches the handler's
+  existing ctl.restart pattern used by the audio toggles).
+- restructured the off branch to --delete the overrides so the GSI's
+  system.prop lmkd defaults (trebledroid-staging 0014) apply again, instead
+  of setting a conflicting "default" preset.
 
 wired with a vndk.rc property trigger that execs phh-prop-handler.sh in the
-phhsu_daemon domain (the same pattern as the other phh toggles). the prop
-uses the default property context like the other persist.sys.phh.* toggles,
-so no property_contexts/sepolicy change is needed. a TrebleDroid-app UI
-toggle is a follow-up in the treble_app repo.
+phhsu_daemon domain (same pattern as the other phh toggles). the prop uses
+the default property context like the other persist.sys.phh.* toggles, so no
+property_contexts/sepolicy change is needed. the TrebleDroid-app UI toggle is
+added in treble_app (separate patch).
 
 Refs: #92
 ---

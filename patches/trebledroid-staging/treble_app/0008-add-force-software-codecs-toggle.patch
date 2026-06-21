@@ -1,7 +1,7 @@
 From bad74b7eb77791ac93a3c1f7e69e6bca3de637ee Mon Sep 17 00:00:00 2001
 From: "Christopher A. Williamson" <contact@chrisaw.io>
 Date: Sun, 14 Jun 2026 02:07:09 +0100
-Subject: [PATCH 8/9] treble_app: add force software codecs toggle
+Subject: [PATCH 8/10] treble_app: add force software codecs toggle
 
 Replace the prefer hardware codecs toggle with inverted logic.
 The new toggle defaults to OFF (hardware codecs enabled for full
