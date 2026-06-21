@@ -1,4 +1,4 @@
-From dbccdc9eb949546e3732db6c32c4aa5008576722 Mon Sep 17 00:00:00 2001
+From b7a23ac114b6c2edf08fada3954152100f7cd893 Mon Sep 17 00:00:00 2001
 From: "Christopher A. Williamson" <contact@chrisaw.io>
 Date: Sun, 21 Jun 2026 20:56:27 +0100
 Subject: [PATCH 31/32] trebledroid-staging: set up zram swap as a fallback when the
@@ -34,6 +34,8 @@ rw_file_perms on dev_type:blk_file (covers ram_device, the label of
 proc_type writes for /proc/sys/vm, and capability sys_admin for swapon.
 
 Refs: #92
+
+Co-authored-by: Doze-off <viniciussadxxx@gmail.com>
 ---
  phh-on-boot.sh | 36 ++++++++++++++++++++++++++++++++++++
  1 file changed, 36 insertions(+)

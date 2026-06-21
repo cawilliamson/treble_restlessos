@@ -1,4 +1,4 @@
-From e1c6a793788cc8cb2512afcf0078e7f86ac95d9e Mon Sep 17 00:00:00 2001
+From 8f3fc1cf9b9adf3e3d85d23918e54dd81fc610a9 Mon Sep 17 00:00:00 2001
 From: "Christopher A. Williamson" <contact@chrisaw.io>
 Date: Sun, 21 Jun 2026 21:24:22 +0100
 Subject: [PATCH 10/10] treble_app: add an lmk_tweaks toggle to the Misc settings
@@ -13,6 +13,8 @@ bg-app-limit preset, when disabled it --deletes the overrides so the GSI's
 system.prop lmkd defaults (0014) apply again.
 
 Refs: #92
+
+Co-authored-by: Doze-off <viniciussadxxx@gmail.com>
 ---
  app/src/main/java/me/phh/treble/app/Misc.kt         | 4 ++++
  app/src/main/java/me/phh/treble/app/MiscSettings.kt | 1 +
