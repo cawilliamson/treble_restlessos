@@ -1,0 +1,54 @@
+From cc8e61a1182cfd29302f1de7b4c385cf4f675660 Mon Sep 17 00:00:00 2001
+From: "Christopher A. Williamson" <contact@chrisaw.io>
+Date: Sun, 21 Jun 2026 21:18:18 +0100
+Subject: [PATCH 33/33] trebledroid-staging: compress the boot initramfs with LZ4
+
+enable BOARD_RAMDISK_USE_LZ4 so the boot initramfs is LZ4-compressed instead
+of the default gzip -- faster decompression at boot (LZ4's ratio is slightly
+worse so the ramdisk is marginally larger, but boot-time decompression speed
+is the win).
+
+this replaces an earlier draft that also tried to shrink the system image via
+dexpreopt flags (PRODUCT_DEX_PREOPT_DEFAULT_COMPILER_FILTER := verify,
+WITH_DEXPREOPT_BOOT_IMG_AND_SYSTEM_SERVER_ONLY := true, ART/java debug-info
+stripping). those were dropped because:
+
+- WITH_DEXPREOPT_BOOT_IMG_AND_SYSTEM_SERVER_ONLY := true is already set in
+  configs/rom/rom.mk (issue #76, saves ~150-200MB) -- redundant.
+- PRODUCT_DEX_PREOPT_DEFAULT_COMPILER_FILTER := verify is a no-op given that
+  restriction: only the boot image + system_server are pre-compiled, and they
+  use their own filters (PRODUCT_DEX_PREOPT_BOOT_IMAGE_FILTER /
+  PRODUCT_SYSTEM_SERVER_COMPILER_FILTER), so DEFAULT_COMPILER_FILTER has
+  nothing to apply to.
+- the on-device pm.dexopt.* filters default to `speed` (AOT), so apps are
+  AOT-compiled at first boot regardless; forcing `verify` would conflict with
+  that AOT intent without shrinking the image.
+- PRODUCT_ART_TARGET_INCLUDE_DEBUG_BUILD := false /
+  PRODUCT_MINIMIZE_JAVA_DEBUG_INFO := true are already the AOSP release
+  defaults (no-op on release) and would strip debug capability from debug
+  builds.
+
+i.e. release-image-size reduction via dexpreopt isn't available here -- rom.mk
+already applied the main lever, and AOT is forced on-device.
+
+Refs: #92
+---
+ tdgsi_arm64_ab/BoardConfig.mk | 5 +++++
+ 1 file changed, 5 insertions(+)
+
+diff --git a/tdgsi_arm64_ab/BoardConfig.mk b/tdgsi_arm64_ab/BoardConfig.mk
+index 2fddc52..9108b4e 100644
+--- a/tdgsi_arm64_ab/BoardConfig.mk
++++ b/tdgsi_arm64_ab/BoardConfig.mk
+@@ -6,3 +6,8 @@ BOARD_SYSTEMIMAGE_PARTITION_SIZE := 2147483648
+ else
+ BOARD_SYSTEMIMAGE_PARTITION_RESERVED_SIZE := 33554432
+ endif
++
++# compress the boot initramfs with LZ4 (faster decompression at boot than the
++# default gzip; LZ4's ratio is slightly worse so the ramdisk is marginally
++# larger, but boot-time decompression is the win).
++BOARD_RAMDISK_USE_LZ4 := true
+-- 
+2.54.0
+
