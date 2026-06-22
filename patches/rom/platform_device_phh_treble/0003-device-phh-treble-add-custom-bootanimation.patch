@@ -1,4 +1,4 @@
-From 80154dd7de4abd562f309bf070d3c03d29b8bf8b Mon Sep 17 00:00:00 2001
+From 62a306a856c17f6f730d51656a30eba8ab93732a Mon Sep 17 00:00:00 2001
 From: "Christopher A. Williamson" <contact@chrisaw.io>
 Date: Sun, 21 Jun 2026 22:37:21 +0100
 Subject: [PATCH 3/3] device/phh/treble: add custom bootanimation
@@ -8,10 +8,16 @@ Add a self-contained bootanimation/ directory with source frames
 at build time and installs the result to /system/media/bootanimation.zip,
 the default path the bootanimation binary reads.
 
+Register the module in base.mk via PRODUCT_PACKAGES so the prebuilt
+actually gets installed -- the build system defines but does not
+install BUILD_PREBUILT modules unless they are listed in
+PRODUCT_PACKAGES.
+
 the trebledroid dynamic-resize patch (frameworks/base 0025) scales the
 animation to the device screen, so a single 448x605 source set covers
 all gsi targets.
 ---
+ base.mk                     |   4 ++++
  bootanimation/Android.mk    |  29 +++++++++++++++++++++++++++++
  bootanimation/desc.txt      |   4 ++++
  bootanimation/part0/001.png | Bin 0 -> 113 bytes
@@ -426,7 +432,7 @@ all gsi targets.
  bootanimation/part2/410.png | Bin 0 -> 24892 bytes
  bootanimation/part2/411.png | Bin 0 -> 24892 bytes
  bootanimation/part2/412.png | Bin 0 -> 24892 bytes
- 414 files changed, 33 insertions(+)
+ 415 files changed, 37 insertions(+)
  create mode 100644 bootanimation/Android.mk
  create mode 100644 bootanimation/desc.txt
  create mode 100644 bootanimation/part0/001.png
@@ -842,6 +848,21 @@ all gsi targets.
  create mode 100644 bootanimation/part2/411.png
  create mode 100644 bootanimation/part2/412.png
 
+diff --git a/base.mk b/base.mk
+index 161ae3f..695c470 100644
+--- a/base.mk
++++ b/base.mk
+@@ -234,6 +234,10 @@ PRODUCT_COPY_FILES += \
+ 
+ PRODUCT_PACKAGES += phh-ota
+ 
++# custom bootanimation built from source frames in bootanimation/
++# (rom 0003); installs to /system/media/bootanimation.zip
++PRODUCT_PACKAGES += bootanimation.zip
++
+ PRODUCT_PACKAGES += \
+     xiaomi-touch
+ 
 diff --git a/bootanimation/Android.mk b/bootanimation/Android.mk
 new file mode 100644
 index 0000000..739f068
