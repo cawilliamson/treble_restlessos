@@ -1,4 +1,4 @@
-From fc5d4cef067323042651ce0f25450ab230f1098e Mon Sep 17 00:00:00 2001
+From e6fd7d39fd3c5ad5b36fee8ee150e295c02071ba Mon Sep 17 00:00:00 2001
 From: "Christopher A. Williamson" <contact@chrisaw.io>
 Date: Sun, 21 Jun 2026 23:58:54 +0100
 Subject: [PATCH 11/11] treble_app: run EntryService as a freezer-exempt foreground
@@ -11,20 +11,25 @@ so the android app freezer suspends it while the screen is off -- and
 the gestures stop working until the user opens treble settings again
 (which unfreezes the process).
 
-promote EntryService to a specialUse foreground service so the process
-stays unfrozen and the listeners keep firing when locked/backgrounded.
-requires startForegroundServiceAsUser at the boot receiver and a
-low-importance ongoing notification.
+promote EntryService to a foreground service with a low-importance
+ongoing notification so the process stays unfrozen and the listeners
+keep firing when locked/backgrounded. requires startForegroundServiceAsUser
+at the boot receiver.
+
+no foregroundServiceType is declared: treble_app targets sdk 33, and
+the foreground service type declaration is only enforced for apps
+targeting sdk 34+. declaring specialUse would require compileSdk 34,
+which the upstream gradle config does not yet use.
 ---
- app/src/main/AndroidManifest.xml              | 18 +++++++----
+ app/src/main/AndroidManifest.xml              |  9 +++---
  .../java/me/phh/treble/app/EntryService.kt    | 30 ++++++++++++++++++-
- 2 files changed, 42 insertions(+), 6 deletions(-)
+ 2 files changed, 34 insertions(+), 5 deletions(-)
 
 diff --git a/app/src/main/AndroidManifest.xml b/app/src/main/AndroidManifest.xml
-index d1e06c9..a17391a 100644
+index d1e06c9..c4737b4 100644
 --- a/app/src/main/AndroidManifest.xml
 +++ b/app/src/main/AndroidManifest.xml
-@@ -6,13 +6,15 @@
+@@ -6,13 +6,14 @@
      android:sharedUserId="android.uid.system">
  
  
@@ -34,7 +39,6 @@ index d1e06c9..a17391a 100644
 -    <uses-permission android:name="android.permission.REQUEST_INSTALL_PACKAGES" />
 +    <uses-permission android:name="android.permission.DIAGNOSTIC" />
 +    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
-+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_SPECIAL_USE" />
      <uses-permission android:name="android.permission.INSTALL_PACKAGES" />
 +    <uses-permission android:name="android.permission.INTERACT_ACROSS_USERS" />
 +    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
@@ -44,21 +48,6 @@ index d1e06c9..a17391a 100644
      <uses-permission android:name="android.permission.VIBRATE" />
  
      <application
-@@ -28,7 +30,13 @@
-         <uses-library android:name="vendor.qti.hardware.radio.am.V1_0" android:required="false"/>
-         <uses-library android:name="vendor.qti.qcril.am.V1_0" android:required="false"/>
- 
--        <service android:name=".EntryService" />
-+        <service
-+            android:name=".EntryService"
-+            android:foregroundServiceType="specialUse">
-+            <property
-+                android:name="android.app.PROPERTY_SPECIAL_USE_FGS_SUBTYPE"
-+                android:value="keep device-specific sensor listeners (e.g. motorola chop-chop flashlight, handwave doze) active while the screen is off" />
-+        </service>
-         <service android:name=".NubiaAutoFanControlService" />
- 
-         <service
 diff --git a/app/src/main/java/me/phh/treble/app/EntryService.kt b/app/src/main/java/me/phh/treble/app/EntryService.kt
 index f6c501b..5546482 100644
 --- a/app/src/main/java/me/phh/treble/app/EntryService.kt
