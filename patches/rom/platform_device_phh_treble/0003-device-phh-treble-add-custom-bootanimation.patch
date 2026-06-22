@@ -1,4 +1,4 @@
-From 62a306a856c17f6f730d51656a30eba8ab93732a Mon Sep 17 00:00:00 2001
+From a65a643dfe54446335519d322078e840dfc362f7 Mon Sep 17 00:00:00 2001
 From: "Christopher A. Williamson" <contact@chrisaw.io>
 Date: Sun, 21 Jun 2026 22:37:21 +0100
 Subject: [PATCH 3/3] device/phh/treble: add custom bootanimation
@@ -18,7 +18,7 @@ animation to the device screen, so a single 448x605 source set covers
 all gsi targets.
 ---
  base.mk                     |   4 ++++
- bootanimation/Android.mk    |  29 +++++++++++++++++++++++++++++
+ bootanimation/Android.mk    |  30 ++++++++++++++++++++++++++++++
  bootanimation/desc.txt      |   4 ++++
  bootanimation/part0/001.png | Bin 0 -> 113 bytes
  bootanimation/part0/002.png | Bin 0 -> 113 bytes
@@ -432,7 +432,7 @@ all gsi targets.
  bootanimation/part2/410.png | Bin 0 -> 24892 bytes
  bootanimation/part2/411.png | Bin 0 -> 24892 bytes
  bootanimation/part2/412.png | Bin 0 -> 24892 bytes
- 415 files changed, 37 insertions(+)
+ 415 files changed, 38 insertions(+)
  create mode 100644 bootanimation/Android.mk
  create mode 100644 bootanimation/desc.txt
  create mode 100644 bootanimation/part0/001.png
@@ -865,16 +865,17 @@ index 161ae3f..695c470 100644
  
 diff --git a/bootanimation/Android.mk b/bootanimation/Android.mk
 new file mode 100644
-index 0000000..739f068
+index 0000000..beee932
 --- /dev/null
 +++ b/bootanimation/Android.mk
-@@ -0,0 +1,29 @@
+@@ -0,0 +1,30 @@
 +# custom boot animation for restlessos
 +# builds bootanimation.zip from source frames at build time and installs it
 +# to /system/media, where the bootanimation binary reads it by default.
 +# the trebledroid dynamic-resize patch (0025) scales the animation to the
 +# device screen, so a single 448x605 source set covers all targets.
 +
++LOCAL_PATH := $(call my-dir)
 +local_dir := $(LOCAL_PATH)
 +# generate the archive as bootanimation.src.zip under the module intermediates
 +# dir, then let BUILD_PREBUILT copy it to bootanimation.zip. generating straight
