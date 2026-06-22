@@ -1,7 +1,7 @@
-From 6080b0c347e6ca5618b7fe9e35b76cbb9c02a3fa Mon Sep 17 00:00:00 2001
+From 80154dd7de4abd562f309bf070d3c03d29b8bf8b Mon Sep 17 00:00:00 2001
 From: "Christopher A. Williamson" <contact@chrisaw.io>
 Date: Sun, 21 Jun 2026 22:37:21 +0100
-Subject: [PATCH] device/phh/treble: add custom bootanimation
+Subject: [PATCH 3/3] device/phh/treble: add custom bootanimation
 
 Add a self-contained bootanimation/ directory with source frames
 (desc.txt + part0/part1/part2 PNGs) and an Android.mk that zips them
@@ -844,7 +844,7 @@ all gsi targets.
 
 diff --git a/bootanimation/Android.mk b/bootanimation/Android.mk
 new file mode 100644
-index 0000000..9827817
+index 0000000..739f068
 --- /dev/null
 +++ b/bootanimation/Android.mk
 @@ -0,0 +1,29 @@
@@ -874,7 +874,7 @@ index 0000000..9827817
 +include $(CLEAR_VARS)
 +LOCAL_MODULE := bootanimation.zip
 +LOCAL_MODULE_CLASS := ETC
-+LOCAL_MODULE_PATH := $(TARGET_OUT_SYSTEM)/media
++LOCAL_MODULE_PATH := $(TARGET_OUT)/media
 +LOCAL_PREBUILT_MODULE_FILE := $(generated_zip)
 +include $(BUILD_PREBUILT)
 \ No newline at end of file
