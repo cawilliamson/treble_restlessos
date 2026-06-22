@@ -1,4 +1,4 @@
-From e6fd7d39fd3c5ad5b36fee8ee150e295c02071ba Mon Sep 17 00:00:00 2001
+From 84a11de915acc81e36646a2e31eb9069c323a460 Mon Sep 17 00:00:00 2001
 From: "Christopher A. Williamson" <contact@chrisaw.io>
 Date: Sun, 21 Jun 2026 23:58:54 +0100
 Subject: [PATCH 11/11] treble_app: run EntryService as a freezer-exempt foreground
@@ -9,27 +9,35 @@ handwave/pocket doze) are registered from the treble_app process. as a
 plain service the process becomes cached once onStartCommand returns,
 so the android app freezer suspends it while the screen is off -- and
 the gestures stop working until the user opens treble settings again
-(which unfreezes the process).
+(which unfreezes the process). android:persistent only exempts user 0,
+and the app runs under the booted user (e.g. user 10), so it is still
+subject to the freezer.
 
 promote EntryService to a foreground service with a low-importance
 ongoing notification so the process stays unfrozen and the listeners
 keep firing when locked/backgrounded. requires startForegroundServiceAsUser
 at the boot receiver.
 
-no foregroundServiceType is declared: treble_app targets sdk 33, and
-the foreground service type declaration is only enforced for apps
-targeting sdk 34+. declaring specialUse would require compileSdk 34,
-which the upstream gradle config does not yet use.
+declare foregroundServiceType="connectedDevice" and the
+FOREGROUND_SERVICE_CONNECTED_DEVICE + CHANGE_WIFI_STATE permissions.
+android 16 enforces the foreground service type requirement for the
+system shared uid (the FGS_TYPE_NONE compat change is evaluated against
+the platform targetSdk, not the app's own targetSdk 33), so a typeless
+startForeground throws MissingForegroundServiceTypeException and crashes
+the app in a loop. connectedDevice is an sdk-33-valid type whose policy
+is never disabled, and the platform-signed system uid satisfies its
+anyOf permission gate via the auto-granted CHANGE_WIFI_STATE normal
+permission.
 ---
- app/src/main/AndroidManifest.xml              |  9 +++---
+ app/src/main/AndroidManifest.xml              | 13 ++++----
  .../java/me/phh/treble/app/EntryService.kt    | 30 ++++++++++++++++++-
- 2 files changed, 34 insertions(+), 5 deletions(-)
+ 2 files changed, 37 insertions(+), 6 deletions(-)
 
 diff --git a/app/src/main/AndroidManifest.xml b/app/src/main/AndroidManifest.xml
-index d1e06c9..c4737b4 100644
+index d1e06c9..cf72b3d 100644
 --- a/app/src/main/AndroidManifest.xml
 +++ b/app/src/main/AndroidManifest.xml
-@@ -6,13 +6,14 @@
+@@ -6,13 +6,16 @@
      android:sharedUserId="android.uid.system">
  
  
@@ -37,8 +45,10 @@ index d1e06c9..c4737b4 100644
 -    <uses-permission android:name="android.permission.DIAGNOSTIC" />
      <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
 -    <uses-permission android:name="android.permission.REQUEST_INSTALL_PACKAGES" />
++    <uses-permission android:name="android.permission.CHANGE_WIFI_STATE" />
 +    <uses-permission android:name="android.permission.DIAGNOSTIC" />
 +    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
++    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_CONNECTED_DEVICE" />
      <uses-permission android:name="android.permission.INSTALL_PACKAGES" />
 +    <uses-permission android:name="android.permission.INTERACT_ACROSS_USERS" />
 +    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
@@ -48,6 +58,15 @@ index d1e06c9..c4737b4 100644
      <uses-permission android:name="android.permission.VIBRATE" />
  
      <application
+@@ -28,7 +31,7 @@
+         <uses-library android:name="vendor.qti.hardware.radio.am.V1_0" android:required="false"/>
+         <uses-library android:name="vendor.qti.qcril.am.V1_0" android:required="false"/>
+ 
+-        <service android:name=".EntryService" />
++        <service android:name=".EntryService" android:foregroundServiceType="connectedDevice" />
+         <service android:name=".NubiaAutoFanControlService" />
+ 
+         <service
 diff --git a/app/src/main/java/me/phh/treble/app/EntryService.kt b/app/src/main/java/me/phh/treble/app/EntryService.kt
 index f6c501b..5546482 100644
 --- a/app/src/main/java/me/phh/treble/app/EntryService.kt
