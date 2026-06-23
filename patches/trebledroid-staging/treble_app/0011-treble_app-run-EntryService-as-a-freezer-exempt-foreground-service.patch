@@ -1,4 +1,4 @@
-From 273d927a477a99338043989e5ef8af353a86f26b Mon Sep 17 00:00:00 2001
+From d1ccda3cd00dcbc3e2b1e71012886e03f64a6b50 Mon Sep 17 00:00:00 2001
 From: "Christopher A. Williamson" <contact@chrisaw.io>
 Date: Sun, 21 Jun 2026 23:58:54 +0100
 Subject: [PATCH 11/11] treble_app: run EntryService as a freezer-exempt foreground
@@ -29,16 +29,15 @@ is never disabled, and the platform-signed system uid satisfies its
 anyOf permission gate via the auto-granted CHANGE_WIFI_STATE normal
 permission.
 
-create the notification channel at IMPORTANCE_NONE (with a fresh channel
-id) so the persistent foreground-service notification is hidden from the
-ui entirely -- equivalent to the user disabling notifications for the
-app. startForeground clears the fgs anr timer via the call itself, and
-ams never demotes a fgs when its notification is suppressed by a channel
-ban, so the process stays unfrozen without a visible notification.
+the persistent foreground-service notification is hidden at the system
+level by the companion frameworks/base patch (rom 0008), which forces the
+notification record importance to NONE for me.phh.treble.app -- the
+notification is still posted so the fgs stays foreground, it is just not
+displayed.
 ---
- app/src/main/AndroidManifest.xml              | 13 ++++---
- .../java/me/phh/treble/app/EntryService.kt    | 39 ++++++++++++++++++-
- 2 files changed, 46 insertions(+), 6 deletions(-)
+ app/src/main/AndroidManifest.xml              | 13 ++++----
+ .../java/me/phh/treble/app/EntryService.kt    | 30 ++++++++++++++++++-
+ 2 files changed, 37 insertions(+), 6 deletions(-)
 
 diff --git a/app/src/main/AndroidManifest.xml b/app/src/main/AndroidManifest.xml
 index d1e06c9..cf72b3d 100644
@@ -75,7 +74,7 @@ index d1e06c9..cf72b3d 100644
  
          <service
 diff --git a/app/src/main/java/me/phh/treble/app/EntryService.kt b/app/src/main/java/me/phh/treble/app/EntryService.kt
-index f6c501b..aa21fa2 100644
+index f6c501b..5546482 100644
 --- a/app/src/main/java/me/phh/treble/app/EntryService.kt
 +++ b/app/src/main/java/me/phh/treble/app/EntryService.kt
 @@ -1,5 +1,8 @@
@@ -91,12 +90,12 @@ index f6c501b..aa21fa2 100644
  class EntryService: Service() {
      companion object {
          var service: EntryService? = null
-+        private const val CHANNEL_ID = "phh_treble_entry_silent"
++        private const val CHANNEL_ID = "phh_treble_entry"
 +        private const val NOTIF_ID = 1
      }
      override fun onBind(intent: Intent): IBinder? {
          return null
-@@ -33,8 +38,40 @@ class EntryService: Service() {
+@@ -33,8 +38,31 @@ class EntryService: Service() {
          }
      }
  
@@ -105,22 +104,13 @@ index f6c501b..aa21fa2 100644
 +    // doze) keep firing while the screen is off and the app is backgrounded.
 +    // without this the android app freezer suspends the whole process and the
 +    // gestures stop working until the user opens treble settings again.
-+    //
-+    // the channel is created at IMPORTANCE_NONE so the ongoing foreground-service
-+    // notification is suppressed from the ui entirely -- equivalent to the user
-+    // disabling notifications for the app. startForeground() clears the fgs anr
-+    // timer via the call itself (not via the notification being displayed), and
-+    // ams never demotes a fgs when its notification is cancelled by a channel
-+    // ban, so the service stays foreground and the process stays unfrozen.
-+    // a fresh channel id is used because an app cannot downgrade an existing
-+    // channel's importance once the user has touched it.
 +    private fun startForegroundNotif() {
 +        val nm = getSystemService(NotificationManager::class.java)
 +        if (nm.getNotificationChannel(CHANNEL_ID) == null) {
 +            nm.createNotificationChannel(NotificationChannel(
 +                CHANNEL_ID,
 +                getString(R.string.app_name),
-+                NotificationManager.IMPORTANCE_NONE
++                NotificationManager.IMPORTANCE_LOW
 +            ))
 +        }
 +        val notif = Notification.Builder(this, CHANNEL_ID)
@@ -137,7 +127,7 @@ index f6c501b..aa21fa2 100644
  
          thread {
              tryC { Tools.startup(this) }
-@@ -88,7 +125,7 @@ class Starter: BroadcastReceiver() {
+@@ -88,7 +116,7 @@ class Starter: BroadcastReceiver() {
              Intent.ACTION_BOOT_COMPLETED,
              Intent.ACTION_MY_PACKAGE_REPLACED,
              Intent.ACTION_LOCKED_BOOT_COMPLETED -> {

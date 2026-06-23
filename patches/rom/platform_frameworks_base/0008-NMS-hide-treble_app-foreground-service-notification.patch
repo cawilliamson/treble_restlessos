@@ -1,0 +1,52 @@
+From b9726838913dbcde49a0369c3885f88a50279703 Mon Sep 17 00:00:00 2001
+From: "Christopher A. Williamson" <contact@chrisaw.io>
+Date: Tue, 23 Jun 2026 09:50:39 +0100
+Subject: [PATCH 8/8] NMS: hide the treble_app foreground-service notification
+
+RestlessOS runs the treble_app as a freezer-exempt foreground service so
+device-specific sensor listeners (motorola chop-chop, handwave/pocket doze)
+keep firing with the screen off. that service posts a persistent
+foreground-service notification that some users want gone -- the same end
+state as manually disabling notifications for the app.
+
+android deliberately floors foreground-service notifications at IMPORTANCE_LOW
+so users always see them, and an app cannot self-lock its channel importance to
+bypass the floor (the system strips app-supplied lock fields on channel creation).
+so suppress the treble_app notification at the system level instead: when an
+fgs/uij notification is posted for me.phh.treble.app, force its record importance
+to IMPORTANCE_NONE so it is not displayed.
+
+the notification is still posted, so the fgs stays foreground -- startForeground()
+clears the fgs anr timer via the call itself, and ams never demotes a fgs whose
+notification is suppressed -- keeping the process unfrozen. all other fgs/uij
+notifications (music, calls, downloads, ...) keep the standard LOW importance
+floor and remain visible.
+---
+ .../notification/NotificationManagerService.java      | 11 ++++++++++-
+ 1 file changed, 10 insertions(+), 1 deletion(-)
+
+diff --git a/services/core/java/com/android/server/notification/NotificationManagerService.java b/services/core/java/com/android/server/notification/NotificationManagerService.java
+index a499054ac..210029ebb 100644
+--- a/services/core/java/com/android/server/notification/NotificationManagerService.java
++++ b/services/core/java/com/android/server/notification/NotificationManagerService.java
+@@ -8918,7 +8918,16 @@ public class NotificationManagerService extends SystemService {
+         boolean isImportanceFixed = mPermissionHelper.isPermissionFixed(pkg, userId);
+         r.setImportanceFixed(isImportanceFixed);
+         if (notification.isFgsOrUij()) {
+-            if (((channel.getUserLockedFields() & NotificationChannel.USER_LOCKED_IMPORTANCE) == 0
++            // restlessos: suppress the treble_app foreground-service notification.
++            // force the record importance to NONE so it is not displayed, while still
++            // posting it (the fgs stays foreground -- startForeground clears the anr
++            // timer and ams never demotes a fgs whose notification is suppressed, so
++            // the process stays unfrozen). all other fgs/uij notifications keep the
++            // standard LOW importance floor so music, calls, downloads etc. remain
++            // visible.
++            if ("me.phh.treble.app".equals(pkg)) {
++                r.setSystemImportance(IMPORTANCE_NONE);
++            } else if (((channel.getUserLockedFields() & NotificationChannel.USER_LOCKED_IMPORTANCE) == 0
+                         || !channel.isUserVisibleTaskShown())
+                     && (r.getImportance() == IMPORTANCE_MIN
+                             || r.getImportance() == IMPORTANCE_NONE)) {
+-- 
+2.54.0
+
