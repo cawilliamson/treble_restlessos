@@ -1,0 +1,88 @@
+From 295ac4d08be3a56c4ba5146f3f372b28f1b70507 Mon Sep 17 00:00:00 2001
+From: "Christopher A. Williamson" <contact@chrisaw.io>
+Date: Wed, 24 Jun 2026 11:27:54 +0100
+Subject: [PATCH 2/2] debug-builds: log OP6190L1 audio boot sequence for issue #44
+
+Emit logcat markers (tag phh-audio) on OP6190L1 so a single
+'adb logcat -b all' proves the issue #44 fix took effect and shows the full
+audio boot sequence:
+  - sysbta prop value at toggle
+  - restartAudio() entry + OP6190L1 skip confirmation + the ctl.restart it
+    would have issued on other devices
+  - vendor.audio-hal-aidl RUNNING/STOPPED transitions (crash-loop visible)
+  - audioserver RUNNING/STOPPED
+  - sys.boot_completed=1 (proves the fix worked end-to-end)
+Plus a best-effort crank of QTI audio/ACDB verbose log props (no-op if the
+vendor HAL doesn't read them). Gated to OP6190L1, debug-builds tier only.
+---
+ phh-prop-handler.sh |  4 ++++
+ vndk.rc             | 27 +++++++++++++++++++++++++++
+ 2 files changed, 31 insertions(+)
+
+diff --git a/phh-prop-handler.sh b/phh-prop-handler.sh
+index 74c0e12..61f26ba 100644
+--- a/phh-prop-handler.sh
++++ b/phh-prop-handler.sh
+@@ -74,13 +74,16 @@ restartAudio() {
+     # it has not started yet at this point. sysbta itself is left enabled. see
+     # issue #44.
+     if [ "$(getprop ro.product.device)" = "OP6190L1" ]; then
++        log -t phh-audio -p i "restartAudio: OP6190L1 -> SKIPPING (issue #44 fix: let vendor.audio-hal-aidl first init complete)"
+         return 0
+     fi
++    log -t phh-audio -p i "restartAudio: device=$(getprop ro.product.device) -> restarting audio (sysbta toggle)"
+     setprop ctl.restart audioserver
+     audioHal="$(getprop |sed -nE 's/.*init\.svc\.(.*audio-hal[^]]*).*/\1/p')"
+     setprop ctl.restart "$audioHal"
+     setprop ctl.restart vendor.audio-hal-2-0
+     setprop ctl.restart audio-hal-2-0
++    log -t phh-audio -p i "restartAudio: issued ctl.restart audioserver + ${audioHal} + vendor.audio-hal-2-0 + audio-hal-2-0"
+ }
+ 
+ if [ "$1" == "persist.sys.phh.asus.dt2w" ]; then
+@@ -285,6 +288,7 @@ if [ "$1" == "persist.sys.phh.disable_soundvolume_effect" ];then
+ fi
+ 
+ if [ "$1" == "persist.bluetooth.system_audio_hal.enabled" ]; then
++    log -t phh-audio -p i "sysbta handler: prop_value=$prop_value"
+     # Migrate from 0/1 to false/true first
+     if [[ "$prop_value" == "0" ]]; then
+         setprop persist.bluetooth.system_audio_hal.enabled false
+diff --git a/vndk.rc b/vndk.rc
+index 2bf8894..703af99 100644
+--- a/vndk.rc
++++ b/vndk.rc
+@@ -176,3 +176,30 @@ on property:init.svc.wifidisplayhalservice=running && property:ro.product.device
+ 
+ on property:persist.sys.phh.lmk_tweaks=*
+     exec u:r:phhsu_daemon:s0 root -- /system/bin/phh-prop-handler.sh "persist.sys.phh.lmk_tweaks"
++
++# issue #44 diagnostics (OP6190L1 only) -- emit logcat markers for the audio
++# boot sequence so a single `adb logcat -b all` proves the fix took effect and
++# shows whether the QTI AIDL audio HAL completes init / audioserver stabilises /
++# boot is reached. grep logcat for tag `phh-audio` (and `ahal-boot`).
++on property:persist.bluetooth.system_audio_hal.enabled=* && property:ro.product.device=OP6190L1
++    log i phh-audio "sysbta prop=${persist.bluetooth.system_audio_hal.enabled}"
++
++on property:init.svc.vendor.audio-hal-aidl=running && property:ro.product.device=OP6190L1
++    log i phh-audio "vendor.audio-hal-aidl RUNNING"
++on property:init.svc.vendor.audio-hal-aidl=stopped && property:ro.product.device=OP6190L1
++    log i phh-audio "vendor.audio-hal-aidl STOPPED"
++
++on property:init.svc.audioserver=running && property:ro.product.device=OP6190L1
++    log i phh-audio "audioserver RUNNING"
++on property:init.svc.audioserver=stopped && property:ro.product.device=OP6190L1
++    log i phh-audio "audioserver STOPPED"
++
++on property:sys.boot_completed=1 && property:ro.product.device=OP6190L1
++    log i phh-audio "BOOT_COMPLETED reached (issue #44 fix OK -- audio HAL came up)"
++
++# best-effort: crank QTI audio/ACDB verbose logging on this device (no-op if
++# the vendor HAL doesn't read these props). -n = ephemeral, not persisted.
++on property:ro.product.device=OP6190L1
++    exec u:r:phhsu_daemon:s0 root -- /system/bin/resetprop_phh -n persist.vendor.audio.log.level 0xFFFF
++    exec u:r:phhsu_daemon:s0 root -- /system/bin/resetprop_phh -n vendor.audio.log.level 0xFFFF
++    exec u:r:phhsu_daemon:s0 root -- /system/bin/resetprop_phh -n persist.audio.log.level 1
+-- 
+2.54.0
+

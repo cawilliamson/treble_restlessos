@@ -1,7 +1,7 @@
 From 3a6672a8894386db79fabb1408c83c492c02a7e5 Mon Sep 17 00:00:00 2001
 From: "Christopher A. Williamson" <contact@chrisaw.io>
 Date: Wed, 24 Jun 2026 11:22:30 +0100
-Subject: [PATCH] phh-prop-handler: don't restartAudio on OnePlus OP6190L1 (fix
+Subject: [PATCH 1/2] phh-prop-handler: don't restartAudio on OnePlus OP6190L1 (fix
  boot stall)
 
 On the first boot, the sysbta toggle (persist.bluetooth.system_audio_hal.enabled
