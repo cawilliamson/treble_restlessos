@@ -1,0 +1,48 @@
+From 3a6672a8894386db79fabb1408c83c492c02a7e5 Mon Sep 17 00:00:00 2001
+From: "Christopher A. Williamson" <contact@chrisaw.io>
+Date: Wed, 24 Jun 2026 11:22:30 +0100
+Subject: [PATCH] phh-prop-handler: don't restartAudio on OnePlus OP6190L1 (fix
+ boot stall)
+
+On the first boot, the sysbta toggle (persist.bluetooth.system_audio_hal.enabled
+unset->true) fires phh-prop-handler.sh's restartAudio() while the QTI AIDL
+audio core HAL (vendor.audio-hal-aidl) is ~370ms into its own registerServices.
+The ctl.restart of vendor.audio-hal-aidl SIGKILLs it mid-init -- before it
+finishes parsing ACDB / building the audio graph -- and the device never reaches
+boot_completed (stuck at bootanimation, issue #44).
+
+Skip restartAudio() entirely on OP6190L1 so the HAL's first init completes
+uninterrupted. sysbta itself is left enabled; this only drops the one mid-init
+kill of the primary AIDL audio HAL on this device. Gated to OP6190L1; other
+devices keep restartAudio() as-is.
+---
+ phh-prop-handler.sh | 13 +++++++++++++
+ 1 file changed, 13 insertions(+)
+
+diff --git a/phh-prop-handler.sh b/phh-prop-handler.sh
+index ed1127b..d1569e9 100644
+--- a/phh-prop-handler.sh
++++ b/phh-prop-handler.sh
+@@ -63,6 +63,19 @@ xiaomi_toggle_dt2w_ioctl() {
+ }
+ 
+ restartAudio() {
++    # OnePlus/OPPO sm8750 (OP6190L1): on the first boot the sysbta toggle
++    # (persist.bluetooth.system_audio_hal.enabled unset->true) runs this while
++    # the QTI AIDL audio core HAL (vendor.audio-hal-aidl) is ~370ms into its
++    # own registerServices. the ctl.restart of vendor.audio-hal-aidl SIGKILLs
++    # it mid-init before it finishes parsing ACDB / building the audio graph,
++    # and the device then never reaches boot_completed (stuck at bootanimation,
++    # issue #44). skip restarting the primary AIDL audio HAL on this device so
++    # its first init can complete; audioserver is not restarted either, since
++    # it has not started yet at this point. sysbta itself is left enabled. see
++    # issue #44.
++    if [ "$(getprop ro.product.device)" = "OP6190L1" ]; then
++        return 0
++    fi
+     setprop ctl.restart audioserver
+     audioHal="$(getprop |sed -nE 's/.*init\.svc\.(.*audio-hal[^]]*).*/\1/p')"
+     setprop ctl.restart "$audioHal"
+-- 
+2.54.0
+
