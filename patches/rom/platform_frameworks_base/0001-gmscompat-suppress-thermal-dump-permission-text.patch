@@ -1,0 +1,50 @@
+From 32161819f728b4192870cbff038e3ab4fb6ba01c Mon Sep 17 00:00:00 2001
+From: Dmitry Muhomor <muhomor.dmitry@gmail.com>
+Date: Tue, 23 Jun 2026 13:40:12 +0000
+Subject: [PATCH] gmscompat: remove permission error text from
+ ThermalManagerService dump
+
+---
+ core/java/com/android/internal/util/DumpUtils.java   | 12 +++++++++---
+ .../server/power/thermal/ThermalManagerService.java  |  3 ++-
+ 2 files changed, 11 insertions(+), 4 deletions(-)
+
+diff --git a/core/java/com/android/internal/util/DumpUtils.java b/core/java/com/android/internal/util/DumpUtils.java
+index d1ff034ff0015..00b77ac98d23f 100644
+--- a/core/java/com/android/internal/util/DumpUtils.java
++++ b/core/java/com/android/internal/util/DumpUtils.java
+@@ -96,11 +96,17 @@ private static void logMessage(PrintWriter pw, String msg) {
+     @android.ravenwood.annotation.RavenwoodThrow(
+             blockedBy = android.permission.PermissionManager.class)
+     public static boolean checkDumpPermission(Context context, String tag, PrintWriter pw) {
++        return checkDumpPermission(context, tag, pw, true);
++    }
++
++    public static boolean checkDumpPermission(Context context, String tag, PrintWriter pw, boolean log) {
+         if (context.checkCallingOrSelfPermission(android.Manifest.permission.DUMP)
+                 != PackageManager.PERMISSION_GRANTED) {
+-            logMessage(pw, "Permission Denial: can't dump " + tag + " from from pid="
+-                    + Binder.getCallingPid() + ", uid=" + Binder.getCallingUid()
+-                    + " due to missing android.permission.DUMP permission");
++            if (log) {
++                logMessage(pw, "Permission Denial: can't dump " + tag + " from from pid="
++                        + Binder.getCallingPid() + ", uid=" + Binder.getCallingUid()
++                        + " due to missing android.permission.DUMP permission");
++            }
+             return false;
+         } else {
+             return true;
+diff --git a/services/core/java/com/android/server/power/thermal/ThermalManagerService.java b/services/core/java/com/android/server/power/thermal/ThermalManagerService.java
+index 52b407a23bf09..0baccf7e9b782 100644
+--- a/services/core/java/com/android/server/power/thermal/ThermalManagerService.java
++++ b/services/core/java/com/android/server/power/thermal/ThermalManagerService.java
+@@ -976,7 +976,8 @@ private static void dumpTemperatureThresholds(PrintWriter pw, String prefix,
+ 
+     @VisibleForTesting
+     void dumpInternal(FileDescriptor fd, PrintWriter pw, String[] args) {
+-        if (!DumpUtils.checkDumpPermission(getContext(), TAG, pw)) {
++        if (!DumpUtils.checkDumpPermission(getContext(), TAG, pw, false)) {
++            Slog.i(TAG, "checkDumpPermission failed, skipping dump; callerPid: " + Binder.getCallingPid());
+             return;
+         }
+         final long token = Binder.clearCallingIdentity();
