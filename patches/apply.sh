@@ -14,6 +14,7 @@ for project in $(cd "$patches"/"$tree"; echo *); do
     [ "$p" == build ] && p=build/make
     [ "$p" == testing ] && p=platform_testing
     [ "$p" == treble/app ] && p=treble_app
+    [ "$p" == system/fs/fs/mgr ] && p=system/fs/fs_mgr
     [ "$p" == vendor/hardware/overlay ] && p=vendor/hardware_overlay
     [ "$p" == vendor/partner/gms ] && p=vendor/partner_gms
     pushd "$p" &>/dev/null
