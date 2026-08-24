@@ -54,8 +54,6 @@
   <remove-project name="platform/test/catbox" />
   <remove-project name="platform/test/cts-root" />
   <remove-project name="platform/test/dittosuite" />
-  <remove-project name="platform/test/graphics" />
-  <remove-project name="platform/test/mts" />
   <remove-project name="platform/test/vts-testcase/nbu" />
   <remove-project name="platform/test/vts-testcase/performance" />
   <remove-project name="platform/test/vts-testcase/security" />
