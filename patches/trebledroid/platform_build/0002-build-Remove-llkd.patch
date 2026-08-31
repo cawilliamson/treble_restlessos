@@ -11,17 +11,16 @@ Change-Id: I29384a820a0c07b29d3f11d7039bed40eeaee926
  1 file changed, 1 deletion(-)
 
 diff --git a/target/product/base_system.mk b/target/product/base_system.mk
-index 5c4ef33284..cb1b32a7fe 100644
+index 2b4f37c..602e949 100644
 --- a/target/product/base_system.mk
 +++ b/target/product/base_system.mk
-@@ -211,7 +211,6 @@ PRODUCT_PACKAGES += \
+@@ -219,7 +219,6 @@ PRODUCT_PACKAGES += \
+     libvintf_jni \
      libvulkan \
      libwilhelm \
-     linker \
 -    llkd \
      llndk_libs \
      lmkd \
      LocalTransport \
--- 
-2.52.0
-
+--
+2.55.0
