@@ -7,11 +7,11 @@ Subject: [PATCH 2/2] Add new mechanism to fake vendor props on a per-process
 This reads debug.phh.props.<process name>. If its value is "vendor",
 then ro.product.device/ro.product.manufacturer is read from vendor
 ---
- libc/system_properties/system_properties.cpp | 94 +++++++++++++++++++-
- 1 file changed, 92 insertions(+), 2 deletions(-)
+ libc/system_properties/system_properties.cpp | 89 +++++++++++++++++++-
+ 1 file changed, 88 insertions(+), 1 deletion(-)
 
 diff --git a/libc/system_properties/system_properties.cpp b/libc/system_properties/system_properties.cpp
-index e0d38a822..60974e8ae 100644
+index ca286e8..1030f90 100644
 --- a/libc/system_properties/system_properties.cpp
 +++ b/libc/system_properties/system_properties.cpp
 @@ -36,6 +36,8 @@
@@ -23,9 +23,9 @@ index e0d38a822..60974e8ae 100644
 
  #include <new>
 
-@@ -53,6 +55,85 @@
- #define SERIAL_VALUE_LEN(serial) ((serial) >> 24)
+@@ -54,6 +56,82 @@
  #define APPCOMPAT_PREFIX "ro.appcompat_override."
+ #define APPCOMPAT_OVERRIDE_ENV_VAR "BIONIC_APPCOMPAT_OVERRIDE"
 
 +static char comm[128];
 +static bool self_ok = false;
@@ -72,9 +72,6 @@ index e0d38a822..60974e8ae 100644
 +
 +static const char* redirectToProp(const char *name) {
 +  read_self();
-+  /*if(strstr(name, "ro.keymaster") != nullptr || strstr(name, "security_patch") != nullptr || strstr(name, "release") != nullptr) {
-+    async_safe_format_log(ANDROID_LOG_WARN, "libc", "Process/comm %s/%s is reading %s", comm, comm_override, name);
-+  }*/
 +  if(strcmp(comm_override, "vendor") == 0) {
 +    if(strcmp(name, "ro.product.device") == 0) {
 +      return "ro.product.vendor.device";
@@ -109,7 +106,7 @@ index e0d38a822..60974e8ae 100644
  static bool is_dir(const char* pathname) {
    struct stat info;
    if (stat(pathname, &info) == -1) {
-@@ -160,17 +241,26 @@ uint32_t SystemProperties::AreaSerial() {
+@@ -166,6 +244,8 @@ uint32_t SystemProperties::AreaSerial() {
  }
 
  const prop_info* SystemProperties::Find(const char* name) {
@@ -118,11 +115,7 @@ index e0d38a822..60974e8ae 100644
    if (!initialized_) {
      return nullptr;
    }
-
--  prop_area* pa = contexts_->GetPropAreaForName(name);
-+  prop_area* pa = contexts_->GetPropAreaForName(newName);
-   if (!pa) {
-     async_safe_format_log(ANDROID_LOG_WARN, "libc", "Access denied finding property \"%s\"", name);
+@@ -193,7 +273,14 @@ const prop_info* SystemProperties::Find(const char* name) {
      return nullptr;
    }
 
@@ -138,6 +131,6 @@ index e0d38a822..60974e8ae 100644
  }
 
  static bool is_appcompat_override(const char* name) {
--- 
-2.52.0
+--
+2.55.0
 
