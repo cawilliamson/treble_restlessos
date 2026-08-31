@@ -14,12 +14,12 @@ Change-Id: I7c14fe5229e953f620bb225fa5c981752d0ac5f9
  target/product/gsi/Android.bp         | 8 --------
  target/product/gsi/init.gsi.rc        | 2 --
  target/product/gsi/init.vndk-nodef.rc | 3 ---
- target/product/gsi_release.mk         | 2 --
- 4 files changed, 15 deletions(-)
+ target/product/gsi_release.mk         | 3 +--
+ 4 files changed, 1 insertion(+), 15 deletions(-)
  delete mode 100644 target/product/gsi/init.vndk-nodef.rc
 
 diff --git a/target/product/gsi/Android.bp b/target/product/gsi/Android.bp
-index 8c200a1dcb..5d6fb66283 100644
+index 4fdb3ab..2ec2eb6 100644
 --- a/target/product/gsi/Android.bp
 +++ b/target/product/gsi/Android.bp
 @@ -55,13 +55,6 @@ prebuilt_etc {
@@ -36,7 +36,7 @@ index 8c200a1dcb..5d6fb66283 100644
  gsi_symlinks = [
      {
          target: "/system/system_ext",
-@@ -110,7 +103,6 @@ android_filesystem_defaults {
+@@ -114,7 +107,6 @@ android_filesystem_defaults {
          ///////////////////////////////////////////
          "gsi_skip_mount.cfg",
          "init.gsi.rc",
@@ -45,7 +45,7 @@ index 8c200a1dcb..5d6fb66283 100644
          "gsi_overlay_framework",
          "gsi_overlay_systemui",
 diff --git a/target/product/gsi/init.gsi.rc b/target/product/gsi/init.gsi.rc
-index 69c8e467be..c6faba78d9 100644
+index 69c8e46..c6faba7 100644
 --- a/target/product/gsi/init.gsi.rc
 +++ b/target/product/gsi/init.gsi.rc
 @@ -1,5 +1,3 @@
@@ -56,7 +56,7 @@ index 69c8e467be..c6faba78d9 100644
 -import /system/system_ext/etc/gsi/init.vndk-${ro.vndk.version:-nodef}.rc
 diff --git a/target/product/gsi/init.vndk-nodef.rc b/target/product/gsi/init.vndk-nodef.rc
 deleted file mode 100644
-index 1b141a05e7..0000000000
+index 1b141a0..0000000
 --- a/target/product/gsi/init.vndk-nodef.rc
 +++ /dev/null
 @@ -1,3 +0,0 @@
@@ -64,18 +64,18 @@ index 1b141a05e7..0000000000
 -    # Reboot if BOARD_VNDK_VERSION is not defined
 -    exec - root -- /system/bin/reboot bootloader
 diff --git a/target/product/gsi_release.mk b/target/product/gsi_release.mk
-index 115b355920..a4319babc4 100644
+index f92a6e3..fbae342 100644
 --- a/target/product/gsi_release.mk
 +++ b/target/product/gsi_release.mk
-@@ -48,8 +48,6 @@ PRODUCT_USE_DYNAMIC_PARTITION_SIZE := true
+@@ -53,8 +53,7 @@ PRODUCT_USE_DYNAMIC_PARTITION_SIZE := true
+ # GSI specific tasks on boot
  PRODUCT_PACKAGES += \
      gsi_skip_mount.cfg \
-     init.gsi.rc \
+-    init.gsi.rc \
 -    init.vndk-nodef.rc \
--
++    init.gsi.rc
 
- # Overlay the GSI specific setting for framework and SystemUI
- ifneq ($(PRODUCT_IS_AUTOMOTIVE),true)
--- 
-2.52.0
-
+ # Add all system_ext packages used to support older/upgrading devices that have
+ # PRODUCT_SHIPPING_API_LEVEL 34 or older.
+--
+2.55.0
