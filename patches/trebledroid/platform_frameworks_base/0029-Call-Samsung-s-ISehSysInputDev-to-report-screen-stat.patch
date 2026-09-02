@@ -13,22 +13,22 @@ Change-Id: If2d74b97a51b19c730a6f9a1b1f4293d1469a9f8
  2 files changed, 32 insertions(+)
 
 diff --git a/services/core/Android.bp b/services/core/Android.bp
-index f154cc078..87f761db5 100644
+index 0edd21b6e..0d7875064 100644
 --- a/services/core/Android.bp
 +++ b/services/core/Android.bp
-@@ -259,6 +259,7 @@ java_library_static {
+@@ -274,6 +274,7 @@ java_library_static {
+         "profiling_flags_lib",
          "android.adpf.sessionmanager_aidl-java",
-         "uprobestats_flags_java_lib",
          "clipboard_flags_lib",
 +        "vendor.samsung.hardware.sysinput-V1.2-java", // HIDL
          "aconfig_adbdauth_flags_java_lib",
          "AvfBuildFlags",
-     ],
+         "textclassifier_flags_lib",
 diff --git a/services/core/java/com/android/server/display/LocalDisplayAdapter.java b/services/core/java/com/android/server/display/LocalDisplayAdapter.java
-index 3da7874f6..6865a23a7 100644
+index ae8e01484..33d432a27 100644
 --- a/services/core/java/com/android/server/display/LocalDisplayAdapter.java
 +++ b/services/core/java/com/android/server/display/LocalDisplayAdapter.java
-@@ -38,6 +38,7 @@ import android.os.SystemClock;
+@@ -39,6 +39,7 @@ import android.os.SystemClock;
  import android.os.SystemProperties;
  import android.os.Trace;
  import android.util.DisplayUtils;
@@ -36,7 +36,7 @@ index 3da7874f6..6865a23a7 100644
  import android.util.LongSparseArray;
  import android.util.Slog;
  import android.util.SparseArray;
-@@ -63,6 +64,8 @@ import com.android.server.display.notifications.DisplayNotificationManager;
+@@ -66,6 +67,8 @@ import com.android.server.display.utils.DebugUtils;
  import com.android.server.lights.LightsManager;
  import com.android.server.lights.LogicalLight;
 
@@ -45,7 +45,7 @@ index 3da7874f6..6865a23a7 100644
  import java.io.PrintWriter;
  import java.util.ArrayList;
  import java.util.Arrays;
-@@ -257,6 +260,8 @@ final class LocalDisplayAdapter extends DisplayAdapter {
+@@ -282,6 +285,8 @@ final class LocalDisplayAdapter extends DisplayAdapter {
 
          private DisplayEventReceiver.FrameRateOverride[] mFrameRateOverrides =
                  new DisplayEventReceiver.FrameRateOverride[0];
@@ -54,9 +54,9 @@ index 3da7874f6..6865a23a7 100644
 
          LocalDisplayDevice(IBinder displayToken, long physicalDisplayId,
                  SurfaceControl.StaticDisplayInfo staticDisplayInfo,
-@@ -960,10 +965,26 @@ final class LocalDisplayAdapter extends DisplayAdapter {
-                             }
+@@ -988,10 +993,26 @@ final class LocalDisplayAdapter extends DisplayAdapter {
                          }
+
 
 +                        if (!triedSamsungHal) {
 +                            triedSamsungHal = true;
@@ -81,7 +81,7 @@ index 3da7874f6..6865a23a7 100644
                          try {
                              final long start = SystemClock.uptimeMillis();
                              mSurfaceControlProxy.setDisplayPowerMode(token, mode);
-@@ -973,6 +994,16 @@ final class LocalDisplayAdapter extends DisplayAdapter {
+@@ -1001,6 +1022,16 @@ final class LocalDisplayAdapter extends DisplayAdapter {
                          } finally {
                              Trace.traceEnd(Trace.TRACE_TAG_POWER);
                          }
@@ -98,6 +98,5 @@ index 3da7874f6..6865a23a7 100644
                          setCommittedState(state);
 
                          // If we're entering a suspended (but not OFF) power state and we
--- 
-2.52.0
-
+--
+2.55.0
