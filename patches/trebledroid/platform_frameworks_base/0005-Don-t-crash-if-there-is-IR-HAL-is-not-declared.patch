@@ -6,14 +6,13 @@ Subject: [PATCH 05/55] Don't crash if there is IR HAL is not declared
 Change-Id: I3afded27441bbee8244d5fda544b3e6d1238dc1b
 ---
  .../core/java/com/android/server/ConsumerIrService.java   | 8 --------
- .../core/jni/com_android_server_ConsumerIrService.cpp     | 2 +-
- 2 files changed, 1 insertion(+), 9 deletions(-)
+ 1 file changed, 8 deletions(-)
 
 diff --git a/services/core/java/com/android/server/ConsumerIrService.java b/services/core/java/com/android/server/ConsumerIrService.java
-index 8362079b9009..030265567da8 100644
+index 63dbaa5b3..d68c938ed 100644
 --- a/services/core/java/com/android/server/ConsumerIrService.java
 +++ b/services/core/java/com/android/server/ConsumerIrService.java
-@@ -59,14 +59,6 @@ public class ConsumerIrService extends IConsumerIrService.Stub {
+@@ -49,14 +49,6 @@ public class ConsumerIrService extends IConsumerIrService.Stub {
          mWakeLock.setReferenceCounted(true);
 
          mHasNativeHal = getHalService();
@@ -28,19 +27,5 @@ index 8362079b9009..030265567da8 100644
      }
 
      @Override
-diff --git a/services/core/jni/com_android_server_ConsumerIrService.cpp b/services/core/jni/com_android_server_ConsumerIrService.cpp
-index 63daa3503bd5..d068ec06fc14 100644
---- a/services/core/jni/com_android_server_ConsumerIrService.cpp
-+++ b/services/core/jni/com_android_server_ConsumerIrService.cpp
-@@ -36,7 +36,7 @@ static sp<IConsumerIr> mHal;
-
- static jboolean getHidlHalService(JNIEnv * /* env */, jobject /* obj */) {
-     // TODO(b/31632518)
--    mHal = IConsumerIr::getService();
-+    mHal = IConsumerIr::tryGetService();
-     return mHal != nullptr;
- }
-
--- 
-2.52.0
-
+--
+2.55.0
