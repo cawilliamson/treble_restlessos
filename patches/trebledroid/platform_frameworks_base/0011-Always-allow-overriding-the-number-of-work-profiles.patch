@@ -5,28 +5,26 @@ Subject: [PATCH 11/55] Always allow overriding the number of work profiles
 
 Change-Id: I6eb09aa71663c6fbe7563e3038bffcabdba0ff6a
 ---
- .../java/com/android/server/pm/UserManagerService.java    | 8 ++------
- 1 file changed, 2 insertions(+), 6 deletions(-)
+ .../core/java/com/android/server/pm/UserTypeFactory.java     | 5 ++---
+ 1 file changed, 2 insertions(+), 3 deletions(-)
 
-diff --git a/services/core/java/com/android/server/pm/UserManagerService.java b/services/core/java/com/android/server/pm/UserManagerService.java
-index c72bf6bf8..0d71abd4c 100644
---- a/services/core/java/com/android/server/pm/UserManagerService.java
-+++ b/services/core/java/com/android/server/pm/UserManagerService.java
-@@ -9171,12 +9171,8 @@ public class UserManagerService extends IUserManager.Stub {
-             // UNLIMITED_NUMBER_OF_USERS serves as a shorthand for getMaxSupportedUsers().
-             defaultMax = UserManager.getMaxSupportedUsers();
-         }
+diff --git a/services/core/java/com/android/server/pm/UserTypeFactory.java b/services/core/java/com/android/server/pm/UserTypeFactory.java
+index 1941d2a2a..7465c4613 100644
+--- a/services/core/java/com/android/server/pm/UserTypeFactory.java
++++ b/services/core/java/com/android/server/pm/UserTypeFactory.java
+@@ -615,11 +615,10 @@ public final class UserTypeFactory {
+     /** Returns the number of managed profiles allowed, virtually always 1. */
+     private static int getMaxManagedProfiles() {
+         final int normalValue = 1;
 -        if (!Build.IS_DEBUGGABLE) {
--            return defaultMax;
+-            return normalValue;
 -        } else {
--            if (userTypeDetails.isManagedProfile()) {
--                return SystemProperties.getInt("persist.sys.max_profiles", defaultMax);
--            }
 +        if (userTypeDetails.isManagedProfile()) {
-+            return SystemProperties.getInt("persist.sys.max_profiles", defaultMax);
+             return SystemProperties.getInt("persist.sys.max_profiles", normalValue);
          }
-         return defaultMax;
++        return normalValue;
      }
--- 
-2.52.0
 
+     /**
+--
+2.55.0
