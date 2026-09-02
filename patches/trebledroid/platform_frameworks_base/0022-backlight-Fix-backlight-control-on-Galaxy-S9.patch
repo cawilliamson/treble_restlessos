@@ -53,18 +53,18 @@ Change-Id: I4e85178327d2bb63d5d0a37786058843662a89ba
  1 file changed, 46 insertions(+)
 
 diff --git a/services/core/java/com/android/server/lights/LightsService.java b/services/core/java/com/android/server/lights/LightsService.java
-index 6124b553498c..67f6932921f6 100644
+index a1365517e..d9f29e20e 100644
 --- a/services/core/java/com/android/server/lights/LightsService.java
 +++ b/services/core/java/com/android/server/lights/LightsService.java
-@@ -31,6 +31,7 @@ import android.os.Looper;
+@@ -38,6 +38,7 @@ import android.os.Looper;
  import android.os.PermissionEnforcer;
  import android.os.RemoteException;
  import android.os.ServiceManager;
 +import android.os.SystemProperties;
  import android.os.Trace;
  import android.provider.Settings;
- import android.util.Slog;
-@@ -297,6 +298,51 @@ public class LightsService extends SystemService {
+ import android.text.TextUtils;
+@@ -673,6 +674,51 @@ public class LightsService extends SystemService {
                      return;
                  }
                  int brightnessInt = BrightnessSynchronizer.brightnessFloatToInt(brightness);
@@ -116,6 +116,5 @@ index 6124b553498c..67f6932921f6 100644
                  int color = brightnessInt & 0x000000ff;
                  color = 0xff000000 | (color << 16) | (color << 8) | color;
                  setLightLocked(color, LIGHT_FLASH_NONE, 0, 0, brightnessMode);
--- 
-2.52.0
-
+--
+2.55.0
