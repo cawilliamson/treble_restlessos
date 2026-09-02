@@ -9,11 +9,11 @@ Subject: [PATCH 22/25] Include Samsung AIDL camera ids
  2 files changed, 22 insertions(+)
 
 diff --git a/services/camera/libcameraservice/Android.bp b/services/camera/libcameraservice/Android.bp
-index 53af1a23df..646fa8e6e8 100644
+index ee38f0a..95acdb6 100644
 --- a/services/camera/libcameraservice/Android.bp
 +++ b/services/camera/libcameraservice/Android.bp
-@@ -117,6 +117,7 @@ cc_defaults {
-         "android.hardware.camera.provider-V3-ndk",
+@@ -121,6 +121,7 @@ cc_defaults {
+         "android.hardware.camera.provider-V4-ndk",
          "vendor.samsung.hardware.camera.provider@3.0",
          "vendor.samsung.hardware.camera.provider@4.0",
 +        "vendor.samsung.hardware.camera.provider-V1-ndk",
@@ -21,7 +21,7 @@ index 53af1a23df..646fa8e6e8 100644
          "libbinderthreadstateutils",
          "libcameraservice_device_independent",
 diff --git a/services/camera/libcameraservice/common/aidl/AidlProviderInfo.cpp b/services/camera/libcameraservice/common/aidl/AidlProviderInfo.cpp
-index b9e8cddf5a..59789d4e35 100644
+index 4c19ccf..86f264a 100644
 --- a/services/camera/libcameraservice/common/aidl/AidlProviderInfo.cpp
 +++ b/services/camera/libcameraservice/common/aidl/AidlProviderInfo.cpp
 @@ -34,6 +34,8 @@
@@ -59,6 +59,5 @@ index b9e8cddf5a..59789d4e35 100644
      for (auto& name : retDevices) {
          uint16_t major, minor;
          std::string type, id;
--- 
-2.52.0
-
+--
+2.55.0
