@@ -13,18 +13,17 @@ Change-Id: Iac23480e080edf4300e6f411c3394c0b41030daa
  1 file changed, 1 insertion(+), 1 deletion(-)
 
 diff --git a/packages/SystemUI/src/com/android/systemui/screenrecord/ScreenMediaRecorder.java b/packages/SystemUI/src/com/android/systemui/screenrecord/ScreenMediaRecorder.java
-index f4455bfb7048..c9a60a2b4791 100644
+index 1aad015c0..f4ec0417e 100644
 --- a/packages/SystemUI/src/com/android/systemui/screenrecord/ScreenMediaRecorder.java
 +++ b/packages/SystemUI/src/com/android/systemui/screenrecord/ScreenMediaRecorder.java
-@@ -169,7 +169,7 @@ public class ScreenMediaRecorder extends MediaProjection.Callback {
-                 * VIDEO_FRAME_RATE_TO_RESOLUTION_RATIO;
+@@ -169,7 +169,7 @@ public class ScreenMediaRecorder {
+                 metrics.heightPixels, refreshRate);
          mMediaRecorder.setVideoEncoder(MediaRecorder.VideoEncoder.H264);
          mMediaRecorder.setVideoEncodingProfileLevel(
 -                MediaCodecInfo.CodecProfileLevel.AVCProfileHigh,
 +                MediaCodecInfo.CodecProfileLevel.AVCProfileMain,
                  MediaCodecInfo.CodecProfileLevel.AVCLevel3);
-         mMediaRecorder.setVideoSize(width, height);
-         mMediaRecorder.setVideoFrameRate(refreshRate);
--- 
-2.52.0
-
+         mMediaRecorder.setVideoSize(videoParameters.mWidth, videoParameters.mHeight);
+         mMediaRecorder.setVideoFrameRate(videoParameters.mRefreshRate);
+--
+2.55.0
