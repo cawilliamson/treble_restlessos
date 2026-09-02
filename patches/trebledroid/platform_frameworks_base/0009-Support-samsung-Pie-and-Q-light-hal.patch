@@ -9,11 +9,11 @@ Change-Id: I01f94acd7d0672733e48854d80368f9ac6f861c6
  1 file changed, 2 insertions(+)
 
 diff --git a/services/core/jni/Android.bp b/services/core/jni/Android.bp
-index 2606a5aca277..364bd920799a 100644
+index 2b6629c87..83c7f130a 100644
 --- a/services/core/jni/Android.bp
 +++ b/services/core/jni/Android.bp
-@@ -207,6 +207,8 @@ cc_defaults {
-         "android_location_flags_c_lib",
+@@ -203,6 +203,8 @@ cc_defaults {
+         "attentionmanager_native_aidl-cpp",
          "server_configurable_flags",
          "service.incremental",
 +        "vendor.samsung.hardware.light@2.0",
@@ -21,6 +21,5 @@ index 2606a5aca277..364bd920799a 100644
      ],
 
      static_libs: [
--- 
-2.52.0
-
+--
+2.55.0
