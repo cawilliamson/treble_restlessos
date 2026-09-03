@@ -5,24 +5,21 @@ Subject: [PATCH 7/9] Revert "netdupdatable: add back abort() on init() fail"
 
 This reverts commit ff845a642bc988f960c77ac60664560f8cdc7ee3.
 ---
- bpf/netd/NetdUpdatable.cpp | 4 ++--
- 1 file changed, 2 insertions(+), 2 deletions(-)
+ bpf/netd/NetdUpdatable.cpp | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
 
 diff --git a/bpf/netd/NetdUpdatable.cpp b/bpf/netd/NetdUpdatable.cpp
-index 3b15916398..8b9e5a759c 100644
+index 8b2b4dc..78fa11f 100644
 --- a/bpf/netd/NetdUpdatable.cpp
 +++ b/bpf/netd/NetdUpdatable.cpp
-@@ -31,8 +31,8 @@ int libnetd_updatable_init(const char* cg2_path) {
-
-     android::netdutils::Status ret = sBpfHandler.init(cg2_path);
-     if (!android::netdutils::isOk(ret)) {
--        LOG(ERROR) << __func__ << ": Failed: (" << ret.code() << ") " << ret.msg();
+@@ -32,7 +32,7 @@ int libnetd_updatable_init(const char* cg2_path) {
+     android::base::Result<void> ret = sBpfHandler.init(cg2_path);
+     if (!ret.ok()) {
+         LOG(ERROR) << __func__ << ": Failed: " << ret.error().message();
 -        abort();
-+        LOG(ERROR) << __func__ << ": Failed. " << ret.code() << " " << ret.msg();
 +        return -ret.code();
      }
      return 0;
  }
--- 
-2.52.0
-
+--
+2.55.0
