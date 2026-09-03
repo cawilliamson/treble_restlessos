@@ -24,7 +24,7 @@ Change-Id: Ic29a231ea8651efd598083611197aaa9e3c1fbbe
  2 files changed, 205 insertions(+)
 
 diff --git a/libs/gui/Surface.cpp b/libs/gui/Surface.cpp
-index cabc177..6adae2d 100644
+index 45e332d..bef9550 100644
 --- a/libs/gui/Surface.cpp
 +++ b/libs/gui/Surface.cpp
 @@ -26,6 +26,9 @@
@@ -37,8 +37,8 @@ index cabc177..6adae2d 100644
 
  #include <inttypes.h>
 
-@@ -36,6 +39,8 @@
- #include <gui/LayerState.h>
+@@ -38,6 +41,8 @@
+ #include <gui/bufferqueue/2.0/H2BGraphicBufferProducer.h>
  #include <private/gui/ComposerService.h>
  #include <private/gui/ComposerServiceAIDL.h>
 +#include <android-base/properties.h>
@@ -46,7 +46,7 @@ index cabc177..6adae2d 100644
  #endif
 
  #include <android/native_window.h>
-@@ -104,6 +109,37 @@ bool isInterceptorRegistrationOp(int op) {
+@@ -106,6 +111,37 @@ bool isInterceptorRegistrationOp(int op) {
 
  } // namespace
 
@@ -81,16 +81,15 @@ index cabc177..6adae2d 100644
 +static int doMtkGedKpi = -1;
 +static int ged_fd = -1;
 +
- Surface::ProducerDeathListenerProxy::ProducerDeathListenerProxy(wp<SurfaceListener> surfaceListener)
+ Surface::ProducerDeathListenerProxy::ProducerDeathListenerProxy(
+         const wp<SurfaceListener>& surfaceListener)
        : mSurfaceListener(surfaceListener) {}
-
-@@ -175,6 +211,47 @@ Surface::Surface(const sp<IGraphicBufferProducer>& bufferProducer, bool controll
-     mSwapIntervalZero = false;
-     mMaxBufferCount = NUM_BUFFER_SLOTS;
+@@ -178,6 +214,47 @@ Surface::Surface(const sp<IGraphicBufferProducer>& bufferProducer, bool controll
+     mIsSlotExpansionAllowed = false;
      mSurfaceControlHandle = surfaceControlHandle;
-+
+
 +    if (doMtkGedKpi == -1) {
-+        doMtkGedKpi = android::base::GetIntProperty("persist.sys.phh.mtk_ged_kpi", 0);
++        doMtkGedKpi = android::base::GetIntProperty("persist.sys.phh.mtk_ged_kpi", 0);+
 +    }
 +
 +    if (ged_fd == -1 && doMtkGedKpi == 1) {
@@ -129,10 +128,11 @@ index cabc177..6adae2d 100644
 +        }
 +        }
 +    }
- }
-
- Surface::~Surface() {
-@@ -754,6 +831,37 @@ int Surface::dequeueBuffer(sp<GraphicBuffer>* buffer, int* fenceFd) {
++
+     IGraphicBufferProducer::SurfaceConfig config;
+     status_t status = mGraphicBufferProducer->getConfigForSurface(&config);
+     if (status == OK) {
+@@ -836,6 +913,37 @@ int Surface::dequeueBuffer(sp<GraphicBuffer>* buffer, int* fenceFd) {
          }
      }
 
@@ -170,7 +170,7 @@ index cabc177..6adae2d 100644
      if (fence->isValid()) {
          *fenceFd = fence->dup();
          if (*fenceFd == -1) {
-@@ -1323,6 +1431,61 @@ void Surface::onBufferQueuedLocked(int slot, sp<Fence> fence,
+@@ -1471,6 +1579,61 @@ void Surface::onBufferQueuedLocked(int slot, const sp<Fence>& fence,
 
      mQueueBufferCondition.broadcast();
 
@@ -232,7 +232,7 @@ index cabc177..6adae2d 100644
      if (CC_UNLIKELY(atrace_is_tag_enabled(ATRACE_TAG_GRAPHICS))) {
          static gui::FenceMonitor gpuCompletionThread("GPU completion");
          gpuCompletionThread.queueFence(fence);
-@@ -2196,6 +2359,45 @@ int Surface::connect(int api, const sp<SurfaceListener>& listener, bool reportBu
+@@ -2382,6 +2545,45 @@ int Surface::connect(int api, const sp<SurfaceListener>& listener, bool reportBu
          SURF_LOGE_IF(idErr != NO_ERROR, "Unable to get ID from IGBP: %d", idErr);
          mIsConnected = true;
      }
@@ -279,10 +279,10 @@ index cabc177..6adae2d 100644
          mConnectedToCpu = true;
          // Clear the dirty region in case we're switching from a non-CPU API
 diff --git a/libs/gui/include/gui/Surface.h b/libs/gui/include/gui/Surface.h
-index 9a6e75c..d7c51d7 100644
+index d372eac..bea49f4 100644
 --- a/libs/gui/include/gui/Surface.h
 +++ b/libs/gui/include/gui/Surface.h
-@@ -761,6 +761,9 @@ protected:
+@@ -907,6 +907,9 @@ protected:
      // Buffers that are successfully dequeued/attached and handed to clients
      std::unordered_set<int> mDequeuedSlots;
 
@@ -292,6 +292,5 @@ index 9a6e75c..d7c51d7 100644
      // Indicates whether this surface holds the mouse cursor, and subsequently determines whether
      // the GRALLOC_USAGE_CURSOR usage flag should be set on the buffer created when this surface is
      // locked.
--- 
-2.52.0
-
+--
+2.55.0
