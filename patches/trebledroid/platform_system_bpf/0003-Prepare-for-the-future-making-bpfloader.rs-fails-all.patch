@@ -10,12 +10,12 @@ Change-Id: I79d413dc4b7626e2a196317e4e58572f61863a30
  1 file changed, 2 insertions(+), 2 deletions(-)
 
 diff --git a/loader/bpfloader.rs b/loader/bpfloader.rs
-index 48f7319..68d9635 100644
+index 1292c31..0437b4e 100644
 --- a/loader/bpfloader.rs
 +++ b/loader/bpfloader.rs
-@@ -267,9 +267,9 @@ fn load_libbpf_progs() {
-     for file_desc in FILE_ARR {
-         if let Err(e) = libbpf_worker(file_desc) {
+@@ -729,9 +729,9 @@ fn load_libbpf_progs() {
+     for file_desc in file_vec {
+         if let Err(e) = libbpf_worker(&file_desc) {
              if file_desc.critical {
 -                panic!("Error when loading {0}: {e}", file_desc.filename);
 +                error!("'critical' Error when loading {0}: {e}\n", file_desc.filename);
@@ -25,6 +25,5 @@ index 48f7319..68d9635 100644
              }
          };
      }
--- 
-2.52.0
-
+--
+2.55.0
