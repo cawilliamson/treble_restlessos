@@ -9,7 +9,7 @@ Subject: [PATCH 6/8] Add properties to disable some features/commands/states
  1 file changed, 65 insertions(+), 4 deletions(-)
 
 diff --git a/system/gd/hci/controller_impl.cc b/system/gd/hci/controller_impl.cc
-index 69b2294..c0bfc69 100644
+index e20029f..0fdc172 100644
 --- a/system/gd/hci/controller_impl.cc
 +++ b/system/gd/hci/controller_impl.cc
 @@ -21,6 +21,7 @@
@@ -20,17 +20,17 @@ index 69b2294..c0bfc69 100644
  #include <future>
  #include <memory>
  #include <string>
-@@ -35,6 +36,8 @@
- #include "sysprops/sysprops_module.h"
- #endif
+@@ -32,6 +33,8 @@
+ #include "os/system_properties.h"
+ #include "stack/include/hcidefs.h"
 
 +using bluetooth::os::GetSystemProperty;
 +
  namespace bluetooth {
  namespace hci {
 
-@@ -364,7 +367,22 @@ struct ControllerImpl::impl {
-     ASSERT(complete_view.IsValid());
+@@ -344,7 +347,22 @@ struct ControllerImpl::impl {
+     log::assert_that(complete_view.IsValid(), "Complete view is invalid");
      ErrorCode status = complete_view.GetStatus();
      log::assert_that(status == ErrorCode::SUCCESS, "Status {}", ErrorCodeText(status));
 -    local_supported_commands_ = complete_view.GetSupportedCommands();
@@ -50,10 +50,10 @@ index 69b2294..c0bfc69 100644
 +    }
 +
 +    local_supported_commands_ = local_commands;
-   }
 
-   void read_local_extended_features_complete_handler(std::promise<void> promise,
-@@ -374,7 +392,24 @@ struct ControllerImpl::impl {
+     if (com_android_bluetooth_flags_check_set_event_mask_p2_support_before_writing()) {
+       if (is_supported(OpCode::SET_EVENT_MASK_PAGE_2)) {
+@@ -360,7 +378,24 @@ struct ControllerImpl::impl {
      ErrorCode status = complete_view.GetStatus();
      log::assert_that(status == ErrorCode::SUCCESS, "Status {}", ErrorCodeText(status));
      uint8_t page_number = complete_view.GetPageNumber();
@@ -79,8 +79,8 @@ index 69b2294..c0bfc69 100644
      if (page_number == 0 && local_version_information_.manufacturer_name_ == LMP_COMPID_INTEL &&
          local_version_information_.lmp_version_ == LmpVersion::V_4_2 &&
          local_version_information_.lmp_subversion_ == LMP_SUBVERSION_INTEL_AC7265) {
-@@ -537,7 +572,20 @@ struct ControllerImpl::impl {
-     ASSERT(complete_view.IsValid());
+@@ -523,7 +558,20 @@ struct ControllerImpl::impl {
+     log::assert_that(complete_view.IsValid(), "Complete view is invalid");
      ErrorCode status = complete_view.GetStatus();
      log::assert_that(status == ErrorCode::SUCCESS, "Status {}", status, ErrorCodeText(status));
 -    le_local_supported_features_ = complete_view.GetLeFeatures();
@@ -101,8 +101,8 @@ index 69b2294..c0bfc69 100644
    }
 
    void le_read_supported_states_handler(CommandCompleteView view) {
-@@ -545,7 +593,20 @@ struct ControllerImpl::impl {
-     ASSERT(complete_view.IsValid());
+@@ -531,7 +579,20 @@ struct ControllerImpl::impl {
+     log::assert_that(complete_view.IsValid(), "Complete view is invalid");
      ErrorCode status = complete_view.GetStatus();
      log::assert_that(status == ErrorCode::SUCCESS, "Status {}", ErrorCodeText(status));
 -    le_supported_states_ = complete_view.GetLeStates();
@@ -123,6 +123,5 @@ index 69b2294..c0bfc69 100644
    }
 
    void le_read_accept_list_size_handler(CommandCompleteView view) {
--- 
-2.52.0
-
+--
+2.55.0
