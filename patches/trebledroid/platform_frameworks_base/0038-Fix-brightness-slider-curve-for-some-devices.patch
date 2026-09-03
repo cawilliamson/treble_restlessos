@@ -6,11 +6,11 @@ Subject: [PATCH 38/55] Fix brightness slider curve for some devices
 Some devices report max brightness as 2047 or 4095
 ---
  .../settingslib/display/BrightnessUtils.java      | 15 ++++++++++-----
- .../brightness/shared/model/GammaBrightness.kt    | 14 +++++++-------
+ .../src/api/domain/model/GammaBrightness.kt       | 14 +++++++-------
  2 files changed, 17 insertions(+), 12 deletions(-)
 
 diff --git a/packages/SettingsLib/DisplayUtils/src/com/android/settingslib/display/BrightnessUtils.java b/packages/SettingsLib/DisplayUtils/src/com/android/settingslib/display/BrightnessUtils.java
-index 66ed10433459..f6820b4436fc 100644
+index 66ed10433..f6820b443 100644
 --- a/packages/SettingsLib/DisplayUtils/src/com/android/settingslib/display/BrightnessUtils.java
 +++ b/packages/SettingsLib/DisplayUtils/src/com/android/settingslib/display/BrightnessUtils.java
 @@ -16,13 +16,18 @@
@@ -54,20 +54,20 @@ index 66ed10433459..f6820b4436fc 100644
 +                       MathUtils.constrain(val, min, max)) : Math.round(MathUtils.lerp(GAMMA_SPACE_MIN, GAMMA_SPACE_MAX, ret));
      }
  }
-diff --git a/packages/SystemUI/src/com/android/systemui/brightness/shared/model/GammaBrightness.kt b/packages/SystemUI/src/com/android/systemui/brightness/shared/model/GammaBrightness.kt
-index 7eba6268869c..b7a9d5f535b4 100644
---- a/packages/SystemUI/src/com/android/systemui/brightness/shared/model/GammaBrightness.kt
-+++ b/packages/SystemUI/src/com/android/systemui/brightness/shared/model/GammaBrightness.kt
-@@ -23,13 +23,13 @@ import com.android.systemui.util.kotlin.pairwiseBy
- import kotlinx.coroutines.flow.Flow
+diff --git a/packages/SystemUI/pods/brightness/src/api/domain/model/GammaBrightness.kt b/packages/SystemUI/pods/brightness/src/api/domain/model/GammaBrightness.kt
+index e52bb8745..82b9452a2 100644
+--- a/packages/SystemUI/pods/brightness/src/api/domain/model/GammaBrightness.kt
++++ b/packages/SystemUI/pods/brightness/src/api/domain/model/GammaBrightness.kt
+@@ -20,10 +20,10 @@ import androidx.annotation.IntRange
+ import com.android.settingslib.display.BrightnessUtils
 
  @JvmInline
--value class GammaBrightness(
+-public value class GammaBrightness(
 -    @IntRange(
 -        from = BrightnessUtils.GAMMA_SPACE_MIN.toLong(),
--        to = BrightnessUtils.GAMMA_SPACE_MAX.toLong()
+-        to = BrightnessUtils.GAMMA_SPACE_MAX.toLong(),
 -    )
--    val value: Int
+-    public val value: Int
 -)
 +value class GammaBrightness(val value: Int) {
 +    init {
@@ -76,9 +76,5 @@ index 7eba6268869c..b7a9d5f535b4 100644
 +        }
 +    }
 +}
-
- internal fun Flow<GammaBrightness>.logDiffForTable(
-     tableLogBuffer: TableLogBuffer,
--- 
-2.52.0
-
+--
+2.55.0
