@@ -1,4 +1,4 @@
-From 8bb603c8f973de594444c7506723da323f93c975 Mon Sep 17 00:00:00 2001
+From 8bb603c8f973de594444c7506723da323f93c975 Mon Sep 17 00:00:00 2001roamingNetworkScanIsRequested
 From: Pierre-Hugues Husson <phh@phh.me>
 Date: Wed, 21 Feb 2024 12:50:28 -0500
 Subject: [PATCH 08/12] Initialize Samsung AIDL ISehRadioNetwork. Fixes 5G on
@@ -11,22 +11,22 @@ Subject: [PATCH 08/12] Initialize Samsung AIDL ISehRadioNetwork. Fixes 5G on
  3 files changed, 144 insertions(+), 2 deletions(-)
 
 diff --git a/Android.bp b/Android.bp
-index e667cb39e5..e87ddb3ffd 100644
+index b0221f4..4155780 100644
 --- a/Android.bp
 +++ b/Android.bp
-@@ -90,6 +90,7 @@ java_library {
+@@ -91,6 +91,7 @@ java_library {
          "android.hardware.radio.network-V5-java",
          "android.hardware.radio.sim-V5-java",
          "android.hardware.radio.voice-V5-java",
 +        "vendor.samsung.hardware.radio.network-V1-java",
+         "error_prone_annotations",
          "voip-common",
          "ims-common",
-         "unsupportedappusage",
 diff --git a/src/java/com/android/internal/telephony/RIL.java b/src/java/com/android/internal/telephony/RIL.java
-index f5d06dbe76..358654aa1d 100644
+index afb9905..c542765 100644
 --- a/src/java/com/android/internal/telephony/RIL.java
 +++ b/src/java/com/android/internal/telephony/RIL.java
-@@ -865,7 +865,7 @@ public class RIL extends BaseCommands implements CommandsInterface {
+@@ -863,7 +863,7 @@ public class RIL extends BaseCommands implements CommandsInterface {
                              mHalVersion.put(service, ((RadioNetworkProxy) serviceProxy).setAidl(
                                      mHalVersion.get(service),
                                      android.hardware.radio.network.IRadioNetwork.Stub
@@ -36,7 +36,7 @@ index f5d06dbe76..358654aa1d 100644
                          break;
                      case HAL_SERVICE_SIM:
 diff --git a/src/java/com/android/internal/telephony/RadioNetworkProxy.java b/src/java/com/android/internal/telephony/RadioNetworkProxy.java
-index 5db77067f2..f4123f82b1 100644
+index d90a7ca..c9f8005 100644
 --- a/src/java/com/android/internal/telephony/RadioNetworkProxy.java
 +++ b/src/java/com/android/internal/telephony/RadioNetworkProxy.java
 @@ -34,6 +34,20 @@ import java.util.ArrayList;
@@ -60,7 +60,7 @@ index 5db77067f2..f4123f82b1 100644
  /**
   * A holder for IRadioNetwork.
   * Use getAidl to get IRadioNetwork and call the AIDL implementations of the HAL APIs.
-@@ -69,7 +83,7 @@ public class RadioNetworkProxy extends RadioServiceProxy {
+@@ -70,7 +84,7 @@ public class RadioNetworkProxy extends RadioServiceProxy {
       * @return updated HAL version
       */
      public HalVersion setAidl(HalVersion halVersion,
@@ -69,7 +69,7 @@ index 5db77067f2..f4123f82b1 100644
          HalVersion version = halVersion;
          try {
              version = RIL.getServiceHalVersion(network.getInterfaceVersion());
-@@ -80,6 +94,133 @@ public class RadioNetworkProxy extends RadioServiceProxy {
+@@ -81,6 +95,133 @@ public class RadioNetworkProxy extends RadioServiceProxy {
          mNetworkProxy = network;
          mIsAidl = true;
 
@@ -164,7 +164,7 @@ index 5db77067f2..f4123f82b1 100644
 +                public void sendEncodedUssdResponse(SehRadioResponseInfo info) {}
 +                public void sendRequestRawResponse(SehRadioResponseInfo info, byte[] data) {}
 +                public void sendRequestStringsResponse(SehRadioResponseInfo info, String[] data) {}
-+                public void setCurrentNetworkInfoViaBLEResponse(SehRadioResponseInfo info) {}
++                public void setCurrentNetworkInfoViaBLEResponse(SehRadioResponseInfo info) {}+
 +                public void setDisable2gResponse(SehRadioResponseInfo info) {}
 +                public void setImsCallListResponse(SehRadioResponseInfo info) {}
 +                public void setNrModeResponse(SehRadioResponseInfo info) {}
@@ -203,6 +203,5 @@ index 5db77067f2..f4123f82b1 100644
          Rlog.d(TAG, "AIDL initialized mHalVersion=" + mHalVersion);
          return mHalVersion;
      }
--- 
-2.52.0
-
+--
+2.55.0
