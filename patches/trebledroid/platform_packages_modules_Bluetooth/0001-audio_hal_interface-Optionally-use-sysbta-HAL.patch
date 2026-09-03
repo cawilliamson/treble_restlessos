@@ -15,10 +15,10 @@ Change-Id: I59973e6ec84c5923be8a7c67b36b2e237f000860
  5 files changed, 31 insertions(+), 10 deletions(-)
 
 diff --git a/system/audio_hal_interface/aidl/a2dp/client_interface_aidl.cc b/system/audio_hal_interface/aidl/a2dp/client_interface_aidl.cc
-index 201cae8..ec238d5 100644
+index 030e706..aeb034e 100644
 --- a/system/audio_hal_interface/aidl/a2dp/client_interface_aidl.cc
 +++ b/system/audio_hal_interface/aidl/a2dp/client_interface_aidl.cc
-@@ -59,7 +59,7 @@ BluetoothAudioClientInterface::~BluetoothAudioClientInterface() {
+@@ -60,7 +60,7 @@ BluetoothAudioClientInterface::~BluetoothAudioClientInterface() {
  bool BluetoothAudioClientInterface::IsValid() const { return provider_ != nullptr; }
 
  bool BluetoothAudioClientInterface::is_aidl_available() {
@@ -26,8 +26,8 @@ index 201cae8..ec238d5 100644
 +  return AServiceManager_isDeclared(audioProviderFactoryInterface().c_str());
  }
 
- std::vector<AudioCapabilities> BluetoothAudioClientInterface::GetAudioCapabilities() const {
-@@ -73,7 +73,7 @@ std::vector<AudioCapabilities> BluetoothAudioClientInterface::GetAudioCapabiliti
+ std::vector<AudioCapabilities> BluetoothAudioClientInterface::GetAudioCapabilities(
+@@ -70,7 +70,7 @@ std::vector<AudioCapabilities> BluetoothAudioClientInterface::GetAudioCapabiliti
      return capabilities;
    }
    auto provider_factory = IBluetoothAudioProviderFactory::fromBinder(::ndk::SpAIBinder(
@@ -36,7 +36,7 @@ index 201cae8..ec238d5 100644
 
    if (provider_factory == nullptr) {
      log::error("can't get capability from unknown factory");
-@@ -98,7 +98,7 @@ BluetoothAudioClientInterface::GetProviderInfo(
+@@ -95,7 +95,7 @@ BluetoothAudioClientInterface::GetProviderInfo(
 
    if (provider_factory == nullptr) {
      provider_factory = IBluetoothAudioProviderFactory::fromBinder(::ndk::SpAIBinder(
@@ -45,7 +45,7 @@ index 201cae8..ec238d5 100644
    }
 
    if (provider_factory == nullptr) {
-@@ -174,7 +174,7 @@ void BluetoothAudioClientInterface::FetchAudioProvider() {
+@@ -172,7 +172,7 @@ void BluetoothAudioClientInterface::FetchAudioProvider() {
    // re-registered, so we need to re-fetch the service.
    for (int retry_no = 0; retry_no < kFetchAudioProviderRetryNumber; ++retry_no) {
      auto provider_factory = IBluetoothAudioProviderFactory::fromBinder(::ndk::SpAIBinder(
@@ -55,18 +55,18 @@ index 201cae8..ec238d5 100644
      if (provider_factory == nullptr) {
        log::error("can't get capability from unknown factory");
 diff --git a/system/audio_hal_interface/aidl/a2dp/client_interface_aidl.h b/system/audio_hal_interface/aidl/a2dp/client_interface_aidl.h
-index e492fde..a24ffef 100644
+index da431e0..1161397 100644
 --- a/system/audio_hal_interface/aidl/a2dp/client_interface_aidl.h
 +++ b/system/audio_hal_interface/aidl/a2dp/client_interface_aidl.h
-@@ -28,6 +28,7 @@
+@@ -27,6 +27,7 @@
+ #include "bluetooth_audio_port_impl.h"
  #include "bta/le_audio/broadcaster/broadcaster_types.h"
  #include "bta/le_audio/le_audio_types.h"
- #include "transport_instance.h"
 +#include "osi/include/properties.h"
 
  // Keep after audio_aidl_interfaces.h because of <base/logging.h>
  // conflicting definitions.
-@@ -164,6 +165,12 @@ protected:
+@@ -166,6 +167,12 @@ protected:
    //     "android.hardware.bluetooth.audio.IBluetoothAudioProviderFactory/default";
    static inline const std::string kDefaultAudioProviderFactoryInterface =
            std::string() + IBluetoothAudioProviderFactory::descriptor + "/default";
@@ -78,12 +78,12 @@ index e492fde..a24ffef 100644
 +  }
 
  private:
-   IBluetoothTransportInstance* transport_;
+   std::shared_ptr<A2dpTransport> transport_;
 diff --git a/system/audio_hal_interface/aidl/client_interface_aidl.cc b/system/audio_hal_interface/aidl/client_interface_aidl.cc
-index c1ce661..401fd5b 100644
+index 8f79bd4..cda5936 100644
 --- a/system/audio_hal_interface/aidl/client_interface_aidl.cc
 +++ b/system/audio_hal_interface/aidl/client_interface_aidl.cc
-@@ -73,7 +73,7 @@ BluetoothAudioClientInterface::BluetoothAudioClientInterface(IBluetoothTransport
+@@ -75,7 +75,7 @@ BluetoothAudioClientInterface::BluetoothAudioClientInterface(
  bool BluetoothAudioClientInterface::IsValid() const { return provider_ != nullptr; }
 
  bool BluetoothAudioClientInterface::is_aidl_available() {
@@ -92,7 +92,7 @@ index c1ce661..401fd5b 100644
  }
 
  std::vector<AudioCapabilities> BluetoothAudioClientInterface::GetAudioCapabilities() const {
-@@ -87,7 +87,7 @@ std::vector<AudioCapabilities> BluetoothAudioClientInterface::GetAudioCapabiliti
+@@ -89,7 +89,7 @@ std::vector<AudioCapabilities> BluetoothAudioClientInterface::GetAudioCapabiliti
      return capabilities;
    }
    auto provider_factory = IBluetoothAudioProviderFactory::fromBinder(::ndk::SpAIBinder(
@@ -101,7 +101,7 @@ index c1ce661..401fd5b 100644
 
    if (provider_factory == nullptr) {
      log::error("can't get capability from unknown factory");
-@@ -112,7 +112,7 @@ BluetoothAudioClientInterface::GetProviderInfo(
+@@ -114,7 +114,7 @@ BluetoothAudioClientInterface::GetProviderInfo(
 
    if (provider_factory == nullptr) {
      provider_factory = IBluetoothAudioProviderFactory::fromBinder(::ndk::SpAIBinder(
@@ -110,7 +110,7 @@ index c1ce661..401fd5b 100644
    }
 
    if (provider_factory == nullptr) {
-@@ -144,7 +144,7 @@ void BluetoothAudioClientInterface::FetchAudioProvider() {
+@@ -146,7 +146,7 @@ void BluetoothAudioClientInterface::FetchAudioProvider() {
    // re-registered, so we need to re-fetch the service.
    for (int retry_no = 0; retry_no < kFetchAudioProviderRetryNumber; ++retry_no) {
      auto provider_factory = IBluetoothAudioProviderFactory::fromBinder(::ndk::SpAIBinder(
@@ -120,18 +120,18 @@ index c1ce661..401fd5b 100644
      if (provider_factory == nullptr) {
        log::error("can't get capability from unknown factory");
 diff --git a/system/audio_hal_interface/aidl/client_interface_aidl.h b/system/audio_hal_interface/aidl/client_interface_aidl.h
-index a3c6038..ee5901e 100644
+index 2f4315e..3a235ed 100644
 --- a/system/audio_hal_interface/aidl/client_interface_aidl.h
 +++ b/system/audio_hal_interface/aidl/client_interface_aidl.h
-@@ -29,6 +29,7 @@
- #include "bta/le_audio/broadcaster/broadcaster_types.h"
+@@ -30,6 +30,7 @@
  #include "bta/le_audio/le_audio_types.h"
+ #include "common/message_loop_thread.h"
  #include "transport_instance.h"
 +#include "osi/include/properties.h"
 
  namespace bluetooth {
  namespace audio {
-@@ -150,6 +151,12 @@ protected:
+@@ -154,6 +155,12 @@ protected:
    //     "android.hardware.bluetooth.audio.IBluetoothAudioProviderFactory/default";
    static inline const std::string kDefaultAudioProviderFactoryInterface =
            std::string() + IBluetoothAudioProviderFactory::descriptor + "/default";
@@ -145,7 +145,7 @@ index a3c6038..ee5901e 100644
  private:
    IBluetoothTransportInstance* transport_;
 diff --git a/system/audio_hal_interface/hal_version_manager.cc b/system/audio_hal_interface/hal_version_manager.cc
-index 1a92c1a..bb27167 100644
+index b73a41e..a93c21c 100644
 --- a/system/audio_hal_interface/hal_version_manager.cc
 +++ b/system/audio_hal_interface/hal_version_manager.cc
 @@ -20,6 +20,7 @@
@@ -169,7 +169,7 @@ index 1a92c1a..bb27167 100644
 
  std::string toString(BluetoothAudioHalTransport transport) {
    switch (transport) {
-@@ -74,7 +81,7 @@ BluetoothAudioHalVersion GetAidlInterfaceVersion() {
+@@ -78,7 +85,7 @@ BluetoothAudioHalVersion GetAidlInterfaceVersion() {
    static auto aidl_version = []() -> BluetoothAudioHalVersion {
      int version = 0;
      auto provider_factory = IBluetoothAudioProviderFactory::fromBinder(::ndk::SpAIBinder(
@@ -178,7 +178,7 @@ index 1a92c1a..bb27167 100644
 
      if (provider_factory == nullptr) {
        log::error("getInterfaceVersion: Can't get aidl version from unknown factory");
-@@ -139,7 +146,7 @@ android::sp<IBluetoothAudioProvidersFactory_2_0> HalVersionManager::GetProviders
+@@ -143,7 +150,7 @@ android::sp<IBluetoothAudioProvidersFactory_2_0> HalVersionManager::GetProviders
 
  HalVersionManager::HalVersionManager() {
    hal_transport_ = BluetoothAudioHalTransport::UNKNOWN;
@@ -187,6 +187,5 @@ index 1a92c1a..bb27167 100644
      hal_version_ = GetAidlInterfaceVersion();
      hal_transport_ = BluetoothAudioHalTransport::AIDL;
      return;
--- 
-2.52.0
-
+--
+2.55.0
