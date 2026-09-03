@@ -13,19 +13,18 @@ Change-Id: I34cfd6b42d3b9aee4b3e63181480cfb8b1255f29
  1 file changed, 3 deletions(-)
 
 diff --git a/rootdir/init.rc b/rootdir/init.rc
-index 471059bc8..0019c38d6 100644
+index b998698..2537913 100644
 --- a/rootdir/init.rc
 +++ b/rootdir/init.rc
-@@ -1315,9 +1315,6 @@ on property:ro.debuggable=1
+@@ -1317,9 +1317,6 @@ on property:ro.debuggable=1
      # Give reads to anyone for the accessibility trace folder on debug builds.
      chmod 0775 /data/misc/a11ytrace
 
 -on init && property:ro.debuggable=1
 -    start console
 -
- # Multi-Gen LRU Experiment
- on property:persist.device_config.mglru_native.lru_gen_config=none
-   write /sys/kernel/mm/lru_gen/enabled 0
--- 
-2.52.0
-
+ # Allow other processes to run `snapshotctl` through `init`. This requires
+ # `set_prop` permission on `snapshotctl_prop`.
+ on property:sys.snapshotctl.map=requested
+--
+2.55.0
