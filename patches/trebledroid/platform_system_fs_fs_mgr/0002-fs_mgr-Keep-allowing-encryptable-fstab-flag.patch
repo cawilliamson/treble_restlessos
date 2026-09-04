@@ -7,14 +7,14 @@ Some users still use "encryptable" flag while being unencrypted. Let them still 
 
 Change-Id: Id2554d6563a869bb5bcf39c67b0322484bdab0c9
 ---
- fs_mgr/libfstab/fstab.cpp | 10 ----------
+ libfstab/fstab.cpp | 10 ----------
  1 file changed, 10 deletions(-)
 
-diff --git a/fs_mgr/libfstab/fstab.cpp b/fs_mgr/libfstab/fstab.cpp
-index ec23ce5cf..f2e1ad6b8 100644
---- a/fs_mgr/libfstab/fstab.cpp
-+++ b/fs_mgr/libfstab/fstab.cpp
-@@ -346,16 +346,6 @@ bool ParseFsMgrFlags(const std::string& flags, FstabEntry* entry) {
+diff --git a/libfstab/fstab.cpp b/libfstab/fstab.cpp
+index e3e5336..4e32ffb 100644
+--- a/libfstab/fstab.cpp
++++ b/libfstab/fstab.cpp
+@@ -360,16 +360,6 @@ bool ParseFsMgrFlags(const std::string& flags, FstabEntry* entry) {
          }
      }
 
@@ -31,6 +31,5 @@ index ec23ce5cf..f2e1ad6b8 100644
      return true;
  }
 
--- 
-2.52.0
-
+--
+2.55.0
