@@ -12,10 +12,10 @@ See https://github.com/phhusson/treble_experimentations/issues/1119
  1 file changed, 2 insertions(+), 2 deletions(-)
 
 diff --git a/vold_prepare_subdirs.cpp b/vold_prepare_subdirs.cpp
-index e82a7c2d..de5583f4 100644
+index bd7ec4f..e8c334d 100644
 --- a/vold_prepare_subdirs.cpp
 +++ b/vold_prepare_subdirs.cpp
-@@ -208,7 +208,7 @@ static bool prepare_subdirs(const std::string& volume_uuid, int user_id, int fla
+@@ -219,7 +219,7 @@ static bool prepare_subdirs(const std::string& volume_uuid, int user_id, int fla
              }
              auto facedata_path = vendor_de_path + "/facedata";
              if (!prepare_dir(sehandle, 0700, AID_SYSTEM, AID_SYSTEM, facedata_path)) {
@@ -24,15 +24,14 @@ index e82a7c2d..de5583f4 100644
              }
          }
      }
-@@ -257,7 +257,7 @@ static bool prepare_subdirs(const std::string& volume_uuid, int user_id, int fla
+@@ -272,7 +272,7 @@ static bool prepare_subdirs(const std::string& volume_uuid, int user_id, int fla
              auto vendor_ce_path = android::vold::BuildDataVendorCePath(user_id);
              auto facedata_path = vendor_ce_path + "/facedata";
              if (!prepare_dir(sehandle, 0700, AID_SYSTEM, AID_SYSTEM, facedata_path)) {
 -                return false;
 +                LOG(ERROR) << "Failed preparing folder for de facedata";
              }
-         }
-     }
--- 
-2.52.0
-
+             auto wifidata_path = vendor_ce_path + "/wifi";
+             if (!prepare_dir(sehandle, 0700, AID_WIFI, AID_WIFI, wifidata_path)) {
+--
+2.55.0
