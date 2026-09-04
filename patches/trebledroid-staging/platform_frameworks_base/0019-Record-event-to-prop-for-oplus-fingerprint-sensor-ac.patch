@@ -1,28 +1,28 @@
 From aaae20204026b002c6ba37f35c21457c7ea65977 Mon Sep 17 00:00:00 2001
 From: dozeofffff <dozeoffff@dozeoffff>
 Date: Sun, 10 May 2026 23:55:47 +0000
-Subject: [PATCH 19/20] biometrics_oplus_notify_fingerprint_sensor_pressed_1
+Subject: [PATCH 19/20] Record event to prop for oplus fingerprint sensor actuation
 
 ---
  .../com/android/systemui/biometrics/AuthController.java    | 7 +++++++
  1 file changed, 7 insertions(+)
 
 diff --git a/packages/SystemUI/src/com/android/systemui/biometrics/AuthController.java b/packages/SystemUI/src/com/android/systemui/biometrics/AuthController.java
-index 201c80537..b33064b37 100644
+index 052e98506..37fb159fb 100644
 --- a/packages/SystemUI/src/com/android/systemui/biometrics/AuthController.java
 +++ b/packages/SystemUI/src/com/android/systemui/biometrics/AuthController.java
-@@ -59,6 +59,7 @@ import android.os.Handler;
+@@ -58,6 +58,7 @@ import android.os.Handler;
  import android.os.RemoteException;
  import android.os.UserHandle;
  import android.os.UserManager;
 +import android.os.SystemProperties;
+ import android.provider.Settings;
  import android.util.Log;
  import android.util.RotationUtils;
- import android.util.SparseBooleanArray;
 @@ -227,6 +228,10 @@ public class AuthController implements
          }
      };
- 
+
 +    private void oplusFpUiReady(boolean fingerDown) {
 +        SystemProperties.set("sys.phh.oplus.fppress", fingerDown ? "1" : "0");
 +    }
@@ -30,19 +30,18 @@ index 201c80537..b33064b37 100644
      private void closeDialog(String reasonString) {
          closeDialog(BiometricPrompt.DISMISSED_REASON_USER_CANCEL, reasonString);
      }
-@@ -309,10 +314,12 @@ public class AuthController implements
+@@ -310,10 +315,12 @@ public class AuthController implements
              mUdfpsController.addCallback(new UdfpsController.Callback() {
                  @Override
                  public void onFingerUp() {
-+                        oplusFpUiReady(false);
++                    oplusFpUiReady(false);
                  }
- 
+
                  @Override
                  public void onFingerDown() {
-+                        oplusFpUiReady(true);
++                    oplusFpUiReady(true);
                      if (mCurrentDialog != null) {
                          mCurrentDialog.onPointerDown();
                      }
--- 
-2.54.0
-
+--
+2.55.0
