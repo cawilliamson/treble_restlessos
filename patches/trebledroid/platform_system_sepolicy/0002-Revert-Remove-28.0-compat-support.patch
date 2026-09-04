@@ -710,16 +710,23 @@ diff --git a/Android.bp b/Android.bp
 index 1dd9813..f526827 100644
 --- a/Android.bp
 +++ b/Android.bp
-@@ -119,6 +119,8 @@ phony {
-         "plat_sepolicy_genfs_202604.cil",
+@@ -119,6 +119,7 @@ phony {
+         "plat_sepolicy_genfs_202704.cil",
          "plat_service_contexts",
          "secilc",
 +        "plat_28.0.cil",
-+        "28.0.compat.cil",
          "plat_29.0.cil",
          "plat_30.0.cil",
          "plat_31.0.cil",
-@@ -1068,6 +1070,7 @@ phony {
+@@ -127,6 +128,7 @@ phony {
+         "plat_34.0.cil",
+         "plat_202404.cil",
+         "plat_202504.cil",
++        "28.0.compat.cil",
+         "29.0.compat.cil",
+         "30.0.compat.cil",
+         "31.0.compat.cil",
+@@ -1067,6 +1069,7 @@ phony {
          "system_ext_sepolicy.cil",
      ] + [
          //"ifdef HAS_SYSTEM_EXT_SEPOLICY" check included in .cil
@@ -735,7 +742,7 @@ index 1dd9813..f526827 100644
          "system_ext_29.0.compat.cil",
          "system_ext_30.0.compat.cil",
          "system_ext_31.0.compat.cil",
-@@ -1122,6 +1126,7 @@ phony {
+@@ -1123,6 +1127,7 @@ phony {
          "product_mapping_file",
          "product_sepolicy.cil",
          // "ifdef HAS_PRODUCT_PUBLIC_SEPOLICY" check included in .cil
@@ -743,7 +750,7 @@ index 1dd9813..f526827 100644
          "product_29.0.cil",
          "product_30.0.cil",
          "product_31.0.cil",
-@@ -1225,6 +1230,7 @@ phony {
+@@ -1227,6 +1232,7 @@ phony {
  phony {
      name: "selinux_policy_system",
      required: [
@@ -751,15 +758,15 @@ index 1dd9813..f526827 100644
          "29.0.compat.cil",
          "30.0.compat.cil",
          "31.0.compat.cil",
-@@ -1235,6 +1241,7 @@ phony {
-         "ashmem_compat_memfd_context.txt",
+@@ -1237,6 +1243,7 @@ phony {
+         "202504.compat.cil",
          "build_sepolicy",
          "fuzzer_bindings_test",
 +        "plat_28.0.cil",
          "plat_29.0.cil",
          "plat_30.0.cil",
          "plat_31.0.cil",
-@@ -1280,6 +1287,7 @@ phony {
+@@ -1284,6 +1291,7 @@ phony {
              "sepolicy_compat_test",
              "sepolicy_test",
              "sepolicy_dev_type_test",
