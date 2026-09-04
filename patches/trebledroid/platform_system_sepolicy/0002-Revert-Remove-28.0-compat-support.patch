@@ -1,7 +1,7 @@
 From 110f3833fbf6fe5069d2f45a39d35f1a79fd4968 Mon Sep 17 00:00:00 2001
 From: Pierre-Hugues Husson <phh@phh.me>
 Date: Fri, 6 Oct 2023 08:25:11 -0400
-Subject: [PATCH 1/2] Revert "Remove 28.0 compat support"
+Subject: [PATCH 2/3] Revert "Remove 28.0 compat support"
 
 This reverts commit d16612cd8aed0de2ca889174f1a7033137260ecd.
 
