@@ -5,37 +5,21 @@ Subject: [PATCH 6/20] TelephonyManager: add prop to force SIM slot count
 
 Some devices report an incorrect number of SIM slots, causing dual-SIM
 functionality to be unavailable. Add persist.sys.phh.sim_slots property
-to override the reported SIM slot count in getMultiSimConfiguration(),
-getActiveModemCount(), and getSupportedModemCount().
+to override the reported SIM slot count in getActiveModemCount() and
+getSupportedModemCount().
 
 Setting persist.sys.phh.sim_slots=2 forces DSDS mode, =3 forces TSTS,
 =0 or =1 forces single-SIM. When unset (-1), the default behavior is
 preserved.
 ---
- .../android/telephony/TelephonyManager.java   | 19 +++++++++++++++++++
- 1 file changed, 19 insertions(+)
+ telephony/java/android/telephony/TelephonyManager.java | 10 ++++++++++
+ 1 file changed, 10 insertions(+)
 
 diff --git a/telephony/java/android/telephony/TelephonyManager.java b/telephony/java/android/telephony/TelephonyManager.java
-index 0e7f8400b..c30bc065c 100644
+index c94ba5dfe..cbf0fff96 100644
 --- a/telephony/java/android/telephony/TelephonyManager.java
 +++ b/telephony/java/android/telephony/TelephonyManager.java
-@@ -648,6 +648,15 @@ public class TelephonyManager {
-     /** @hide */
-     @UnsupportedAppUsage
-     public MultiSimVariants getMultiSimConfiguration() {
-+        int simSlots = SystemProperties.getInt("persist.sys.phh.sim_slots", -1);
-+        if (simSlots == 0 || simSlots == 1) {
-+            return MultiSimVariants.UNKNOWN;
-+        } else if (simSlots == 2) {
-+            return MultiSimVariants.DSDS;
-+        } else if (simSlots == 3) {
-+            return MultiSimVariants.TSTS;
-+        }
-+
-         String mSimConfig =
-                 TelephonyProperties.multi_sim_config().orElse("");
-         if (mSimConfig.equals("dsds")) {
-@@ -689,6 +698,11 @@ public class TelephonyManager {
+@@ -667,6 +667,11 @@ public class TelephonyManager {
       * </ul>
       */
      public int getActiveModemCount() {
@@ -44,10 +28,10 @@ index 0e7f8400b..c30bc065c 100644
 +            return simSlots;
 +        }
 +
-         int modemCount = 1;
-         switch (getMultiSimConfiguration()) {
-             case UNKNOWN:
-@@ -717,6 +731,11 @@ public class TelephonyManager {
+         if (!isDeviceVoiceCapable() && !isDeviceSmsCapable() && !isDataCapable()) return 0;
+ 
+         return switch(TelephonyProperties.multi_sim_config().orElse("").toLowerCase(Locale.ROOT)) {
+@@ -684,6 +689,11 @@ public class TelephonyManager {
       * {@link #getActiveModemCount} returns 1 while this API returns 2.
       */
      public int getSupportedModemCount() {
@@ -58,7 +42,6 @@ index 0e7f8400b..c30bc065c 100644
 +
          return TelephonyProperties.max_active_modems().orElse(getActiveModemCount());
      }
-
--- 
-2.53.0
-
+ 
+--
+2.55.0
