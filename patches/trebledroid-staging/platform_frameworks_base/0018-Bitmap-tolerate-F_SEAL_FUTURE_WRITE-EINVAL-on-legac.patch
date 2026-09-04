@@ -26,54 +26,53 @@ Fixes: #67, #73
  1 file changed, 20 insertions(+), 11 deletions(-)
 
 diff --git a/libs/hwui/jni/Bitmap.cpp b/libs/hwui/jni/Bitmap.cpp
-index 1d4576156..d5dc1bfb1 100644
+index d97d1bca4..1625473f1 100644
 --- a/libs/hwui/jni/Bitmap.cpp
 +++ b/libs/hwui/jni/Bitmap.cpp
-@@ -5,6 +5,7 @@
- #ifdef __linux__
+@@ -3,6 +3,7 @@
+
+ #include <android-base/unique_fd.h>
  #include <com_android_graphics_hwui_flags.h>
- #endif
 +#include <cerrno>
  #include <fcntl.h>
  #include <hwui/Bitmap.h>
  #include <hwui/Paint.h>
-@@ -795,17 +796,25 @@ static binder_status_t writeBlob(AParcel* parcel, uint64_t bitmapId, const SkBit
-                 return STATUS_NO_MEMORY;
-             }
- 
--            if (fcntl(fd, F_ADD_SEALS,
--                      // Disallow growing / shrinking.
--                      F_SEAL_GROW | F_SEAL_SHRINK
--                      // If immutable, disallow writing.
--                      // Use F_SEAL_FUTURE_WRITE instead of F_SEAL_WRITE to work around a bug in
--                      // pre-6.7 kernels.
--                      // There are no writable mappings made prior to this, so both seals are
--                      // functionally equivalent.
--                      // See: b/409846908#comment39
--                      | (immutable ? F_SEAL_FUTURE_WRITE : 0))) {
--                return STATUS_UNKNOWN_ERROR;
-+            int seals = F_SEAL_GROW | F_SEAL_SHRINK;
-+            if (immutable) {
-+                seals |= F_SEAL_FUTURE_WRITE;
-+            }
-+            if (fcntl(fd, F_ADD_SEALS, seals) < 0) {
-+                // F_SEAL_FUTURE_WRITE was added in Linux 5.1. Kernels
-+                // below 5.1 (e.g. 4.9 on legacy devices) return EINVAL
-+                // because the seal bit is unrecognised. Retry without
-+                // F_SEAL_FUTURE_WRITE to keep ashmem blobs working on
-+                // these kernels. The write protection is best-effort;
-+                // skipping it on legacy kernels is acceptable.
-+                if (errno == EINVAL && (seals & F_SEAL_FUTURE_WRITE)) {
-+                    if (fcntl(fd, F_ADD_SEALS,
-+                              F_SEAL_GROW | F_SEAL_SHRINK) < 0) {
-+                        return STATUS_UNKNOWN_ERROR;
-+                    }
-+                } else {
+@@ -807,17 +808,25 @@ static binder_status_t writeBlob(AParcel* parcel, uint64_t bitmapId, const SkBit
+             return STATUS_NO_MEMORY;
+         }
+
+-        if (fcntl(fd, F_ADD_SEALS,
+-                    // Disallow growing / shrinking.
+-                    F_SEAL_GROW | F_SEAL_SHRINK
+-                    // If immutable, disallow writing.
+-                    // Use F_SEAL_FUTURE_WRITE instead of F_SEAL_WRITE to work around a bug in
+-                    // pre-6.7 kernels.
+-                    // There are no writable mappings made prior to this, so both seals are
+-                    // functionally equivalent.
+-                    // See: b/409846908#comment39
+-                    | (immutable ? F_SEAL_FUTURE_WRITE : 0))) {
+-            return STATUS_UNKNOWN_ERROR;
++        int seals = F_SEAL_GROW | F_SEAL_SHRINK;
++        if (immutable) {
++            seals |= F_SEAL_FUTURE_WRITE;
++        }
++        if (fcntl(fd, F_ADD_SEALS, seals) < 0) {
++            // F_SEAL_FUTURE_WRITE was added in Linux 5.1. Kernels
++            // below 5.1 (e.g. 4.9 on legacy devices) return EINVAL
++            // because the seal bit is unrecognised. Retry without
++            // F_SEAL_FUTURE_WRITE to keep ashmem blobs working on
++            // these kernels. The write protection is best-effort;
++            // skipping it on legacy kernels is acceptable.
++            if (errno == EINVAL && (seals & F_SEAL_FUTURE_WRITE)) {
++                if (fcntl(fd, F_ADD_SEALS,
++                          F_SEAL_GROW | F_SEAL_SHRINK) < 0) {
 +                    return STATUS_UNKNOWN_ERROR;
 +                }
-             }
- 
-         } else {
--- 
-2.54.0
++            } else {
++                return STATUS_UNKNOWN_ERROR;
++            }
+         }
 
+         // Workaround b/149851140 in AParcel_writeParcelFileDescriptor
+--
+2.55.0
