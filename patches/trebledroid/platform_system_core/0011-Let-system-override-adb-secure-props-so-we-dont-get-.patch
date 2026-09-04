@@ -9,18 +9,17 @@ Subject: [PATCH 11/28] Let system override adb/secure props, so we dont get
  1 file changed, 1 insertion(+), 1 deletion(-)
 
 diff --git a/init/property_service.cpp b/init/property_service.cpp
-index 180fe7b7b..26d1579e7 100644
+index 93bc1ef..494515a 100644
 --- a/init/property_service.cpp
 +++ b/init/property_service.cpp
-@@ -800,7 +800,7 @@ static void LoadProperties(char* data, const char* filter, const char* filename,
-                 } else if (it->second != value) {
+@@ -888,7 +888,7 @@ static void LoadProperties(char* data, const char* filter, const char* filename,
+                 } else if (it->second != *expanded_value) {
                      LOG(WARNING) << "Overriding previous property '" << key << "':'" << it->second
-                                  << "' with new value '" << value << "'";
+                                  << "' with new value '" << *expanded_value << "'";
 -                    if(strcmp("ro.apex.updatable", key) == 0) {
 +                    if(strcmp("ro.apex.updatable", key) == 0 || strstr(key, "adb") || strstr(key, "secure")) {
                          LOG(WARNING) << "... Ignored";
                      } else {
-                         it->second = value;
--- 
-2.52.0
-
+                         it->second = std::move(*expanded_value);
+--
+2.55.0
