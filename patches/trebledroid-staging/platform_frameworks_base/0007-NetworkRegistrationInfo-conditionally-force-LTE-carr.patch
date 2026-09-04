@@ -15,18 +15,18 @@ but not reported correctly by the baseband.
  1 file changed, 5 insertions(+)
 
 diff --git a/telephony/java/android/telephony/NetworkRegistrationInfo.java b/telephony/java/android/telephony/NetworkRegistrationInfo.java
-index db5ebde37..87d7d023c 100644
+index 59045cf5d..2c2d8698a 100644
 --- a/telephony/java/android/telephony/NetworkRegistrationInfo.java
 +++ b/telephony/java/android/telephony/NetworkRegistrationInfo.java
-@@ -27,6 +27,7 @@ import android.compat.annotation.EnabledSince;
+@@ -37,6 +37,7 @@ import android.compat.annotation.EnabledSince;
  import android.os.Build;
  import android.os.Parcel;
  import android.os.Parcelable;
 +import android.os.SystemProperties;
  import android.telephony.AccessNetworkConstants.TransportType;
  import android.telephony.Annotation.NetworkType;
- import android.text.TextUtils;
-@@ -639,6 +640,10 @@ public final class NetworkRegistrationInfo implements Parcelable {
+ import android.telephony.satellite.SatelliteManager.NTRadioTechnology;
+@@ -666,6 +667,10 @@ public final class NetworkRegistrationInfo implements Parcelable {
       * @hide
       */
      public void setAccessNetworkTechnology(@NetworkType int tech) {
@@ -37,6 +37,5 @@ index db5ebde37..87d7d023c 100644
          if (tech == TelephonyManager.NETWORK_TYPE_LTE_CA) {
              // For old device backward compatibility support
              tech = TelephonyManager.NETWORK_TYPE_LTE;
--- 
-2.53.0
-
+--
+2.55.0
