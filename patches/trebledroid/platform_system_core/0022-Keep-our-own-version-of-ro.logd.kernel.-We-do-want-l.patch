@@ -9,18 +9,17 @@ Subject: [PATCH 22/28] Keep our own version of ro.logd.kernel. We do want
  1 file changed, 1 insertion(+), 1 deletion(-)
 
 diff --git a/init/property_service.cpp b/init/property_service.cpp
-index acd7aa22f..4b88fc140 100644
+index bfb43ac..3a8f02c 100644
 --- a/init/property_service.cpp
 +++ b/init/property_service.cpp
-@@ -813,7 +813,7 @@ static void LoadProperties(char* data, const char* filter, const char* filename,
-                                  << "' with new value '" << value << "'";
+@@ -901,7 +901,7 @@ static void LoadProperties(char* data, const char* filter, const char* filename,
+                                  << "' with new value '" << *expanded_value << "'";
                      if(strcmp("ro.apex.updatable", key) == 0 && !kernel_supports_capex()) {
                          LOG(WARNING) << "... Ignored apex by kernel version";
 -                    } else if(strstr(key, "adb") || strstr(key, "secure")) {
 +                    } else if(strstr(key, "adb") || strstr(key, "secure") || strstr(key, "ro.logd.kernel")) {
                          LOG(WARNING) << "... Ignored";
                      } else {
-                         it->second = value;
--- 
-2.52.0
-
+                         it->second = std::move(*expanded_value);
+--
+2.55.0
