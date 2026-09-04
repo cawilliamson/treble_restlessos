@@ -10,17 +10,20 @@ avoid errors on devices without the goodix_ts driver by checking for
  1 file changed, 3 insertions(+), 1 deletion(-)
 
 diff --git a/rw-system.sh b/rw-system.sh
-index 227913f..592e952 100644
+index a0ca472..425ff11 100644
 --- a/rw-system.sh
 +++ b/rw-system.sh
-@@ -1249,4 +1249,6 @@ if getprop ro.vendor.build.fingerprint | grep -iq -e Rebecco/K70_ROW; then
+@@ -1247,7 +1247,9 @@ if getprop ro.vendor.build.fingerprint | grep -iq -e Rebecco/K70_ROW; then
  fi
- 
+
  # Enable pen mode on Lenovo/goodix
 -echo 1 > /sys/devices/platform/goodix_ts.0/support_pen
 +if [ -e /sys/devices/platform/goodix_ts.0/support_pen ]; then
 +    echo 1 > /sys/devices/platform/goodix_ts.0/support_pen
 +fi
--- 
-2.53.0
+
+ # Samsung's sw Codec2 service seccomp policy only allows mremap with
+ # MREMAP_MAYMOVE|MREMAP_FIXED, but the current bionic allocator uses other
+--
+2.55.0
 
