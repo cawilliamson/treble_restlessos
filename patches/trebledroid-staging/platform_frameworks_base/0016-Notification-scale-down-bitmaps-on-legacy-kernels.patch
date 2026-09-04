@@ -3,9 +3,6 @@ From: "Christopher A. Williamson" <contact@chrisaw.io>
 Date: Fri, 29 May 2026 22:39:11 +0100
 Subject: [PATCH 16/20] Notification: scale down large bitmap icons on legacy kernels
  (< 4.14)
-MIME-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
-Content-Transfer-Encoding: 8bit
 
 On kernel 4.9 devices, large notification bitmaps (contact photos,
 message previews) exceed the binder transaction buffer size, causing
@@ -21,25 +18,40 @@ No effect on devices with kernel >= 4.14 — the isLowRam check now
 includes an OR with the new isLegacyKernel() helper.
 
 Issue: #67
----
- core/java/android/app/Notification.java | 18 +++++++++++++++++-
- 1 file changed, 17 insertions(+), 1 deletion(-)
 
-diff --git a/core/java/android/app/Notification.java b/core/java/android/app/Notification.java
-index cd3c8225f..65f8846c1 100644
---- a/core/java/android/app/Notification.java
-+++ b/core/java/android/app/Notification.java
-@@ -8209,7 +8209,7 @@ public class Notification implements Parcelable
-         if (extras.getBoolean(EXTRA_REDUCED_IMAGES)) {
-             return;
-         }
--        boolean isLowRam = ActivityManager.isLowRamDeviceStatic();
-+        boolean isLowRam = ActivityManager.isLowRamDeviceStatic() || isLegacyKernel();
+---
+ .../java/android/graphics/drawable/Icon.java  | 26 +++++++++++++++++++
+ 1 file changed, 26 insertions(+)
+
+diff --git a/graphics/java/android/graphics/drawable/Icon.java b/graphics/java/android/graphics/drawable/Icon.java
+index 037806cb7..6fd36636b 100644
+--- a/graphics/java/android/graphics/drawable/Icon.java
++++ b/graphics/java/android/graphics/drawable/Icon.java
+@@ -685,6 +685,9 @@ public final class Icon implements Parcelable {
+     /** @hide */
+     public static final int MIN_ASHMEM_ICON_SIZE = 128 * (1 << 10);
  
-         if (mSmallIcon != null
-                 // Only bitmap icons can be downscaled.
-@@ -8240,6 +8240,22 @@ public class Notification implements Parcelable
-         extras.putBoolean(EXTRA_REDUCED_IMAGES, true);
++    // Largest bitmap dimension that safely fits a legacy (< 4.14) binder transaction buffer.
++    private static final int LEGACY_KERNEL_MAX_IMAGE_SIZE = 256;
++
+     /**
+      * Puts the memory used by this instance into Ashmem memory, if possible.
+      * @hide
+@@ -1232,6 +1235,12 @@ public final class Icon implements Parcelable {
+      * @hide
+      */
+     public static Bitmap scaleDownIfNecessary(Bitmap bitmap, int maxWidth, int maxHeight) {
++        if (isLegacyKernel()) {
++            // Kernels below 4.14 cap the binder transaction buffer at ~1MB, so keep bitmaps
++            // that travel inside a notification parcel within that budget.
++            maxWidth = Math.min(maxWidth, LEGACY_KERNEL_MAX_IMAGE_SIZE);
++            maxHeight = Math.min(maxHeight, LEGACY_KERNEL_MAX_IMAGE_SIZE);
++        }
+         int bitmapWidth = bitmap.getWidth();
+         int bitmapHeight = bitmap.getHeight();
+         if (bitmapWidth > maxWidth || bitmapHeight > maxHeight) {
+@@ -1255,6 +1264,23 @@ public final class Icon implements Parcelable {
+         return bitmap;
      }
  
 +    private static boolean isLegacyKernel() {
@@ -50,7 +62,8 @@ index cd3c8225f..65f8846c1 100644
 +            if (firstDot < 0) return false;
 +            int major = Integer.parseInt(kv.substring(0, firstDot));
 +            int secondDot = kv.indexOf('.', firstDot + 1);
-+            String minorStr = (secondDot < 0) ? kv.substring(firstDot + 1) : kv.substring(firstDot + 1, secondDot);
++            String minorStr = secondDot < 0
++                    ? kv.substring(firstDot + 1) : kv.substring(firstDot + 1, secondDot);
 +            int minor = Integer.parseInt(minorStr);
 +            return major < 4 || (major == 4 && minor < 14);
 +        } catch (NumberFormatException e) {
@@ -58,9 +71,9 @@ index cd3c8225f..65f8846c1 100644
 +        }
 +    }
 +
-     private void reduceImageSizesForRemoteView(RemoteViews remoteView, Context context,
-             boolean isLowRam) {
-         if (remoteView != null) {
+     /**
+      * Scale down this icon to a given max width and max height.
+      * The scaling will be done in a uniform way and currently only bitmaps are supported.
 -- 
-2.54.0
+2.55.0
 
