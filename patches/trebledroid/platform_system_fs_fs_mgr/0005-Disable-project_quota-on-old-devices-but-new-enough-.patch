@@ -5,15 +5,15 @@ Subject: [PATCH 19/28] Disable project_quota on old devices but new enough to
  have encryption (they do keep quota support)
 
 ---
- fs_mgr/fs_mgr.cpp | 8 ++++++++
+ fs_mgr.cpp | 8 ++++++++
  1 file changed, 8 insertions(+)
 
-diff --git a/fs_mgr/fs_mgr.cpp b/fs_mgr/fs_mgr.cpp
-index b4ea91172..8b6785c99 100644
---- a/fs_mgr/fs_mgr.cpp
-+++ b/fs_mgr/fs_mgr.cpp
-@@ -381,6 +381,14 @@ static void tune_quota(const std::string& blk_device, const FstabEntry& entry,
-         want_quota = false;
+diff --git a/fs_mgr.cpp b/fs_mgr.cpp
+index adb1d50..79611ab 100644
+--- a/fs_mgr.cpp
++++ b/fs_mgr.cpp
+@@ -440,6 +440,14 @@ static void tune_quota(const std::string& blk_device, const FstabEntry& entry,
+         return;
      }
 
 +    struct utsname uts;
@@ -27,6 +27,5 @@ index b4ea91172..8b6785c99 100644
      if (!tune2fs_available()) {
          LERROR << "Unable to " << (want_quota ? "enable" : "disable") << " quotas on " << blk_device
                 << " because " TUNE2FS_BIN " is missing";
--- 
-2.52.0
-
+--
+2.55.0
