@@ -13,10 +13,10 @@ This reverts commit 0e87a83cbacd7ccb47873df1b555598f94e6a287.
  4 files changed, 153 insertions(+)
 
 diff --git a/Android.bp b/Android.bp
-index bef64710..5511d44c 100644
+index 5f4b2b3..656b280 100644
 --- a/Android.bp
 +++ b/Android.bp
-@@ -63,6 +63,7 @@ cc_defaults {
+@@ -61,6 +61,7 @@ cc_defaults {
          "libincfs",
          "libhidlbase",
          "libkeymint_support",
@@ -25,10 +25,10 @@ index bef64710..5511d44c 100644
          "liblogwrap",
          "libselinux",
 diff --git a/FsCrypt.cpp b/FsCrypt.cpp
-index ea455a81..28f511b6 100644
+index 7db1fb5..a20a38b 100644
 --- a/FsCrypt.cpp
 +++ b/FsCrypt.cpp
-@@ -49,6 +49,7 @@
+@@ -46,6 +46,7 @@
  #include <cutils/properties.h>
 
  #include <fscrypt/fscrypt.h>
@@ -36,7 +36,7 @@ index ea455a81..28f511b6 100644
  #include <libdm/dm.h>
 
  #include <android-base/file.h>
-@@ -74,6 +75,7 @@ using android::vold::retrieveOrGenerateKey;
+@@ -78,6 +79,7 @@ using android::vold::retrieveOrGenerateKey;
  using android::vold::SetDefaultAcl;
  using android::vold::SetQuotaInherit;
  using android::vold::SetQuotaProjectId;
@@ -44,7 +44,7 @@ index ea455a81..28f511b6 100644
  using namespace android::fscrypt;
  using namespace android::dm;
 
-@@ -682,6 +684,27 @@ bool fscrypt_create_user_keys(userid_t user_id, bool ephemeral) {
+@@ -697,6 +699,27 @@ bool fscrypt_create_user_keys(userid_t user_id, bool ephemeral) {
      return true;
  }
 
@@ -72,7 +72,7 @@ index ea455a81..28f511b6 100644
  // Evicts all the user's keys of one type from all volumes (internal and adoptable).
  // This evicts either CE keys or DE keys, depending on which map is passed.
  static bool evict_user_keys(std::map<userid_t, UserPolicies>& policy_map, userid_t user_id) {
-@@ -694,6 +717,7 @@ static bool evict_user_keys(std::map<userid_t, UserPolicies>& policy_map, userid
+@@ -709,6 +732,7 @@ static bool evict_user_keys(std::map<userid_t, UserPolicies>& policy_map, userid
              success &= android::vold::evictKey(BuildDataPath(volume_uuid), policy);
          }
          policy_map.erase(it);
@@ -81,19 +81,19 @@ index ea455a81..28f511b6 100644
      return success;
  }
 diff --git a/KeyUtil.cpp b/KeyUtil.cpp
-index bd2ccddd..9e8920d1 100644
+index b13e4cd..3d8cc6f 100644
 --- a/KeyUtil.cpp
 +++ b/KeyUtil.cpp
-@@ -28,6 +28,7 @@
+@@ -29,6 +29,7 @@
 
  #include <android-base/file.h>
  #include <android-base/logging.h>
 +#include <keyutils.h>
 
  #include "KeyStorage.h"
- #include "Utils.h"
-@@ -74,6 +75,39 @@ bool generateStorageKey(const KeyGeneration& gen, KeyBuffer* key) {
-     }
+ #include "Keystore.h"
+@@ -198,6 +199,39 @@ bool prepareKeyForUse(const KeyBuffer& lt_key, KeyType type, KeyBuffer* kernel_k
+     return false;
  }
 
 +static bool isFsKeyringSupportedImpl() {
@@ -132,7 +132,7 @@ index bd2ccddd..9e8920d1 100644
  // Get raw keyref - used to make keyname and to pass to ioctl
  static std::string generateKeyRef(const uint8_t* key, int length) {
      SHA512_CTX c;
-@@ -93,6 +127,20 @@ static std::string generateKeyRef(const uint8_t* key, int length) {
+@@ -217,6 +251,20 @@ static std::string generateKeyRef(const uint8_t* key, int length) {
      return std::string((char*)key_ref2, FSCRYPT_KEY_DESCRIPTOR_SIZE);
  }
 
@@ -153,7 +153,7 @@ index bd2ccddd..9e8920d1 100644
  static std::string keyrefstring(const std::string& raw_ref) {
      std::ostringstream o;
      for (unsigned char i : raw_ref) {
-@@ -101,6 +149,44 @@ static std::string keyrefstring(const std::string& raw_ref) {
+@@ -225,6 +273,44 @@ static std::string keyrefstring(const std::string& raw_ref) {
      return o.str();
  }
 
@@ -198,7 +198,7 @@ index bd2ccddd..9e8920d1 100644
  // Build a struct fscrypt_key_specifier for use in the key management ioctls.
  static bool buildKeySpecifier(fscrypt_key_specifier* spec, const EncryptionPolicy& policy) {
      switch (policy.options.version) {
-@@ -144,6 +230,9 @@ bool installKey(const std::string& mountpoint, const EncryptionOptions& options,
+@@ -268,6 +354,9 @@ bool installKey(const std::string& mountpoint, const EncryptionOptions& options,
              // "descriptor", which must be provided by userspace.  We use the
              // first 8 bytes from the double SHA-512 of the key itself.
              policy->key_raw_ref = generateKeyRef((const uint8_t*)key.data(), key.size());
@@ -208,7 +208,7 @@ index bd2ccddd..9e8920d1 100644
              if (!buildKeySpecifier(&arg->key_spec, *policy)) {
                  return false;
              }
-@@ -187,6 +276,29 @@ bool installKey(const std::string& mountpoint, const EncryptionOptions& options,
+@@ -327,6 +416,29 @@ bool installKey(const std::string& mountpoint, const EncryptionOptions& options,
      return true;
  }
 
@@ -238,7 +238,7 @@ index bd2ccddd..9e8920d1 100644
  static void waitForBusyFiles(const struct fscrypt_key_specifier key_spec, const std::string ref,
                               const std::string mountpoint) {
      android::base::unique_fd fd(open(mountpoint.c_str(), O_RDONLY | O_DIRECTORY | O_CLOEXEC));
-@@ -247,6 +359,9 @@ static void waitForBusyFiles(const struct fscrypt_key_specifier key_spec, const
+@@ -387,6 +499,9 @@ static void waitForBusyFiles(const struct fscrypt_key_specifier key_spec, const
 
  bool evictKey(const std::string& mountpoint, const EncryptionPolicy& policy) {
      const std::lock_guard<std::mutex> lock(fscrypt_keyring_mutex);
@@ -249,15 +249,19 @@ index bd2ccddd..9e8920d1 100644
      android::base::unique_fd fd(open(mountpoint.c_str(), O_RDONLY | O_DIRECTORY | O_CLOEXEC));
      if (fd == -1) {
 diff --git a/KeyUtil.h b/KeyUtil.h
-index cc1a1f98..17a234e6 100644
+index 04f6c94..d5b536c 100644
 --- a/KeyUtil.h
 +++ b/KeyUtil.h
-@@ -43,15 +43,28 @@ bool generateStorageKey(const KeyGeneration& gen, KeyBuffer* key);
+@@ -44,6 +44,8 @@ bool generateStorageKey(const KeyGeneration& gen, KeyBuffer* key);
  // be generated.
  const KeyGeneration neverGen();
 
 +bool isFsKeyringSupported(void);
 +
+ // Prepares a file-based or metadata encryption key for runtime use. Given a
+ // long-term, persistent key "lt_key", this sets "kernel_key" to the key that
+ // should be passed to the kernel to en/decrypt the storage. If it's a raw key,
+@@ -55,12 +57,23 @@ bool prepareKeyForUse(const KeyBuffer& lt_key, android::fscrypt::KeyType type,
  // Install a file-based encryption key to the kernel, for use by encrypted files
  // on the specified filesystem using the specified encryption policy version.
  //
@@ -281,6 +285,5 @@ index cc1a1f98..17a234e6 100644
  bool evictKey(const std::string& mountpoint, const android::fscrypt::EncryptionPolicy& policy);
 
  // Retrieves the key from the named directory, or generates it if it doesn't
--- 
-2.52.0
-
+--
+2.55.0
