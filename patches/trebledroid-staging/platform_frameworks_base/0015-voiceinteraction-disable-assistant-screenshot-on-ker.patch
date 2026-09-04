@@ -24,10 +24,10 @@ Issue: #54, #67
  1 file changed, 24 insertions(+)
 
 diff --git a/services/voiceinteraction/java/com/android/server/voiceinteraction/VoiceInteractionSessionConnection.java b/services/voiceinteraction/java/com/android/server/voiceinteraction/VoiceInteractionSessionConnection.java
-index 59f4d87a5..fa28adcd0 100644
+index c98a04336..0c012924b 100644
 --- a/services/voiceinteraction/java/com/android/server/voiceinteraction/VoiceInteractionSessionConnection.java
 +++ b/services/voiceinteraction/java/com/android/server/voiceinteraction/VoiceInteractionSessionConnection.java
-@@ -277,9 +277,33 @@ final class VoiceInteractionSessionConnection implements ServiceConnection,
+@@ -288,6 +288,13 @@ final class VoiceInteractionSessionConnection implements ServiceConnection,
                  Settings.Secure.ASSIST_SCREENSHOT_ENABLED, 1, mUser) == 0) {
              flags |= VoiceInteractionSession.SHOW_WITH_SCREENSHOT;
          }
@@ -38,9 +38,13 @@ index 59f4d87a5..fa28adcd0 100644
 +        if (isLegacyKernel()) {
 +            flags |= VoiceInteractionSession.SHOW_WITH_SCREENSHOT;
 +        }
+
+         // If this session should restrict access to AssistStructure screen content and the
+         // associated permission flag is enabled then READ_ASSIST_STRUCTURE_SCREEN_CONTENT must be
+@@ -307,6 +314,23 @@ final class VoiceInteractionSessionConnection implements ServiceConnection,
          return flags;
      }
- 
+
 +    private static boolean isLegacyKernel() {
 +        String kv = System.getProperty("os.version");
 +        if (kv == null || kv.isEmpty()) return false;
@@ -61,6 +65,5 @@ index 59f4d87a5..fa28adcd0 100644
      public boolean showLocked(@NonNull Bundle args, int flags, @Nullable String attributionTag,
              int disabledContext, @Nullable IVoiceInteractionSessionShowCallback showCallback,
              @NonNull List<ActivityAssistInfo> topActivities) {
--- 
-2.53.0
-
+--
+2.55.0
