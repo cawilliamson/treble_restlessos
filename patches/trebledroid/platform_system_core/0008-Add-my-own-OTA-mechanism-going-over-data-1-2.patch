@@ -1,0 +1,122 @@
+From bde4234a4250fd15338635f4fcfdd708db90bc92 Mon Sep 17 00:00:00 2001
+From: Pierre-Hugues Husson <phh@phh.me>
+Date: Sat, 22 Jan 2022 14:34:45 -0500
+Subject: [PATCH 08/28] Add my own OTA mechanism going over /data (1/2)
+
+Change-Id: I9cacff2d761affa0376b4bb8ca63353a9d95b5de
+---
+ init/selinux.cpp | 64 ++++++++++++++++++++++++++++++++++++++++++++++++
+ 1 file changed, 64 insertions(+)
+
+diff --git a/init/selinux.cpp b/init/selinux.cpp
+index 4baf9a4..b32b71e 100644
+--- a/init/selinux.cpp
++++ b/init/selinux.cpp
+@@ -59,6 +59,9 @@
+ #include <sys/mount.h>
+ #include <sys/wait.h>
+ #include <unistd.h>
++#include <fcntl.h>
++#include <strings.h>
++#include <sys/sysmacros.h>
+
+ #include <android-base/chrono_utils.h>
+ #include <android-base/file.h>
+@@ -76,6 +79,9 @@
+ #include <libgsi/libgsi.h>
+ #include <libsnapshot/snapshot.h>
+ #include <selinux/android.h>
++#include <sys/mount.h>
++#include <libfiemap/image_manager.h>
++#include <liblp/partition_opener.h>
+
+ #include "block_dev_initializer.h"
+ #include "debug_ramdisk.h"
+@@ -84,6 +90,7 @@
+ #include "snapuserd_transition.h"
+ #include "util.h"
+ #include "ota_utils.h"
++#include "switch_root.h"
+
+ using namespace std::string_literals;
+
+@@ -92,6 +99,7 @@ using android::base::Timer;
+ using android::base::unique_fd;
+ using android::fs_mgr::AvbHandle;
+ using android::snapshot::SnapshotManager;
++using android::fiemap::IImageManager;
+
+ namespace android {
+ namespace init {
+@@ -672,6 +680,60 @@ void LoadSelinuxPolicyMicrodroid() {
+     LoadSelinuxPolicy(policy);
+ }
+
++static void setupPhhOta() {
++       setenv("PHH_STEP2", (char*)"1", 1);
++       if(getenv("PHH_OTA")) return;
++       setenv("PHH_STEP3", (char*)"1", 1);
++
++       std::string phh_ota;
++       if(!base::ReadFileToString("/metadata/phh/img", &phh_ota)) return;
++       const char *slot = "a";
++       if(phh_ota.c_str()[0] == 'b')
++               slot = "b";
++       setenv("PHH_OTA_SLOT", (char*)slot, 1);
++       setenv("PHH_STEP4", (char*)"1", 1);
++
++       std::string imageNameStr = "system_otaphh_"s + slot;
++
++       BlockDevInitializer block_dev_init;
++       block_dev_init.InitDeviceMapper();
++       block_dev_init.InitDevices({"userdata"});
++
++       auto images = IImageManager::Open("phh", 0ms);
++       std::string blockDev;
++       android::fs_mgr::PartitionOpener opener;
++       if(!images->MapImageWithDeviceMapper(opener, imageNameStr, &blockDev)) return;
++
++       // For some reason, I can't get block_dev_init to find system_otaphh_X, so construct it ourselves
++       int major = atoi(blockDev.c_str());
++       const char *minorStr = strstr(blockDev.c_str(), ":")+1;
++       int minor = atoi(minorStr);
++       int eee = mknod("/dev/root-otaphh", 0644 | S_IFBLK, makedev(major, minor));
++
++       base::WriteStringToFile("phh mknod returned " + std::to_string(eee) + " of " + std::to_string(major) + " " + std::to_string(minor), "/dev/kmsg");
++       setenv("PHH_STEP5", (char*)"1", 1);
++
++       umount2("/debug_ramdisk", 0);
++       umount2("/debug_ramdisk", MNT_DETACH);
++       int mountRes = mount("/dev/root-otaphh", "/debug_ramdisk", "ext4", MS_RDONLY, "");
++       putenv((char*)"PHH_OTA=1");
++       base::WriteStringToFile("phh_ota setup " + blockDev, "/dev/kmsg");
++       base::WriteStringToFile("phh mount returned " + std::to_string(mountRes), "/dev/kmsg");
++       base::WriteStringToFile("errno is " + std::to_string(errno), "/dev/kmsg");
++
++       if(mountRes != 0) return;
++
++       SwitchRoot("/debug_ramdisk");
++
++       const char* path = "/system/bin/init";
++       const char* args[] = {path, "selinux_setup", nullptr};
++       auto fd = open("/dev/kmsg", O_WRONLY | O_CLOEXEC);
++       dup2(fd, STDOUT_FILENO);
++       dup2(fd, STDERR_FILENO);
++       close(fd);
++       execv(path, const_cast<char**>(args));
++}
++
+ // The SELinux setup process is carefully orchestrated around snapuserd. Policy
+ // must be loaded off dynamic partitions, and during an OTA, those partitions
+ // cannot be read without snapuserd. But, with kernel-privileged snapuserd
+@@ -688,6 +750,8 @@ void LoadSelinuxPolicyMicrodroid() {
+ //
+ // After this sequence, it is safe to enable enforcing mode and continue booting.
+ void LoadSelinuxPolicyAndroid() {
++    setenv("PHH_STEP1", (char*)"1", 1);
++    setupPhhOta();
+     MountMissingSystemPartitions();
+
+     LOG(INFO) << "Opening SELinux policy";
+--
+2.55.0
