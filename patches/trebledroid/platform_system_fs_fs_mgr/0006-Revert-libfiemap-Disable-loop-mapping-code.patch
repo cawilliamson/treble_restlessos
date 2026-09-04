@@ -1,7 +1,7 @@
 From 6f4bace5c7605fba4e9a826efe4665f8fa36bad2 Mon Sep 17 00:00:00 2001
 From: signoreTNT <71853850+signoreTNT@users.noreply.github.com>
 Date: Wed, 12 Feb 2025 12:41:40 +0100
-Subject: [PATCH 28/28] Revert "libfiemap: Disable loop mapping code."
+Subject: [PATCH 6/6] Revert "libfiemap: Disable loop mapping code."
 
 This reverts commit d7f09657617cd26734729bf8bc24b9a7829a544d.
 ---
@@ -63,5 +63,5 @@ index 435f7bd..b3b71ca 100644
 
      // Set a property so we remember this is mapped.
      auto prop_name = GetStatusPropertyName(name);
---
+-- 
 2.55.0
