@@ -9,10 +9,10 @@ Subject: [PATCH 26/28] Flattened apexes no longer exist, we'll deal with it
  1 file changed, 1 insertion(+), 21 deletions(-)
 
 diff --git a/init/property_service.cpp b/init/property_service.cpp
-index 5c3beeb83..6be46436a 100644
+index 03a2263..7e4f771 100644
 --- a/init/property_service.cpp
 +++ b/init/property_service.cpp
-@@ -704,26 +704,6 @@ uint32_t InitPropertySet(const std::string& name, const std::string& value) {
+@@ -784,26 +784,6 @@ uint32_t InitPropertySet(const std::string& name, const std::string& value) {
  static Result<void> load_properties_from_file(const char*, const char*,
                                                std::map<std::string, std::string>*);
 
@@ -39,15 +39,14 @@ index 5c3beeb83..6be46436a 100644
  /*
   * Filter is used to decide which properties to load: NULL loads all keys,
   * "ro.foo.*" is a prefix match, and "ro.foo.bar" is an exact match.
-@@ -819,7 +799,7 @@ static void LoadProperties(char* data, const char* filter, const char* filename,
-                 const char *new_value = value;
+@@ -907,7 +887,7 @@ static void LoadProperties(char* data, const char* filter, const char* filename,
+                 const char *new_value = std::move(*expanded_value);
 
                  if(strcmp("ro.apex.updatable", key) == 0) {
 -                    new_value = kernel_supports_capex() ? "true" : "false";
 +                    new_value = "true";
                  }
                  if (it == properties->end()) {
-                     (*properties)[key] = new_value;
--- 
-2.52.0
-
+                    (*properties)[key] = new_value;
+--
+2.55.0
