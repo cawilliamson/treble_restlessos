@@ -20,10 +20,10 @@ Properties:
 ---
  core/java/android/view/RoundedCorners.java    | 13 ++++++++
  .../systemui/shade/ShadeHeaderController.kt   |  5 ++-
- .../layout/StatusBarContentInsetsProvider.kt  | 32 +++++++++++--------
+ .../layout/StatusBarContentInsetsProvider.kt  | 30 +++++++++--------
  .../phone/KeyguardStatusBarView.java          |  9 ++++--
  .../statusbar/phone/PhoneStatusBarView.java   | 32 +++++++++++++------
- 5 files changed, 64 insertions(+), 27 deletions(-)
+ 5 files changed, 63 insertions(+), 26 deletions(-)
 
 diff --git a/core/java/android/view/RoundedCorners.java b/core/java/android/view/RoundedCorners.java
 index 1f841bf53..c5a5fe184 100644
@@ -71,7 +71,7 @@ index 1f841bf53..c5a5fe184 100644
          return radius;
      }
 diff --git a/packages/SystemUI/src/com/android/systemui/shade/ShadeHeaderController.kt b/packages/SystemUI/src/com/android/systemui/shade/ShadeHeaderController.kt
-index 517b93be9..1889c6bb1 100644
+index 2c5fa7ec7..7fa7195dd 100644
 --- a/packages/SystemUI/src/com/android/systemui/shade/ShadeHeaderController.kt
 +++ b/packages/SystemUI/src/com/android/systemui/shade/ShadeHeaderController.kt
 @@ -26,6 +26,7 @@ import android.content.Intent
@@ -82,7 +82,7 @@ index 517b93be9..1889c6bb1 100644
  import android.os.Trace
  import android.os.Trace.TRACE_TAG_APP
  import android.provider.AlarmClock
-@@ -702,7 +703,9 @@ constructor(
+@@ -646,7 +647,9 @@ constructor(
      }
 
      private fun updateResources() {
@@ -94,7 +94,7 @@ index 517b93be9..1889c6bb1 100644
          header.setPadding(padding, header.paddingTop, padding, header.paddingBottom)
          updateQQSPaddings()
 diff --git a/packages/SystemUI/src/com/android/systemui/statusbar/layout/StatusBarContentInsetsProvider.kt b/packages/SystemUI/src/com/android/systemui/statusbar/layout/StatusBarContentInsetsProvider.kt
-index 6806cfdc9..14f9d5299 100644
+index 91acbcdf4..9c7ee67ba 100644
 --- a/packages/SystemUI/src/com/android/systemui/statusbar/layout/StatusBarContentInsetsProvider.kt
 +++ b/packages/SystemUI/src/com/android/systemui/statusbar/layout/StatusBarContentInsetsProvider.kt
 @@ -22,6 +22,7 @@ import android.content.res.Resources
@@ -105,12 +105,12 @@ index 6806cfdc9..14f9d5299 100644
  import android.util.LruCache
  import android.util.Pair
  import android.view.Display.DEFAULT_DISPLAY
-@@ -331,20 +332,23 @@ constructor(
+@@ -312,19 +313,22 @@ constructor(
      ): Rect {
          val currentRotation = getExactRotation(context)
 
 -        val roundedCornerPadding =
--            if (context.displayId == DEFAULT_DISPLAY || !StatusBarConnectedDisplays.isEnabled) {
+-            if (displayId == DEFAULT_DISPLAY) {
 -                rotatedResources.getDimensionPixelSize(R.dimen.rounded_corner_content_padding)
 -            } else {
 -                // Currently the padding is hardcoded for each device default display, and there is
@@ -122,7 +122,6 @@ index 6806cfdc9..14f9d5299 100644
 -                rotatedResources.getDimensionPixelSize(
 -                    R.dimen.status_bar_padding_without_rounded_corners
 -                )
--            }
 +        var roundedCornerPadding = SystemProperties.getInt("persist.sys.phh.rounded_corners_padding", -1)
 +        if (roundedCornerPadding == -1) {
 +            roundedCornerPadding =
@@ -139,12 +138,11 @@ index 6806cfdc9..14f9d5299 100644
 +                        R.dimen.status_bar_padding_without_rounded_corners
 +                    )
 +                }
-+        }
+             }
          val minDotPadding =
              if (isPrivacyDotEnabled)
-                 rotatedResources.getDimensionPixelSize(R.dimen.ongoing_appops_dot_min_padding)
 diff --git a/packages/SystemUI/src/com/android/systemui/statusbar/phone/KeyguardStatusBarView.java b/packages/SystemUI/src/com/android/systemui/statusbar/phone/KeyguardStatusBarView.java
-index 83e5db4db..8e2bc1fc2 100644
+index 13cfa8064..312531cc6 100644
 --- a/packages/SystemUI/src/com/android/systemui/statusbar/phone/KeyguardStatusBarView.java
 +++ b/packages/SystemUI/src/com/android/systemui/statusbar/phone/KeyguardStatusBarView.java
 @@ -27,6 +27,7 @@ import android.graphics.Color;
@@ -155,7 +153,7 @@ index 83e5db4db..8e2bc1fc2 100644
  import android.os.Trace;
  import android.util.AttributeSet;
  import android.util.TypedValue;
-@@ -169,7 +170,7 @@ public class KeyguardStatusBarView extends RelativeLayout {
+@@ -157,7 +158,7 @@ public class KeyguardStatusBarView extends RelativeLayout {
          // mStatusIconArea
          mStatusIconArea.setPaddingRelative(
                  mStatusIconArea.getPaddingStart(),
@@ -164,7 +162,7 @@ index 83e5db4db..8e2bc1fc2 100644
                  mStatusIconArea.getPaddingEnd(),
                  mStatusIconArea.getPaddingBottom()
          );
-@@ -221,8 +222,10 @@ public class KeyguardStatusBarView extends RelativeLayout {
+@@ -209,8 +210,10 @@ public class KeyguardStatusBarView extends RelativeLayout {
          Resources res = getResources();
          mSystemIconsSwitcherHiddenExpandedMargin = res.getDimensionPixelSize(
                  R.dimen.system_icons_switcher_hidden_expanded_margin);
@@ -178,10 +176,10 @@ index 83e5db4db..8e2bc1fc2 100644
                  R.dimen.ongoing_appops_dot_min_padding);
          mCutoutSideNudge = getResources().getDimensionPixelSize(
 diff --git a/packages/SystemUI/src/com/android/systemui/statusbar/phone/PhoneStatusBarView.java b/packages/SystemUI/src/com/android/systemui/statusbar/phone/PhoneStatusBarView.java
-index 28621e1b0..0b3d8c621 100644
+index db91ce3c1..b462bdd3d 100644
 --- a/packages/SystemUI/src/com/android/systemui/statusbar/phone/PhoneStatusBarView.java
 +++ b/packages/SystemUI/src/com/android/systemui/statusbar/phone/PhoneStatusBarView.java
-@@ -22,6 +22,7 @@ import android.content.res.Configuration;
+@@ -24,6 +24,7 @@ import android.content.res.Configuration;
  import android.graphics.Insets;
  import android.graphics.Rect;
  import android.graphics.Region;
@@ -189,7 +187,7 @@ index 28621e1b0..0b3d8c621 100644
  import android.util.AttributeSet;
  import android.util.Log;
  import android.view.DisplayCutout;
-@@ -330,23 +331,36 @@ public class PhoneStatusBarView extends FrameLayout {
+@@ -314,23 +315,36 @@ public class PhoneStatusBarView extends FrameLayout {
      }
 
      private void updatePaddings() {
@@ -235,6 +233,5 @@ index 28621e1b0..0b3d8c621 100644
          );
      }
 
--- 
-2.53.0
-
+--
+2.55.0
