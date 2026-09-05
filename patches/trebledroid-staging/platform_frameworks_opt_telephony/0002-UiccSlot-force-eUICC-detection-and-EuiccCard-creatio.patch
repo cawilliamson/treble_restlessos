@@ -3,9 +3,6 @@ From: "Christopher A. Williamson" <contact@chrisaw.io>
 Date: Sat, 9 May 2026 01:57:05 +0100
 Subject: [PATCH 2/2] UiccSlot: force eUICC detection and EuiccCard creation for
  non-standard eSIM
-MIME-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
-Content-Transfer-Encoding: 8bit
 
 Some devices (notably MediaTek devices with DL2005/HCT eSIM) do not
 present a standard eUICC ATR to AOSP. Without vendor-specific boot
@@ -39,7 +36,7 @@ verified: full patch stack applies cleanly
  1 file changed, 33 insertions(+), 1 deletion(-)
 
 diff --git a/src/java/com/android/internal/telephony/uicc/UiccSlot.java b/src/java/com/android/internal/telephony/uicc/UiccSlot.java
-index 9f8c09f..27d5141 100644
+index bfc5438..9024315 100644
 --- a/src/java/com/android/internal/telephony/uicc/UiccSlot.java
 +++ b/src/java/com/android/internal/telephony/uicc/UiccSlot.java
 @@ -28,6 +28,7 @@ import android.content.res.Resources;
@@ -50,18 +47,18 @@ index 9f8c09f..27d5141 100644
  import android.os.UserHandle;
  import android.telephony.SubscriptionInfo;
  import android.telephony.SubscriptionManager;
-@@ -94,6 +95,7 @@ public class UiccSlot extends Handler {
+@@ -95,6 +96,7 @@ public class UiccSlot extends Handler {
      private AnswerToReset mAtr;
      private boolean mIsRemovable;
      private MultipleEnabledProfilesMode mSupportedMepMode;
 +    private int mSlotIndex;
- 
+
      // Map each available portIdx to phoneId
      private HashMap<Integer, Integer> mPortIdxToPhoneId = new HashMap<>();
-@@ -122,12 +124,23 @@ public class UiccSlot extends Handler {
-      */
-     public void update(CommandsInterface ci, IccCardStatus ics, int phoneId, int slotIndex) {
+@@ -129,12 +131,23 @@ public class UiccSlot extends Handler {
          synchronized (mLock) {
+             int oldPhoneId = mPortIdxToPhoneId.getOrDefault(ics.mSlotPortMapping.mPortIndex,
+                     INVALID_PHONE_ID);
 +            String forceSlots = SystemProperties.get("persist.sys.phh.force_euicc_slots", "");
              mPortIdxToPhoneId.put(ics.mSlotPortMapping.mPortIndex, phoneId);
              CardState oldState = mCardState.get(ics.mSlotPortMapping.mPortIndex);
@@ -83,7 +80,7 @@ index 9f8c09f..27d5141 100644
              // Update supported MEP mode in IccCardStatus if the CardState is present.
              if (ics.mCardState.isCardPresent()) {
                  updateSupportedMepMode(ics.mSupportedMepMode);
-@@ -190,6 +203,15 @@ public class UiccSlot extends Handler {
+@@ -208,6 +221,15 @@ public class UiccSlot extends Handler {
                          mUiccCard.update(mContext, ci, ics, phoneId);
                      }
                  }
@@ -99,7 +96,7 @@ index 9f8c09f..27d5141 100644
              } else {
                  if (mUiccCard != null) {
                      mUiccCard.update(mContext, ci, ics, phoneId);
-@@ -205,6 +227,7 @@ public class UiccSlot extends Handler {
+@@ -223,6 +245,7 @@ public class UiccSlot extends Handler {
      public void update(CommandsInterface[] ci, IccSlotStatus iss, int slotIndex) {
          synchronized (mLock) {
              IccSimPortInfo[] simPortInfos = iss.mSimPortInfos;
@@ -107,9 +104,9 @@ index 9f8c09f..27d5141 100644
              parseAtr(iss.atr);
              mEid = iss.eid;
              mIsRemovable = isSlotRemovable(slotIndex);
-@@ -443,6 +466,15 @@ public class UiccSlot extends Handler {
+@@ -474,6 +497,15 @@ public class UiccSlot extends Handler {
      }
- 
+
      private void checkIsEuiccSupported() {
 +        String forceSlots = SystemProperties.get("persist.sys.phh.force_euicc_slots", "");
 +        if (!forceSlots.isEmpty()) {
@@ -123,6 +120,5 @@ index 9f8c09f..27d5141 100644
          if (mAtr == null) {
              mIsEuicc = false;
              return;
--- 
-2.53.0
-
+--
+2.55.0
