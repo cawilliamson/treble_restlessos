@@ -19,15 +19,32 @@ features that require newer kernel support. This allows the
 connectivity stack to function on pre-5.10 kernels with degraded but
 operational BPF support.
 ---
+ bpf/headers/include/bpf/BpfUtils.h            |  5 +-
  bpf/netd/BpfHandler.cpp                       | 67 +++++++++++++------
- .../src/com/android/server/BpfNetMaps.java    |  7 +-
- 2 files changed, 51 insertions(+), 23 deletions(-)
+ .../src/com/android/server/BpfNetMaps.java    | 12 ++++
+ 3 files changed, 62 insertions(+), 22 deletions(-)
 
+diff --git a/bpf/headers/include/bpf/BpfUtils.h b/bpf/headers/include/bpf/BpfUtils.h
+index 5ca52c6..86fe01e 100644
+--- a/bpf/headers/include/bpf/BpfUtils.h
++++ b/bpf/headers/include/bpf/BpfUtils.h
+@@ -152,7 +152,10 @@ const bool isAtLeastS    = (api_level_full >= 3100);  // 31
+ const bool isAtLeastT    = (api_level_full >= 3300);  // 33
+ const bool isAtLeastU    = (api_level_full >= 3400);  // 34
+ const bool isAtLeastV    = (api_level_full >= 3500);  // 35
+-const bool isAtLeast25Q2 = (api_level_full >= 3600);  // 36.0
++// GSI: 25Q2 BPF features need a 5.4+ kernel, and api_level_full says nothing about
++// the kernel actually running, so gate on the kernel too. isAtLeastKernelVersion()
++// cannot be used here: it short-circuits to true against minSupportedKernelVer.
++const bool isAtLeast25Q2 = (api_level_full >= 3600) && (kernelVersion() >= KVER(5, 4, 0));
+ const bool isAtLeast25Q4 = (api_level_full >= 3610);  // 36.1
+ const bool isAtLeast26Q2 = (api_level_full >= 3700);  // 37.0
+ const bool isAtLeast26Q3 = (api_level_full >= 3702);  // 37.0+
 diff --git a/bpf/netd/BpfHandler.cpp b/bpf/netd/BpfHandler.cpp
-index 09d6159..0f53e26 100644
+index 17cffbe..4e018ac 100644
 --- a/bpf/netd/BpfHandler.cpp
 +++ b/bpf/netd/BpfHandler.cpp
-@@ -164,32 +164,46 @@ static Status initPrograms(const char* cg2_path) {
+@@ -205,32 +205,46 @@ static Result<void> initPrograms(const char* cg2_path) {
 
          // This should trivially pass, since we just attached up above,
          // but BPF_PROG_QUERY is only implemented on 4.19+ kernels.
@@ -88,7 +105,7 @@ index 09d6159..0f53e26 100644
          }
      }
 
-@@ -218,10 +232,11 @@ static inline void waitForNetProgsLoaded() {
+@@ -265,10 +279,11 @@ static inline void waitForNetProgsLoaded() {
          ALOGW("Waited %ds for init.svc.mdnsd_netbpfload=stopped, still waiting...", delay);
      }
      if (!mainlineNetBpfLoadDone()) {
@@ -104,7 +121,7 @@ index 09d6159..0f53e26 100644
      }
      return;
  }
-@@ -245,7 +260,8 @@ static inline void waitForBpf() {
+@@ -292,7 +307,8 @@ static inline void waitForBpf() {
          // so waitForProgsLoaded() implies mainlineNetBpfLoadDone().
          if (!base::SetProperty("ctl.start", "mdnsd_netbpfload")) {
              ALOGE("Failed to set property ctl.start=mdnsd_netbpfload, see dmesg for reason.");
@@ -114,7 +131,7 @@ index 09d6159..0f53e26 100644
          }
 
          ALOGI("Waiting for Networking BPF programs");
-@@ -300,9 +316,18 @@ static void mapLockTest(void) {
+@@ -466,9 +482,18 @@ static void mapLockTest(void) {
      const char * const m1 = BPF_NETD_PATH "map_netd_lock_array_test_map";
      const char * const m2 = BPF_NETD_PATH "map_netd_lock_hash_test_map";
 
@@ -136,20 +153,32 @@ index 09d6159..0f53e26 100644
      unique_fd fd3(bpf::mapRetrieveRO(m2));          if (!fd3.ok()) abort();  // no lock taken
      unique_fd fd4(bpf::mapRetrieveRW(m2));          if ( fd4.ok()) abort();  // busy due to fd1
 diff --git a/service/src/com/android/server/BpfNetMaps.java b/service/src/com/android/server/BpfNetMaps.java
-index 44a4c29..fc609f8 100644
+index be3b12b..3094cf4 100644
 --- a/service/src/com/android/server/BpfNetMaps.java
 +++ b/service/src/com/android/server/BpfNetMaps.java
-@@ -483,8 +483,7 @@ public class BpfNetMaps {
-      NetworkStackUtils.isAtLeast25Q2 when it is moved to a static lib.
-      */
-     public static boolean isAtLeast25Q2() {
--        return SdkLevel.isAtLeastB()  || (SdkLevel.isAtLeastV()
--                && "Baklava".equals(Build.VERSION.CODENAME));
-+        return false;
-     }
-
-     private void removeRule(final int uid, final long match, final String caller) {
-@@ -1079,6 +1078,10 @@ public class BpfNetMaps {
+@@ -1932,6 +1932,10 @@ public class BpfNetMaps {
+     @RequiresApi(Build.VERSION_CODES.CUR_DEVELOPMENT)
+     public void addUidToLocalNetBlockMap(final int uid) {
+         throwIfPre25Q2("addUidToLocalNetBlockMap is not available on pre-B devices");
++        if (sLocalNetBlockedUidMap == null) {
++            Log.w(TAG, "sLocalNetBlockedUidMap is null, skipping add for uid: " + uid);
++            return;
++        }
+         try {
+             sLocalNetBlockedUidMap.updateEntry(new U32(uid), new Bool(true));
+         } catch (ErrnoException e) {
+@@ -1946,6 +1950,10 @@ public class BpfNetMaps {
+     @RequiresApi(Build.VERSION_CODES.CUR_DEVELOPMENT)
+     public boolean isUidBlockedFromUsingLocalNetwork(final int uid) {
+         throwIfPre25Q2("isUidBlockedFromUsingLocalNetwork is not available on pre-B devices");
++        if (sLocalNetBlockedUidMap == null) {
++            Log.w(TAG, "sLocalNetBlockedUidMap is null, assuming not blocked for uid: " + uid);
++            return false;
++        }
+         try {
+             final Bool value = sLocalNetBlockedUidMap.getValue(new U32(uid));
+             return value == null ? false : value.val;
+@@ -1963,6 +1971,10 @@ public class BpfNetMaps {
      @RequiresApi(Build.VERSION_CODES.CUR_DEVELOPMENT)
      public void removeUidFromLocalNetBlockMap(final int uid) {
          throwIfPre25Q2("removeUidFromLocalNetBlockMap is not available on pre-B devices");
@@ -160,6 +189,5 @@ index 44a4c29..fc609f8 100644
          try {
              sLocalNetBlockedUidMap.deleteEntry(new U32(uid));
          } catch (ErrnoException e) {
--- 
-2.53.0
-
+--
+2.55.0
