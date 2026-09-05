@@ -18,10 +18,10 @@ it get_prop access to serialno_prop.
  2 files changed, 5 insertions(+)
 
 diff --git a/private/domain.te b/private/domain.te
-index 77097d2..ea0206d 100644
+index 4c49bef..2e2c018 100644
 --- a/private/domain.te
 +++ b/private/domain.te
-@@ -870,6 +870,7 @@ neverallow {
+@@ -883,6 +883,7 @@ neverallow {
    -hal_camera_server
    -hal_cas_server
    -hal_drm_server
@@ -30,7 +30,7 @@ index 77097d2..ea0206d 100644
    userdebug_or_eng(`-incidentd')
    -init
 diff --git a/private/hal_fingerprint.te b/private/hal_fingerprint.te
-index 3295cc7..cc4b127 100644
+index 07a0a65..861f62f 100644
 --- a/private/hal_fingerprint.te
 +++ b/private/hal_fingerprint.te
 @@ -7,6 +7,10 @@ hal_attribute_service(hal_fingerprint, hal_fingerprint_service)
@@ -41,9 +41,8 @@ index 3295cc7..cc4b127 100644
 +# fingerprint templates to the device via the TEE.
 +get_prop(hal_fingerprint_server, serialno_prop)
 +
- # For memory allocation
- allow hal_fingerprint ion_device:chr_file r_file_perms;
+ allow { hal_fingerprint -coredomain } fingerprint_vendor_data_file:file { create_file_perms };
+ allow { hal_fingerprint -coredomain } fingerprint_vendor_data_file:dir rw_dir_perms;
 
--- 
-2.52.0
-
+--
+2.55.0
