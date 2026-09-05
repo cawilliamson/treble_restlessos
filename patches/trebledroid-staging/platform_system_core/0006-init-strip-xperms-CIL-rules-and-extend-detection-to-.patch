@@ -23,17 +23,17 @@ Property overrides:
 - ro.boot.selinux_no_xperms=1: opt out on 5.4+ kernels that
   DON'T have xperms
 ---
- init/selinux.cpp | 165 ++++++++++++++++++++++++++++++++++++++++++++---
- 1 file changed, 157 insertions(+), 8 deletions(-)
+ init/selinux.cpp | 163 +++++++++++++++++++++++++++++++++++++++++++++--
+ 1 file changed, 156 insertions(+), 7 deletions(-)
 
 diff --git a/init/selinux.cpp b/init/selinux.cpp
-index acd3a08..1f91b9a 100644
+index e999cdc..59b9824 100644
 --- a/init/selinux.cpp
 +++ b/init/selinux.cpp
-@@ -247,6 +247,80 @@ bool KernelOlderThan(unsigned want_major, unsigned want_minor) {
+@@ -248,6 +248,80 @@ bool KernelOlderThan(unsigned want_major, unsigned want_minor) {
      return false;
  }
- 
+
 +// Strip xperms CIL statements from a file.  When secilc is invoked
 +// with -c 29 it still fails if the CIL input contains
 +// allowxperm / auditallowxperm / dontauditxperm / neverallowxperm
@@ -111,7 +111,7 @@ index acd3a08..1f91b9a 100644
  bool OpenSplitPolicy(PolicyFile* policy_file) {
      // IMPLEMENTATION NOTE: Split policy consists of three or more CIL files:
      // * platform -- policy needed due to logic contained in the system image,
-@@ -349,15 +423,33 @@ bool OpenSplitPolicy(PolicyFile* policy_file) {
+@@ -350,13 +424,31 @@ bool OpenSplitPolicy(PolicyFile* policy_file) {
      if (access(odm_policy_cil_file.c_str(), F_OK) == -1) {
          odm_policy_cil_file.clear();
      }
@@ -147,15 +147,12 @@ index acd3a08..1f91b9a 100644
 +
 +    if (kernel_lacks_xperms && effective_version > 29) {
          LOG(WARNING) << "SELinux: capping policy version from " << effective_version
--                     << " to 29 for legacy kernel (no xperms support)";
-+                     << " to 29 for kernel lacking xperms support";
+                      << " to 29 for legacy kernel (no xperms support)";
          effective_version = 29;
-     }
-     const std::string version_as_string = std::to_string(effective_version);
-@@ -374,10 +466,67 @@ bool OpenSplitPolicy(PolicyFile* policy_file) {
+@@ -379,10 +471,67 @@ bool OpenSplitPolicy(PolicyFile* policy_file) {
          LOG(INFO) << "Using " << genfs_cil_file << " for genfs labels";
      }
- 
+
 +    // Shadow the constexpr plat_policy_cil_file and the optional
 +    // userdebug policy path with mutable strings so we can redirect
 +    // secilc to xperms-stripped copies on affected kernels.
@@ -218,9 +215,8 @@ index acd3a08..1f91b9a 100644
          "/system/bin/secilc",
 -        use_userdebug_policy ? *userdebug_plat_sepolicy : plat_policy_cil_file,
 +        use_userdebug_policy ? effective_userdebug_policy.c_str() : effective_plat_policy.c_str(),
-         "-m", "-M", "true", "-G", "-N",
+         "-m", "-M", "true", "-G", "-N", "-v",
          "-c", version_as_string.c_str(),
          plat_mapping_file.c_str(),
--- 
-2.53.0
-
+--
+2.55.0
