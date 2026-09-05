@@ -15,25 +15,22 @@ gate the vendor override on persist.sys.phh.hardening.mte_vendor:
 also add "none" as a recognised memtag property value that fully
 disables pointer tagging including TBI.
 ---
- libc/bionic/libc_init_mte.cpp | 47 ++++++++++++++++-------------------
- 1 file changed, 22 insertions(+), 25 deletions(-)
+ libc/bionic/libc_init_mte.cpp | 45 +++++++++++++++--------------------
+ 1 file changed, 19 insertions(+), 26 deletions(-)
 
 diff --git a/libc/bionic/libc_init_mte.cpp b/libc/bionic/libc_init_mte.cpp
-index a8dfa27..5a688c5 100644
+index 04bb47e..9a20d50 100644
 --- a/libc/bionic/libc_init_mte.cpp
 +++ b/libc/bionic/libc_init_mte.cpp
-@@ -131,30 +131,16 @@ static bool get_environment_memtag_setting(HeapTaggingLevel* level) {
- 
+@@ -135,30 +135,12 @@ static bool get_environment_memtag_setting(HeapTaggingLevel* level) {
    const bool is_vendor_prog = starts_with(progname, "/vendor/") || starts_with(progname, "/apex/com.google.");
    const bool is_debug_build = is_debuggable_build();
-+
-+  // On GSI builds, vendor processes may not handle tagged pointers correctly.
-+  // Only apply MTE/TBI tagging to vendor processes if explicitly enabled.
    if (is_vendor_prog) {
 -    char device_name[PROP_VALUE_MAX];
 -    get_property_value("ro.product.name", device_name, sizeof(device_name));
 -    bool apply_override =
 -        strcmp(progname, "/apex/com.google.pixel.camera.hal/bin/hw/android.hardware.camera.provider@2.7-service-google") != 0
+-        && strcmp(progname, "/apex/com.google.android.widevine/bin/hw/android.hardware.drm-service.widevine-rikers") != 0
 -        && (
 -            (
 -                 strcmp(device_name, "tokay") != 0
@@ -60,18 +57,18 @@ index a8dfa27..5a688c5 100644
 +      return true;
 +    }
    }
- 
+
    if (!is_debug_build) {
-@@ -175,7 +161,7 @@ static bool get_environment_memtag_setting(HeapTaggingLevel* level) {
- 
+@@ -179,7 +161,7 @@ static bool get_environment_memtag_setting(HeapTaggingLevel* level) {
+
    if (!get_config_from_env_or_sysprops("MEMTAG_OPTIONS", sys_prop_names, arraysize(sys_prop_names),
                                         options_str, sizeof(options_str))) {
 -    return is_vendor_prog;
 +    return false;
    }
- 
+
    if (strcmp("sync", options_str) == 0) {
-@@ -184,10 +170,12 @@ static bool get_environment_memtag_setting(HeapTaggingLevel* level) {
+@@ -188,10 +170,12 @@ static bool get_environment_memtag_setting(HeapTaggingLevel* level) {
      *level = M_HEAP_TAGGING_LEVEL_ASYNC;
    } else if (strcmp("off", options_str) == 0) {
      *level = M_HEAP_TAGGING_LEVEL_TBI;
@@ -85,10 +82,10 @@ index a8dfa27..5a688c5 100644
          options_str);
      return false;
    }
-@@ -294,6 +282,15 @@ __attribute__((no_sanitize("hwaddress", "memtag"))) void __libc_init_mte(
+@@ -298,6 +282,15 @@ __attribute__((no_sanitize("hwaddress", "memtag"))) void __libc_init_mte(
        __get_tagging_level(memtag_dynamic_entries, phdr_start, phdr_ct, load_bias, &memtag_stack);
    if (memtag_stack) __libc_shared_globals()->initial_memtag_stack_abi = true;
- 
+
 +  // "none" means fully disable all pointer tagging (no MTE, no TBI). This is
 +  // needed for processes that communicate with kernel drivers (e.g. TEE drivers)
 +  // that cannot handle tagged pointers in their copy_from_user/copy_to_user paths.
@@ -101,6 +98,5 @@ index a8dfa27..5a688c5 100644
    if (int64_t timed_upgrade = __get_memtag_upgrade_secs()) {
      if (level == M_HEAP_TAGGING_LEVEL_ASYNC) {
        async_safe_format_log(ANDROID_LOG_INFO, "libc",
--- 
-2.53.0
-
+--
+2.55.0
