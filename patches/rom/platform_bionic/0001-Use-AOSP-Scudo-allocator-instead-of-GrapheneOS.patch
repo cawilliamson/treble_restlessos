@@ -22,23 +22,23 @@ This removes:
 Also removes the dangling init_prog_id(globals) call that upstream
 added inside __libc_preinit_impl() in a newer revision.
 ---
- libc/Android.bp                   | 17 +------
- libc/bionic/heap_tagging.cpp      | 14 +-----
- libc/bionic/libc_init_dynamic.cpp | 82 -------------------------------
- libc/bionic/malloc_common.h       | 20 --------
+ libc/Android.bp                   | 17 +-----
+ libc/bionic/heap_tagging.cpp      | 14 +----
+ libc/bionic/libc_init_dynamic.cpp | 86 -------------------------------
+ libc/bionic/malloc_common.h       | 20 -------
  libc/libc.map.txt                 |  1 -
- 5 files changed, 2 insertions(+), 132 deletions(-)
+ 5 files changed, 2 insertions(+), 136 deletions(-)
 
 diff --git a/libc/Android.bp b/libc/Android.bp
-index 85c39a9..7743c23 100644
+index 42d5d93..3b0db1d 100644
 --- a/libc/Android.bp
 +++ b/libc/Android.bp
-@@ -175,26 +175,15 @@ cc_defaults {
- 
+@@ -191,26 +191,15 @@ cc_defaults {
+
      header_libs: ["gwp_asan_headers"],
      whole_static_libs: ["libscudo"],
 +    cflags: ["-DUSE_SCUDO"],
- 
+
      multilib: {
          lib32: {
 -            cflags: ["-DUSE_SCUDO"],
@@ -60,8 +60,8 @@ index 85c39a9..7743c23 100644
 -        },
      },
  }
- 
-@@ -210,10 +199,6 @@ cc_library_static {
+
+@@ -226,10 +215,6 @@ cc_library_static {
              srcs: ["bionic/jemalloc_wrapper.cpp"],
              static_libs: ["libjemalloc5"],
          },
@@ -71,7 +71,7 @@ index 85c39a9..7743c23 100644
 -        },
      },
      cflags: ["-fvisibility=hidden"],
- 
+
 diff --git a/libc/bionic/heap_tagging.cpp b/libc/bionic/heap_tagging.cpp
 index 6b29f8e..c7b6d22 100644
 --- a/libc/bionic/heap_tagging.cpp
@@ -79,12 +79,12 @@ index 6b29f8e..c7b6d22 100644
 @@ -36,8 +36,6 @@
  #include <sys/auxv.h>
  #include <sys/prctl.h>
- 
+
 -extern "C" void h_malloc_disable_memory_tagging();
 -
  extern "C" void scudo_malloc_disable_memory_tagging();
  extern "C" void scudo_malloc_set_track_allocation_stacks(int);
- 
+
 @@ -79,17 +77,10 @@ void SetDefaultHeapTaggingLevel() {
    switch (heap_tagging_level) {
      case M_HEAP_TAGGING_LEVEL_TBI:
@@ -117,10 +117,10 @@ index 6b29f8e..c7b6d22 100644
        break;
      case M_HEAP_TAGGING_LEVEL_TBI:
 diff --git a/libc/bionic/libc_init_dynamic.cpp b/libc/bionic/libc_init_dynamic.cpp
-index 913fc06..ca37407 100644
+index 8ca4da2..798c133 100644
 --- a/libc/bionic/libc_init_dynamic.cpp
 +++ b/libc/bionic/libc_init_dynamic.cpp
-@@ -55,19 +55,6 @@
+@@ -53,23 +53,6 @@
  #include "private/bionic_ssp.h"
  #include "private/bionic_tls.h"
  #include "private/KernelArgumentBlock.h"
@@ -132,18 +132,22 @@ index 913fc06..ca37407 100644
 -}
 -
 -static bool is_debuggable_build() {
--  char pv[8];
--  return get_property_value("ro.debuggable", pv, sizeof(pv)) && strcmp(pv, "1") == 0;
+-#ifdef IS_DEBUGGABLE_BUILD
+-    return true;
+-#else
+-    return false;
+-#endif
 -}
 -
 -extern "C" const char* __gnu_basename(const char* path);
- 
+-
  extern "C" {
    extern void netdClientInit(void);
-@@ -93,74 +80,6 @@ extern "C" __attribute__((weak)) void __hwasan_library_unloaded(ElfW(Addr) base,
+   extern int __cxa_atexit(void (*)(void *), void *, void *);
+@@ -94,74 +77,6 @@ extern "C" __attribute__((weak)) void __hwasan_library_unloaded(ElfW(Addr) base,
                                                                  const ElfW(Phdr)* phdr,
                                                                  ElfW(Half) phnum);
- 
+
 -static void init_prog_id(libc_globals* globals) {
 -  char exe_path[500];
 -  ssize_t readlink_res = readlink("/proc/self/exe", exe_path, sizeof(exe_path) - 1 /* space for NUL terminator */);
@@ -215,22 +219,22 @@ index 913fc06..ca37407 100644
  // We need a helper function for __libc_preinit because compiling with LTO may
  // inline functions requiring a stack protector check, but __stack_chk_guard is
  // not initialized at the start of __libc_preinit. __libc_preinit_impl will run
-@@ -193,7 +112,6 @@ static void __libc_preinit_impl() {
- 
+@@ -194,7 +109,6 @@ static void __libc_preinit_impl() {
+
    // Hooks for various libraries to let them know that we're starting up.
    __libc_globals.mutate([](libc_globals* globals) {
 -    init_prog_id(globals);
      __libc_init_malloc(globals);
- 
+
      // save the default SIGABRT handler to support restoring it with mallopt(M_BIONIC_RESTORE_DEFAULT_SIGABRT_HANDLER)
 diff --git a/libc/bionic/malloc_common.h b/libc/bionic/malloc_common.h
 index ef4b1a4..9604296 100644
 --- a/libc/bionic/malloc_common.h
 +++ b/libc/bionic/malloc_common.h
 @@ -55,28 +55,8 @@ __END_DECLS
- 
+
  #else // __has_feature(hwaddress_sanitizer)
- 
+
 -#ifdef  __LP64__
 -#ifndef USE_H_MALLOC
 -#error missing USE_H_MALLOC
@@ -253,14 +257,14 @@ index ef4b1a4..9604296 100644
  #include "scudo.h"
  #define Malloc(function)  scudo_ ## function
 -#endif
- 
+
  #endif
- 
+
 diff --git a/libc/libc.map.txt b/libc/libc.map.txt
-index 7002ee7..950fc4f 100644
+index c77e540..ae09d9f 100644
 --- a/libc/libc.map.txt
 +++ b/libc/libc.map.txt
-@@ -422,7 +422,6 @@ LIBC {
+@@ -425,7 +425,6 @@ LIBC {
      get_nprocs; # introduced=23
      get_nprocs_conf; # introduced=23
      get_phys_pages; # introduced=23
@@ -268,6 +272,5 @@ index 7002ee7..950fc4f 100644
      getaddrinfo;
      getauxval;
      getc;
--- 
-2.54.0
-
+--
+2.55.0
