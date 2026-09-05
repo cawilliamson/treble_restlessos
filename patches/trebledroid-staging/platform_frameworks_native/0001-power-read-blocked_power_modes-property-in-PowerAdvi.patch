@@ -1,7 +1,7 @@
 From edb02b21da210186d350baa07e83db2023d39f27 Mon Sep 17 00:00:00 2001
 From: "Christopher A. Williamson" <contact@chrisaw.io>
 Date: Fri, 10 Apr 2026 00:43:34 +0100
-Subject: [PATCH 1/7] power: read blocked_power_modes property in PowerAdvisor
+Subject: [PATCH 1/6] power: read blocked_power_modes property in PowerAdvisor
 
 replace the per-mode EXPENSIVE_RENDERING property with a check against
 the generic persist.sys.phh.blocked_power_modes property.  if mode 6
