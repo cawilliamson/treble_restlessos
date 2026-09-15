@@ -40,7 +40,7 @@ index 03a2263..7e4f771 100644
   * Filter is used to decide which properties to load: NULL loads all keys,
   * "ro.foo.*" is a prefix match, and "ro.foo.bar" is an exact match.
 @@ -907,7 +887,7 @@ static void LoadProperties(char* data, const char* filter, const char* filename,
-                 const char *new_value = std::move(*expanded_value);
+                 const char *new_value = (*expanded_value).c_str();
 
                  if(strcmp("ro.apex.updatable", key) == 0) {
 -                    new_value = kernel_supports_capex() ? "true" : "false";
