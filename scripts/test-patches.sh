@@ -64,7 +64,7 @@ if [[ "$RESET" -eq 1 ]]; then
 fi
 
 echo "==> refreshing vendored trebledroid sources"
-"$SCRIPT_DIR/copy-upstream-sources.sh" "$SRC_DIR"
+"$SCRIPT_DIR/copy-local-upstream-sources.sh" "$SRC_DIR"
 
 TIERS=(trebledroid trebledroid-staging rom personal)
 if [[ "$DEBUG" -eq 1 ]]; then

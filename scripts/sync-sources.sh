@@ -82,7 +82,7 @@ while ! repo sync --force-sync --jobs="${JOBS}" --no-clone-bundle --no-tags; do
 done
 
 echo "==> copying vendored trebledroid sources"
-"$SCRIPT_DIR/copy-upstream-sources.sh" "$SRC_DIR"
+"$SCRIPT_DIR/copy-local-upstream-sources.sh" "$SRC_DIR"
 
 AOSP_TAG=$(grep --max-count=1 "aosp_revision:" .repo/manifests/config.yml | sed "s/.*: *//")
 ANDROID_VERSION=$(echo "$AOSP_TAG" | sed "s/android-//;s/_r.*//")
