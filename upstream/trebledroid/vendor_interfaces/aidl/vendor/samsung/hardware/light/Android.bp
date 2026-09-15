@@ -17,11 +17,11 @@ aidl_interface {
         },
     },
     owner: "phh",
-    imports: ["android.hardware.light-V1"],
+    imports: ["android.hardware.light-V3"],
     versions_with_info: [
         {
             version: "1",
-            imports: ["android.hardware.light-V1"],
+            imports: ["android.hardware.light-V3"],
         },
 
     ],
