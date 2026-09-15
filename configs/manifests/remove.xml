@@ -4,7 +4,6 @@
   <remove-project name="device/amlogic/yukawa" />
   <remove-project name="device/amlogic/yukawa-kernel" />
   <remove-project name="device/generic/art" />
-  <remove-project name="device/generic/trusty" />
   <remove-project name="device/generic/x86" />
   <remove-project name="device/generic/x86_64" />
   <remove-project name="device/google_car" />
