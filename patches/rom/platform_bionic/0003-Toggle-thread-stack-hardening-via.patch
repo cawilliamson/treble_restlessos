@@ -1,4 +1,4 @@
-From 022b26d5e86ea7ef2835879c72916643a935d50a Mon Sep 17 00:00:00 2001
+From ec9b3d1e60e2d24c85e0e8b8f8f6d8d7970c4c72 Mon Sep 17 00:00:00 2001
 From: "Christopher A. Williamson" <contact@chrisaw.io>
 Date: Sat, 21 Feb 2026 21:56:46 +0000
 Subject: [PATCH 3/3] toggle thread stack hardening via
@@ -21,12 +21,12 @@ requires reboot to take effect.
  2 files changed, 107 insertions(+), 71 deletions(-)
 
 diff --git a/libc/bionic/pthread_create.cpp b/libc/bionic/pthread_create.cpp
-index a55c6ce..ee53d0b 100644
+index a55c6ce..b5938f6 100644
 --- a/libc/bionic/pthread_create.cpp
 +++ b/libc/bionic/pthread_create.cpp
 @@ -29,8 +29,8 @@
  #include <pthread.h>
-
+ 
  #include <errno.h>
 -#include <stdlib.h>
  #include <string.h>
@@ -37,8 +37,8 @@ index a55c6ce..ee53d0b 100644
 @@ -219,6 +219,17 @@ int __init_thread(pthread_internal_t* thread) {
    return 0;
  }
-
-++// Check once whether GrapheneOS stack hardening is enabled.
+ 
++// Check once whether GrapheneOS stack hardening is enabled.
 +static bool __gos_stack_hardening_enabled() {
 +  static int cached = -1;
 +  if (cached == -1) {
@@ -55,7 +55,7 @@ index a55c6ce..ee53d0b 100644
 @@ -227,35 +238,40 @@ int __init_thread(pthread_internal_t* thread) {
  ThreadMapping __allocate_thread_mapping(size_t stack_size, size_t stack_guard_size) {
    const StaticTlsLayout& layout = __libc_shared_globals()->static_tls_layout;
-
+ 
 -  // Address calculated using stack_size is passed to mprotect later, so make it page-aligned.
 -  stack_size = __builtin_align_up(stack_size, page_size());
 -  // Round up static TLS layout size to be multiple of page size as well.
@@ -65,7 +65,7 @@ index a55c6ce..ee53d0b 100644
 +  size_t static_tls_layout_size;
 +  size_t gap_size = 0;
 +  size_t thread_page_size = 0;
-
+ 
 -  // Place a randomly sized gap above the stack, up to 10% as large as the stack
 -  // on 32-bit and 50% on 64-bit where virtual memory is plentiful.
 +  if (hardened) {
@@ -77,7 +77,7 @@ index a55c6ce..ee53d0b 100644
 +    // on 32-bit and 50% on 64-bit where virtual memory is plentiful.
  #if __LP64__
 -  size_t max_gap_size = stack_size / 2;
-+    size_t max_gap_size = stack_size / 2
++    size_t max_gap_size = stack_size / 2;
  #else
 -  size_t max_gap_size = stack_size / 10;
 +    size_t max_gap_size = stack_size / 10;
@@ -100,7 +100,7 @@ index a55c6ce..ee53d0b 100644
 +    // AOSP layout: contiguous stack + TLS region.
 +    static_tls_layout_size = layout.size();
 +  }
-
+ 
 -  // Allocate in order: stack guard, stack, (random) guard page(s), pthread_internal_t, static TLS, libgen buffers, guard page.
 +  // Calculate total mapping size.
    size_t mmap_size;
@@ -117,7 +117,7 @@ index a55c6ce..ee53d0b 100644
    // Add space for the dedicated libgen buffers page(s).
 @@ -268,7 +284,7 @@ ThreadMapping __allocate_thread_mapping(size_t stack_size, size_t stack_guard_si
    if (mmap_size < unaligned_size) return {};
-
+ 
    // Create a new private anonymous map. Make the entire mapping PROT_NONE, then carve out
 -  // read+write areas in the middle.
 +  // read+write area(s) in the middle.
@@ -161,7 +161,7 @@ index a55c6ce..ee53d0b 100644
 -  // [ gap_size (for (random) guard page(s)) ]
 -  // [ stack_size ]
 -  // [ stack_guard_size ]
-
+ 
    ThreadMapping result = {};
    result.mmap_base = space;
 @@ -325,12 +308,53 @@ ThreadMapping __allocate_thread_mapping(size_t stack_size, size_t stack_guard_si
@@ -222,11 +222,11 @@ index a55c6ce..ee53d0b 100644
 +
    return result;
  }
-
+ 
 @@ -342,6 +366,12 @@ static int __allocate_thread(pthread_attr_t* attr, bionic_tcb** tcbp, void** chi
    if (attr->stack_base == nullptr) {
      // The caller didn't provide a stack, so allocate one.
-
+ 
 +    // When stack hardening is enabled and the caller is using the default stack
 +    // size, upgrade to the hardened (8MB) size.
 +    if (__gos_stack_hardening_enabled() && attr->stack_size == PTHREAD_STACK_SIZE_DEFAULT) {
@@ -239,7 +239,7 @@ index a55c6ce..ee53d0b 100644
 @@ -360,8 +390,16 @@ static int __allocate_thread(pthread_attr_t* attr, bionic_tcb** tcbp, void** chi
      stack_top = static_cast<char*>(attr->stack_base) + attr->stack_size;
    }
-
+ 
 -  pthread_internal_t* thread = reinterpret_cast<pthread_internal_t*>(
 -      mapping.static_tls - __builtin_align_up(sizeof(pthread_internal_t), page_size()));
 +  pthread_internal_t* thread;
@@ -262,7 +262,7 @@ index c10e25f..96c9ccc 100644
 @@ -264,15 +264,13 @@ __LIBC_HIDDEN__ void pthread_key_clean_all(void);
  #define SIGNAL_STACK_SIZE_WITHOUT_GUARD (16 * 1024)
  #endif
-
+ 
 -// Traditionally we gave threads a 1MiB stack. When we started
 -// allocating per-thread alternate signal stacks to ease debugging of
 -// stack overflows, we subtracted the same amount we were using there
@@ -278,7 +278,8 @@ index c10e25f..96c9ccc 100644
 -#define PTHREAD_STACK_SIZE_DEFAULT ((1 * 1024 * 1024) - SIGNAL_STACK_SIZE_WITHOUT_GUARD)
 +#define PTHREAD_STACK_SIZE_HARDENED ((1 * 1024 * 1024) - SIGNAL_STACK_SIZE_WITHOUT_GUARD)
  #endif
-
+ 
  // Leave room for a guard page in the internally created signal stacks.
---
+-- 
 2.55.0
+
