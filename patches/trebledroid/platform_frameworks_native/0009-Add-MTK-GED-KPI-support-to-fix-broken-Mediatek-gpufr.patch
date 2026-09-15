@@ -1,4 +1,4 @@
-From 64edc8e3e35dce49eb3867f0814ecbdfb3a1eaf1 Mon Sep 17 00:00:00 2001
+From 2133b35c55d6b78acbcd189c27b94c9fbcc06d8e Mon Sep 17 00:00:00 2001
 From: Pierre-Hugues Husson <phh@phh.me>
 Date: Sat, 25 Nov 2023 08:15:28 -0500
 Subject: [PATCH 09/16] Add MTK GED KPI support to fix broken Mediatek gpufreq
@@ -24,7 +24,7 @@ Change-Id: Ic29a231ea8651efd598083611197aaa9e3c1fbbe
  2 files changed, 205 insertions(+)
 
 diff --git a/libs/gui/Surface.cpp b/libs/gui/Surface.cpp
-index 45e332d..bef9550 100644
+index 45e332d..7d86d0d 100644
 --- a/libs/gui/Surface.cpp
 +++ b/libs/gui/Surface.cpp
 @@ -26,6 +26,9 @@
@@ -34,9 +34,9 @@ index 45e332d..bef9550 100644
 +#include <sys/ioctl.h>
 +#include <fcntl.h>
 +#include <unistd.h>
-
+ 
  #include <inttypes.h>
-
+ 
 @@ -38,6 +41,8 @@
  #include <gui/bufferqueue/2.0/H2BGraphicBufferProducer.h>
  #include <private/gui/ComposerService.h>
@@ -44,12 +44,12 @@ index 45e332d..bef9550 100644
 +#include <android-base/properties.h>
 +#include <binder/IPCThreadState.h>
  #endif
-
+ 
  #include <android/native_window.h>
 @@ -106,6 +111,37 @@ bool isInterceptorRegistrationOp(int op) {
-
+ 
  } // namespace
-
+ 
 +#define GED_MAGIC 'g'
 +#define GED_BRIDGE_COMMAND_GPU_TIMESTAMP      103
 +#define GED_IOWR(INDEX)  _IOWR(GED_MAGIC, INDEX, GED_BRIDGE_PACKAGE)
@@ -87,9 +87,9 @@ index 45e332d..bef9550 100644
 @@ -178,6 +214,47 @@ Surface::Surface(const sp<IGraphicBufferProducer>& bufferProducer, bool controll
      mIsSlotExpansionAllowed = false;
      mSurfaceControlHandle = surfaceControlHandle;
-
+ 
 +    if (doMtkGedKpi == -1) {
-+        doMtkGedKpi = android::base::GetIntProperty("persist.sys.phh.mtk_ged_kpi", 0);+
++        doMtkGedKpi = android::base::GetIntProperty("persist.sys.phh.mtk_ged_kpi", 0);
 +    }
 +
 +    if (ged_fd == -1 && doMtkGedKpi == 1) {
@@ -135,7 +135,7 @@ index 45e332d..bef9550 100644
 @@ -836,6 +913,37 @@ int Surface::dequeueBuffer(sp<GraphicBuffer>* buffer, int* fenceFd) {
          }
      }
-
+ 
 +    if (mGraphicBufferProducer != nullptr && ged_fd >= 0) {
 +        uint64_t uniqueId;
 +        mGraphicBufferProducer->getUniqueId(&uniqueId);
@@ -171,9 +171,9 @@ index 45e332d..bef9550 100644
          *fenceFd = fence->dup();
          if (*fenceFd == -1) {
 @@ -1471,6 +1579,61 @@ void Surface::onBufferQueuedLocked(int slot, const sp<Fence>& fence,
-
+ 
      mQueueBufferCondition.broadcast();
-
+ 
 +    if (mGraphicBufferProducer != nullptr && ged_fd >= 0) {
 +        sp<GraphicBuffer>& gbuf(mSlots[slot].buffer);
 +        uint64_t uniqueId;
@@ -285,12 +285,13 @@ index d372eac..bea49f4 100644
 @@ -907,6 +907,9 @@ protected:
      // Buffers that are successfully dequeued/attached and handed to clients
      std::unordered_set<int> mDequeuedSlots;
-
+ 
 +    pid_t mPid;
 +    bool mIsSurfaceFlinger;
 +
      // Indicates whether this surface holds the mouse cursor, and subsequently determines whether
      // the GRALLOC_USAGE_CURSOR usage flag should be set on the buffer created when this surface is
      // locked.
---
+-- 
 2.55.0
+
