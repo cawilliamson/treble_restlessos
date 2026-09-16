@@ -1,8 +1,7 @@
-From 21d4d870565609b9a83dca6298a831f00772e330 Mon Sep 17 00:00:00 2001
+From 259e97f5ce298c3c7ffad55c2d3ef42b80efe2d3 Mon Sep 17 00:00:00 2001
 From: Pierre-Hugues Husson <phh@phh.me>
 Date: Wed, 21 Feb 2024 16:21:51 -0500
-Subject: [PATCH 09/12] Initialize Samsung HIDL ISehRadio. Fixes 5G on S20
- Ultra
+Subject: [PATCH 09/12] Initialize Samsung HIDL ISehRadio. Fixes 5G on S20 Ultra
 
 ---
  Android.bp                                    |   1 +
@@ -45,13 +44,13 @@ index c542765..e8f0460 100644
                          break;
                      case HAL_SERVICE_SIM:
 diff --git a/src/java/com/android/internal/telephony/RadioNetworkProxy.java b/src/java/com/android/internal/telephony/RadioNetworkProxy.java
-index c9f8005..6b303aa 100644
+index c9f8005..bccb9c6 100644
 --- a/src/java/com/android/internal/telephony/RadioNetworkProxy.java
 +++ b/src/java/com/android/internal/telephony/RadioNetworkProxy.java
 @@ -34,6 +34,7 @@ import java.util.ArrayList;
  import java.util.List;
  import java.util.stream.Collectors;
-
+ 
 +// AIDL
  import vendor.samsung.hardware.radio.network.ISehRadioNetworkIndication;
  import vendor.samsung.hardware.radio.network.ISehRadioNetworkResponse;
@@ -59,7 +58,7 @@ index c9f8005..6b303aa 100644
 @@ -48,6 +49,10 @@ import vendor.samsung.hardware.radio.network.SehRoamingNetworkInfo;
  import vendor.samsung.hardware.radio.network.SehSignalBar;
  import vendor.samsung.hardware.radio.network.SehVendorConfiguration;
-
+ 
 +// HIDL
 +import android.hardware.radio.V1_0.RadioResponseInfo;
 +import vendor.samsung.hardware.radio.V2_2.ISehRadio;
@@ -77,7 +76,7 @@ index c9f8005..6b303aa 100644
          try {
              version = RIL.getServiceHalVersion(network.getInterfaceVersion());
 @@ -97,7 +102,7 @@ public class RadioNetworkProxy extends RadioServiceProxy {
-
+ 
          try {
              var samsungIndication = new ISehRadioNetworkIndication.Stub() {
 -                void l(String v) {
@@ -97,7 +96,7 @@ index c9f8005..6b303aa 100644
 @@ -759,6 +764,117 @@ public class RadioNetworkProxy extends RadioServiceProxy {
          }
      }
-
+ 
 +    @Override
 +    public void setHidl(HalVersion halVersion, android.hardware.radio.V1_4.IRadio radio) {
 +        super.setHidl(halVersion, radio);
@@ -174,7 +173,7 @@ index c9f8005..6b303aa 100644
 +                public void nrBearerAllocationChanged(int type, int status) { l("nrBearerAllocationChanged"); }
 +                public void nrNetworkTypeAdded(int type, int status) { l("nrNetworkTypeAdded"); }
 +                public void rrcStateChanged(int type, vendor.samsung.hardware.radio.V2_0.SehRrcStateInfo state) { l("rrcStateChanged"); }
-+                public void configModemCapabilityChangeNoti(int type, vendor.samsung.hardware.radio.V2_0.SehConfigModemCapability configModemCapa) { l("configModemCapabilityChang>
++                public void configModemCapabilityChangeNoti(int type, vendor.samsung.hardware.radio.V2_0.SehConfigModemCapability configModemCapa) { l("configModemCapabilityChangeNoti"); }
 +                public void needApnProfileIndication(String select) { l("needApnProfileIndication");};
 +                public int needSettingValueIndication(String key, String table) {
 +                    l("needSettingValueIndication");
@@ -188,7 +187,7 @@ index c9f8005..6b303aa 100644
 +                }
 +                public void nrIconTypeChanged(int type, int nrIconType) { l("nrIconTypeChanged " + nrIconType); }
 +                public void callDetailsChanged(int type, ArrayList<vendor.samsung.hardware.radio.V2_0.SehCallDetails> callDetails) { l("callDetailsChanged"); }
-+                public void vendorConfigurationChanged(int type, ArrayList<vendor.samsung.hardware.radio.V2_2.SehVendorConfiguration> configurations) { l("vendorConfigurationChan>
++                public void vendorConfigurationChanged(int type, ArrayList<vendor.samsung.hardware.radio.V2_2.SehVendorConfiguration> configurations) { l("vendorConfigurationChanged"); }
 +                public void eriInfoReceived(int type, vendor.samsung.hardware.radio.V2_2.SehEriInfo eriInfo) { l("eriInfoReceived"); }
 +
 +            };
@@ -226,5 +225,6 @@ index 02fc751..fa02d52 100644
 +        mServiceName = serviceName;
 +    }
  }
---
+-- 
 2.55.0
+
