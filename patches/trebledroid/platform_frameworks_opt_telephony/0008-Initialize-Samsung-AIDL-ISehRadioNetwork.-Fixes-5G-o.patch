@@ -1,4 +1,4 @@
-From 8bb603c8f973de594444c7506723da323f93c975 Mon Sep 17 00:00:00 2001roamingNetworkScanIsRequested
+From 8bb603c8f973de594444c7506723da323f93c975 Mon Sep 17 00:00:00 2001
 From: Pierre-Hugues Husson <phh@phh.me>
 Date: Wed, 21 Feb 2024 12:50:28 -0500
 Subject: [PATCH 08/12] Initialize Samsung AIDL ISehRadioNetwork. Fixes 5G on
@@ -36,13 +36,13 @@ index afb9905..c542765 100644
                          break;
                      case HAL_SERVICE_SIM:
 diff --git a/src/java/com/android/internal/telephony/RadioNetworkProxy.java b/src/java/com/android/internal/telephony/RadioNetworkProxy.java
-index d90a7ca..c9f8005 100644
+index d90a7ca..5a1bc93 100644
 --- a/src/java/com/android/internal/telephony/RadioNetworkProxy.java
 +++ b/src/java/com/android/internal/telephony/RadioNetworkProxy.java
 @@ -34,6 +34,20 @@ import java.util.ArrayList;
  import java.util.List;
  import java.util.stream.Collectors;
-
+ 
 +import vendor.samsung.hardware.radio.network.ISehRadioNetworkIndication;
 +import vendor.samsung.hardware.radio.network.ISehRadioNetworkResponse;
 +import vendor.samsung.hardware.radio.network.ISehRadioNetwork;
@@ -72,7 +72,7 @@ index d90a7ca..c9f8005 100644
 @@ -81,6 +95,133 @@ public class RadioNetworkProxy extends RadioServiceProxy {
          mNetworkProxy = network;
          mIsAidl = true;
-
+ 
 +        try {
 +            var samsungIndication = new ISehRadioNetworkIndication.Stub() {
 +                void l(String v) {
@@ -164,7 +164,7 @@ index d90a7ca..c9f8005 100644
 +                public void sendEncodedUssdResponse(SehRadioResponseInfo info) {}
 +                public void sendRequestRawResponse(SehRadioResponseInfo info, byte[] data) {}
 +                public void sendRequestStringsResponse(SehRadioResponseInfo info, String[] data) {}
-+                public void setCurrentNetworkInfoViaBLEResponse(SehRadioResponseInfo info) {}+
++                public void setCurrentNetworkInfoViaBLEResponse(SehRadioResponseInfo info) {}
 +                public void setDisable2gResponse(SehRadioResponseInfo info) {}
 +                public void setImsCallListResponse(SehRadioResponseInfo info) {}
 +                public void setNrModeResponse(SehRadioResponseInfo info) {}
@@ -203,5 +203,6 @@ index d90a7ca..c9f8005 100644
          Rlog.d(TAG, "AIDL initialized mHalVersion=" + mHalVersion);
          return mHalVersion;
      }
---
+-- 
 2.55.0
+
