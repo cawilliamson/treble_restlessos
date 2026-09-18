@@ -1,7 +1,7 @@
 From cb56d3fbbea3ce5508b9be4de8b3bb7bab7162df Mon Sep 17 00:00:00 2001
 From: Pierre-Hugues Husson <phh@phh.me>
 Date: Sun, 12 Dec 2021 08:45:36 -0500
-Subject: [PATCH 05/16] Mark accelerometer input as sensor exclusively if there
+Subject: [PATCH 5/16] Mark accelerometer input as sensor exclusively if there
  are ABS axis
 
 The reason this is needed is that on -fucked up- Xiami Mi A2 Lite and
