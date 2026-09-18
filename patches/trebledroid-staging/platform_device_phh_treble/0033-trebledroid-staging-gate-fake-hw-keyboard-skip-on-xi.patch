@@ -1,7 +1,7 @@
 From 6a1e02d96ca6e3750e4290476cf1fe5741c46d3a Mon Sep 17 00:00:00 2001
 From: "Christopher A. Williamson" <contact@chrisaw.io>
 Date: Sun, 21 Jun 2026 21:48:15 +0100
-Subject: [PATCH 33/34] trebledroid-staging: gate fake hw-keyboard skip on xiaomi
+Subject: [PATCH 33/35] trebledroid-staging: gate fake hw-keyboard skip on xiaomi
  pad6 (pipa)
 
 xiaomi pad6 (pipa) ships vendor.xiaomi.hardware.keyboardnanoapp, a CHRE
