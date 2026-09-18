@@ -9,7 +9,7 @@ This reverts commit ff845a642bc988f960c77ac60664560f8cdc7ee3.
  1 file changed, 1 insertion(+), 1 deletion(-)
 
 diff --git a/bpf/netd/NetdUpdatable.cpp b/bpf/netd/NetdUpdatable.cpp
-index 8b2b4dc..78fa11f 100644
+index 8b2b4dc..20323a3 100644
 --- a/bpf/netd/NetdUpdatable.cpp
 +++ b/bpf/netd/NetdUpdatable.cpp
 @@ -32,7 +32,7 @@ int libnetd_updatable_init(const char* cg2_path) {
@@ -17,9 +17,10 @@ index 8b2b4dc..78fa11f 100644
      if (!ret.ok()) {
          LOG(ERROR) << __func__ << ": Failed: " << ret.error().message();
 -        abort();
-+        return -ret.code();
++        return -ret.error().code();
      }
      return 0;
  }
---
+-- 
 2.55.0
+
