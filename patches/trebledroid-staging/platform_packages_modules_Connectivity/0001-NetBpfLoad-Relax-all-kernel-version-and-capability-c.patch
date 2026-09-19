@@ -29,7 +29,7 @@ Affected checks:
  1 file changed, 43 insertions(+), 38 deletions(-)
 
 diff --git a/bpf/loader/NetBpfLoad.cpp b/bpf/loader/NetBpfLoad.cpp
-index a806a6d..a31ac71 100644
+index 25cc01a..957c863 100644
 --- a/bpf/loader/NetBpfLoad.cpp
 +++ b/bpf/loader/NetBpfLoad.cpp
 @@ -698,19 +698,20 @@ static int pinMap(const borrowed_fd& fd, const struct bpf_map_def& mapDef) {
@@ -78,7 +78,7 @@ index a806a6d..a31ac71 100644
      }
      return 0;
  }
-@@ -1546,68 +1546,62 @@ static int doLoad(char** argv, char * const envp[]) {
+@@ -1548,68 +1548,62 @@ static int doLoad(char** argv, char * const envp[]) {
          return 2;
      }
  
@@ -161,7 +161,7 @@ index a806a6d..a31ac71 100644
      }
  
      if (isAtLeastV) {
-@@ -1739,7 +1733,7 @@ static int doLoad(char** argv, char * const envp[]) {
+@@ -1741,7 +1735,7 @@ static int doLoad(char** argv, char * const envp[]) {
          // (this writeFile is known to fail on at least 4.19, but always defaults to 0 on
          // pre-5.13, on 5.13+ it depends on CONFIG_BPF_UNPRIV_DEFAULT_OFF)
          if (!writeFile("/proc/sys/kernel/unprivileged_bpf_disabled", "0\n")) {
@@ -170,7 +170,7 @@ index a806a6d..a31ac71 100644
          }
      }
  
-@@ -1756,14 +1750,14 @@ static int doLoad(char** argv, char * const envp[]) {
+@@ -1758,14 +1752,14 @@ static int doLoad(char** argv, char * const envp[]) {
          // BPF_JIT is required by R VINTF (which means 4.14/4.19/5.4 kernels),
          // but 4.14/4.19 were released with P & Q, and only 5.4 is new in R+.
          if (!writeFile("/proc/sys/net/core/bpf_jit_enable", "1\n")) {
@@ -187,7 +187,7 @@ index a806a6d..a31ac71 100644
          }
      }
  
-@@ -1802,13 +1796,15 @@ static int doLoad(char** argv, char * const envp[]) {
+@@ -1804,13 +1798,15 @@ static int doLoad(char** argv, char * const envp[]) {
          uint32_t progId = bpfGetNextProgId(0);  // expect 0 with errno == ENOENT
          if (progId || errno != ENOENT) {
              ALOGE("bpfGetNextProgId(zero) returned %u (errno %d)", progId, errno);
@@ -205,7 +205,7 @@ index a806a6d..a31ac71 100644
          }
      } else if (isAtLeastKernelVersion(4, 14)) {  // implies S through U QPR2
          // bpfGetNext{Prog,Map}Id require 4.14+
-@@ -1821,7 +1817,8 @@ static int doLoad(char** argv, char * const envp[]) {
+@@ -1823,7 +1819,8 @@ static int doLoad(char** argv, char * const envp[]) {
              if (!next && errno == ENOENT) break;
              if (next <= mapId) {
                  ALOGE("bpfGetNextMapId(%u) returned %u errno %d", mapId, next, errno);
@@ -215,7 +215,7 @@ index a806a6d..a31ac71 100644
              }
              mapId = next;
          }
-@@ -1834,12 +1831,19 @@ static int doLoad(char** argv, char * const envp[]) {
+@@ -1836,12 +1833,19 @@ static int doLoad(char** argv, char * const envp[]) {
              // which causes bpfGetNextMapId to behave as bpfGetNextProgId,
              // and thus it should return 0 with errno == ENOENT.
              ALOGE("bpfGetNextMapId(final %u) returned %u errno %d", mapId, next, errno);
@@ -223,7 +223,7 @@ index a806a6d..a31ac71 100644
 -            if (isAtLeastT || isAtLeastKernelVersion(4, 20)) return 36;
 +            // [GSI] non-fatal: old vendor kernels may not satisfy this
 +            if (next || errno != ENOENT) {
-+                ALOGW("[GSI] bpfGetNextMapId(final) unexpected: next=%d errno=%d", next, errno);
++                ALOGW("[GSI] bpfGetNextMapId(final) unexpected: next=%u errno=%d", next, errno);
 +            }
 +            if (isAtLeastT || isAtLeastKernelVersion(4, 20)) {
 +                ALOGW("[GSI] kernel should not have BPF UAPI bug on T+ or 4.20+");
@@ -238,7 +238,7 @@ index a806a6d..a31ac71 100644
              return 0;
          }
      } else {  // implies S/T with 4.9 kernel
-@@ -1868,7 +1872,8 @@ static int doLoad(char** argv, char * const envp[]) {
+@@ -1870,7 +1874,8 @@ static int doLoad(char** argv, char * const envp[]) {
          if (writeToMapEntry(bpfKernelStatsMapFd, &key, &value, BPF_ANY)) {
              ALOGE("Critical kernel bug - failure to write into index 1 of 2 element bpf map array."
                    "[%d, %s]", errno, strerror(errno));
