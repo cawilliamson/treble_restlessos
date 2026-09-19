@@ -5,9 +5,9 @@ Subject: [PATCH 24/25] Tell Unihertz/Agold we are not a GSI. Fixes aux cam on
  Jelly Max
 
 ---
- services/camera/libcameraservice/Android.bp              | 1 +
- .../libcameraservice/common/aidl/AidlProviderInfo.cpp    | 9 +++++++++
- 2 files changed, 10 insertions(+)
+ services/camera/libcameraservice/Android.bp            |  1 +
+ .../libcameraservice/common/aidl/AidlProviderInfo.cpp  | 10 ++++++++++
+ 2 files changed, 11 insertions(+)
 
 diff --git a/services/camera/libcameraservice/Android.bp b/services/camera/libcameraservice/Android.bp
 index 95acdb6..abf3715 100644
@@ -22,13 +22,21 @@ index 95acdb6..abf3715 100644
          "vendor.samsung.hardware.camera.provider@4.0",
          "vendor.samsung.hardware.camera.provider-V1-ndk",
 diff --git a/services/camera/libcameraservice/common/aidl/AidlProviderInfo.cpp b/services/camera/libcameraservice/common/aidl/AidlProviderInfo.cpp
-index 86f264a..d84882a 100644
+index 86f264a..a96ca7e 100644
 --- a/services/camera/libcameraservice/common/aidl/AidlProviderInfo.cpp
 +++ b/services/camera/libcameraservice/common/aidl/AidlProviderInfo.cpp
-@@ -161,6 +161,15 @@ status_t AidlProviderInfo::initializeAidlProvider(
+@@ -34,6 +34,7 @@
+ #include <utils/SessionConfigurationUtils.h>
+ #include <utils/Trace.h>
+ 
++#include <aidl/vendor/mediatek/hardware/agolddaemon/IAgoldDaemon.h>
+ #include <aidl/vendor/samsung/hardware/camera/provider/ISehCameraProvider.h>
+ 
+ namespace {
+@@ -161,6 +162,15 @@ status_t AidlProviderInfo::initializeAidlProvider(
              __FUNCTION__, mProviderName.c_str(), mDeviceState);
      notifyDeviceStateChange(currentDeviceState);
-
+ 
 +    if (true) {
 +        auto svc = aidl::vendor::mediatek::hardware::agolddaemon::IAgoldDaemon::fromBinder(
 +                ndk::SpAIBinder(AServiceManager_checkService("vendor.mediatek.hardware.agolddaemon.IAgoldDaemon/default")));
@@ -41,5 +49,6 @@ index 86f264a..d84882a 100644
      res = setUpVendorTags();
      if (res != OK) {
          ALOGE("%s: Unable to set up vendor tags from provider '%s'",
---
+-- 
 2.55.0
+
