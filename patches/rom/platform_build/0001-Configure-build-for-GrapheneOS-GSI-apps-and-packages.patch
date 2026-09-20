@@ -1,7 +1,10 @@
-From d0b28ac0bbb498d75add3c207fefa7fb6484a5bd Mon Sep 17 00:00:00 2001
+From ff29d6fd2c0c762deeeda73ab02783b1deeddabe Mon Sep 17 00:00:00 2001
 From: "Christopher A. Williamson" <contact@chrisaw.io>
 Date: Tue, 17 Mar 2026 23:24:50 +0000
 Subject: [PATCH 1/2] Configure build for GrapheneOS GSI: apps and packages
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
 
 Adapt the AOSP build configuration for GrapheneOS GSI:
 
@@ -20,7 +23,6 @@ Adapt the AOSP build configuration for GrapheneOS GSI:
   GrapheneOS Updater (only useful for official GrapheneOS devices)
 - Remove LogViewer from GSI system image
 - Exclude AOSP sample APN list from GSI build
-
 ---
  target/product/base_system.mk         | 3 ---
  target/product/generic/Android.bp     | 3 +--
@@ -31,7 +33,7 @@ Adapt the AOSP build configuration for GrapheneOS GSI:
  6 files changed, 3 insertions(+), 20 deletions(-)
 
 diff --git a/target/product/base_system.mk b/target/product/base_system.mk
-index 602e949..bcf42d2 100644
+index 8f2cc28..0c4d1e4 100644
 --- a/target/product/base_system.mk
 +++ b/target/product/base_system.mk
 @@ -238,8 +238,6 @@ PRODUCT_PACKAGES += \
@@ -48,11 +50,11 @@ index 602e949..bcf42d2 100644
      unwind_reg_info \
      unwind_symbols \
 -    HardeningTestApp \
-
+     SecurePasteTestSystemApp \
+ 
  # The set of packages whose code can be loaded by the system server.
- PRODUCT_SYSTEM_SERVER_APPS += \
 diff --git a/target/product/generic/Android.bp b/target/product/generic/Android.bp
-index 06de021..492e8a1 100644
+index 06de021..12de408 100644
 --- a/target/product/generic/Android.bp
 +++ b/target/product/generic/Android.bp
 @@ -426,7 +426,7 @@ android_filesystem_defaults {
@@ -89,10 +91,10 @@ index 2ec2eb6..8a6e692 100644
 +        "TrichromeChrome",
          "frameworks-base-overlays",
          "preinstalled-packages-base-product.xml",
-
+ 
 @@ -193,13 +191,12 @@ android_system_image {
          "preinstalled-packages-platform-telephony-system-ext.xml",
-
+ 
          // handheld_product
 -        "Calendar",
          "Contacts",
@@ -104,7 +106,7 @@ index 2ec2eb6..8a6e692 100644
 -        "QuickSearchBox",
          "SettingsIntelligence",
          "frameworks-base-overlays",
-
+ 
 diff --git a/target/product/handheld_product.mk b/target/product/handheld_product.mk
 index 2a4602d..b276cf9 100644
 --- a/target/product/handheld_product.mk
@@ -165,5 +167,6 @@ index 529fa6f..cf9b894 100644
      StorageManager \
      SystemUI \
      WallpaperCropper \
---
+-- 
 2.55.0
+
