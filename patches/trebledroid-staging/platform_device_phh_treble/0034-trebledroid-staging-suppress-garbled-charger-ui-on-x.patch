@@ -1,7 +1,7 @@
 From 8ea9b07e1c9a2f9836aaf19cf796fa0873db380f Mon Sep 17 00:00:00 2001
 From: "Christopher A. Williamson" <contact@chrisaw.io>
 Date: Sun, 21 Jun 2026 22:25:34 +0100
-Subject: [PATCH 34/35] trebledroid-staging: suppress garbled charger ui on xiaomi
+Subject: [PATCH 34/36] trebledroid-staging: suppress garbled charger ui on xiaomi
  pad6 (pipa)
 
 on the xiaomi pad6 (pipa) the aosp healthd offline charger renders a garbled

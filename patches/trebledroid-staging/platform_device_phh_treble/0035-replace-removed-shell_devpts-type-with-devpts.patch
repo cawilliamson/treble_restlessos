@@ -1,7 +1,7 @@
 From 23a676ad606ddd453cb204752861e1e8bebea8c9 Mon Sep 17 00:00:00 2001
 From: "Christopher A. Williamson" <contact@chrisaw.io>
 Date: Fri, 18 Sep 2026 20:47:14 +0100
-Subject: [PATCH 35/35] replace removed shell_devpts type with devpts in su policy
+Subject: [PATCH 35/36] replace removed shell_devpts type with devpts in su policy
 
 aosp dropped the shell_devpts type; it existed only as a compatibility
 alias for older platform API levels, and is gone entirely by the 202404
