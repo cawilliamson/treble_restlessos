@@ -1,4 +1,4 @@
-From 96ea000f2fddd5102212f69f5009bda1e36601d4 Mon Sep 17 00:00:00 2001
+From 50013aa72f7785981a93442d26390f6b1baea44b Mon Sep 17 00:00:00 2001
 From: "Christopher A. Williamson" <contact@chrisaw.io>
 Date: Tue, 17 Mar 2026 23:16:26 +0000
 Subject: [PATCH 4/20] Add system property overrides for status bar and corner
@@ -84,7 +84,7 @@ index 2c5fa7ec7..7fa7195dd 100644
  import android.provider.AlarmClock
 @@ -646,7 +647,9 @@ constructor(
      }
-
+ 
      private fun updateResources() {
 -        roundedCorners = resources.getDimensionPixelSize(R.dimen.rounded_corner_content_padding)
 +        roundedCorners = SystemProperties.getInt("persist.sys.phh.rounded_corners_padding", -1);
@@ -94,7 +94,7 @@ index 2c5fa7ec7..7fa7195dd 100644
          header.setPadding(padding, header.paddingTop, padding, header.paddingBottom)
          updateQQSPaddings()
 diff --git a/packages/SystemUI/src/com/android/systemui/statusbar/layout/StatusBarContentInsetsProvider.kt b/packages/SystemUI/src/com/android/systemui/statusbar/layout/StatusBarContentInsetsProvider.kt
-index 91acbcdf4..9c7ee67ba 100644
+index 91acbcdf4..798a16f0c 100644
 --- a/packages/SystemUI/src/com/android/systemui/statusbar/layout/StatusBarContentInsetsProvider.kt
 +++ b/packages/SystemUI/src/com/android/systemui/statusbar/layout/StatusBarContentInsetsProvider.kt
 @@ -22,6 +22,7 @@ import android.content.res.Resources
@@ -108,7 +108,7 @@ index 91acbcdf4..9c7ee67ba 100644
 @@ -312,19 +313,22 @@ constructor(
      ): Rect {
          val currentRotation = getExactRotation(context)
-
+ 
 -        val roundedCornerPadding =
 -            if (displayId == DEFAULT_DISPLAY) {
 -                rotatedResources.getDimensionPixelSize(R.dimen.rounded_corner_content_padding)
@@ -125,7 +125,7 @@ index 91acbcdf4..9c7ee67ba 100644
 +        var roundedCornerPadding = SystemProperties.getInt("persist.sys.phh.rounded_corners_padding", -1)
 +        if (roundedCornerPadding == -1) {
 +            roundedCornerPadding =
-+                if (context.displayId == DEFAULT_DISPLAY || !StatusBarConnectedDisplays.isEnabled) {
++                if (displayId == DEFAULT_DISPLAY) {
 +                    rotatedResources.getDimensionPixelSize(R.dimen.rounded_corner_content_padding)
 +                } else {
 +                    // Currently the padding is hardcoded for each device default display, and there is
@@ -189,7 +189,7 @@ index db91ce3c1..b462bdd3d 100644
  import android.view.DisplayCutout;
 @@ -314,23 +315,36 @@ public class PhoneStatusBarView extends FrameLayout {
      }
-
+ 
      private void updatePaddings() {
 -        int statusBarPaddingStart = getResources().getDimensionPixelSize(
 -                R.dimen.status_bar_padding_start);
@@ -208,7 +208,7 @@ index db91ce3c1..b462bdd3d 100644
 +        int statusBarPaddingBottom = SystemProperties.getInt("persist.sys.phh.status_bar_padding_bottom", -1);
 +        if(statusBarPaddingBottom == -1)
 +            statusBarPaddingBottom = getResources().getDimensionPixelSize(R.dimen.status_bar_icons_padding_bottom);
-
+ 
          findViewById(R.id.status_bar_contents).setPaddingRelative(
 -                statusBarPaddingStart,
 -                getResources().getDimensionPixelSize(R.dimen.status_bar_padding_top),
@@ -217,10 +217,10 @@ index db91ce3c1..b462bdd3d 100644
 +                (int) statusBarPaddingTop,
 +                (int) statusBarPaddingEnd,
                  0);
-
+ 
          findViewById(R.id.notification_lights_out)
                  .setPaddingRelative(0, statusBarPaddingStart, 0, 0);
-
+ 
          findViewById(R.id.system_icons).setPaddingRelative(
 -                getResources().getDimensionPixelSize(R.dimen.status_bar_icons_padding_start),
 -                getResources().getDimensionPixelSize(R.dimen.status_bar_icons_padding_top),
@@ -232,6 +232,7 @@ index db91ce3c1..b462bdd3d 100644
 +                (int) statusBarPaddingBottom
          );
      }
-
---
+ 
+-- 
 2.55.0
+
