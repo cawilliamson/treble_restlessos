@@ -1,8 +1,7 @@
-From 8abc4c7ad4b13a7c04d1a34e661e6ed014cd9738 Mon Sep 17 00:00:00 2001
+From 93fd4217d0ac0ae8cd78b04716d241b4a7c7dee4 Mon Sep 17 00:00:00 2001
 From: "Christopher A. Williamson" <contact@chrisaw.io>
 Date: Sat, 5 Sep 2026 11:50:54 +0100
-Subject: [PATCH 2/4] compatibility_matrices: restore old kernel config
- entries
+Subject: [PATCH 2/4] compatibility_matrices: restore old kernel config entries
 
 Restore the framework compatibility matrix for level 6 along with the
 older kernel config sets it needs, so GSI builds accept vendor
@@ -18,13 +17,13 @@ pass on those devices.
 
 Change-Id: Ia97eb64871b596933aa78964c0810bcc6ea702da
 ---
- compatibility_matrices/Android.bp             |  20 +
+ compatibility_matrices/Android.bp             |  18 +
  .../compatibility_matrix.6.xml                | 668 ++++++++++++++++++
- 2 files changed, 688 insertions(+)
+ 2 files changed, 686 insertions(+)
  create mode 100644 compatibility_matrices/compatibility_matrix.6.xml
 
 diff --git a/compatibility_matrices/Android.bp b/compatibility_matrices/Android.bp
-index e34fdca..390b41d 100644
+index e34fdca..d94ea9f 100644
 --- a/compatibility_matrices/Android.bp
 +++ b/compatibility_matrices/Android.bp
 @@ -32,6 +32,7 @@ vintf_compatibility_matrix {
@@ -43,7 +42,7 @@ index e34fdca..390b41d 100644
      "framework_compatibility_matrix.7.xml",
      "framework_compatibility_matrix.8.xml",
      "framework_compatibility_matrix.202404.xml",
-@@ -84,6 +86,24 @@ phony {
+@@ -84,6 +86,22 @@ phony {
  // DO NOT ADD MORE MODULES BELOW THIS LINE
  ////////////////////////////////////////////
  
@@ -56,8 +55,6 @@ index e34fdca..390b41d 100644
 +    kernel_configs: [
 +        "kernel_config_p_4.4",
 +        "kernel_config_q_4.9",
-+        "kernel_config_r_4.14",
-+        "kernel_config_r_4.19",
 +        "kernel_config_s_4.14",
 +        "kernel_config_s_4.19",
 +        "kernel_config_s_5.4",
