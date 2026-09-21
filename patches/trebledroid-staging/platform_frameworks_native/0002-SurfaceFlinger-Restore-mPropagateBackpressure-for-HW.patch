@@ -1,4 +1,4 @@
-From 005373ead1f17593cba61924cd82fcc336c719d9 Mon Sep 17 00:00:00 2001
+From 485e1c6de64674a585c4e617b9550f78078ef1f6 Mon Sep 17 00:00:00 2001
 From: "Christopher A. Williamson" <contact@chrisaw.io>
 Date: Thu, 19 Mar 2026 16:56:39 +0000
 Subject: [PATCH 2/6] SurfaceFlinger: Restore mPropagateBackpressure for HWC
@@ -32,13 +32,13 @@ setting the property to true and rebooting.
  2 files changed, 6 insertions(+), 3 deletions(-)
 
 diff --git a/services/surfaceflinger/SurfaceFlinger.cpp b/services/surfaceflinger/SurfaceFlinger.cpp
-index c716533..bc10eb8 100644
+index c716533..daa58cf 100644
 --- a/services/surfaceflinger/SurfaceFlinger.cpp
 +++ b/services/surfaceflinger/SurfaceFlinger.cpp
 @@ -541,6 +541,9 @@ SurfaceFlinger::SurfaceFlinger(Factory& factory) : SurfaceFlinger(factory, SkipI
      mBackpressureGpuComposition = base::GetBoolProperty("debug.sf.enable_gl_backpressure"s, true);
      ALOGI_IF(mBackpressureGpuComposition, "Enabling backpressure for GPU composition");
-
+ 
 +    mPropagateBackpressure = base::GetBoolProperty("persist.sys.phh.enable_sf_hwc_backpressure"s, false);
 +    ALOGI_IF(!mPropagateBackpressure, "Disabling backpressure propagation");
 +
@@ -48,12 +48,12 @@ index c716533..bc10eb8 100644
 @@ -3056,9 +3059,8 @@ bool SurfaceFlinger::commit(PhysicalDisplayId pacesetterId,
          }
      }
-
+ 
 -    if (base::GetBoolProperty("persist.sys.phh.enable_sf_hwc_backpressure"s, true)
 -            && (pacesetterFrameTargetPtr->isFramePending()) {
 -        if (mBackpressureGpuComposition || pacesetterFrameTargetPtr->didMissHwcFrame()) {
-+    if (pacesetterFrameTarget.isFramePending()) {
-+        if (mPropagateBackpressure && (mBackpressureGpuComposition || pacesetterFrameTarget.didMissHwcFrame())) {
++    if (pacesetterFrameTargetPtr->isFramePending()) {
++        if (mPropagateBackpressure && (mBackpressureGpuComposition || pacesetterFrameTargetPtr->didMissHwcFrame())) {
              mScheduler->getVsyncSchedule()->getTracker().onFrameMissed(
                      pacesetterFrameTargetPtr->expectedPresentTime());
              const Duration slack = TimePoint::now() - pacesetterFrameTargetPtr->frameBeginTime();
@@ -63,11 +63,12 @@ index b278487..ac0df60 100644
 +++ b/services/surfaceflinger/SurfaceFlinger.h
 @@ -1547,6 +1547,7 @@ private:
      std::atomic_bool mForceFullDamage = false;
-
+ 
      bool mLayerCachingEnabled = false;
 +    bool mPropagateBackpressure = false;
      bool mBackpressureGpuComposition = false;
-
+ 
      LayerTracing mLayerTracing;
 -- 
 2.55.0
+
