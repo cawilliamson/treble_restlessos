@@ -1,7 +1,7 @@
 From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: "Christopher A. Williamson" <contact@chrisaw.io>
 Date: Sun, 21 Sep 2026 00:00:00 +0100
-Subject: [PATCH 36/36] implement new bluetooth audio provider method
+Subject: [PATCH 36/37] implement new bluetooth audio provider method
 
 android-17.0 added getLeAudioAseCodecConfiguredParameters to the
 bluetooth audio aidl interface, leaving the phh bluetooth audio
