@@ -16,7 +16,7 @@ diff --git a/res/values/strings_app_exploit_protection.xml b/res/values/strings_
 index 59348a1..6086822 100644
 --- a/res/values/strings_app_exploit_protection.xml
 +++ b/res/values/strings_app_exploit_protection.xml
-@@ -107,7 +107,7 @@ This setting doesn’t apply to preinstalled apps, WebView JIT is always disable
+@@ -107,7 +107,7 @@ This setting doesn't apply to preinstalled apps, WebView JIT is always disable
      <string name="aep_exec_spawning">Secure app spawning</string>
      <string name="aep_exec_spawning_footer">Launch app in a more secure way than Android which increases memory usage and takes slightly longer.</string>
      <string name="aep_default_exec_spawning_main_switch_title">Enable by default</string>
