@@ -1,0 +1,47 @@
+From 9da044d55d72eaa0c802855e4ac83597fbff42f8 Mon Sep 17 00:00:00 2001
+From: "Christopher A. Williamson" <contact@chrisaw.io>
+Date: Mon, 16 Feb 2026 09:44:47 +0000
+Subject: [PATCH 59/72] TelephonyManager: add prop to force SIM slot count
+
+Some devices report an incorrect number of SIM slots, causing dual-SIM
+functionality to be unavailable. Add persist.sys.phh.sim_slots property
+to override the reported SIM slot count in getActiveModemCount() and
+getSupportedModemCount().
+
+Setting persist.sys.phh.sim_slots=2 forces DSDS mode, =3 forces TSTS,
+=0 or =1 forces single-SIM. When unset (-1), the default behavior is
+preserved.
+---
+ telephony/java/android/telephony/TelephonyManager.java | 10 ++++++++++
+ 1 file changed, 10 insertions(+)
+
+diff --git a/telephony/java/android/telephony/TelephonyManager.java b/telephony/java/android/telephony/TelephonyManager.java
+index c94ba5dfe..cbf0fff96 100644
+--- a/telephony/java/android/telephony/TelephonyManager.java
++++ b/telephony/java/android/telephony/TelephonyManager.java
+@@ -667,6 +667,11 @@ public class TelephonyManager {
+      * </ul>
+      */
+     public int getActiveModemCount() {
++        int simSlots = SystemProperties.getInt("persist.sys.phh.sim_slots", -1);
++        if (simSlots >= 0) {
++            return simSlots;
++        }
++
+         if (!isDeviceVoiceCapable() && !isDeviceSmsCapable() && !isDataCapable()) return 0;
+ 
+         return switch(TelephonyProperties.multi_sim_config().orElse("").toLowerCase(Locale.ROOT)) {
+@@ -684,6 +689,11 @@ public class TelephonyManager {
+      * {@link #getActiveModemCount} returns 1 while this API returns 2.
+      */
+     public int getSupportedModemCount() {
++        int simSlots = SystemProperties.getInt("persist.sys.phh.sim_slots", -1);
++        if (simSlots >= 0) {
++            return simSlots;
++        }
++
+         return TelephonyProperties.max_active_modems().orElse(getActiveModemCount());
+     }
+ 
+--
+2.55.0

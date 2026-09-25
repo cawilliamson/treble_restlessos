@@ -66,7 +66,7 @@ fi
 echo "==> refreshing vendored trebledroid sources"
 "$SCRIPT_DIR/copy-local-upstream-sources.sh" "$SRC_DIR"
 
-TIERS=(trebledroid trebledroid-staging rom personal)
+TIERS=(trebledroid-staging rom personal)
 if [[ "$DEBUG" -eq 1 ]]; then
   TIERS+=(debug-builds)
 else

@@ -1,0 +1,33 @@
+From 2d5c15247bea607cf7003400b3be7c8b22cd7d3b Mon Sep 17 00:00:00 2001
+From: Michael Bestas <mkbestas@gmail.com>
+Date: Fri, 15 Mar 2024 14:59:21 +0200
+Subject: [PATCH 5/15] netd: Remove <4.14 kernel restrictions
+
+Change-Id: I4d4abbacd6b9589260de06663e2143bc37d8ea0f
+---
+ bpf/netd/BpfHandler.cpp | 10 ----------
+ 1 file changed, 10 deletions(-)
+
+diff --git a/bpf/netd/BpfHandler.cpp b/bpf/netd/BpfHandler.cpp
+index efbbd93..17cffbe 100644
+--- a/bpf/netd/BpfHandler.cpp
++++ b/bpf/netd/BpfHandler.cpp
+@@ -114,16 +114,6 @@ static Result<void> initPrograms(const char* cg2_path) {
+     // This code was mainlined in T, so this should be trivially satisfied.
+     if (!isAtLeastT) return Error() << "S- platform is unsupported";
+
+-    // S requires eBPF support which was only added in 4.9, so this should be satisfied.
+-    if (!isAtLeastKernelVersion(4, 9)) {
+-        return Error() << "kernel version < 4.9.0 is unsupported";
+-    }
+-
+-    // U bumps the kernel requirement up to 4.14
+-    if (isAtLeastU && !isAtLeastKernelVersion(4, 14)) {
+-        return Error() << "U+ platform with kernel version < 4.14.0 is unsupported";
+-    }
+-
+     // U mandates this mount point (though it should also be the case on T)
+     if (isAtLeastU && !!strcmp(cg2_path, "/sys/fs/cgroup")) {
+         return Error() << "U+ platform with cg2_path != /sys/fs/cgroup is unsupported";
+--
+2.55.0

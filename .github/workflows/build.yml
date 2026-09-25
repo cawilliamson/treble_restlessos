@@ -150,7 +150,7 @@ jobs:
       - name: Apply patches
         working-directory: /mnt/src/
         run: |
-          for tier in trebledroid trebledroid-staging rom personal; do
+          for tier in trebledroid-staging rom personal; do
             ${{ github.workspace }}/patches/apply.sh . "${tier}"
           done
           if [ "${{ github.event.inputs.debug_build || 'false' }}" = "true" ]; then

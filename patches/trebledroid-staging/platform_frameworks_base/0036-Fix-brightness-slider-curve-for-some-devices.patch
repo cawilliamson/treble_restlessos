@@ -1,0 +1,80 @@
+From 430b80a11889e94c4c1f954cc4dd785778038dc0 Mon Sep 17 00:00:00 2001
+From: ChonDoit <thphantomblog@gmail.com>
+Date: Thu, 24 Aug 2023 15:58:15 -0300
+Subject: [PATCH 36/72] Fix brightness slider curve for some devices
+
+Some devices report max brightness as 2047 or 4095
+---
+ .../settingslib/display/BrightnessUtils.java      | 15 ++++++++++-----
+ .../src/api/domain/model/GammaBrightness.kt       | 14 +++++++-------
+ 2 files changed, 17 insertions(+), 12 deletions(-)
+
+diff --git a/packages/SettingsLib/DisplayUtils/src/com/android/settingslib/display/BrightnessUtils.java b/packages/SettingsLib/DisplayUtils/src/com/android/settingslib/display/BrightnessUtils.java
+index 66ed10433..f6820b443 100644
+--- a/packages/SettingsLib/DisplayUtils/src/com/android/settingslib/display/BrightnessUtils.java
++++ b/packages/SettingsLib/DisplayUtils/src/com/android/settingslib/display/BrightnessUtils.java
+@@ -16,13 +16,18 @@
+
+ package com.android.settingslib.display;
+
++import android.os.SystemProperties;
+ import android.util.MathUtils;
+
++import com.android.internal.display.BrightnessSynchronizer;
++
+ /** Utility methods for calculating the display brightness. */
+ public class BrightnessUtils {
+
++    public static final boolean LowGammaBrightness = Boolean.parseBoolean(SystemProperties.get("persist.sys.phh.low_gamma_brightness", "false"));
++
+     public static final int GAMMA_SPACE_MIN = 0;
+-    public static final int GAMMA_SPACE_MAX = 65535;
++    public static final int GAMMA_SPACE_MAX = LowGammaBrightness ? 255 : 65535;
+
+     // Hybrid Log Gamma constant values
+     private static final float R = 0.5f;
+@@ -88,9 +93,8 @@ public class BrightnessUtils {
+         // it shouldn't be out of bounds.
+         final float normalizedRet = MathUtils.constrain(ret, 0, 12);
+
+-        // Re-normalize to the range [0, 1]
+-        // in order to derive the correct setting value.
+-        return MathUtils.lerp(min, max, normalizedRet / 12);
++        return LowGammaBrightness ? MathUtils.constrain(BrightnessSynchronizer.brightnessIntToFloat(val),
++                         min, max) : MathUtils.lerp(min, max, normalizedRet / 12);
+     }
+
+     /**
+@@ -137,6 +141,7 @@ public class BrightnessUtils {
+             ret = A * MathUtils.log(normalizedVal - B) + C;
+         }
+
+-        return Math.round(MathUtils.lerp(GAMMA_SPACE_MIN, GAMMA_SPACE_MAX, ret));
++        return LowGammaBrightness ? BrightnessSynchronizer.brightnessFloatToInt(
++                       MathUtils.constrain(val, min, max)) : Math.round(MathUtils.lerp(GAMMA_SPACE_MIN, GAMMA_SPACE_MAX, ret));
+     }
+ }
+diff --git a/packages/SystemUI/pods/brightness/src/api/domain/model/GammaBrightness.kt b/packages/SystemUI/pods/brightness/src/api/domain/model/GammaBrightness.kt
+index e52bb8745..82b9452a2 100644
+--- a/packages/SystemUI/pods/brightness/src/api/domain/model/GammaBrightness.kt
++++ b/packages/SystemUI/pods/brightness/src/api/domain/model/GammaBrightness.kt
+@@ -20,10 +20,10 @@ import androidx.annotation.IntRange
+ import com.android.settingslib.display.BrightnessUtils
+
+ @JvmInline
+-public value class GammaBrightness(
+-    @IntRange(
+-        from = BrightnessUtils.GAMMA_SPACE_MIN.toLong(),
+-        to = BrightnessUtils.GAMMA_SPACE_MAX.toLong(),
+-    )
+-    public val value: Int
+-)
++value class GammaBrightness(val value: Int) {
++    init {
++        require(value == -1 || value in BrightnessUtils.GAMMA_SPACE_MIN..BrightnessUtils.GAMMA_SPACE_MAX) {
++            "Value must be in range ${BrightnessUtils.GAMMA_SPACE_MIN} to ${BrightnessUtils.GAMMA_SPACE_MAX}"
++        }
++    }
++}
+--
+2.55.0

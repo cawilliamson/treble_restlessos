@@ -1,0 +1,103 @@
+From f2c304794db29a62cd8c9a35ac9ea94bf4a787ef Mon Sep 17 00:00:00 2001
+From: "Christopher A. Williamson" <contact@chrisaw.io>
+Date: Fri, 25 Sep 2026 18:18:55 +0100
+Subject: [PATCH 1/25] property_service: system override policy for apex, adb and
+ logd props
+
+Several props must keep their system-provided values even when the
+vendor tries to override them:
+
+- ro.apex.updatable: APEX is broken by a kernel bug in Android 10
+  devices, so system sets ro.apex.updatable=false; vendor overriding it
+  to true would re-enable a broken setup, so ignore the override policy
+  for this prop. Allow apex on kernels above 5.0 anyway -- on Pixels the
+  camera HAL ships exclusively in a vendor apex -- but keep capex when
+  the vendor ships apexes of its own (e.g. Pixel 4a on Linux 4.14).
+  The value is also actually set (based on kernel version) rather than
+  only recorded as an override, because newer Android 14 vendors do not
+  explicitly set ro.apex.updatable=true, so there is no override to
+  change; we still want apex (notably vendor apex) for them. Fixes boot
+  on Samsung Galaxy S24.
+- adb/secure props: let system override them so we do not get stuck in
+  ro.adb.secure=1 vendors.
+- ro.logd.kernel: keep our own version; we want logcat -b kernel, unlike
+  what the OEM set from their vendor.
+
+Combines the former 'Let system override ro.apex.updatable', 'Let
+system override adb/secure props', 'Allow apex on > 5.0 kernels', 'Keep
+our own version of ro.logd.kernel', 'Keep capex when there are vendor
+apexes' and 'When setting ro.apex.updatable, actually set the value'
+patches, which all shape the same override-policy chain.
+---
+ init/property_service.cpp | 38 +++++++++++++++++++++++++++++++++++---
+ 1 file changed, 35 insertions(+), 3 deletions(-)
+
+diff --git a/init/property_service.cpp b/init/property_service.cpp
+index 6d5e53d..19c1089 100644
+--- a/init/property_service.cpp
++++ b/init/property_service.cpp
+@@ -61,6 +61,7 @@
+ #include <selinux/android.h>
+ #include <selinux/label.h>
+ #include <selinux/selinux.h>
++#include <sys/utsname.h>
+ #include <vendorsupport/api_level.h>
+ 
+ #include "debug_ramdisk.h"
+@@ -783,6 +784,26 @@ uint32_t InitPropertySet(const std::string& name, const std::string& value) {
+ static Result<void> load_properties_from_file(const char*, const char*,
+                                               std::map<std::string, std::string>*);
+ 
++static bool kernel_supports_capex() {
++    //Put a threshold at >= 5.0
++    struct utsname buf;
++    uname(&buf);
++    const char *where = buf.release;
++    int a = atoi(where);
++    if(a >= 5) return true;
++
++    // If there are vendor apexes, we most likely actually need them
++    auto dir = std::unique_ptr<DIR, decltype(&closedir)>{opendir("/vendor/apex"), closedir};
++    if (!dir) {
++        return false;
++    }
++    for (struct dirent* ent = readdir(dir.get()); ent; ent = readdir(dir.get())) {
++        if(strstr(ent->d_name, "apex")) return true;
++    }
++
++    return false;
++}
++
+ /*
+  * Filter is used to decide which properties to load: NULL loads all keys,
+  * "ro.foo.*" is a prefix match, and "ro.foo.bar" is an exact match.
+@@ -883,12 +904,23 @@ static void LoadProperties(char* data, const char* filter, const char* filename,
+             std::string error;
+             if (CheckPermissions(key, *expanded_value, context, cr, &error) == PROP_SUCCESS) {
+                 auto it = properties->find(key);
++                const char *new_value = (*expanded_value).c_str();
++
++                if(strcmp("ro.apex.updatable", key) == 0) {
++                    new_value = kernel_supports_capex() ? "true" : "false";
++                }
+                 if (it == properties->end()) {
+-                    (*properties)[key] = std::move(*expanded_value);
+-                } else if (it->second != *expanded_value) {
++                   (*properties)[key] = new_value;
++                } else if (it->second != new_value) {
+                     LOG(WARNING) << "Overriding previous property '" << key << "':'" << it->second
+                                  << "' with new value '" << *expanded_value << "'";
+-                    it->second = std::move(*expanded_value);
++                    if(strcmp("ro.apex.updatable", key) == 0) {
++                        LOG(WARNING) << "... Ignored apex by kernel version";
++                    } else if(strstr(key, "adb") || strstr(key, "secure") || strstr(key, "ro.logd.kernel")) {
++                        LOG(WARNING) << "... Ignored";
++                    } else {
++                        it->second = new_value;
++                    }
+                 }
+             } else {
+                 LOG(ERROR) << "Do not have permissions to set '" << key << "' to '"
+-- 
+2.55.0
+

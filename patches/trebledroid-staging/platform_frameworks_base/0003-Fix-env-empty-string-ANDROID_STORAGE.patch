@@ -1,0 +1,27 @@
+From 8b7b08f2c0201a78bce0591c20c639132e7563ae Mon Sep 17 00:00:00 2001
+From: Raphael Mounier <mounierr07@gmail.com>
+Date: Sat, 6 Aug 2022 18:08:36 +0200
+Subject: [PATCH 3/72] Fix env empty string - ANDROID_STORAGE
+
+Huawei hi6250 define in init.hi6250.rc ANDROID_STORAGE to "", so check empty string and replace with default path. Apply change for all env directory
+---
+ core/java/android/os/Environment.java | 3 ++-
+ 1 file changed, 2 insertions(+), 1 deletion(-)
+
+diff --git a/core/java/android/os/Environment.java b/core/java/android/os/Environment.java
+index f8e7f10ea..e305d617b 100644
+--- a/core/java/android/os/Environment.java
++++ b/core/java/android/os/Environment.java
+@@ -210,7 +210,8 @@ public class Environment {
+      */
+     @RavenwoodRedirect(comment = "Use java props on Ravenwood")
+     private static String getEnvPath(String variableName) {
+-        return System.getenv(variableName);
++        String path = System.getenv(variableName);
++        return (path == null || path.isEmpty()) ? null : path;
+     }
+
+     static {
+-- 
+2.52.0
+

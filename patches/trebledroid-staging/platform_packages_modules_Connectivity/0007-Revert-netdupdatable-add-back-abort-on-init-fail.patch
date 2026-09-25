@@ -1,0 +1,26 @@
+From 6051e813665e8b6bfb2ea2d6cf9d8802f4ade5a5 Mon Sep 17 00:00:00 2001
+From: Alberto Ponces <ponces26@gmail.com>
+Date: Thu, 20 Jun 2024 12:38:58 +0100
+Subject: [PATCH 7/15] Revert "netdupdatable: add back abort() on init() fail"
+
+This reverts commit ff845a642bc988f960c77ac60664560f8cdc7ee3.
+---
+ bpf/netd/NetdUpdatable.cpp | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/bpf/netd/NetdUpdatable.cpp b/bpf/netd/NetdUpdatable.cpp
+index 8b2b4dc..20323a3 100644
+--- a/bpf/netd/NetdUpdatable.cpp
++++ b/bpf/netd/NetdUpdatable.cpp
+@@ -32,7 +32,7 @@ int libnetd_updatable_init(const char* cg2_path) {
+     android::base::Result<void> ret = sBpfHandler.init(cg2_path);
+     if (!ret.ok()) {
+         LOG(ERROR) << __func__ << ": Failed: " << ret.error().message();
+-        abort();
++        return -ret.error().code();
+     }
+     return 0;
+ }
+-- 
+2.55.0
+

@@ -1,0 +1,188 @@
+From e28651f0af98b8614d2b45142f5b74dbadb6b4b6 Mon Sep 17 00:00:00 2001
+From: "Christopher A. Williamson" <contact@chrisaw.io>
+Date: Fri, 25 Sep 2026 18:22:21 +0100
+Subject: [PATCH 69/72] Bitmap: scale down bitmaps and tolerate seal failures on
+ legacy kernels
+
+On legacy kernels the binder transaction buffer cannot carry large
+bitmaps, and GrapheneOS's memfd sealing path uses a seal bit old
+kernels do not know:
+
+- Notification large bitmap icons exceed the binder transaction buffer
+  on kernel 4.9 devices, causing silent delivery failure; reuse the
+  existing isLowRam scaling paths for kernels below 4.14 (Icon.java).
+- Bitmaps over 256px parceled by media apps crash writeToParcel with
+  'Could not copy bitmap to parcel blob'; scale them down to fit the
+  legacy binder budget, caching the kernel check (Bitmap.java).
+- Kernels below 5.1 return EINVAL for F_SEAL_FUTURE_WRITE; retry the
+  seal without it -- write protection stays best-effort there
+  (hwui Bitmap.cpp).
+
+Kernels at or above the respective versions are unaffected.
+
+Fixes: #67, #73
+
+Combines the former 'Notification: scale down large bitmap icons on
+legacy kernels', 'Bitmap: scale down bitmaps in writeToParcel on legacy
+kernels' and 'Bitmap: tolerate F_SEAL_FUTURE_WRITE EINVAL on legacy
+kernels' patches.
+---
+ graphics/java/android/graphics/Bitmap.java    | 33 ++++++++++++++++++-
+ .../java/android/graphics/drawable/Icon.java  | 26 +++++++++++++++
+ libs/hwui/jni/Bitmap.cpp                      | 31 ++++++++++-------
+ 3 files changed, 78 insertions(+), 12 deletions(-)
+
+diff --git a/graphics/java/android/graphics/Bitmap.java b/graphics/java/android/graphics/Bitmap.java
+index 76fd979e5..f5a0bd15d 100644
+--- a/graphics/java/android/graphics/Bitmap.java
++++ b/graphics/java/android/graphics/Bitmap.java
+@@ -2640,7 +2640,19 @@ public final class Bitmap implements Parcelable {
+     public void writeToParcel(@NonNull Parcel p, int flags) {
+         checkRecycled("Can't parcel a recycled bitmap");
+         noteHardwareBitmapSlowCall();
+-        if (!nativeWriteToParcel(mNativePtr, mDensity, p)) {
++        // On legacy kernels (< 4.14) the binder transaction buffer is limited to ~1MB.
++        // Large bitmaps (album art, thumbnails) exceed this and cause a native crash.
++        // Scale down bitmaps over 256px to keep the parcel under the binder limit.
++        if (isLegacyKernel() && (getWidth() > 256 || getHeight() > 256)) {
++            float scale = 256f / Math.max(getWidth(), getHeight());
++            Bitmap scaled = Bitmap.createScaledBitmap(this,
++                    (int) (getWidth() * scale), (int) (getHeight() * scale), true);
++            scaled.noteHardwareBitmapSlowCall();
++            if (!nativeWriteToParcel(scaled.mNativePtr, scaled.mDensity, p)) {
++                throw new RuntimeException("native writeToParcel failed");
++            }
++            scaled.recycle();
++        } else if (!nativeWriteToParcel(mNativePtr, mDensity, p)) {
+             throw new RuntimeException("native writeToParcel failed");
+         }
+         if (hasGainmap()) {
+@@ -2651,6 +2663,25 @@ public final class Bitmap implements Parcelable {
+         }
+     }
+ 
++    private static volatile Boolean sIsLegacyKernel;
++
++    private static boolean isLegacyKernel() {
++        if (sIsLegacyKernel != null) return sIsLegacyKernel;
++        String kv = System.getProperty("os.version");
++        if (kv == null || kv.isEmpty()) return sIsLegacyKernel = false;
++        try {
++            int firstDot = kv.indexOf('.');
++            if (firstDot < 0) return sIsLegacyKernel = false;
++            int major = Integer.parseInt(kv.substring(0, firstDot));
++            int secondDot = kv.indexOf('.', firstDot + 1);
++            String minorStr = (secondDot < 0) ? kv.substring(firstDot + 1) : kv.substring(firstDot + 1, secondDot);
++            int minor = Integer.parseInt(minorStr);
++            return sIsLegacyKernel = (major < 4 || (major == 4 && minor < 14));
++        } catch (NumberFormatException e) {
++            return sIsLegacyKernel = false;
++        }
++    }
++
+     /**
+      * Returns a new bitmap that captures the alpha values of the original.
+      * This may be drawn with Canvas.drawBitmap(), where the color(s) will be
+diff --git a/graphics/java/android/graphics/drawable/Icon.java b/graphics/java/android/graphics/drawable/Icon.java
+index 037806cb7..6fd36636b 100644
+--- a/graphics/java/android/graphics/drawable/Icon.java
++++ b/graphics/java/android/graphics/drawable/Icon.java
+@@ -685,6 +685,9 @@ public final class Icon implements Parcelable {
+     /** @hide */
+     public static final int MIN_ASHMEM_ICON_SIZE = 128 * (1 << 10);
+ 
++    // Largest bitmap dimension that safely fits a legacy (< 4.14) binder transaction buffer.
++    private static final int LEGACY_KERNEL_MAX_IMAGE_SIZE = 256;
++
+     /**
+      * Puts the memory used by this instance into Ashmem memory, if possible.
+      * @hide
+@@ -1232,6 +1235,12 @@ public final class Icon implements Parcelable {
+      * @hide
+      */
+     public static Bitmap scaleDownIfNecessary(Bitmap bitmap, int maxWidth, int maxHeight) {
++        if (isLegacyKernel()) {
++            // Kernels below 4.14 cap the binder transaction buffer at ~1MB, so keep bitmaps
++            // that travel inside a notification parcel within that budget.
++            maxWidth = Math.min(maxWidth, LEGACY_KERNEL_MAX_IMAGE_SIZE);
++            maxHeight = Math.min(maxHeight, LEGACY_KERNEL_MAX_IMAGE_SIZE);
++        }
+         int bitmapWidth = bitmap.getWidth();
+         int bitmapHeight = bitmap.getHeight();
+         if (bitmapWidth > maxWidth || bitmapHeight > maxHeight) {
+@@ -1255,6 +1264,23 @@ public final class Icon implements Parcelable {
+         return bitmap;
+     }
+ 
++    private static boolean isLegacyKernel() {
++        String kv = System.getProperty("os.version");
++        if (kv == null || kv.isEmpty()) return false;
++        try {
++            int firstDot = kv.indexOf('.');
++            if (firstDot < 0) return false;
++            int major = Integer.parseInt(kv.substring(0, firstDot));
++            int secondDot = kv.indexOf('.', firstDot + 1);
++            String minorStr = secondDot < 0
++                    ? kv.substring(firstDot + 1) : kv.substring(firstDot + 1, secondDot);
++            int minor = Integer.parseInt(minorStr);
++            return major < 4 || (major == 4 && minor < 14);
++        } catch (NumberFormatException e) {
++            return false;
++        }
++    }
++
+     /**
+      * Scale down this icon to a given max width and max height.
+      * The scaling will be done in a uniform way and currently only bitmaps are supported.
+diff --git a/libs/hwui/jni/Bitmap.cpp b/libs/hwui/jni/Bitmap.cpp
+index d97d1bca4..1625473f1 100644
+--- a/libs/hwui/jni/Bitmap.cpp
++++ b/libs/hwui/jni/Bitmap.cpp
+@@ -3,6 +3,7 @@
+ 
+ #include <android-base/unique_fd.h>
+ #include <com_android_graphics_hwui_flags.h>
++#include <cerrno>
+ #include <fcntl.h>
+ #include <hwui/Bitmap.h>
+ #include <hwui/Paint.h>
+@@ -807,17 +808,25 @@ static binder_status_t writeBlob(AParcel* parcel, uint64_t bitmapId, const SkBit
+             return STATUS_NO_MEMORY;
+         }
+ 
+-        if (fcntl(fd, F_ADD_SEALS,
+-                    // Disallow growing / shrinking.
+-                    F_SEAL_GROW | F_SEAL_SHRINK
+-                    // If immutable, disallow writing.
+-                    // Use F_SEAL_FUTURE_WRITE instead of F_SEAL_WRITE to work around a bug in
+-                    // pre-6.7 kernels.
+-                    // There are no writable mappings made prior to this, so both seals are
+-                    // functionally equivalent.
+-                    // See: b/409846908#comment39
+-                    | (immutable ? F_SEAL_FUTURE_WRITE : 0))) {
+-            return STATUS_UNKNOWN_ERROR;
++        int seals = F_SEAL_GROW | F_SEAL_SHRINK;
++        if (immutable) {
++            seals |= F_SEAL_FUTURE_WRITE;
++        }
++        if (fcntl(fd, F_ADD_SEALS, seals) < 0) {
++            // F_SEAL_FUTURE_WRITE was added in Linux 5.1. Kernels
++            // below 5.1 (e.g. 4.9 on legacy devices) return EINVAL
++            // because the seal bit is unrecognised. Retry without
++            // F_SEAL_FUTURE_WRITE to keep ashmem blobs working on
++            // these kernels. The write protection is best-effort;
++            // skipping it on legacy kernels is acceptable.
++            if (errno == EINVAL && (seals & F_SEAL_FUTURE_WRITE)) {
++                if (fcntl(fd, F_ADD_SEALS,
++                          F_SEAL_GROW | F_SEAL_SHRINK) < 0) {
++                    return STATUS_UNKNOWN_ERROR;
++                }
++            } else {
++                return STATUS_UNKNOWN_ERROR;
++            }
+         }
+ 
+         // Workaround b/149851140 in AParcel_writeParcelFileDescriptor
+-- 
+2.55.0
+
