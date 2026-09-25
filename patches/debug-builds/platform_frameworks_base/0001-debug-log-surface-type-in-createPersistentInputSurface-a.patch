@@ -3,9 +3,6 @@ From: "Christopher A. Williamson" <contact@chrisaw.io>
 Date: Sun, 21 Jun 2026 06:04:20 +0100
 Subject: [PATCH] debug: log surface type in createPersistentInputSurface and
  setInputSurface
-MIME-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
-Content-Transfer-Encoding: 8bit
 
 diagnostic patch for issue #33. logs the full chain:
 - Java: createPersistentInputSurface return value (class, isPersistent, hashCode)
@@ -17,7 +14,7 @@ is the same object returned by createPersistentInputSurface, or if it was
 replaced by something else (e.g. the camera framework providing a regular
 Surface to the CameraX SurfaceInput before getSurface runs).
 
-debug-builds only — do not ship.
+debug-builds only -- do not ship.
 ---
  media/java/android/media/MediaCodec.java | 11 ++++++++++-
  media/jni/android_media_MediaCodec.cpp   |  5 +++++
