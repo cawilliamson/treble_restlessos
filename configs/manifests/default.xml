@@ -1,15 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <manifest>
-  <remote name="andycgyan" fetch="https://github.com/AndyCGYan/" />
   <remote name="cawilliamson-priv" fetch="ssh://git@github.com/cawilliamson/" />
-  <remote name="gitlab" fetch="https://gitlab.com/" />
   <remote name="lineage" fetch="https://github.com/LineageOS/" />
-  <remote name="lmodroid" fetch="https://github.com/LMODroid/" />
-  <remote name="phhusson" fetch="https://github.com/phhusson/" />
-  <remote name="ponces" fetch="https://github.com/ponces/" />
-
-  <!-- andycgyan: qcrilam -->
-  <project path="packages/apps/QcRilAm" name="android_packages_apps_QcRilAm" remote="andycgyan" revision="master" clone-depth="1" />
 
   <!-- aosp: vndk-v28 -->
   <project path="prebuilts/vndk/v28" name="platform/prebuilts/vndk/v28" remote="aosp" revision="204f1bad00aaf480ba33233f7b8c2ddaa03155dd" clone-depth="1" />
@@ -25,16 +17,4 @@
 
   <!-- vendor-priv -->
   <project path="vendor/cawilliamson-priv" name="vendor_cawilliamson-priv" remote="cawilliamson-priv" revision="main" clone-depth="1" />
-
-  <!-- phhusson: lptools  -->
-  <project path="vendor/lptools" name="vendor_lptools" remote="phhusson" revision="master" clone-depth="1" />
-
-  <!-- phhusson: magisk vendor -->
-  <project path="vendor/magisk" name="vendor_magisk" remote="phhusson" revision="android-10.0" clone-depth="1" />
-
-  <!-- pixel: google sans fonts -->
-  <project path="vendor/pixel/gsans" name="PixelOS-AOSP/proprietary_vendor_pixel_gsans" remote="gitlab" revision="sixteen-qpr2" clone-depth="1" />
-
-  <!-- phhusson: vndk tests -->
-  <project path="vendor/vndk-tests" name="vendor_vndk-tests" remote="phhusson" revision="master" clone-depth="1" />
 </manifest>

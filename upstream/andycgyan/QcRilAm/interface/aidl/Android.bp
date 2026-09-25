@@ -1,0 +1,18 @@
+aidl_interface {
+    name: "vendor.qti.hardware.radio.am",
+    srcs: ["vendor/qti/hardware/radio/am/*.aidl"],
+    stability: "vintf",
+    owner: "qti",
+    backend: {
+        cpp: {
+            enabled: false,
+        },
+        java: {
+            enabled: true,
+            platform_apis: true,
+        },
+        ndk: {
+            enabled: true,
+        },
+    },
+}

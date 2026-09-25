@@ -1,0 +1,24 @@
+hidl_package_root {
+    name: "vendor.qti.hardware.radio",
+    path: "packages/apps/QcRilAm/interface/hidl/vendor/qti/hardware/radio",
+}
+
+hidl_package_root {
+    name: "vendor.qti.qcril",
+    path: "packages/apps/QcRilAm/interface/hidl/vendor/qti/qcril",
+}
+
+android_app {
+    name: "QcRilAm",
+    certificate: "platform",
+
+    srcs: ["src/**/*.kt"],
+
+    static_libs: [
+        "vendor.qti.hardware.radio.am-V1-java",
+        "vendor.qti.hardware.radio.am-V1.0-java",
+        "vendor.qti.qcril.am-V1.0-java",
+    ],
+
+    platform_apis: true,
+}

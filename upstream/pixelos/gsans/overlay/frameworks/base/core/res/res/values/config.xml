@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+     Copyright (C) 2024 The LineageOS Project
+     SPDX-License-Identifier: Apache-2.0
+-->
+<resources xmlns:xliff="urn:oasis:names:tc:xliff:document:1.2">
+    <!-- Name of a font family to use for headlines. If empty, falls back to platform default -->
+    <string name="config_headlineFontFamily" translatable="false">google-sans</string>
+
+    <!-- Allows setting custom fontFeatureSettings on specific text. -->
+    <string name="config_headlineFontFeatureSettings" translatable="false">ss03</string>
+
+    <!-- Name of the font family used for system surfaces where the font should use medium weight -->
+    <string name="config_headlineFontFamilyMedium">google-sans-medium</string>
+
+    <!-- Name of a font family to use for body text. -->
+    <string name="config_bodyFontFamily" translatable="false">google-sans-text</string>
+
+    <!-- Name of a font family to use for medium body text. -->
+    <string name="config_bodyFontFamilyMedium" translatable="false">google-sans-text-medium</string>
+
+    <!-- Name of the font family to use in the default lockscreen clock -->
+    <string name="config_clockFontFamily" translatable="false">google-sans-clock</string>
+</resources>

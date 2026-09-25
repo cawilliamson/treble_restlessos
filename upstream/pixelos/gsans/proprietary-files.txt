@@ -1,0 +1,9 @@
+# Extracted from caiman-ota-bp4a.251205.006
+
+# Fonts
+product/etc/fonts_customization.xml
+product/fonts/GoogleSans-Regular.ttf
+product/fonts/GoogleSans-Italic.ttf
+product/fonts/GoogleSansClock-Regular.ttf
+product/fonts/GoogleSansFlexClock-Regular.ttf
+product/fonts/GoogleSansFlex-Regular.ttf
