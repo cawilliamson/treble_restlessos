@@ -1,0 +1,118 @@
+From a7d08f54c06a42a9ac5a51923cb27ff23a5209c5 Mon Sep 17 00:00:00 2001
+From: Doze-off <viniciussadxxx@gmail.com>
+Date: Sun, 21 Jun 2026 21:29:59 +0100
+Subject: [PATCH 28/33] trebledroid-staging: adopt lmk_tweaks toggle and LZ4 boot
+ ramdisk from Doze-off
+
+two small tweaks adopted from Doze-off's device_phh_treble fork, combined
+into one patch (both are Doze-off-authored and part of the #92 low-RAM
+headroom work):
+
+1. lmk_tweaks toggle (from commit 055fa81fb7) -- a persist.sys.phh.lmk_tweaks
+   prop-handler (aggressive lmkd thresholds + tighter bg-app limits; off mode
+   --deletes the overrides so the GSI's system.prop lmkd defaults, 0014, apply
+   again) wired with a vndk.rc property trigger that execs phh-prop-handler.sh
+   in the phhsu_daemon domain. a TrebleDroid-app UI toggle is added separately
+   in treble_app. adaptations vs the original: dropped the ro.zram.*_wb_*
+   writeback props (no zram backing device), fixed `stop lmkd; start lmkd` ->
+   `setprop ctl.restart lmkd` (stop/start are not toybox applets), restructured
+   the off branch to --delete overrides.
+
+2. LZ4 boot ramdisk (from commits c4075221a9 / 9ad5d58714) --
+   BOARD_RAMDISK_USE_LZ4 := true so the boot initramfs is LZ4-compressed
+   instead of gzip (faster boot decompression; ramdisk marginally larger).
+
+an earlier draft also adopted Doze-off's dexpreopt / image-size flags
+(PRODUCT_DEX_PREOPT_DEFAULT_COMPILER_FILTER := verify,
+WITH_DEXPREOPT_BOOT_IMG_AND_SYSTEM_SERVER_ONLY := true, ART/java debug-info
+stripping); those were dropped because WITH_DEXPREOPT_BOOT_IMG_AND_SYSTEM_SERVER_ONLY
+is already set in configs/rom/rom.mk (issue #76), PRODUCT_DEX_PREOPT_DEFAULT_COMPILER_FILTER
+is a no-op given that restriction (boot image + system_server use their own
+filters) and would conflict with the on-device pm.dexopt.*=speed (AOT) filters,
+and the debug-info flags are already AOSP release defaults (no-op on release,
+and would strip debug capability from debug builds).
+
+Refs: #92
+---
+ phh-prop-handler.sh           | 42 +++++++++++++++++++++++++++++++++++
+ tdgsi_arm64_ab/BoardConfig.mk |  5 +++++
+ vndk.rc                       |  3 +++
+ 3 files changed, 50 insertions(+)
+
+diff --git a/phh-prop-handler.sh b/phh-prop-handler.sh
+index eb22c4d..cbd3005 100644
+--- a/phh-prop-handler.sh
++++ b/phh-prop-handler.sh
+@@ -297,3 +297,45 @@ if [ "$1" == "persist.bluetooth.system_audio_hal.enabled" ]; then
+     restartAudio
+     exit
+ fi
++
++if [ "$1" == "persist.sys.phh.lmk_tweaks" ]; then
++    if [[ "$prop_value" != "false" && "$prop_value" != "true" ]]; then
++        exit 1
++    fi
++    if [[ "$prop_value" == "true" ]]; then
++        # aggressive lmkd + background-app limits: free foreground headroom on
++        # low-RAM devices (e.g. kernel-4.9 GSIs where isolated renderers get
++        # OOM-reaped, #92). overrides the GSI's system.prop lmkd defaults.
++        resetprop_phh ro.lmk.use_minfree_levels true
++        resetprop_phh ro.lmk.kill_timeout_ms 100
++        resetprop_phh ro.lmk.low 1001
++        resetprop_phh ro.lmk.medium 800
++        resetprop_phh ro.lmk.critical 0
++        resetprop_phh ro.lmk.kill_heaviest_task true
++        resetprop_phh ro.lmk.critical_upgrade false
++        resetprop_phh ro.lmk.upgrade_pressure 100
++        resetprop_phh ro.lmk.downgrade_pressure 250
++        resetprop_phh ro.lmk.psi_partial_stall_ms 200
++        resetprop_phh ro.lmk.psi_complete_stall_ms 700
++        resetprop_phh ro.sys.fw.bg_apps_limit 16
++        resetprop_phh ro.config.max_starting_bg 8
++    else
++        # off: remove the overrides so the GSI's system.prop lmkd defaults
++        # (trebledroid-staging 0014) apply again.
++        resetprop_phh --delete ro.lmk.use_minfree_levels
++        resetprop_phh --delete ro.lmk.kill_timeout_ms
++        resetprop_phh --delete ro.lmk.low
++        resetprop_phh --delete ro.lmk.medium
++        resetprop_phh --delete ro.lmk.critical
++        resetprop_phh --delete ro.lmk.kill_heaviest_task
++        resetprop_phh --delete ro.lmk.critical_upgrade
++        resetprop_phh --delete ro.lmk.upgrade_pressure
++        resetprop_phh --delete ro.lmk.downgrade_pressure
++        resetprop_phh --delete ro.lmk.psi_partial_stall_ms
++        resetprop_phh --delete ro.lmk.psi_complete_stall_ms
++        resetprop_phh --delete ro.sys.fw.bg_apps_limit
++        resetprop_phh --delete ro.config.max_starting_bg
++    fi
++    setprop ctl.restart lmkd
++    exit
++fi
+diff --git a/tdgsi_arm64_ab/BoardConfig.mk b/tdgsi_arm64_ab/BoardConfig.mk
+index 2fddc52..9108b4e 100644
+--- a/tdgsi_arm64_ab/BoardConfig.mk
++++ b/tdgsi_arm64_ab/BoardConfig.mk
+@@ -6,3 +6,8 @@ BOARD_SYSTEMIMAGE_PARTITION_SIZE := 2147483648
+ else
+ BOARD_SYSTEMIMAGE_PARTITION_RESERVED_SIZE := 33554432
+ endif
++
++# compress the boot initramfs with LZ4 (faster decompression at boot than the
++# default gzip; LZ4's ratio is slightly worse so the ramdisk is marginally
++# larger, but boot-time decompression is the win).
++BOARD_RAMDISK_USE_LZ4 := true
+diff --git a/vndk.rc b/vndk.rc
+index fbac009..2bf8894 100644
+--- a/vndk.rc
++++ b/vndk.rc
+@@ -173,3 +173,6 @@ on property:persist.sys.phh.force_sw_codecs=true
+ # lost on this device, which beats not booting.
+ on property:init.svc.wifidisplayhalservice=running && property:ro.product.device=OP6190L1
+     stop wifidisplayhalservice
++
++on property:persist.sys.phh.lmk_tweaks=*
++    exec u:r:phhsu_daemon:s0 root -- /system/bin/phh-prop-handler.sh "persist.sys.phh.lmk_tweaks"
+-- 
+2.54.0
+

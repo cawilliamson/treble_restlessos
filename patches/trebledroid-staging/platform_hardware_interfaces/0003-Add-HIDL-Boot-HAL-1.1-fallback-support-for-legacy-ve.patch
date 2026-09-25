@@ -1,7 +1,7 @@
 From c9eaad024736cf0250782d40ef36257f297725b6 Mon Sep 17 00:00:00 2001
 From: "Christopher A. Williamson" <contact@chrisaw.io>
 Date: Tue, 19 May 2026 09:51:16 +0100
-Subject: [PATCH 3/4] Add HIDL Boot HAL 1.1 fallback support for legacy vendor
+Subject: [PATCH 3/3] Add HIDL Boot HAL 1.1 fallback support for legacy vendor
  devices
 
 QPR2 dropped support for Boot HAL HIDL 1.1 and earlier, causing

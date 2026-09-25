@@ -1,36 +1,40 @@
-From ff29d6fd2c0c762deeeda73ab02783b1deeddabe Mon Sep 17 00:00:00 2001
+From d138a1e1339a12083bbcb6d8fc99f25a4e147857 Mon Sep 17 00:00:00 2001
 From: "Christopher A. Williamson" <contact@chrisaw.io>
-Date: Tue, 17 Mar 2026 23:24:50 +0000
-Subject: [PATCH 1/2] Configure build for GrapheneOS GSI: apps and packages
-MIME-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
-Content-Transfer-Encoding: 8bit
+Date: Fri, 25 Sep 2026 18:15:31 +0100
+Subject: [PATCH] Configure build for GrapheneOS GSI: apps and packages
 
 Adapt the AOSP build configuration for GrapheneOS GSI:
 
 - Replace generic webview module with TrichromeWebView (Vanadium)
 - Use GrapheneOS TrichromeChrome as browser (replaces Browser2)
 - Remove QuickSearchBox (not in GrapheneOS)
-- Remove Camera and Messaging from GSI product — users install
-  from GrapheneOS App Store to save system image space
+- Remove Camera and Messaging from GSI product -- users install from
+  GrapheneOS App Store to save system image space
 - Remove packages that are not useful or not desired in GSI builds:
   Calendar (deprecated, CalendarProvider kept), MusicFX, Auditor
   (requires hardware attestation), PdfViewerGOS, InfoApp,
-  DeviceDiagnostics, EasterEgg, HardeningTestApp,
-  LiveWallpapersPicker (deprecated), PhotoTable, WallpaperPickerGOS,
-  ContactsGOS (use AOSP Contacts), BluetoothViewerGOS, TalkBackGOS
-  (use standard TalkBack included in handheld_product.mk),
-  GrapheneOS Updater (only useful for official GrapheneOS devices)
+  DeviceDiagnostics, EasterEgg, HardeningTestApp, LiveWallpapersPicker
+  (deprecated), PhotoTable, WallpaperPickerGOS, ContactsGOS (use AOSP
+  Contacts), BluetoothViewerGOS, TalkBackGOS (use standard TalkBack
+  included in handheld_product.mk), GrapheneOS Updater (only useful for
+  official GrapheneOS devices)
 - Remove LogViewer from GSI system image
 - Exclude AOSP sample APN list from GSI build
+- Use the GrapheneOS Messaging soong module name (external/Messaging)
+  in gsi/Android.bp so aosp_system_image does not depend on an
+  undefined module, which fails soong bootstrap
+
+Combines the former 'Configure build for GrapheneOS GSI: apps and
+packages' and 'Use GrapheneOS Messaging module name in GSI system
+image' patches.
 ---
  target/product/base_system.mk         | 3 ---
  target/product/generic/Android.bp     | 3 +--
- target/product/gsi/Android.bp         | 7 ++-----
+ target/product/gsi/Android.bp         | 9 +++------
  target/product/handheld_product.mk    | 5 -----
  target/product/handheld_system.mk     | 4 ----
  target/product/handheld_system_ext.mk | 1 -
- 6 files changed, 3 insertions(+), 20 deletions(-)
+ 6 files changed, 4 insertions(+), 21 deletions(-)
 
 diff --git a/target/product/base_system.mk b/target/product/base_system.mk
 index 8f2cc28..0c4d1e4 100644
@@ -54,7 +58,7 @@ index 8f2cc28..0c4d1e4 100644
  
  # The set of packages whose code can be loaded by the system server.
 diff --git a/target/product/generic/Android.bp b/target/product/generic/Android.bp
-index 06de021..12de408 100644
+index b2ee0fe..edef3a8 100644
 --- a/target/product/generic/Android.bp
 +++ b/target/product/generic/Android.bp
 @@ -426,7 +426,7 @@ android_filesystem_defaults {
@@ -75,7 +79,7 @@ index 06de021..12de408 100644
                  "ONS", // telephony_system
                  "PacProcessor", // handheld_system
 diff --git a/target/product/gsi/Android.bp b/target/product/gsi/Android.bp
-index 2ec2eb6..8a6e692 100644
+index 2ec2eb6..1dea323 100644
 --- a/target/product/gsi/Android.bp
 +++ b/target/product/gsi/Android.bp
 @@ -122,12 +122,10 @@ android_filesystem_defaults {
@@ -86,8 +90,9 @@ index 2ec2eb6..8a6e692 100644
 -        "Camera2",
          "Dialer",
          "LatinIME",
-         "messaging",
+-        "messaging",
 -        "apns-full-conf.xml",
++        "Messaging",
 +        "TrichromeChrome",
          "frameworks-base-overlays",
          "preinstalled-packages-base-product.xml",

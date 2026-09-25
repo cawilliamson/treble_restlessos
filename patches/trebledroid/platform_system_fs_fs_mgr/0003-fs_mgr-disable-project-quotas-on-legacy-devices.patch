@@ -1,0 +1,48 @@
+From 6dc20a133f97db8de463b6f0a62f34333f22d0b0 Mon Sep 17 00:00:00 2001
+From: "Christopher A. Williamson" <contact@chrisaw.io>
+Date: Fri, 25 Sep 2026 18:21:30 +0100
+Subject: [PATCH 3/4] fs_mgr: disable project quotas on legacy devices
+
+Disable quotas on legacy devices with encryption disabled, and
+disable project_quota on old devices new enough to have encryption
+(they do keep quota support).
+
+Source: https://t.me/phhtreblebuilders/20521 and
+https://t.me/phhtreblebuilders/20546
+
+Combines the former 'Disable quotas on legacy devices with encryption
+disabled' and 'Disable project_quota on old devices but new enough to
+have encryption' patches.
+---
+ fs_mgr.cpp | 15 +++++++++++++++
+ 1 file changed, 15 insertions(+)
+
+diff --git a/fs_mgr.cpp b/fs_mgr.cpp
+index adb1d50..305627b 100644
+--- a/fs_mgr.cpp
++++ b/fs_mgr.cpp
+@@ -440,6 +440,21 @@ static void tune_quota(const std::string& blk_device, const FstabEntry& entry,
+         return;
+     }
+ 
++    // There is no relation between quotas and encryption disabled, it's just that encryption
++    // being disabled shows that the device is pretty old, so quotas might be broken on it
++    if (!entry.fs_mgr_flags.file_encryption) {
++        LINFO << "Disabling quotas on legacy devices with encryption disabled";
++        want_quota = false;
++    }
++
++    struct utsname uts;
++    unsigned int major, minor;
++
++    if ((uname(&uts) == 0) && (sscanf(uts.release, "%u.%u", &major, &minor) == 2)) {
++        if(major < 4) want_projid = false;
++        if(major == 4 && minor < 9) want_projid = false;
++    }
++
+     if (!tune2fs_available()) {
+         LERROR << "Unable to " << (want_quota ? "enable" : "disable") << " quotas on " << blk_device
+                << " because " TUNE2FS_BIN " is missing";
+-- 
+2.55.0
+
