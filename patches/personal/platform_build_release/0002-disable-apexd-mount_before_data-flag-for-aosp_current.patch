@@ -1,7 +1,7 @@
 From fa0650be0664db0497d90566df1ad6fcfef5d1d5 Mon Sep 17 00:00:00 2001
 From: "Christopher A. Williamson" <contact@chrisaw.io>
 Date: Fri, 25 Sep 2026 19:49:22 +0100
-Subject: [PATCH 2/2] disable apexd mount_before_data flag for aosp_current
+Subject: [PATCH 2/3] disable apexd mount_before_data flag for aosp_current
 
 apexd-bootstrap with mount_before_data enabled mounts data apexes and
 processes staged sessions before /data, rebooting to bootloader on any

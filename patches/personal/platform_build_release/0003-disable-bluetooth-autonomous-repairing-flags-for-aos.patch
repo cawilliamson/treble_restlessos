@@ -1,0 +1,43 @@
+From 3001efdeed3298d29d6fb3b863fa96d5df5f6540 Mon Sep 17 00:00:00 2001
+From: "Christopher A. Williamson" <contact@chrisaw.io>
+Date: Sat, 26 Sep 2026 05:09:24 +0100
+Subject: [PATCH 3/3] disable bluetooth autonomous repairing flags for aosp_current
+
+the autonomous repairing feature added in A17 initiates SMP re-pairing
+in the background after a bond loss. with SC passkey entry devices the
+repair pairing stalls waiting for a passkey that is never entered,
+leaving the SMP state machine stuck and the peer bond unusable after
+every reboot. pin both flags off so bond loss falls back to the
+A16-style disconnect and manual re-pairing.
+---
+ .../autonomous_repairing_initiation_flag_values.textproto       | 2 +-
+ .../bugfix_autonomous_repairing_flag_values.textproto           | 2 +-
+ 2 files changed, 2 insertions(+), 2 deletions(-)
+
+diff --git a/aconfig/cp2a/com.android.bluetooth.flags/autonomous_repairing_initiation_flag_values.textproto b/aconfig/cp2a/com.android.bluetooth.flags/autonomous_repairing_initiation_flag_values.textproto
+index 3082867..9f180f0 100644
+--- a/aconfig/cp2a/com.android.bluetooth.flags/autonomous_repairing_initiation_flag_values.textproto
++++ b/aconfig/cp2a/com.android.bluetooth.flags/autonomous_repairing_initiation_flag_values.textproto
+@@ -1,6 +1,6 @@
+ flag_value {
+   package: "com.android.bluetooth.flags"
+   name: "autonomous_repairing_initiation"
+-  state: ENABLED
++  state: DISABLED
+   permission: READ_ONLY
+ }
+diff --git a/aconfig/cp2a/com.android.bluetooth.flags/bugfix_autonomous_repairing_flag_values.textproto b/aconfig/cp2a/com.android.bluetooth.flags/bugfix_autonomous_repairing_flag_values.textproto
+index b5a555e..90b893e 100644
+--- a/aconfig/cp2a/com.android.bluetooth.flags/bugfix_autonomous_repairing_flag_values.textproto
++++ b/aconfig/cp2a/com.android.bluetooth.flags/bugfix_autonomous_repairing_flag_values.textproto
+@@ -1,6 +1,6 @@
+ flag_value {
+   package: "com.android.bluetooth.flags"
+   name: "bugfix_autonomous_repairing"
+-  state: ENABLED
++  state: DISABLED
+   permission: READ_ONLY
+ }
+-- 
+2.55.0
+
