@@ -1,0 +1,124 @@
+From ec8a7dd074d5cbc956ef525bdd1c370aaa22963e Mon Sep 17 00:00:00 2001
+From: "Christopher A. Williamson" <contact@chrisaw.io>
+Date: Fri, 25 Sep 2026 18:26:11 +0100
+Subject: [PATCH 34/36] rw-system: remove stale property overrides and the
+ /cache/phh-adb USB gadget hack
+
+remove ro.adb.secure=0 (adb authentication is now controlled per-boot
+by the fingerprint change detection block), the ro.bluetooth.library_name
+override (no longer needed since the framework defaults to
+libbluetooth.so) and the media volume step overrides (let device
+defaults apply rather than forcing a specific step count and default
+volume).
+
+also remove PHH's /cache/phh-adb block: it tears down the entire USB
+gadget and rebuilds it from scratch with hardcoded huawei VID/PID,
+spawns adbd outside init's service lifecycle, and uses the wrong
+configfs layout (c.1 instead of AOSP's b.1). it conflicts with vendor
+USB HALs and breaks on devices that reclaim the gadget after
+rw-system runs.
+
+Combines the former 'remove stale property overrides from rw-system.sh
+and base.mk' and 'remove PHH's /cache/phh-adb USB gadget hack from
+rw-system.sh' patches.
+---
+ base.mk      |  1 -
+ rw-system.sh | 46 ----------------------------------------------
+ system.prop  |  1 -
+ 3 files changed, 48 deletions(-)
+
+diff --git a/base.mk b/base.mk
+index 432cfb4..21b6e7d 100644
+--- a/base.mk
++++ b/base.mk
+@@ -35,7 +35,6 @@ PRODUCT_SYSTEM_DEFAULT_PROPERTIES += \
+     ro.build.version.all_codenames=$(PLATFORM_VERSION_ALL_CODENAMES) \
+     ro.build.version.release=$(PLATFORM_VERSION) \
+     ro.build.version.security_patch=$(PLATFORM_SECURITY_PATCH) \
+-    ro.adb.secure=0 \
+     ro.logd.auditd=true \
+     ro.logd.kernel=true \
+ 
+diff --git a/rw-system.sh b/rw-system.sh
+index 7480c5f..4f99c45 100644
+--- a/rw-system.sh
++++ b/rw-system.sh
+@@ -10,48 +10,6 @@ else
+     chmod 0644 /cache/phh/logs
+ fi
+ 
+-if [ -f /cache/phh-adb ];then
+-    setprop ctl.stop adbd
+-    setprop ctl.stop adbd_apex
+-    mount -t configfs none /config
+-    rm -Rf /config/usb_gadget
+-    mkdir -p /config/usb_gadget/g1
+-
+-    echo 0x12d1 > /config/usb_gadget/g1/idVendor
+-    echo 0x103A > /config/usb_gadget/g1/idProduct
+-    mkdir -p /config/usb_gadget/g1/strings/0x409
+-    echo phh > /config/usb_gadget/g1/strings/0x409/serialnumber
+-    echo phh > /config/usb_gadget/g1/strings/0x409/manufacturer
+-    echo phh > /config/usb_gadget/g1/strings/0x409/product
+-
+-    mkdir /config/usb_gadget/g1/functions/ffs.adb
+-    mkdir /config/usb_gadget/g1/functions/mtp.gs0
+-    mkdir /config/usb_gadget/g1/functions/ptp.gs1
+-
+-    mkdir /config/usb_gadget/g1/configs/c.1/
+-    mkdir /config/usb_gadget/g1/configs/c.1/strings/0x409
+-    echo 'ADB MTP' > /config/usb_gadget/g1/configs/c.1/strings/0x409/configuration
+-
+-    mkdir /dev/usb-ffs
+-    chmod 0770 /dev/usb-ffs
+-    chown shell:shell /dev/usb-ffs
+-    mkdir /dev/usb-ffs/adb/
+-    chmod 0770 /dev/usb-ffs/adb
+-    chown shell:shell /dev/usb-ffs/adb
+-
+-    mount -t functionfs -o uid=2000,gid=2000 adb /dev/usb-ffs/adb
+-
+-    /apex/com.android.adbd/bin/adbd &
+-
+-    sleep 1
+-    echo none > /config/usb_gadget/g1/UDC
+-    ln -s /config/usb_gadget/g1/functions/ffs.adb /config/usb_gadget/g1/configs/c.1/f1
+-    ls /sys/class/udc |head -n 1 > /config/usb_gadget/g1/UDC
+-
+-    sleep 2
+-    echo 2 > /sys/devices/virtual/android_usb/android0/port_mode
+-fi
+-
+ vndk="$(getprop persist.sys.vndk)"
+ [ -z "$vndk" ] && vndk="$(getprop ro.vndk.version |grep -oE '^[0-9]+')"
+ 
+@@ -1093,7 +1051,6 @@ if getprop ro.build.overlay.deviceid |grep -iq -e RMX2185 -e RMX1941 -e RMX1945
+     setprop persist.sys.overlay.devinputjack true
+ fi
+ 
+-resetprop_phh ro.bluetooth.library_name libbluetooth.so
+ 
+ board="$(getprop ro.board.platform)"
+ 
+@@ -1270,9 +1227,6 @@ if getprop ro.product.vendor.device | grep -q -e TECNO-LG8n; then
+     chown -R system:system /sys/class/leds/vibrator_single/
+ fi
+ 
+-# Override media volume steps
+-resetprop_phh ro.config.media_vol_steps 25
+-resetprop_phh ro.config.media_vol_default 8
+ 
+ # Force disable Sunlight Reading Mode to prevent weird color issues
+ if getprop ro.vendor.build.fingerprint | grep -iq -e xiaomi/renoir; then
+diff --git a/system.prop b/system.prop
+index ae895b6..41a0688 100644
+--- a/system.prop
++++ b/system.prop
+@@ -1,4 +1,3 @@
+-ro.adb.secure=0
+ #Some devices have sdcardfs kernel panicing on 8.0
+ #Disable for everyone for the moment
+ ro.sys.sdcardfs=0
+-- 
+2.55.0
+
