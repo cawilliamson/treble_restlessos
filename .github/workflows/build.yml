@@ -26,7 +26,7 @@ concurrency:
 jobs:
   deploy-infrastructure:
     name: Deploy Infrastructure
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     outputs:
       subnet_id_a: ${{ steps.tofu.outputs.subnet_id_a }}
       subnet_id_b: ${{ steps.tofu.outputs.subnet_id_b }}
@@ -167,7 +167,7 @@ jobs:
   start-build:
     name: Swap to Build Instance
     needs: [deploy-infrastructure, sync]
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     outputs:
       label: ${{ steps.label.outputs.label }}
       instance_id: ${{ steps.provision.outputs.instance_id }}
@@ -274,7 +274,7 @@ jobs:
   start-sign:
     name: Swap to Sign Instance
     needs: [deploy-infrastructure, start-build, build]
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     outputs:
       label: ${{ steps.label.outputs.label }}
       instance_id: ${{ steps.provision.outputs.instance_id }}
@@ -412,7 +412,7 @@ jobs:
   destroy-infrastructure:
     name: Destroy Infrastructure
     needs: [deploy-infrastructure, start-build, start-sign, build, sign]
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     if: always()
     steps:
       - name: Checkout repository
