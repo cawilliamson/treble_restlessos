@@ -1,0 +1,50 @@
+From f7c2331346f1e16df8df85a15ebaaa5bd6df9dc7 Mon Sep 17 00:00:00 2001
+From: "Christopher A. Williamson" <contact@chrisaw.io>
+Date: Sat, 26 Sep 2026 04:18:12 +0100
+Subject: [PATCH] DownloadProvider: don't trust stale uids for user-initiated
+ jobs
+
+Download rows migrated from an older database can have no uid recorded,
+and checkPermission grants every permission to uid 0. Scheduling a
+user-initiated job for such a row passes the client-side guard but the
+job scheduler rechecks against the real package, which fails for apps
+built before RUN_USER_INITIATED_JOBS existed, crashing
+android.process.media in a loop at boot.
+
+Reject a recorded uid of 0 or less, and verify the recorded uid still
+belongs to the package the job is scheduled for, so the guard falls back
+to the foreground-service bias path instead.
+---
+ src/com/android/providers/downloads/Helpers.java | 16 ++++++++++++++++
+ 1 file changed, 16 insertions(+)
+
+diff --git a/src/com/android/providers/downloads/Helpers.java b/src/com/android/providers/downloads/Helpers.java
+index aca9761..36f9c9f 100644
+--- a/src/com/android/providers/downloads/Helpers.java
++++ b/src/com/android/providers/downloads/Helpers.java
+@@ -254,6 +254,22 @@ public class Helpers {
+      */
+     @RequiresPermission(android.Manifest.permission.RUN_USER_INITIATED_JOBS)
+     private static boolean canCallerRunUserInitiatedJobs(Context context, DownloadInfo info) {
++        // Rows migrated from an older database can have no uid recorded, and
++        // checkPermission grants everything to uid 0, so a uid of 0 or less
++        // must never be trusted here
++        if (info.mUid <= 0) {
++            return false;
++        }
++        // The job scheduler resolves the package and rechecks the permission
++        // there, so the recorded uid must still belong to the package the job
++        // will be scheduled for
++        if (info.mPackage != null) {
++            final String[] uidPackages =
++                    context.getPackageManager().getPackagesForUid(info.mUid);
++            if (uidPackages == null || !Arrays.asList(uidPackages).contains(info.mPackage)) {
++                return false;
++            }
++        }
+         // Static manifest permission check to avoid security exception
+         if (context.checkPermission(android.Manifest.permission.RUN_USER_INITIATED_JOBS, -1,
+                 info.mUid) != PackageManager.PERMISSION_GRANTED) {
+-- 
+2.55.0
+
