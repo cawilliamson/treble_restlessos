@@ -1,7 +1,7 @@
 From a8d0d7ea2698e5b147aa526b0a8adbcf19d2bf1f Mon Sep 17 00:00:00 2001
 From: Pierre-Hugues Husson <phh@phh.me>
 Date: Mon, 16 Jun 2025 16:21:55 -0400
-Subject: [PATCH 9/15] Some additional handling of bpf-less device
+Subject: [PATCH 9/9] Some additional handling of bpf-less device
 
 Change-Id: I7360ef049fd57d0f27a4579719b7ec05bba971b0
 ---

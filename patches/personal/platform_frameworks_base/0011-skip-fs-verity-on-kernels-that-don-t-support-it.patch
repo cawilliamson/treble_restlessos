@@ -1,0 +1,112 @@
+From 3f5cbf49a72bc6d2db87c44376753d35eca8170b Mon Sep 17 00:00:00 2001
+From: "Christopher A. Williamson" <contact@chrisaw.io>
+Date: Thu, 26 Mar 2026 14:27:44 +0000
+Subject: [PATCH 11/20] skip fs-verity on kernels that don't support it
+
+on GSI builds the system partition is android 16 but the vendor kernel
+may predate fs-verity (added in 5.4).  isFsVeritySupported() only
+checked DEVICE_INITIAL_SDK_INT but not actual kernel support, causing
+INSTALL_FAILED_BAD_SIGNATURE when installing APKs with .idsig files
+and INSTALL_PARSE_FAILED_NO_CERTIFICATES when verifying v4 signatures
+on kernel 4.14/4.19 devices.
+
+add a /sys/fs/verity existence check to isFsVeritySupported() and
+guard the four unguarded fs-verity callsites:
+- PackageInstallerSession: enabling fs-verity on APKs with .idsig
+- InstallPackageHelper: checking fs-verity on system package updates
+- ApkSignatureSchemeV4Verifier: fs-verity consistency check during
+  v4 signature verification
+- PackageVerityExt: boot-time fs-verity check on system package
+  updates that was causing updates to be rolled back on every reboot
+---
+ .../java/android/util/apk/ApkSignatureSchemeV4Verifier.java | 4 +++-
+ core/java/com/android/internal/security/VerityUtils.java    | 6 +++++-
+ .../java/com/android/server/pm/InstallPackageHelper.java    | 5 ++++-
+ .../java/com/android/server/pm/PackageInstallerSession.java | 2 +-
+ .../core/java/com/android/server/pm/PackageVerityExt.java   | 2 +-
+ 5 files changed, 14 insertions(+), 5 deletions(-)
+
+diff --git a/core/java/android/util/apk/ApkSignatureSchemeV4Verifier.java b/core/java/android/util/apk/ApkSignatureSchemeV4Verifier.java
+index ac9ebe58e..a8b8beda0 100644
+--- a/core/java/android/util/apk/ApkSignatureSchemeV4Verifier.java
++++ b/core/java/android/util/apk/ApkSignatureSchemeV4Verifier.java
+@@ -92,7 +92,9 @@ public class ApkSignatureSchemeV4Verifier {
+                 // 2. Try fs-verity next. fs-verity checks against the Merkle tree, but the
+                 // v4 signature file (including a raw root hash) is managed separately. We need to
+                 // ensure the signed data from the file is consistent with the actual file.
+-                needsConsistencyCheck = true;
++                // on GSI builds with old kernels (< 5.4), fs-verity is not available --
++                // skip the consistency check rather than failing the install.
++                needsConsistencyCheck = VerityUtils.isFsVeritySupported();
+ 
+                 final File idsig = new File(apk.getAbsolutePath() + V4Signature.EXT);
+                 try (var fis = new FileInputStream(idsig.getAbsolutePath())) {
+diff --git a/core/java/com/android/internal/security/VerityUtils.java b/core/java/com/android/internal/security/VerityUtils.java
+index ac186d0a2..ff818b01f 100644
+--- a/core/java/com/android/internal/security/VerityUtils.java
++++ b/core/java/com/android/internal/security/VerityUtils.java
+@@ -56,7 +56,11 @@ public abstract class VerityUtils {
+     private static final int HASH_SIZE_BYTES = 32;
+ 
+     public static boolean isFsVeritySupported() {
+-        return Build.VERSION.DEVICE_INITIAL_SDK_INT >= Build.VERSION_CODES.R;
++        // on GSI builds the system partition is modern but the vendor kernel may
++        // predate fs-verity (added in 5.4).  check both the SDK level and whether
++        // the kernel actually has CONFIG_FS_VERITY enabled.
++        return Build.VERSION.DEVICE_INITIAL_SDK_INT >= Build.VERSION_CODES.R
++                && new java.io.File("/sys/fs/verity").exists();
+     }
+ 
+     /** Enables fs-verity for the file without signature. */
+diff --git a/services/core/java/com/android/server/pm/InstallPackageHelper.java b/services/core/java/com/android/server/pm/InstallPackageHelper.java
+index 00abc017c..38e4f9595 100644
+--- a/services/core/java/com/android/server/pm/InstallPackageHelper.java
++++ b/services/core/java/com/android/server/pm/InstallPackageHelper.java
+@@ -173,6 +173,7 @@ import com.android.internal.pm.pkg.component.ParsedIntentInfo;
+ import com.android.internal.pm.pkg.component.ParsedPermission;
+ import com.android.internal.pm.pkg.component.ParsedPermissionGroup;
+ import com.android.internal.pm.pkg.parsing.ParsingPackageUtils;
++import com.android.internal.security.VerityUtils;
+ import com.android.internal.util.ArrayUtils;
+ import com.android.internal.util.CollectionUtils;
+ import com.android.server.EventLogTags;
+@@ -2016,7 +2017,9 @@ final class InstallPackageHelper {
+             // this is an update to a system package
+ 
+             try {
+-                PackageVerityExt.checkFsVerity(parsedPackage);
++                if (VerityUtils.isFsVeritySupported()) {
++                    PackageVerityExt.checkFsVerity(parsedPackage);
++                }
+             } catch (PackageManagerException e) {
+                 String message = "fs-verity not set up for system package update " + e;
+                 boolean abortInstall = true;
+diff --git a/services/core/java/com/android/server/pm/PackageInstallerSession.java b/services/core/java/com/android/server/pm/PackageInstallerSession.java
+index 36adc149c..822054250 100644
+--- a/services/core/java/com/android/server/pm/PackageInstallerSession.java
++++ b/services/core/java/com/android/server/pm/PackageInstallerSession.java
+@@ -4506,7 +4506,7 @@ public class PackageInstallerSession extends IPackageInstallerSession.Stub {
+ 
+         // Needs to happen before the first v4 signature verification, which happens in
+         // getAddedApkLitesLocked.
+-        if (!isIncrementalInstallation()) {
++        if (!isIncrementalInstallation() && VerityUtils.isFsVeritySupported()) {
+             enableFsVerityToAddedApksWithIdsig();
+         }
+ 
+diff --git a/services/core/java/com/android/server/pm/PackageVerityExt.java b/services/core/java/com/android/server/pm/PackageVerityExt.java
+index 83972db25..e16de1dca 100644
+--- a/services/core/java/com/android/server/pm/PackageVerityExt.java
++++ b/services/core/java/com/android/server/pm/PackageVerityExt.java
+@@ -133,7 +133,7 @@ public class PackageVerityExt {
+             }
+         }
+ 
+-        if (checkFsVerity) {
++        if (checkFsVerity && VerityUtils.isFsVeritySupported()) {
+             checkFsVerity(systemPkgUpdate);
+         }
+ 
+-- 
+2.53.0
+

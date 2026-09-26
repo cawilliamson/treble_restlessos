@@ -1,7 +1,7 @@
 From e3d473da238397ecde7809f5852d6ecfad405754 Mon Sep 17 00:00:00 2001
 From: Pierre-Hugues Husson <phh@phh.me>
 Date: Wed, 26 Oct 2022 18:13:56 -0400
-Subject: [PATCH 4/6] Don't abort in case of cgroup/bpf setup fail, since some
+Subject: [PATCH 4/4] Don't abort in case of cgroup/bpf setup fail, since some
  devices dont have BPF
 
 ---

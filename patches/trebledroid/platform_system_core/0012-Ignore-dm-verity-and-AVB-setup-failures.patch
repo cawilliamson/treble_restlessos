@@ -1,7 +1,7 @@
 From 7069ebe949c512a889756526086b0fa64daf6b2e Mon Sep 17 00:00:00 2001
 From: "Christopher A. Williamson" <contact@chrisaw.io>
 Date: Fri, 25 Sep 2026 18:18:55 +0100
-Subject: [PATCH 12/25] Ignore dm-verity and AVB setup failures
+Subject: [PATCH 12/17] Ignore dm-verity and AVB setup failures
 
 On Amlogic STB Android 9 vendors no boot device is set up (fstab uses
 direct mappings rather than /dev/block/by-name), so libavb cannot read

@@ -1,0 +1,107 @@
+From d794eb6bef9348fb297ceac4a6065d9f85313c62 Mon Sep 17 00:00:00 2001
+From: "Christopher A. Williamson" <contact@chrisaw.io>
+Date: Tue, 22 Sep 2026 16:58:48 +0100
+Subject: [PATCH 36/36] init rc files: declare user root for services defaulting to
+ root
+
+host_init_verifier on newer Android treats a service without an
+explicit user as a build error when it would run as root. declare
+user root on the phh services that intentionally run as root.
+---
+ cmds/evgrab.rc             | 1 +
+ cmds/oplus-alert-slider.rc | 1 +
+ files/adbd.rc              | 1 +
+ ota/phh-ota.rc             | 1 +
+ remote/phh-remotectl.rc    | 1 +
+ su/su.rc                   | 1 +
+ vndk.rc                    | 3 +++
+ 7 files changed, 9 insertions(+)
+
+diff --git a/cmds/evgrab.rc b/cmds/evgrab.rc
+index adf0ff4..67f3494 100644
+--- a/cmds/evgrab.rc
++++ b/cmds/evgrab.rc
+@@ -2,6 +2,7 @@ on property:sys.boot_completed=1
+     start phh_evgrab
+ 
+ service phh_evgrab /system/bin/evgrab
++    user root
+     seclabel u:r:phhsu_daemon:s0
+     disabled
+     oneshot
+diff --git a/cmds/oplus-alert-slider.rc b/cmds/oplus-alert-slider.rc
+index e895b5a..5476af4 100644
+--- a/cmds/oplus-alert-slider.rc
++++ b/cmds/oplus-alert-slider.rc
+@@ -1,4 +1,5 @@
+ service phhoplus-alert-slider /system/bin/oplus-alert-slider
++    user root
+     seclabel u:r:phhsu_daemon:s0
+     oneshot
+     class main
+diff --git a/files/adbd.rc b/files/adbd.rc
+index 55b3311..de17682 100644
+--- a/files/adbd.rc
++++ b/files/adbd.rc
+@@ -1,4 +1,5 @@
+ service adbd_system /system/bin/adbd --root_seclabel=u:r:su:s0
++	user root
+ 	class core
+ 	socket adbd stream 660 system system
+ 	disabled
+diff --git a/ota/phh-ota.rc b/ota/phh-ota.rc
+index c6c5814..b92cbe6 100644
+--- a/ota/phh-ota.rc
++++ b/ota/phh-ota.rc
+@@ -1,4 +1,5 @@
+ service phh-ota-make /system/bin/phh-ota new-slot
++	user root
+ 	seclabel u:r:phhsu_daemon:s0
+ 	disabled
+ 	oneshot
+diff --git a/remote/phh-remotectl.rc b/remote/phh-remotectl.rc
+index 3e7aec1..0cb7c96 100644
+--- a/remote/phh-remotectl.rc
++++ b/remote/phh-remotectl.rc
+@@ -10,4 +10,5 @@ on property:persist.sys.phh.remote=false
+ 
+ 
+ service phh-remotectl /system/bin/phh-remotectl.sh
++   user root
+    seclabel u:r:phhsu_daemon:s0
+diff --git a/su/su.rc b/su/su.rc
+index 935bdde..70d76ea 100644
+--- a/su/su.rc
++++ b/su/su.rc
+@@ -1,2 +1,3 @@
+ service sudaemon /system/bin/phh-su --daemon
++    user root
+     class main
+diff --git a/vndk.rc b/vndk.rc
+index f3c7182..0e0a14a 100644
+--- a/vndk.rc
++++ b/vndk.rc
+@@ -13,10 +13,12 @@ on early-boot
+     exec - root -- /system/bin/phh-on-data.sh
+ 
+ service phh_on_boot /system/bin/phh-on-boot.sh
++    user root
+     oneshot
+     disabled
+ 
+ service power_mode_monitor /system/bin/power-mode-monitor.sh
++    user root
+     oneshot
+     disabled
+     seclabel u:r:phhsu_daemon:s0
+@@ -131,6 +133,7 @@ on property:persist.sys.phh.dynamic_fps=*
+ 
+ # Set watchdog timer to 30 seconds and pet it every 10 seconds to get a 20 second margin
+ service watchdogd-gsi /system/bin/watchdogd 10 20
++    user root
+     class core
+     oneshot
+     disabled
+-- 
+2.55.0
+

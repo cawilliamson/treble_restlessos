@@ -1,7 +1,7 @@
 From cd1aff46e5a863e8e891b29008bf7e0c5757290e Mon Sep 17 00:00:00 2001
 From: DerTeufel <dominik-kassel@gmx.de>
 Date: Wed, 4 Jan 2023 21:39:37 +0100
-Subject: [PATCH 2/10] Don't crash on status:UNSUPPORTED_REMOTE_OR_LMP_FEATURE
+Subject: [PATCH 2/8] Don't crash on status:UNSUPPORTED_REMOTE_OR_LMP_FEATURE
 
 especially 'opcode:0x811 (SNIFF_SUBRATING)' which is the only one I had observed
 

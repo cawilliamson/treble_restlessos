@@ -1,7 +1,7 @@
 From 284192d850aad10f4a79972e28e19cc941b68786 Mon Sep 17 00:00:00 2001
 From: mytja <mitja@severkar.eu>
 Date: Sun, 30 Mar 2025 17:38:53 +0200
-Subject: [PATCH 11/13] Allow for SMSC patching to be configurable
+Subject: [PATCH 11/11] Allow for SMSC patching to be configurable
 
 This is required on my Samsung Galaxy A53 to be able to send messages.
 ---

@@ -1,7 +1,7 @@
 From f66c538d4d34857e54c516f4b9c3499bb40e6435 Mon Sep 17 00:00:00 2001
 From: Pierre-Hugues Husson <phh@phh.me>
 Date: Tue, 30 May 2023 17:34:03 -0400
-Subject: [PATCH 7/10] Add a property to cap declared le vendor version. Found
+Subject: [PATCH 7/8] Add a property to cap declared le vendor version. Found
  needed on unisoc
 
 ---

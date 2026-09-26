@@ -1,7 +1,7 @@
 From 256b81900b3b53b8a2f1f4fc5a450731b4aaa799 Mon Sep 17 00:00:00 2001
 From: Pierre-Hugues Husson <phh@phh.me>
 Date: Sun, 14 Nov 2021 13:47:29 -0500
-Subject: [PATCH 1/2] Pie MTK IMS calls static
+Subject: [PATCH] Pie MTK IMS calls static
  ImsManager.updateImsServiceConfig(Context,int,boolean). Bring it back
 
 Change-Id: I3dd66d436629d37c8ec795df6569736195ae570e

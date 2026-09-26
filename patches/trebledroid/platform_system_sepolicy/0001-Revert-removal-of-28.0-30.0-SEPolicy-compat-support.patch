@@ -1,7 +1,7 @@
 From cc8d671cf86fe9add3b8757028d6ea20642b347f Mon Sep 17 00:00:00 2001
 From: "Christopher A. Williamson" <contact@chrisaw.io>
 Date: Fri, 25 Sep 2026 18:20:49 +0100
-Subject: [PATCH 1/4] Revert removal of 28.0-30.0 SEPolicy compat support
+Subject: [PATCH 1/2] Revert removal of 28.0-30.0 SEPolicy compat support
 
 Restore the SEPolicy compat directories and prebuilts for API 28.0,
 29.0 and 30.0 that upstream removed. GSIs must still build against

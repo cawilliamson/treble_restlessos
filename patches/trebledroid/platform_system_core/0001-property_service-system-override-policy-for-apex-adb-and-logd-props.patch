@@ -1,7 +1,7 @@
 From f2c304794db29a62cd8c9a35ac9ea94bf4a787ef Mon Sep 17 00:00:00 2001
 From: "Christopher A. Williamson" <contact@chrisaw.io>
 Date: Fri, 25 Sep 2026 18:18:55 +0100
-Subject: [PATCH 1/25] property_service: system override policy for apex, adb and
+Subject: [PATCH 1/17] property_service: system override policy for apex, adb and
  logd props
 
 Several props must keep their system-provided values even when the

@@ -1,0 +1,76 @@
+From b3692247f48c9cf19495990451da4bd814fd2a1f Mon Sep 17 00:00:00 2001
+From: "Christopher A. Williamson" <contact@chrisaw.io>
+Date: Fri, 25 Sep 2026 18:25:53 +0100
+Subject: [PATCH 9/36] sepolicy: samsung device compatibility allow rules
+
+several samsung vendor daemons need allow rules the GSI policy does
+not provide:
+
+- hal_sec_inputdev_default (the vendor touch input HAL daemon on some
+  samsung MTK devices, e.g. galaxy A14) was denied access to
+  system_prop, preventing initialisation; without it touch stops
+  working after waking from sleep because the HAL can't track display
+  state changes.
+- system_server must be able to access samsung touch sysfs on wake:
+  when the samsung sysinput HAL is missing from the VINTF manifest
+  (common on budget exynos devices like the A15/exynos 850), the
+  framework falls back to writing 'check_connection' to
+  /sys/class/sec/tsp/cmd and reading cmd_result, plus re-enabling
+  /sys/class/sec/tsp/input/enabled. rw-system.sh already relabels
+  these nodes to sysfs_ss_writable and chowns them to system;
+  system_server needs explicit read/write allow rules. the
+  sysfs_ss_writable type is defined in system policy (samsung vendor
+  policy also defines it; the merged policy handles both).
+- qseecomd must access gatekeeper data on samsung devices.
+- the samsung USB HAL must read system properties.
+
+Combines the former 'allow samsung touch input HAL to read system
+properties', 'allow qseecomd to access gatekeeper data on samsung',
+'allow USB HAL to read system properties on samsung' and 'allow
+system_server to write samsung touch sysfs on wake' patches, which all
+extend sepolicy/samsung.te.
+---
+ sepolicy/samsung.te | 27 +++++++++++++++++++++++++++
+ 1 file changed, 27 insertions(+)
+
+diff --git a/sepolicy/samsung.te b/sepolicy/samsung.te
+index 7dee392..9446fad 100644
+--- a/sepolicy/samsung.te
++++ b/sepolicy/samsung.te
+@@ -4,6 +4,33 @@ set_prop(system_server, boot_prop);
+ 
+ type hal_graphics_composer_default, domain;
+ 
++# allow samsung touch input HAL to read system properties
++# (without this, touch stops working after wake on some samsung devices)
++type hal_sec_inputdev_default, domain;
++allow hal_sec_inputdev_default system_prop:file { getattr map open read };
++
++# allow system_server to access samsung touch sysfs for the
++# check_connection fallback when the sysinput HAL is missing.
++# rw-system.sh relabels /sys/class/sec/tsp/{cmd,cmd_result,input/enabled}
++# to this type.
++type sysfs_ss_writable, file_type, sysfs_type;
++allow system_server sysfs_ss_writable:file { getattr open read write };
++
++# allow USB HAL to read system properties on samsung exynos devices
++# (the coral USB HAL used by TrebleDroid is denied access to system_prop,
++# which breaks USB port role switching on devices like the galaxy M33)
++type hal_usb_default, domain;
++allow hal_usb_default system_prop:file { getattr map open read };
++
++# allow qseecomd (tee) to access gatekeeper secure storage on /data
++# (without this, PIN/password verification fails with error -506 because
++# the gatekeeper HAL cannot load or save its brute-force throttling records)
++# aosp declares gatekeeper_vendor_data_file in the vendor bucket, which
++# system_ext policy cannot reference, so declare it here as well
++type gatekeeper_vendor_data_file, file_type, data_file_type;
++allow tee gatekeeper_vendor_data_file:dir { add_name open read remove_name search write };
++allow tee gatekeeper_vendor_data_file:file { create getattr open read setattr unlink write };
++
+ type sf_hs_mode_prop, property_type;
+ 
+ get_prop(hal_graphics_composer_default, sf_hs_mode_prop);
+-- 
+2.55.0
+

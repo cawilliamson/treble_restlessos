@@ -1,7 +1,7 @@
 From ec748123d4a47120c02e9c28ba3e679b5c502681 Mon Sep 17 00:00:00 2001
 From: Peter Cai <peter@typeblog.net>
 Date: Wed, 24 Aug 2022 15:45:18 -0400
-Subject: [PATCH 1/10] audio_hal_interface: Optionally use sysbta HAL
+Subject: [PATCH 1/8] audio_hal_interface: Optionally use sysbta HAL
 
 Required to support sysbta, our system-side bt audio implementation.
 

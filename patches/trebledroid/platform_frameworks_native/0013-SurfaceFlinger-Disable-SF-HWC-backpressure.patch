@@ -1,7 +1,7 @@
 From b2b61de50812698a93009fa6913bb1df4fbb7493 Mon Sep 17 00:00:00 2001
 From: Andy CrossGate Yan <GeForce8800Ultra@gmail.com>
 Date: Sun, 26 May 2024 21:34:17 +0800
-Subject: [PATCH 13/22] SurfaceFlinger: Disable SF HWC backpressure
+Subject: [PATCH 13/16] SurfaceFlinger: Disable SF HWC backpressure
 
 ---
  services/surfaceflinger/SurfaceFlinger.cpp | 3 ++-

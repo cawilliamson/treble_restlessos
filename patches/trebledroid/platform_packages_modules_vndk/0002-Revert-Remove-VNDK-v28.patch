@@ -1,7 +1,7 @@
 From aaefe6673b4b2ffa27fdbf4bfe287c5e43f27825 Mon Sep 17 00:00:00 2001
 From: Alberto Ponces <ponces26@gmail.com>
 Date: Tue, 25 Mar 2025 22:45:30 +0000
-Subject: [PATCH 2/3] Revert "Remove VNDK v28"
+Subject: [PATCH 2/2] Revert "Remove VNDK v28"
 
 This reverts commit 2c33d53b0d14c9654b361942a916dfe7ed3739db.
 ---

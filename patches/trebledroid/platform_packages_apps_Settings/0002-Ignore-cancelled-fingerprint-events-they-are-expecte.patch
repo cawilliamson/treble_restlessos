@@ -1,7 +1,7 @@
 From 1de2f3f0f20e6d36328b7807fc6e189858e8ccb6 Mon Sep 17 00:00:00 2001
 From: Pierre-Hugues Husson <phh@phh.me>
 Date: Mon, 2 May 2022 17:44:28 -0400
-Subject: [PATCH 2/5] Ignore cancelled fingerprint events, they are expected,
+Subject: [PATCH 2/4] Ignore cancelled fingerprint events, they are expected,
  plus add more fingerprint enroll logs
 
 ---

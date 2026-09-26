@@ -1,7 +1,7 @@
 From 7d1bcdcceee6ed05b2f8032740a7b263821a8959 Mon Sep 17 00:00:00 2001
 From: "Christopher A. Williamson" <contact@chrisaw.io>
 Date: Thu, 26 Feb 2026 11:23:00 +0000
-Subject: [PATCH] Add Unihertz 8849 hardware controls
+Subject: [PATCH 1/12] Add Unihertz 8849 hardware controls
 
 ---
  ....mediatek.hardware.agolddaemon-V1-java.jar | Bin 14002 -> 10882 bytes

@@ -1,7 +1,7 @@
 From 1e5e63c4bde09c8218201613ea54609c7f1a7b72 Mon Sep 17 00:00:00 2001
 From: Andy CrossGate Yan <GeForce8800Ultra@gmail.com>
 Date: Sun, 7 Jul 2024 21:55:42 +0800
-Subject: [PATCH 49/72] Allow APKs of a certain signature to install/work like
+Subject: [PATCH 49/53] Allow APKs of a certain signature to install/work like
  platform-signed
 
 Intended usecase - one authoritative set of signed IMS APKs for any GSI, regardless of their signature

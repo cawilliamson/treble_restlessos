@@ -1,7 +1,7 @@
 From ba30268104651c9b0074292da62f624a8b708f4a Mon Sep 17 00:00:00 2001
 From: Pierre-Hugues Husson <phh@phh.me>
 Date: Wed, 8 May 2024 11:55:07 -0400
-Subject: [PATCH 48/72] Add a prop to disable animation in for sysui media
+Subject: [PATCH 48/53] Add a prop to disable animation in for sysui media
  carousel
 
 Change-Id: Iad4e5b0ac53ce1a1e35e85e3d68e2a5c70ebb7f3

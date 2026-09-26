@@ -1,7 +1,7 @@
 From 033f995cc942038dddf48ca4b7f7c7e80286b4db Mon Sep 17 00:00:00 2001
 From: "Christopher A. Williamson" <contact@chrisaw.io>
 Date: Wed, 4 Mar 2026 23:40:29 +0000
-Subject: [PATCH 2/2] Replace Google DNS IP in IPv4 connectivity probe
+Subject: [PATCH 2/3] Replace Google DNS IP in IPv4 connectivity probe
 
 The IPv4 connectivity check in getaddrinfo uses 8.8.8.8 (Google DNS)
 as a routable destination to determine the local source address. No

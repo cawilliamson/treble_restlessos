@@ -1,7 +1,7 @@
 From 07e110ff146cff3a16bc28f2708a0d38a8b5efe9 Mon Sep 17 00:00:00 2001
 From: "Christopher A. Williamson" <contact@chrisaw.io>
 Date: Wed, 20 May 2026 09:04:51 +0100
-Subject: [PATCH 3/3] Settings: remove View Logs option and dead controller code
+Subject: [PATCH 3/4] Settings: remove View Logs option and dead controller code
 
 The log viewer apk has been removed from the build, so the View Logs
 preference in the System dashboard and per-app info screen crashes on

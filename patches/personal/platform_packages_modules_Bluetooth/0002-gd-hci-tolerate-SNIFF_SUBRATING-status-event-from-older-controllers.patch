@@ -1,0 +1,46 @@
+From 92f0e99b597ad8590abf49c7e370800c0027a6dd Mon Sep 17 00:00:00 2001
+From: "Christopher A. Williamson" <contact@chrisaw.io>
+Date: Sun, 14 Jun 2026 17:22:18 +0100
+Subject: [PATCH 2/2] gd: hci: tolerate SNIFF_SUBRATING status event from older
+ controllers
+
+Some older Bluetooth controllers (notably MediaTek) respond to the
+SNIFF_SUBRATING command with a command-status event even though Android
+expects a command-complete event. Without this tolerance the gd stack
+aborts in hci_layer::handle_command_response, killing com.android.bluetooth
+and breaking A2DP audio streaming on affected devices.
+
+Treat an unexpected SNIFF_SUBRATING status the same way as an unknown
+vendor command: synthesise an empty command-complete event so the caller
+can handle the unsupported response gracefully.
+
+Fixes: #96
+---
+ system/gd/hci/hci_layer.cc | 7 ++++++-
+ 1 file changed, 6 insertions(+), 1 deletion(-)
+
+diff --git a/system/gd/hci/hci_layer.cc b/system/gd/hci/hci_layer.cc
+index ee3b791..52d6d23 100644
+--- a/system/gd/hci/hci_layer.cc
++++ b/system/gd/hci/hci_layer.cc
+@@ -258,11 +258,16 @@ struct HciLayer::impl {
+     if ((is_vendor_specific && (is_status && waiting_for == WaitingFor::COMPLETE) &&
+         (status_view.IsValid() && status_view.GetStatus() == ErrorCode::UNKNOWN_HCI_COMMAND)) ||
+         ((is_status && waiting_for == WaitingFor::COMPLETE) &&
+-        (status_view.IsValid() && status_view.GetStatus() == ErrorCode::UNSUPPORTED_REMOTE_OR_LMP_FEATURE))) {
++        (status_view.IsValid() && status_view.GetStatus() == ErrorCode::UNSUPPORTED_REMOTE_OR_LMP_FEATURE)) ||
++        (op_code == OpCode::SNIFF_SUBRATING && is_status && waiting_for == WaitingFor::COMPLETE)) {
+       // If this is a command status of a vendor specific command, and command complete is expected,
+       // we can't treat this as hard failure since we have no way of probing this lack of support at
+       // earlier time. Instead we let the command complete handler handle a empty Command Complete
+       // packet, which will be interpreted as invalid response.
++      //
++      // Some older controllers (e.g. MediaTek) answer the SNIFF_SUBRATING command with a status
++      // event when a command complete is expected. Treat that the same way to avoid aborting the
++      // Bluetooth stack during audio streaming.
+ 
+       auto payload = std::make_unique<packet::RawBuilder>();
+       payload->AddOctets1(static_cast<uint8_t>(status_view.GetStatus()));
+-- 
+2.54.0
+

@@ -1,7 +1,7 @@
 From 422ee042ffcc06176e91d36b88c60d3f5cbfd788 Mon Sep 17 00:00:00 2001
 From: Pierre-Hugues Husson <phh@phh.me>
 Date: Mon, 16 Jun 2025 16:24:19 -0400
-Subject: [PATCH 2/3] Prepare for the future: making bpfloader.rs fails all
+Subject: [PATCH 2/2] Prepare for the future: making bpfloader.rs fails all
  non-panic
 
 Change-Id: I79d413dc4b7626e2a196317e4e58572f61863a30
