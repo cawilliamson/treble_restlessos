@@ -1,7 +1,7 @@
 From 06b3e3d20319d796308b4253de87d81e3ff8dad6 Mon Sep 17 00:00:00 2001
 From: "Christopher A. Williamson" <contact@chrisaw.io>
 Date: Sun, 21 Jun 2026 21:50:07 +0100
-Subject: [PATCH 19/20] trebledroid-staging: skip fake hw-keyboard in DisplayContent
+Subject: [PATCH 19/20] skip fake hw-keyboard in DisplayContent
  config
 
 DisplayContent.computeConfiguration sets Configuration.keyboard=KEYBOARD_QWERTY

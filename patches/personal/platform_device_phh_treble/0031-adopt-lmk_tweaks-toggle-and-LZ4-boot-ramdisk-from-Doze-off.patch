@@ -1,7 +1,7 @@
 From a7d08f54c06a42a9ac5a51923cb27ff23a5209c5 Mon Sep 17 00:00:00 2001
 From: Doze-off <viniciussadxxx@gmail.com>
 Date: Sun, 21 Jun 2026 21:29:59 +0100
-Subject: [PATCH 31/36] trebledroid-staging: adopt lmk_tweaks toggle and LZ4 boot
+Subject: [PATCH 31/36] adopt lmk_tweaks toggle and LZ4 boot
  ramdisk from Doze-off
 
 two small tweaks adopted from Doze-off's device_phh_treble fork, combined
@@ -71,7 +71,7 @@ index eb22c4d..cbd3005 100644
 +        resetprop_phh ro.config.max_starting_bg 8
 +    else
 +        # off: remove the overrides so the GSI's system.prop lmkd defaults
-+        # (trebledroid-staging 0014) apply again.
++        # apply again.
 +        resetprop_phh --delete ro.lmk.use_minfree_levels
 +        resetprop_phh --delete ro.lmk.kill_timeout_ms
 +        resetprop_phh --delete ro.lmk.low

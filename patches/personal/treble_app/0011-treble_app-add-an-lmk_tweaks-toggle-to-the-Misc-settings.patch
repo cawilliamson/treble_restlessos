@@ -5,7 +5,7 @@ Subject: [PATCH 11/12] treble_app: add an lmk_tweaks toggle to the Misc settings
 
 add a "Aggressive memory management (lmk tweaks)" switch to the Misc
 settings screen that sets persist.sys.phh.lmk_tweaks, wiring the
-device_phh_treble lmk_tweaks prop-handler (trebledroid-staging 0032) to a
+device_phh_treble lmk_tweaks prop-handler to a
 user-facing toggle instead of requiring `setprop` from adb.
 
 off by default; when enabled the handler applies the aggressive lmkd +
