@@ -1,0 +1,365 @@
+From f66aa39ee791fcae5fcb3ce5aa128f4f7f6502f4 Mon Sep 17 00:00:00 2001
+From: Langsdorff <131063968+clangsdorff@users.noreply.github.com>
+Date: Sat, 3 Oct 2026 02:20:24 +0300
+Subject: [PATCH 32/32] overlays: add a gestural navigation mode overlay without the
+ gesture handle
+
+---
+ ...reinstalled-packages-platform-overlays.xml |  6 ++
+ packages/overlays/Android.bp                  |  2 +
+ .../Android.bp                                |  8 +++
+ .../AndroidManifest.xml                       |  9 +++
+ .../res/values/dimens.xml                     |  4 ++
+ .../Android.bp                                | 30 +++++++++
+ .../AndroidManifest.xml                       | 27 ++++++++
+ .../res/values-land/dimens.xml                | 22 +++++++
+ .../res/values-sw600dp/config.xml             | 22 +++++++
+ .../res/values/config.xml                     | 62 +++++++++++++++++++
+ .../res/values/dimens.xml                     | 32 ++++++++++
+ .../res/values/strings.xml                    | 22 +++++++
+ 12 files changed, 246 insertions(+)
+ create mode 100644 packages/overlays/NavigationBarModeGesturalNoHandleLauncherOverlay/Android.bp
+ create mode 100644 packages/overlays/NavigationBarModeGesturalNoHandleLauncherOverlay/AndroidManifest.xml
+ create mode 100644 packages/overlays/NavigationBarModeGesturalNoHandleLauncherOverlay/res/values/dimens.xml
+ create mode 100644 packages/overlays/NavigationBarModeGesturalNoHandleOverlay/Android.bp
+ create mode 100644 packages/overlays/NavigationBarModeGesturalNoHandleOverlay/AndroidManifest.xml
+ create mode 100644 packages/overlays/NavigationBarModeGesturalNoHandleOverlay/res/values-land/dimens.xml
+ create mode 100644 packages/overlays/NavigationBarModeGesturalNoHandleOverlay/res/values-sw600dp/config.xml
+ create mode 100644 packages/overlays/NavigationBarModeGesturalNoHandleOverlay/res/values/config.xml
+ create mode 100644 packages/overlays/NavigationBarModeGesturalNoHandleOverlay/res/values/dimens.xml
+ create mode 100644 packages/overlays/NavigationBarModeGesturalNoHandleOverlay/res/values/strings.xml
+
+diff --git a/data/etc/preinstalled-packages-platform-overlays.xml b/data/etc/preinstalled-packages-platform-overlays.xml
+index 80ddfeb2..baa8de27 100644
+--- a/data/etc/preinstalled-packages-platform-overlays.xml
++++ b/data/etc/preinstalled-packages-platform-overlays.xml
+@@ -41,6 +41,12 @@
+     <install-in-user-type package="com.android.internal.systemui.navbar.gestural">
+         <install-in user-type="FULL" />
+     </install-in-user-type>
++    <install-in-user-type package="com.android.internal.systemui.navbar.gestural_nohandle">
++        <install-in user-type="FULL" />
++    </install-in-user-type>
++    <install-in-user-type package="com.android.internal.systemui.navbar.gestural_nohandle.launcher">
++        <install-in user-type="FULL" />
++    </install-in-user-type>
+     <install-in-user-type package="com.android.internal.systemui.navbar.gestural_extra_wide_back">
+         <install-in user-type="FULL" />
+     </install-in-user-type>
+diff --git a/packages/overlays/Android.bp b/packages/overlays/Android.bp
+index 928011ed..f0aeb3cb 100644
+--- a/packages/overlays/Android.bp
++++ b/packages/overlays/Android.bp
+@@ -34,6 +34,8 @@ phony {
+         "FontNotoSerifSourceOverlay",
+         "NavigationBarMode3ButtonOverlay",
+         "NavigationBarModeGesturalOverlay",
++        "NavigationBarModeGesturalNoHandleOverlay",
++        "NavigationBarModeGesturalNoHandleLauncherOverlay",
+         "NoCutoutOverlay",
+         "TransparentNavigationBarOverlay",
+         "NotesRoleEnabledOverlay",
+diff --git a/packages/overlays/NavigationBarModeGesturalNoHandleLauncherOverlay/Android.bp b/packages/overlays/NavigationBarModeGesturalNoHandleLauncherOverlay/Android.bp
+new file mode 100644
+index 00000000..aa23184c
+--- /dev/null
++++ b/packages/overlays/NavigationBarModeGesturalNoHandleLauncherOverlay/Android.bp
+@@ -0,0 +1,8 @@
++package {
++    default_applicable_licenses: ["frameworks_base_license"],
++}
++
++runtime_resource_overlay {
++    name: "NavigationBarModeGesturalNoHandleLauncherOverlay",
++    product_specific: true,
++}
+diff --git a/packages/overlays/NavigationBarModeGesturalNoHandleLauncherOverlay/AndroidManifest.xml b/packages/overlays/NavigationBarModeGesturalNoHandleLauncherOverlay/AndroidManifest.xml
+new file mode 100644
+index 00000000..45bc61e4
+--- /dev/null
++++ b/packages/overlays/NavigationBarModeGesturalNoHandleLauncherOverlay/AndroidManifest.xml
+@@ -0,0 +1,9 @@
++<manifest xmlns:android="http://schemas.android.com/apk/res/android"
++        package="com.android.internal.systemui.navbar.gestural_nohandle.launcher"
++        android:versionCode="1"
++        android:versionName="1.0">
++    <overlay android:targetPackage="com.android.launcher3"
++        android:priority="1"/>
++
++    <application android:hasCode="false"/>
++</manifest>
+diff --git a/packages/overlays/NavigationBarModeGesturalNoHandleLauncherOverlay/res/values/dimens.xml b/packages/overlays/NavigationBarModeGesturalNoHandleLauncherOverlay/res/values/dimens.xml
+new file mode 100644
+index 00000000..e467b4a9
+--- /dev/null
++++ b/packages/overlays/NavigationBarModeGesturalNoHandleLauncherOverlay/res/values/dimens.xml
+@@ -0,0 +1,4 @@
++<?xml version="1.0" encoding="utf-8"?>
++<resources>
++    <dimen name="taskbar_stashed_handle_height">0dp</dimen>
++</resources>
+diff --git a/packages/overlays/NavigationBarModeGesturalNoHandleOverlay/Android.bp b/packages/overlays/NavigationBarModeGesturalNoHandleOverlay/Android.bp
+new file mode 100644
+index 00000000..db8214a1
+--- /dev/null
++++ b/packages/overlays/NavigationBarModeGesturalNoHandleOverlay/Android.bp
+@@ -0,0 +1,30 @@
++//
++//  Copyright 2018, The Android Open Source Project
++//
++// Licensed under the Apache License, Version 2.0 (the "License");
++// you may not use this file except in compliance with the License.
++// You may obtain a copy of the License at
++//
++//     http://www.apache.org/licenses/LICENSE-2.0
++//
++// Unless required by applicable law or agreed to in writing, software
++// distributed under the License is distributed on an "AS IS" BASIS,
++// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
++// See the License for the specific language governing permissions and
++// limitations under the License.
++//
++
++package {
++    // See: http://go/android-license-faq
++    // A large-scale-change added 'default_applicable_licenses' to import
++    // all of the 'license_kinds' from "frameworks_base_license"
++    // to get the below license kinds:
++    //   SPDX-license-identifier-Apache-2.0
++    default_applicable_licenses: ["frameworks_base_license"],
++}
++
++runtime_resource_overlay {
++    name: "NavigationBarModeGesturalNoHandleOverlay",
++    theme: "NavigationBarModeGesturalNoHandle",
++    product_specific: true,
++}
+diff --git a/packages/overlays/NavigationBarModeGesturalNoHandleOverlay/AndroidManifest.xml b/packages/overlays/NavigationBarModeGesturalNoHandleOverlay/AndroidManifest.xml
+new file mode 100644
+index 00000000..99f3ae8e
+--- /dev/null
++++ b/packages/overlays/NavigationBarModeGesturalNoHandleOverlay/AndroidManifest.xml
+@@ -0,0 +1,27 @@
++<!--
++/**
++ * Copyright (c) 2018, The Android Open Source Project
++ *
++ * Licensed under the Apache License, Version 2.0 (the "License");
++ * you may not use this file except in compliance with the License.
++ * You may obtain a copy of the License at
++ *
++ *     http://www.apache.org/licenses/LICENSE-2.0
++ *
++ * Unless required by applicable law or agreed to in writing, software
++ * distributed under the License is distributed on an "AS IS" BASIS,
++ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
++ * See the License for the specific language governing permissions and
++ * limitations under the License.
++ */
++-->
++<manifest xmlns:android="http://schemas.android.com/apk/res/android"
++        package="com.android.internal.systemui.navbar.gestural_nohandle"
++        android:versionCode="1"
++        android:versionName="1.0">
++    <overlay android:targetPackage="android"
++        android:category="com.android.internal.navigation_bar_mode"
++        android:priority="1"/>
++
++    <application android:label="@string/navigation_bar_mode_title" android:hasCode="false"/>
++</manifest>
+\ No newline at end of file
+diff --git a/packages/overlays/NavigationBarModeGesturalNoHandleOverlay/res/values-land/dimens.xml b/packages/overlays/NavigationBarModeGesturalNoHandleOverlay/res/values-land/dimens.xml
+new file mode 100644
+index 00000000..1f5834d7
+--- /dev/null
++++ b/packages/overlays/NavigationBarModeGesturalNoHandleOverlay/res/values-land/dimens.xml
+@@ -0,0 +1,22 @@
++<?xml version="1.0" encoding="utf-8"?>
++<!--
++/**
++ * Copyright (c) 2019, The Android Open Source Project
++ *
++ * Licensed under the Apache License, Version 2.0 (the "License");
++ * you may not use this file except in compliance with the License.
++ * You may obtain a copy of the License at
++ *
++ *     http://www.apache.org/licenses/LICENSE-2.0
++ *
++ * Unless required by applicable law or agreed to in writing, software
++ * distributed under the License is distributed on an "AS IS" BASIS,
++ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
++ * See the License for the specific language governing permissions and
++ * limitations under the License.
++ */
++-->
++<resources>
++    <!-- The height of the bottom navigation gesture area. -->
++    <dimen name="navigation_bar_gesture_height">32dp</dimen>
++</resources>
+diff --git a/packages/overlays/NavigationBarModeGesturalNoHandleOverlay/res/values-sw600dp/config.xml b/packages/overlays/NavigationBarModeGesturalNoHandleOverlay/res/values-sw600dp/config.xml
+new file mode 100644
+index 00000000..be1f081d
+--- /dev/null
++++ b/packages/overlays/NavigationBarModeGesturalNoHandleOverlay/res/values-sw600dp/config.xml
+@@ -0,0 +1,22 @@
++<?xml version="1.0" encoding="utf-8"?>
++<!--
++/**
++ * Copyright (c) 2023, The Android Open Source Project
++ *
++ * Licensed under the Apache License, Version 2.0 (the "License");
++ * you may not use this file except in compliance with the License.
++ * You may obtain a copy of the License at
++ *
++ *     http://www.apache.org/licenses/LICENSE-2.0
++ *
++ * Unless required by applicable law or agreed to in writing, software
++ * distributed under the License is distributed on an "AS IS" BASIS,
++ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
++ * See the License for the specific language governing permissions and
++ * limitations under the License.
++ */
++-->
++<resources>
++    <!-- If true, attach the navigation bar to the app during app transition -->
++    <bool name="config_attachNavBarToAppDuringTransition">false</bool>
++</resources>
+diff --git a/packages/overlays/NavigationBarModeGesturalNoHandleOverlay/res/values/config.xml b/packages/overlays/NavigationBarModeGesturalNoHandleOverlay/res/values/config.xml
+new file mode 100644
+index 00000000..66fc2ae7
+--- /dev/null
++++ b/packages/overlays/NavigationBarModeGesturalNoHandleOverlay/res/values/config.xml
+@@ -0,0 +1,62 @@
++<?xml version="1.0" encoding="utf-8"?>
++<!--
++/**
++ * Copyright (c) 2019, The Android Open Source Project
++ *
++ * Licensed under the Apache License, Version 2.0 (the "License");
++ * you may not use this file except in compliance with the License.
++ * You may obtain a copy of the License at
++ *
++ *     http://www.apache.org/licenses/LICENSE-2.0
++ *
++ * Unless required by applicable law or agreed to in writing, software
++ * distributed under the License is distributed on an "AS IS" BASIS,
++ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
++ * See the License for the specific language governing permissions and
++ * limitations under the License.
++ */
++-->
++<resources>
++    <!-- Controls the navigation bar interaction mode:
++         0: 3 button mode (back, home, overview buttons)
++         1: 2 button mode (back, home buttons + swipe up for overview)
++         2: gestures only for back, home and overview -->
++    <integer name="config_navBarInteractionMode">2</integer>
++
++    <!-- Controls whether the nav bar can move from the bottom to the side in landscape.
++         Only applies if the device display is not square. -->
++    <bool name="config_navBarCanMove">false</bool>
++
++    <!-- Controls whether the navigation bar lets through taps. -->
++    <bool name="config_navBarTapThrough">true</bool>
++
++    <!-- Controls whether the IME renders the back and IME switcher buttons or not. -->
++    <bool name="config_imeDrawsImeNavBar">true</bool>
++
++    <!-- Controls the size of the back gesture inset. -->
++    <dimen name="config_backGestureInset">30dp</dimen>
++
++    <!-- Controls whether the navbar needs a scrim with
++     {@link Window#setEnsuringNavigationBarContrastWhenTransparent}. -->
++    <bool name="config_navBarNeedsScrim">false</bool>
++
++    <!-- Controls the opacity of the navigation bar depending on the visibility of the
++     various workspace stacks.
++     0 - Nav bar is always opaque when either the freeform stack or docked stack is visible.
++     1 - Nav bar is always translucent when the freeform stack is visible, otherwise always
++         opaque.
++     2 - Nav bar is never forced opaque.
++     -->
++    <integer name="config_navBarOpacityMode">2</integer>
++
++    <!-- Controls whether seamless rotation should be allowed even though the navbar can move
++         (which normally prevents seamless rotation). -->
++    <bool name="config_allowSeamlessRotationDespiteNavBarMoving">true</bool>
++
++    <!-- Controls whether the side edge gestures can always trigger the transient nav bar to
++         show. -->
++    <bool name="config_navBarAlwaysShowOnSideEdgeGesture">true</bool>
++
++    <!-- If true, attach the navigation bar to the app during app transition -->
++    <bool name="config_attachNavBarToAppDuringTransition">true</bool>
++</resources>
+diff --git a/packages/overlays/NavigationBarModeGesturalNoHandleOverlay/res/values/dimens.xml b/packages/overlays/NavigationBarModeGesturalNoHandleOverlay/res/values/dimens.xml
+new file mode 100644
+index 00000000..22a1145c
+--- /dev/null
++++ b/packages/overlays/NavigationBarModeGesturalNoHandleOverlay/res/values/dimens.xml
+@@ -0,0 +1,32 @@
++<?xml version="1.0" encoding="utf-8"?>
++<!--
++/**
++ * Copyright (c) 2019, The Android Open Source Project
++ *
++ * Licensed under the Apache License, Version 2.0 (the "License");
++ * you may not use this file except in compliance with the License.
++ * You may obtain a copy of the License at
++ *
++ *     http://www.apache.org/licenses/LICENSE-2.0
++ *
++ * Unless required by applicable law or agreed to in writing, software
++ * distributed under the License is distributed on an "AS IS" BASIS,
++ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
++ * See the License for the specific language governing permissions and
++ * limitations under the License.
++ */
++-->
++<resources>
++    <!-- Height of the bottom navigation / system bar. -->
++    <dimen name="navigation_bar_height">1px</dimen>
++    <!-- Height of the bottom navigation bar in portrait; often the same as @dimen/navigation_bar_height -->
++    <dimen name="navigation_bar_height_landscape">1px</dimen>
++    <!-- Width of the navigation bar when it is placed vertically on the screen -->
++    <dimen name="navigation_bar_width">24dp</dimen>
++    <!-- Height of the bottom navigation / system bar. -->
++    <dimen name="navigation_bar_frame_height">48dp</dimen>
++    <!-- The height of the bottom navigation gesture area. -->
++    <dimen name="navigation_bar_gesture_height">32dp</dimen>
++    <!-- Height of the stashed taskbar, which draws the gesture handle on phones. -->
++    <dimen name="taskbar_stashed_size">1px</dimen>
++</resources>
+\ No newline at end of file
+diff --git a/packages/overlays/NavigationBarModeGesturalNoHandleOverlay/res/values/strings.xml b/packages/overlays/NavigationBarModeGesturalNoHandleOverlay/res/values/strings.xml
+new file mode 100644
+index 00000000..349ca14b
+--- /dev/null
++++ b/packages/overlays/NavigationBarModeGesturalNoHandleOverlay/res/values/strings.xml
+@@ -0,0 +1,22 @@
++<?xml version="1.0" encoding="utf-8"?>
++<!--
++/**
++ * Copyright (c) 2018, The Android Open Source Project
++ *
++ * Licensed under the Apache License, Version 2.0 (the "License");
++ * you may not use this file except in compliance with the License.
++ * You may obtain a copy of the License at
++ *
++ *     http://www.apache.org/licenses/LICENSE-2.0
++ *
++ * Unless required by applicable law or agreed to in writing, software
++ * distributed under the License is distributed on an "AS IS" BASIS,
++ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
++ * See the License for the specific language governing permissions and
++ * limitations under the License.
++ */
++-->
++<resources xmlns:xliff="urn:oasis:names:tc:xliff:document:1.2">
++    <!-- Name of overlay [CHAR LIMIT=64] -->
++    <string name="navigation_bar_mode_title" translatable="false">Gestural Navigation Bar without handle</string>
++</resources>
+\ No newline at end of file
+-- 
+2.39.2 (Apple Git-143)
+
