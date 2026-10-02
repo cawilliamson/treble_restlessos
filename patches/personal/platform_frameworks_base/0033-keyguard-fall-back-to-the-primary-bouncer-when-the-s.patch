@@ -1,0 +1,59 @@
+From a367a526b2bce810fa8838d47c81bde06b996878 Mon Sep 17 00:00:00 2001
+From: Langsdorff <hocaoglugeylani96@gmail.com>
+Date: Sat, 3 Oct 2026 02:59:38 +0300
+Subject: [PATCH 33/33] keyguard: fall back to the primary bouncer when the second
+ factor auth token is gone
+
+---
+ .../keyguard/KeyguardAbsKeyInputViewController.java        | 7 +++++++
+ .../src/com/android/keyguard/KeyguardUpdateMonitor.java    | 5 +++++
+ 2 files changed, 12 insertions(+)
+
+diff --git a/packages/SystemUI/src/com/android/keyguard/KeyguardAbsKeyInputViewController.java b/packages/SystemUI/src/com/android/keyguard/KeyguardAbsKeyInputViewController.java
+index 2494284e..351b72c0 100644
+--- a/packages/SystemUI/src/com/android/keyguard/KeyguardAbsKeyInputViewController.java
++++ b/packages/SystemUI/src/com/android/keyguard/KeyguardAbsKeyInputViewController.java
+@@ -225,10 +225,12 @@ public abstract class KeyguardAbsKeyInputViewController<T extends KeyguardAbsKey
+                         KeyguardUpdateMonitor.getAndRemovePendingSecondFactorAction(userId);
+                 if (pendingAction == null) {
+                     Log.e(BSF_TAG, "no PendingSecondFactorAction");
++                    abandonSecondFactor();
+                     return;
+                 }
+                 if (!pendingAction.getAsBoolean()) {
+                     Log.e(BSF_TAG, "PendingSecondFactorAction returned false");
++                    abandonSecondFactor();
+                     return;
+                 }
+             }
+@@ -270,6 +272,11 @@ public abstract class KeyguardAbsKeyInputViewController<T extends KeyguardAbsKey
+         }
+     }
+ 
++    private void abandonSecondFactor() {
++        mKeyguardUpdateMonitor.abandonSecondFactor();
++        getKeyguardSecurityCallback().showCurrentSecurityScreen();
++    }
++
+     protected void startErrorAnimation() { /* no-op */ }
+ 
+     protected void verifyPasswordAndUnlock() {
+diff --git a/packages/SystemUI/src/com/android/keyguard/KeyguardUpdateMonitor.java b/packages/SystemUI/src/com/android/keyguard/KeyguardUpdateMonitor.java
+index 93642b94..98978028 100644
+--- a/packages/SystemUI/src/com/android/keyguard/KeyguardUpdateMonitor.java
++++ b/packages/SystemUI/src/com/android/keyguard/KeyguardUpdateMonitor.java
+@@ -4113,6 +4113,11 @@ public class KeyguardUpdateMonitor implements TrustManager.TrustListener, CoreSt
+         clearFingerprintRecognized(unlockedUser);
+     }
+ 
++    void abandonSecondFactor() {
++        clearFingerprintRecognized();
++        updateFingerprintListeningState(BIOMETRIC_ACTION_UPDATE);
++    }
++
+     protected void clearFingerprintRecognized(int unlockedUser) {
+         Assert.isMainThread();
+         mUserFingerprintAuthenticated.clear();
+-- 
+2.39.2 (Apple Git-143)
+
