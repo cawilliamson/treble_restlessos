@@ -1,0 +1,22 @@
+From f78b406aa776f4a9fb5b8e3fe8e1f98b7ea5b45c Mon Sep 17 00:00:00 2001
+From: Langsdorff <131063968+clangsdorff@users.noreply.github.com>
+Date: Sat, 3 Oct 2026 04:11:05 +0300
+Subject: [PATCH 41/41] sepolicy: let cameraserver read the samsung 60fps video
+ toggle
+
+---
+ sepolicy/property_contexts | 1 +
+ 1 file changed, 1 insertion(+)
+
+diff --git a/sepolicy/property_contexts b/sepolicy/property_contexts
+index 9b02d93..aa0a9d0 100644
+--- a/sepolicy/property_contexts
++++ b/sepolicy/property_contexts
+@@ -2,3 +2,4 @@ persist.sys.sf.hs_mode         u:object_r:sf_hs_mode_prop:s0
+ hwc.exynos.vsync_mode      u:object_r:vendor_hwc_prop:s0
+ sys.phh.oplus.fppress    u:object_r:phh_oplus_prop:s0
+ persist.sys.phh.samsung.remosaic u:object_r:phh_samsung_camera_prop:s0
++persist.sys.phh.samsung.video60 u:object_r:phh_samsung_camera_prop:s0
+-- 
+2.39.2 (Apple Git-143)
+
