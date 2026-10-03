@@ -20,15 +20,16 @@ index aa6f11d..a882ad1 100644
  import android.os.SystemClock;
  import android.os.SystemProperties;
  import android.os.Trace;
-@@ -287,6 +288,7 @@ final class LocalDisplayAdapter extends DisplayAdapter {
+@@ -287,6 +288,8 @@ final class LocalDisplayAdapter extends DisplayAdapter {
                  new DisplayEventReceiver.FrameRateOverride[0];
          private boolean triedSamsungHal = false;
          private ISehSysInputDev samsungSysinput = null;
 +        private vendor.samsung.hardware.sysinput.ISehSysInputDev samsungSysinputAidl = null;
++        private long samsungTspLateOnUptime;
  
          LocalDisplayDevice(IBinder displayToken, long physicalDisplayId,
                  SurfaceControl.StaticDisplayInfo staticDisplayInfo,
-@@ -998,6 +1000,20 @@ final class LocalDisplayAdapter extends DisplayAdapter {
+@@ -998,6 +1001,20 @@ final class LocalDisplayAdapter extends DisplayAdapter {
                              try {
                                  samsungSysinput = ISehSysInputDev.getService();
                              } catch(Throwable t) {}
@@ -49,12 +50,18 @@ index aa6f11d..a882ad1 100644
                          }
                          final int mode = getPowerModeForState(state);
                          Trace.traceBegin(Trace.TRACE_TAG_POWER, "setDisplayState("
-@@ -1012,6 +1028,14 @@ final class LocalDisplayAdapter extends DisplayAdapter {
+@@ -1012,6 +1029,20 @@ final class LocalDisplayAdapter extends DisplayAdapter {
                                  Log.d("PHH", "Failed settings tsp enable", t);
                              }
                          }
 +                        // in-cell panels skip the backlight init while the touch IC holds the LCD rails
 +                        if (samsungSysinputAidl != null) {
++                            // the hal queues activate; a panel-off before the queued late resume lands resets the backlight ic
++                            if (state != Display.STATE_ON) {
++                                final long settle = samsungTspLateOnUptime + 1500
++                                        - SystemClock.uptimeMillis();
++                                if (settle > 0) SystemClock.sleep(settle);
++                            }
 +                            try {
 +                                samsungSysinputAidl.activate(1, state, true);
 +                            } catch (Throwable t) {
@@ -64,13 +71,16 @@ index aa6f11d..a882ad1 100644
  
                          try {
                              final long start = SystemClock.uptimeMillis();
-@@ -1031,6 +1055,13 @@ final class LocalDisplayAdapter extends DisplayAdapter {
+@@ -1031,6 +1062,16 @@ final class LocalDisplayAdapter extends DisplayAdapter {
                                  Log.d("PHH", "Failed settings tsp enable", t);
                              }
                          }
 +                        if (samsungSysinputAidl != null) {
 +                            try {
 +                                samsungSysinputAidl.activate(1, state, false);
++                                if (state == Display.STATE_ON) {
++                                    samsungTspLateOnUptime = SystemClock.uptimeMillis();
++                                }
 +                            } catch (Throwable t) {
 +                                Log.d("PHH", "Failed to activate Samsung tsp late", t);
 +                            }
@@ -78,7 +88,7 @@ index aa6f11d..a882ad1 100644
  
                          // fallback: when the samsung sysinput HAL is missing (not
                          // declared in the device VINTF manifest), poke the touch
-@@ -1043,6 +1074,7 @@ final class LocalDisplayAdapter extends DisplayAdapter {
+@@ -1043,6 +1084,7 @@ final class LocalDisplayAdapter extends DisplayAdapter {
                          // we also re-enable the input node explicitly since the
                          // HAL that normally toggles it is absent.
                          if (samsungSysinput == null
