@@ -1,0 +1,35 @@
+From bbcb895b64ef7a8b33c6fd5cf6dd1d98a08cea2d Mon Sep 17 00:00:00 2001
+From: Langsdorff <131063968+clangsdorff@users.noreply.github.com>
+Date: Sat, 3 Oct 2026 01:22:57 +0300
+Subject: [PATCH 31/31] inputmethod: drop the ime navigation bar when it has no
+ visible buttons
+
+---
+ .../android/inputmethodservice/NavigationBarController.java  | 5 +++--
+ 1 file changed, 3 insertions(+), 2 deletions(-)
+
+diff --git a/core/java/android/inputmethodservice/NavigationBarController.java b/core/java/android/inputmethodservice/NavigationBarController.java
+index 83e9d3da..c49b65e1 100644
+--- a/core/java/android/inputmethodservice/NavigationBarController.java
++++ b/core/java/android/inputmethodservice/NavigationBarController.java
+@@ -418,14 +418,15 @@ final class NavigationBarController implements Window.DecorCallback,
+ 
+         final boolean prevShowImeSwitcherButtonInNavBar = showImeSwitcherButtonInNavBar();
+         final boolean prevImeBackButtonHidden = mImeBackButtonHidden;
+-        mImeDrawsImeNavBar =
+-                (navButtonFlags & InputMethodNavButtonFlags.IME_DRAWS_IME_NAV_BAR) != 0;
+         mShowImeSwitcherButton =
+                 (navButtonFlags & InputMethodNavButtonFlags.SHOW_IME_SWITCHER_BUTTON) != 0;
+         mImeSwitcherButtonEnabled =
+                 (navButtonFlags & InputMethodNavButtonFlags.IME_SWITCHER_BUTTON_ENABLED) != 0;
+         mImeBackButtonHidden =
+                 (navButtonFlags & InputMethodNavButtonFlags.IME_BACK_BUTTON_HIDDEN) != 0;
++        mImeDrawsImeNavBar =
++                (navButtonFlags & InputMethodNavButtonFlags.IME_DRAWS_IME_NAV_BAR) != 0
++                && (!mImeBackButtonHidden || showImeSwitcherButtonInNavBar());
+ 
+         mService.mWindow.getWindow().getDecorView().getWindowInsetsController()
+                 .setImeCaptionBarInsetsHeight(getImeCaptionBarHeight(mImeDrawsImeNavBar));
+-- 
+2.39.2 (Apple Git-143)
+

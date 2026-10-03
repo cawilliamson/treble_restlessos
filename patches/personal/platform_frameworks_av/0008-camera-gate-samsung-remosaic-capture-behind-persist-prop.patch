@@ -1,0 +1,40 @@
+From 03c8a6a933ca74dd254c14209d2077e05d41bb92 Mon Sep 17 00:00:00 2001
+From: Langsdorff <131063968+clangsdorff@users.noreply.github.com>
+Date: Sat, 3 Oct 2026 01:43:26 +0300
+Subject: [PATCH 8/8] camera: gate samsung remosaic capture behind
+ persist.sys.phh.samsung.remosaic
+
+---
+ .../camera/libcameraservice/common/CameraProviderManager.cpp    | 2 +-
+ services/camera/libcameraservice/device3/Camera3Device.cpp      | 2 +-
+ 2 files changed, 2 insertions(+), 2 deletions(-)
+
+diff --git a/services/camera/libcameraservice/common/CameraProviderManager.cpp b/services/camera/libcameraservice/common/CameraProviderManager.cpp
+index dd4b1ab..58d99ef 100644
+--- a/services/camera/libcameraservice/common/CameraProviderManager.cpp
++++ b/services/camera/libcameraservice/common/CameraProviderManager.cpp
+@@ -3289,7 +3289,7 @@ status_t CameraProviderManager::ProviderInfo::DeviceInfo3::getCameraCharacterist
+         *characteristics = mCameraCharacteristics;
+     }
+ 
+-    if (property_get_bool("debug.phh.samsung.remosaic", false)) {
++    if (property_get_bool("persist.sys.phh.samsung.remosaic", false)) {
+         SessionConfigurationUtils::addSamsungRemosaicJpegSizes(characteristics);
+     }
+ 
+diff --git a/services/camera/libcameraservice/device3/Camera3Device.cpp b/services/camera/libcameraservice/device3/Camera3Device.cpp
+index 60dd866..bc14c04 100644
+--- a/services/camera/libcameraservice/device3/Camera3Device.cpp
++++ b/services/camera/libcameraservice/device3/Camera3Device.cpp
+@@ -1492,7 +1492,7 @@ status_t Camera3Device::filterParamsAndConfigureLocked(const CameraMetadata& par
+         filteredParams = request->mSettingsList.begin()->metadata;
+     }
+ 
+-    if (property_get_bool("debug.phh.samsung.remosaic", false)) {
++    if (property_get_bool("persist.sys.phh.samsung.remosaic", false)) {
+         int64_t maxOutputArea = 0;
+         for (size_t i = 0; i < mOutputStreams.size(); i++) {
+             sp<Camera3OutputStreamInterface> stream = mOutputStreams[i];
+-- 
+2.39.2 (Apple Git-143)
+
