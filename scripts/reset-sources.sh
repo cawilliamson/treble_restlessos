@@ -13,7 +13,7 @@ usage: $(basename "$0") [options]
 
 reset every repo referenced by a patch tier to its upstream base commit,
 discarding any applied patches and untracked files, and restore the
-vendored snapshots under upstream/ to pristine. leaves src/ ready for a
+overlaid snapshots under overlays/ to pristine. leaves src/ ready for a
 fresh patch apply pass, and fails loudly if any repo could not be reset.
 
 options:
@@ -95,8 +95,8 @@ for project in $projects; do
 done
 
 # vendored snapshots carry no .git so the loop never sees them; restore
-# them from upstream/ instead
-"$TOP_DIR/scripts/copy-local-upstream-sources.sh" "$SRC_DIR" >/dev/null
+# them from overlays/ instead
+"$TOP_DIR/scripts/copy-overlays.sh" "$SRC_DIR" >/dev/null
 
 echo ""
 if [[ "$failures" -ne 0 ]]; then

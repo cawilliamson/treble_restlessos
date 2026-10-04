@@ -14,35 +14,35 @@ shopt -s nullglob
 
 echo "Applying ${tree} patches:"
 [ -d "$patches/$tree" ] || {
-        echo "  (no patches for tier '$tree', skipping)"
-        exit 0
+  echo "  (no patches for tier '$tree', skipping)"
+  exit 0
 }
 
 for project in "$patches"/"$tree"/*/; do
-        project=$(basename "$project")
-        echo "> ${project}"
-        p="$(tr _ / <<<"$project" | sed -e 's;platform/;;g')"
-        [ "$p" == build ] && p=build/make
-        [ "$p" == system/fs/fs/mgr ] && p=system/fs/fs_mgr
-        [ "$p" == testing ] && p=platform_testing
-        [ "$p" == treble/app ] && p=treble_app
-        [ "$p" == vendor/hardware/overlay ] && p=vendor/hardware_overlay
-        [ "$p" == vendor/partner/gms ] && p=vendor/partner_gms
-        pushd "$p" &>/dev/null
-        for patch in "$patches"/"$tree"/"$project"/*.patch; do
-                echo ">> ${patch}"
-                if test -d .git; then
-                        git am "$patch" || {
-                                git am --abort
-                                exit 1
-                        }
-                else
-                        # vendored snapshots under upstream/ have no .git; git apply handles binary hunks.
-                        # --no-index plus a ceiling at the snapshot dir prevents git from discovering a
-                        # parent work tree (e.g. when src/ lives inside this repo locally), where path
-                        # resolution would silently skip patches
-                        GIT_CEILING_DIRECTORIES="$srcroot" git apply --no-index -p1 "$patch" || exit 1
-                fi
-        done
-        popd &>/dev/null
+  project=$(basename "$project")
+  echo "> ${project}"
+  p="$(tr _ / <<<"$project" | sed -e 's;platform/;;g')"
+  [ "$p" == build ] && p=build/make
+  [ "$p" == system/fs/fs/mgr ] && p=system/fs/fs_mgr
+  [ "$p" == testing ] && p=platform_testing
+  [ "$p" == treble/app ] && p=treble_app
+  [ "$p" == vendor/hardware/overlay ] && p=vendor/hardware_overlay
+  [ "$p" == vendor/partner/gms ] && p=vendor/partner_gms
+  pushd "$p" &>/dev/null
+  for patch in "$patches"/"$tree"/"$project"/*.patch; do
+    echo ">> ${patch}"
+    if test -d .git; then
+      git am "$patch" || {
+        git am --abort
+        exit 1
+      }
+    else
+      # overlaid snapshots under overlays/ have no .git; git apply handles binary hunks.
+      # --no-index plus a ceiling at the snapshot dir prevents git from discovering a
+      # parent work tree (e.g. when src/ lives inside this repo locally), where path
+      # resolution would silently skip patches
+      GIT_CEILING_DIRECTORIES="$srcroot" git apply --no-index -p1 "$patch" || exit 1
+    fi
+  done
+  popd &>/dev/null
 done

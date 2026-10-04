@@ -92,6 +92,42 @@ zsync2 https://build.chrisaw.io/RestlessOS-ab-16-202603261200/zsync/RestlessOS-a
 > archive. If you only have the `.xz`, decompress it first with
 > `xz -dk <file>.img.xz`.
 
+## Building
+
+There is no supported local build path — RestlessOS is built entirely through
+the GitHub Actions pipeline in [.github/workflows/build.yml](.github/workflows/build.yml),
+which handles EC2 spot-instance provisioning, source sync, patch application,
+compilation, signing and release. That workflow is the canonical reference for
+how the ROM is built; read it before attempting to replicate the process.
+
+### Signing with your own keys
+
+The release image is signed using a private `vendor_cawilliamson-priv` repo
+(synced via [`configs/manifests/default.xml`](configs/manifests/default.xml) into
+`vendor/cawilliamson-priv`) containing the Android build signing keys: one
+`.pem`/`.pk8`/`.x509.pem` set per signing identity, plus two scripts:
+
+- `keys/make_keys.sh` — generates the full set of signing keys
+- `keys/sign.sh` — invokes `sign_target_files_apks` with the correct
+  `--extra_apks` / `--extra_apex_payload_key` mapping for every APK and APEX
+  in the image
+
+Script-only copies of both are kept under
+[`overlays/cawilliamson/vendor_cawilliamson-priv/`](overlays/cawilliamson/vendor_cawilliamson-priv/)
+as a reference. To sign with your own keys:
+
+1. generate a key set — adapt `make_keys.sh` (the `SUBJECT` line and the key
+   list) to your own details and run it
+2. create your own private repo with the same layout: a `keys/` directory
+   holding the generated key files plus your `sign.sh`, with the
+   `--extra_apks` / `--extra_apex_payload_key` lines matching your key names
+3. point your local manifest at your repo (see
+   [`configs/manifests/default.xml`](configs/manifests/default.xml)) and update
+   the `Sign target files` step in the workflow to reference it
+
+Never commit the private key material (`.pk8` and `.pem` files) to a public
+repository — the copies under `overlays/` are deliberately scripts only.
+
 ## Known Issues
 
 ### MediaTek BPF bug (kernel 4.14 / 4.19)
@@ -119,8 +155,11 @@ for more information and discussion.
 ## Credits
 
 - **TrebleDroid team** — for all of their hard work in making all of this possible
+- **[@phhusson](https://github.com/phhusson)** — for lptools, magisk integration and vndk-tests, overlaid into the build
 - **GrapheneOS team** — for creating the ROM in the first place
 - **@Nullvalue** — for providing the inspiration to start working on this in the first place
 - **@Gero** — for the idea of the previous name
 - **[@Ziednaga](https://github.com/Ziednaga)** — for the RestlessOS logo and boot animation artwork
 - **[@clangsdorff](https://github.com/clangsdorff)** — for endless debugging help and code merged into the ROM
+- **[@andycgyan](https://github.com/andycgyan)** — for QcRilAm, overlaid into the build
+- **[PixelOS](https://github.com/PixelOS-AOSP)** — for the gsans treble build scripts, overlaid into the build

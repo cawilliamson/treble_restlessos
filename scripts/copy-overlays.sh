@@ -4,10 +4,10 @@ set -euo pipefail
 
 SCRIPT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" &>/dev/null && pwd)"
 TOP_DIR="$(dirname "$SCRIPT_DIR")"
-UPSTREAM_DIR="${TOP_DIR}/upstream"
+OVERLAYS_DIR="${TOP_DIR}/overlays"
 SRC_DIR="${1:-${TOP_DIR}/src}"
 
-# vendored upstream snapshots: <dir under upstream/>:<path under src/>
+# local overlays: <dir under overlays/>:<path under src/>
 # snapshotted at: qcrilam dc599b6, lptools c8be7de, magisk d8056f8,
 #                 gsans 817f7c8, vndk-tests 533390a
 PAIRS=(
@@ -27,12 +27,12 @@ PAIRS=(
 for pair in "${PAIRS[@]}"; do
   d="${pair%%:*}"
   t="${SRC_DIR}/${pair#*:}"
-  [ -d "$UPSTREAM_DIR/$d" ] || {
-    echo "ERROR: missing upstream/$d" >&2
+  [ -d "$OVERLAYS_DIR/$d" ] || {
+    echo "ERROR: missing overlays/$d" >&2
     exit 1
   }
   rm -rf "$t"
   mkdir -p "$(dirname "$t")"
-  cp -aT "$UPSTREAM_DIR/$d" "$t"
+  cp -aT "$OVERLAYS_DIR/$d" "$t"
   echo "$d -> ${pair#*:}"
 done

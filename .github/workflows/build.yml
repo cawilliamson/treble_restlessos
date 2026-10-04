@@ -149,9 +149,9 @@ jobs:
           ANDROID_VERSION_TAG=$(grep -m1 "target:" build/release/release_config_map.textproto | sed 's/.*"\([^"]*\)".*/\1/')
           echo "android_version=${ANDROID_VERSION}" >> "$GITHUB_OUTPUT"
           echo "android_version_tag=${ANDROID_VERSION_TAG}" >> "$GITHUB_OUTPUT"
-      - name: Copy local copy of upstream sources
+      - name: Copy local overlays into src/
         working-directory: /mnt/src
-        run: ${{ github.workspace }}/scripts/copy-local-upstream-sources.sh .
+        run: ${{ github.workspace }}/scripts/copy-overlays.sh .
       - name: Apply patches
         working-directory: /mnt/src/
         run: |
