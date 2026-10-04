@@ -1,0 +1,57 @@
+From dd0baf44a1a3ee1605190042f5d37e138f8dbbb8 Mon Sep 17 00:00:00 2001
+From: Langsdorff <131063968+clangsdorff@users.noreply.github.com>
+Date: Sat, 3 Oct 2026 01:21:50 +0300
+Subject: [PATCH 7/8] camera: list the samsung remosaic size as a high resolution
+ size
+
+---
+ .../utils/SessionConfigurationUtils.cpp        | 18 ++++++++++++++++--
+ 1 file changed, 16 insertions(+), 2 deletions(-)
+
+diff --git a/services/camera/libcameraservice/utils/SessionConfigurationUtils.cpp b/services/camera/libcameraservice/utils/SessionConfigurationUtils.cpp
+index 1e2bc73..8bfd000 100644
+--- a/services/camera/libcameraservice/utils/SessionConfigurationUtils.cpp
++++ b/services/camera/libcameraservice/utils/SessionConfigurationUtils.cpp
+@@ -1359,6 +1359,8 @@ bool getVendorTagByName(const CameraMetadata& info, const char* name, uint32_t*
+     return CameraMetadata::getTagFromName(name, vTags.get(), tag) == OK;
+ }
+ 
++static constexpr int64_t kHighResolutionMinFrameDurationNs = 50000000;
++
+ static int64_t findBlobDuration(const std::vector<int64_t>& durations, int32_t width,
+         int32_t height) {
+     for (size_t i = 0; i + 3 < durations.size(); i += 4) {
+@@ -1416,9 +1418,12 @@ void addSamsungRemosaicJpegSizes(CameraMetadata* info) {
+         if (findBlobDuration(minDurations, width, height) >= 0) continue;
+ 
+         double scale = static_cast<double>(area) / activeArea;
++        int64_t minDuration = static_cast<int64_t>(refMin * scale);
++        if (minDuration <= kHighResolutionMinFrameDurationNs) {
++            minDuration = kHighResolutionMinFrameDurationNs + 1;
++        }
+         configs.insert(configs.end(), {format, width, height, direction});
+-        minDurations.insert(minDurations.end(),
+-                {format, width, height, static_cast<int64_t>(refMin * scale)});
++        minDurations.insert(minDurations.end(), {format, width, height, minDuration});
+         stallDurations.insert(stallDurations.end(),
+                 {format, width, height, static_cast<int64_t>(refStall * scale)});
+         ALOGI("%s: exposing %dx%d jpeg from samsung picture configurations", __FUNCTION__,
+@@ -1432,6 +1437,15 @@ void addSamsungRemosaicJpegSizes(CameraMetadata* info) {
+             minDurations.size());
+     info->update(ANDROID_SCALER_AVAILABLE_STALL_DURATIONS, stallDurations.data(),
+             stallDurations.size());
++
++    // BURST_CAPTURE keeps sub-20fps sizes out of getOutputSizes(); apps opt in via high res.
++    camera_metadata_ro_entry capsEntry = constInfo.find(ANDROID_REQUEST_AVAILABLE_CAPABILITIES);
++    std::vector<uint8_t> caps(capsEntry.data.u8, capsEntry.data.u8 + capsEntry.count);
++    if (std::find(caps.begin(), caps.end(),
++            ANDROID_REQUEST_AVAILABLE_CAPABILITIES_BURST_CAPTURE) == caps.end()) {
++        caps.push_back(ANDROID_REQUEST_AVAILABLE_CAPABILITIES_BURST_CAPTURE);
++        info->update(ANDROID_REQUEST_AVAILABLE_CAPABILITIES, caps.data(), caps.size());
++    }
+ }
+ 
+ void setSamsungRemosaicCameraClient(const CameraMetadata& deviceInfo, int64_t maxOutputArea,
+-- 
+2.39.2 (Apple Git-143)
+

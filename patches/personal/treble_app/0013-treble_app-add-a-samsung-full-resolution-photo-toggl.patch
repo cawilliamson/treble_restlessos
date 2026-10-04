@@ -1,0 +1,57 @@
+From eadb22311a01d5b7fb59f1598ababbc0019bcaed Mon Sep 17 00:00:00 2001
+From: Langsdorff <131063968+clangsdorff@users.noreply.github.com>
+Date: Sat, 3 Oct 2026 01:45:45 +0300
+Subject: [PATCH 13/13] treble_app: add a samsung full resolution photo toggle
+
+---
+ app/src/main/java/me/phh/treble/app/Samsung.kt         | 4 ++++
+ app/src/main/java/me/phh/treble/app/SamsungSettings.kt | 1 +
+ app/src/main/res/xml/pref_samsung.xml                  | 5 +++++
+ 3 files changed, 10 insertions(+)
+
+diff --git a/app/src/main/java/me/phh/treble/app/Samsung.kt b/app/src/main/java/me/phh/treble/app/Samsung.kt
+index 9456e30..8c4c497 100644
+--- a/app/src/main/java/me/phh/treble/app/Samsung.kt
++++ b/app/src/main/java/me/phh/treble/app/Samsung.kt
+@@ -80,6 +80,10 @@ class Samsung: EntryStartup {
+                 val value = sp.getBoolean(key, false)
+                 SystemProperties.set("persist.sys.phh.samsung.camera_ids", value.toString())
+             }
++            SamsungSettings.remosaic -> {
++                val value = sp.getBoolean(key, false)
++                SystemProperties.set("persist.sys.phh.samsung.remosaic", value.toString())
++            }
+             SamsungSettings.alternateAudioPolicy -> {
+                 val b = sp.getBoolean(key, false)
+                 val value = if(b) "1" else "0"
+diff --git a/app/src/main/java/me/phh/treble/app/SamsungSettings.kt b/app/src/main/java/me/phh/treble/app/SamsungSettings.kt
+index f5e0cc9..d40606c 100644
+--- a/app/src/main/java/me/phh/treble/app/SamsungSettings.kt
++++ b/app/src/main/java/me/phh/treble/app/SamsungSettings.kt
+@@ -11,6 +11,7 @@ object SamsungSettings : Settings {
+     val brokenFingerprint = "key_samsung_broken_fingerprint"
+     val backlightMultiplier = "key_samsung_backlight_multiplier"
+     val cameraIds = "key_samsung_camera_ids"
++    val remosaic = "key_samsung_remosaic"
+     val alternateAudioPolicy = "key_samsung_alternate_audio_policy"
+     val fodSingleClick = "key_samsung_fod_single_click"
+     val flashStrength = "key_samsung_flash_strength"
+diff --git a/app/src/main/res/xml/pref_samsung.xml b/app/src/main/res/xml/pref_samsung.xml
+index a83bc13..4d7c726 100644
+--- a/app/src/main/res/xml/pref_samsung.xml
++++ b/app/src/main/res/xml/pref_samsung.xml
+@@ -43,6 +43,11 @@
+             android:key="key_samsung_camera_ids"
+             android:title="Enable access to all cameras"
+             android:summary="Requires Q vendor" />
++        <SwitchPreference
++            android:defaultValue="false"
++            android:key="key_samsung_remosaic"
++            android:title="Enable full resolution photos"
++            android:summary="Offers the remosaic size (e.g. 50MP) to camera apps that pick the highest resolution. Reopen the camera app after changing" />
+         <EditTextPreference
+             android:defaultValue="1"
+             android:key="key_samsung_flash_strength"
+-- 
+2.39.2 (Apple Git-143)
+

@@ -1,0 +1,1247 @@
+From 6156a5ea476bca818fcacff1d43ec87b051c6494 Mon Sep 17 00:00:00 2001
+From: Langsdorff <131063968+clangsdorff@users.noreply.github.com>
+Date: Sat, 3 Oct 2026 02:21:51 +0300
+Subject: [PATCH 5/5] gestures: add a toggle to hide the gesture navigation handle
+
+---
+ res/values-af/navigation_handle_strings.xml   |  5 ++
+ res/values-am/navigation_handle_strings.xml   |  5 ++
+ res/values-ar/navigation_handle_strings.xml   |  5 ++
+ res/values-as/navigation_handle_strings.xml   |  5 ++
+ res/values-az/navigation_handle_strings.xml   |  5 ++
+ .../navigation_handle_strings.xml             |  5 ++
+ res/values-be/navigation_handle_strings.xml   |  5 ++
+ res/values-bg/navigation_handle_strings.xml   |  5 ++
+ res/values-bn/navigation_handle_strings.xml   |  5 ++
+ res/values-bs/navigation_handle_strings.xml   |  5 ++
+ res/values-ca/navigation_handle_strings.xml   |  5 ++
+ res/values-cs/navigation_handle_strings.xml   |  5 ++
+ res/values-da/navigation_handle_strings.xml   |  5 ++
+ res/values-de/navigation_handle_strings.xml   |  5 ++
+ res/values-el/navigation_handle_strings.xml   |  5 ++
+ .../navigation_handle_strings.xml             |  5 ++
+ .../navigation_handle_strings.xml             |  5 ++
+ .../navigation_handle_strings.xml             |  5 ++
+ .../navigation_handle_strings.xml             |  5 ++
+ .../navigation_handle_strings.xml             |  5 ++
+ res/values-es/navigation_handle_strings.xml   |  5 ++
+ res/values-et/navigation_handle_strings.xml   |  5 ++
+ res/values-eu/navigation_handle_strings.xml   |  5 ++
+ res/values-fa/navigation_handle_strings.xml   |  5 ++
+ res/values-fi/navigation_handle_strings.xml   |  5 ++
+ .../navigation_handle_strings.xml             |  5 ++
+ res/values-fr/navigation_handle_strings.xml   |  5 ++
+ res/values-gl/navigation_handle_strings.xml   |  5 ++
+ res/values-gu/navigation_handle_strings.xml   |  5 ++
+ res/values-hi/navigation_handle_strings.xml   |  5 ++
+ res/values-hr/navigation_handle_strings.xml   |  5 ++
+ res/values-hu/navigation_handle_strings.xml   |  5 ++
+ res/values-hy/navigation_handle_strings.xml   |  5 ++
+ res/values-in/navigation_handle_strings.xml   |  5 ++
+ res/values-is/navigation_handle_strings.xml   |  5 ++
+ res/values-it/navigation_handle_strings.xml   |  5 ++
+ res/values-iw/navigation_handle_strings.xml   |  5 ++
+ res/values-ja/navigation_handle_strings.xml   |  5 ++
+ res/values-ka/navigation_handle_strings.xml   |  5 ++
+ res/values-kk/navigation_handle_strings.xml   |  5 ++
+ res/values-km/navigation_handle_strings.xml   |  5 ++
+ res/values-kn/navigation_handle_strings.xml   |  5 ++
+ res/values-ko/navigation_handle_strings.xml   |  5 ++
+ res/values-ky/navigation_handle_strings.xml   |  5 ++
+ res/values-lo/navigation_handle_strings.xml   |  5 ++
+ res/values-lt/navigation_handle_strings.xml   |  5 ++
+ res/values-lv/navigation_handle_strings.xml   |  5 ++
+ res/values-mk/navigation_handle_strings.xml   |  5 ++
+ res/values-ml/navigation_handle_strings.xml   |  5 ++
+ res/values-mn/navigation_handle_strings.xml   |  5 ++
+ res/values-mr/navigation_handle_strings.xml   |  5 ++
+ res/values-ms/navigation_handle_strings.xml   |  5 ++
+ res/values-my/navigation_handle_strings.xml   |  5 ++
+ res/values-nb/navigation_handle_strings.xml   |  5 ++
+ res/values-ne/navigation_handle_strings.xml   |  5 ++
+ res/values-nl/navigation_handle_strings.xml   |  5 ++
+ res/values-or/navigation_handle_strings.xml   |  5 ++
+ res/values-pa/navigation_handle_strings.xml   |  5 ++
+ res/values-pl/navigation_handle_strings.xml   |  5 ++
+ .../navigation_handle_strings.xml             |  5 ++
+ .../navigation_handle_strings.xml             |  5 ++
+ res/values-pt/navigation_handle_strings.xml   |  5 ++
+ res/values-ro/navigation_handle_strings.xml   |  5 ++
+ res/values-ru/navigation_handle_strings.xml   |  5 ++
+ res/values-si/navigation_handle_strings.xml   |  5 ++
+ res/values-sk/navigation_handle_strings.xml   |  5 ++
+ res/values-sl/navigation_handle_strings.xml   |  5 ++
+ res/values-sq/navigation_handle_strings.xml   |  5 ++
+ res/values-sr/navigation_handle_strings.xml   |  5 ++
+ res/values-sv/navigation_handle_strings.xml   |  5 ++
+ res/values-sw/navigation_handle_strings.xml   |  5 ++
+ res/values-ta/navigation_handle_strings.xml   |  5 ++
+ res/values-te/navigation_handle_strings.xml   |  5 ++
+ res/values-th/navigation_handle_strings.xml   |  5 ++
+ res/values-tl/navigation_handle_strings.xml   |  5 ++
+ res/values-tr/navigation_handle_strings.xml   |  5 ++
+ res/values-uk/navigation_handle_strings.xml   |  5 ++
+ res/values-ur/navigation_handle_strings.xml   |  5 ++
+ res/values-uz/navigation_handle_strings.xml   |  5 ++
+ res/values-vi/navigation_handle_strings.xml   |  5 ++
+ .../navigation_handle_strings.xml             |  5 ++
+ .../navigation_handle_strings.xml             |  5 ++
+ .../navigation_handle_strings.xml             |  5 ++
+ res/values-zu/navigation_handle_strings.xml   |  5 ++
+ res/values/navigation_handle_strings.xml      |  5 ++
+ res/xml/gesture_navigation_settings.xml       | 13 ++++
+ ...GestureNavigationHideHandleController.java | 73 +++++++++++++++++++
+ .../SystemNavigationGestureSettings.java      |  6 +-
+ 88 files changed, 516 insertions(+), 1 deletion(-)
+ create mode 100644 res/values-af/navigation_handle_strings.xml
+ create mode 100644 res/values-am/navigation_handle_strings.xml
+ create mode 100644 res/values-ar/navigation_handle_strings.xml
+ create mode 100644 res/values-as/navigation_handle_strings.xml
+ create mode 100644 res/values-az/navigation_handle_strings.xml
+ create mode 100644 res/values-b+sr+Latn/navigation_handle_strings.xml
+ create mode 100644 res/values-be/navigation_handle_strings.xml
+ create mode 100644 res/values-bg/navigation_handle_strings.xml
+ create mode 100644 res/values-bn/navigation_handle_strings.xml
+ create mode 100644 res/values-bs/navigation_handle_strings.xml
+ create mode 100644 res/values-ca/navigation_handle_strings.xml
+ create mode 100644 res/values-cs/navigation_handle_strings.xml
+ create mode 100644 res/values-da/navigation_handle_strings.xml
+ create mode 100644 res/values-de/navigation_handle_strings.xml
+ create mode 100644 res/values-el/navigation_handle_strings.xml
+ create mode 100644 res/values-en-rAU/navigation_handle_strings.xml
+ create mode 100644 res/values-en-rCA/navigation_handle_strings.xml
+ create mode 100644 res/values-en-rGB/navigation_handle_strings.xml
+ create mode 100644 res/values-en-rIN/navigation_handle_strings.xml
+ create mode 100644 res/values-es-rUS/navigation_handle_strings.xml
+ create mode 100644 res/values-es/navigation_handle_strings.xml
+ create mode 100644 res/values-et/navigation_handle_strings.xml
+ create mode 100644 res/values-eu/navigation_handle_strings.xml
+ create mode 100644 res/values-fa/navigation_handle_strings.xml
+ create mode 100644 res/values-fi/navigation_handle_strings.xml
+ create mode 100644 res/values-fr-rCA/navigation_handle_strings.xml
+ create mode 100644 res/values-fr/navigation_handle_strings.xml
+ create mode 100644 res/values-gl/navigation_handle_strings.xml
+ create mode 100644 res/values-gu/navigation_handle_strings.xml
+ create mode 100644 res/values-hi/navigation_handle_strings.xml
+ create mode 100644 res/values-hr/navigation_handle_strings.xml
+ create mode 100644 res/values-hu/navigation_handle_strings.xml
+ create mode 100644 res/values-hy/navigation_handle_strings.xml
+ create mode 100644 res/values-in/navigation_handle_strings.xml
+ create mode 100644 res/values-is/navigation_handle_strings.xml
+ create mode 100644 res/values-it/navigation_handle_strings.xml
+ create mode 100644 res/values-iw/navigation_handle_strings.xml
+ create mode 100644 res/values-ja/navigation_handle_strings.xml
+ create mode 100644 res/values-ka/navigation_handle_strings.xml
+ create mode 100644 res/values-kk/navigation_handle_strings.xml
+ create mode 100644 res/values-km/navigation_handle_strings.xml
+ create mode 100644 res/values-kn/navigation_handle_strings.xml
+ create mode 100644 res/values-ko/navigation_handle_strings.xml
+ create mode 100644 res/values-ky/navigation_handle_strings.xml
+ create mode 100644 res/values-lo/navigation_handle_strings.xml
+ create mode 100644 res/values-lt/navigation_handle_strings.xml
+ create mode 100644 res/values-lv/navigation_handle_strings.xml
+ create mode 100644 res/values-mk/navigation_handle_strings.xml
+ create mode 100644 res/values-ml/navigation_handle_strings.xml
+ create mode 100644 res/values-mn/navigation_handle_strings.xml
+ create mode 100644 res/values-mr/navigation_handle_strings.xml
+ create mode 100644 res/values-ms/navigation_handle_strings.xml
+ create mode 100644 res/values-my/navigation_handle_strings.xml
+ create mode 100644 res/values-nb/navigation_handle_strings.xml
+ create mode 100644 res/values-ne/navigation_handle_strings.xml
+ create mode 100644 res/values-nl/navigation_handle_strings.xml
+ create mode 100644 res/values-or/navigation_handle_strings.xml
+ create mode 100644 res/values-pa/navigation_handle_strings.xml
+ create mode 100644 res/values-pl/navigation_handle_strings.xml
+ create mode 100644 res/values-pt-rBR/navigation_handle_strings.xml
+ create mode 100644 res/values-pt-rPT/navigation_handle_strings.xml
+ create mode 100644 res/values-pt/navigation_handle_strings.xml
+ create mode 100644 res/values-ro/navigation_handle_strings.xml
+ create mode 100644 res/values-ru/navigation_handle_strings.xml
+ create mode 100644 res/values-si/navigation_handle_strings.xml
+ create mode 100644 res/values-sk/navigation_handle_strings.xml
+ create mode 100644 res/values-sl/navigation_handle_strings.xml
+ create mode 100644 res/values-sq/navigation_handle_strings.xml
+ create mode 100644 res/values-sr/navigation_handle_strings.xml
+ create mode 100644 res/values-sv/navigation_handle_strings.xml
+ create mode 100644 res/values-sw/navigation_handle_strings.xml
+ create mode 100644 res/values-ta/navigation_handle_strings.xml
+ create mode 100644 res/values-te/navigation_handle_strings.xml
+ create mode 100644 res/values-th/navigation_handle_strings.xml
+ create mode 100644 res/values-tl/navigation_handle_strings.xml
+ create mode 100644 res/values-tr/navigation_handle_strings.xml
+ create mode 100644 res/values-uk/navigation_handle_strings.xml
+ create mode 100644 res/values-ur/navigation_handle_strings.xml
+ create mode 100644 res/values-uz/navigation_handle_strings.xml
+ create mode 100644 res/values-vi/navigation_handle_strings.xml
+ create mode 100644 res/values-zh-rCN/navigation_handle_strings.xml
+ create mode 100644 res/values-zh-rHK/navigation_handle_strings.xml
+ create mode 100644 res/values-zh-rTW/navigation_handle_strings.xml
+ create mode 100644 res/values-zu/navigation_handle_strings.xml
+ create mode 100644 res/values/navigation_handle_strings.xml
+ create mode 100644 src/com/android/settings/gestures/GestureNavigationHideHandleController.java
+
+diff --git a/res/values-af/navigation_handle_strings.xml b/res/values-af/navigation_handle_strings.xml
+new file mode 100644
+index 0000000..1bd40e3
+--- /dev/null
++++ b/res/values-af/navigation_handle_strings.xml
+@@ -0,0 +1,5 @@
++<?xml version="1.0" encoding="utf-8"?>
++<resources>
++    <string name="gesture_navigation_hide_handle_title">Versteek navigasiehandvatsel</string>
++    <string name="gesture_navigation_hide_handle_summary">Verwyder die balk onderaan die skerm en die spasie onder programme. Gebare werk steeds.</string>
++</resources>
+diff --git a/res/values-am/navigation_handle_strings.xml b/res/values-am/navigation_handle_strings.xml
+new file mode 100644
+index 0000000..06c57ab
+--- /dev/null
++++ b/res/values-am/navigation_handle_strings.xml
+@@ -0,0 +1,5 @@
++<?xml version="1.0" encoding="utf-8"?>
++<resources>
++    <string name="gesture_navigation_hide_handle_title">የአሰሳ መያዣን ደብቅ</string>
++    <string name="gesture_navigation_hide_handle_summary">በማያ ገጹ ግርጌ ያለውን አሞሌ እና ከመተግበሪያዎች በታች ያለውን ቦታ ያስወግዳል። የእጅ ምልክቶች መስራታቸውን ይቀጥላሉ።</string>
++</resources>
+diff --git a/res/values-ar/navigation_handle_strings.xml b/res/values-ar/navigation_handle_strings.xml
+new file mode 100644
+index 0000000..eabedfe
+--- /dev/null
++++ b/res/values-ar/navigation_handle_strings.xml
+@@ -0,0 +1,5 @@
++<?xml version="1.0" encoding="utf-8"?>
++<resources>
++    <string name="gesture_navigation_hide_handle_title">إخفاء مقبض التنقّل</string>
++    <string name="gesture_navigation_hide_handle_summary">إزالة الشريط في أسفل الشاشة والمساحة أسفل التطبيقات. تظل الإيماءات تعمل.</string>
++</resources>
+diff --git a/res/values-as/navigation_handle_strings.xml b/res/values-as/navigation_handle_strings.xml
+new file mode 100644
+index 0000000..e2cba88
+--- /dev/null
++++ b/res/values-as/navigation_handle_strings.xml
+@@ -0,0 +1,5 @@
++<?xml version="1.0" encoding="utf-8"?>
++<resources>
++    <string name="gesture_navigation_hide_handle_title">নেভিগেশ্বন হেণ্ডেল লুকুৱাওক</string>
++    <string name="gesture_navigation_hide_handle_summary">স্ক্ৰীনৰ তলৰ বাৰডাল আৰু এপৰ তলৰ খালী ঠাই আঁতৰায়। আঙুলিৰ ভংগীসমূহে কাম কৰি থাকে।</string>
++</resources>
+diff --git a/res/values-az/navigation_handle_strings.xml b/res/values-az/navigation_handle_strings.xml
+new file mode 100644
+index 0000000..c81f791
+--- /dev/null
++++ b/res/values-az/navigation_handle_strings.xml
+@@ -0,0 +1,5 @@
++<?xml version="1.0" encoding="utf-8"?>
++<resources>
++    <string name="gesture_navigation_hide_handle_title">Naviqasiya tutacağını gizlədin</string>
++    <string name="gesture_navigation_hide_handle_summary">Ekranın aşağısındakı zolağı və tətbiqlərin altındakı boşluğu silir. Jestlər işləməyə davam edir.</string>
++</resources>
+diff --git a/res/values-b+sr+Latn/navigation_handle_strings.xml b/res/values-b+sr+Latn/navigation_handle_strings.xml
+new file mode 100644
+index 0000000..5ee894b
+--- /dev/null
++++ b/res/values-b+sr+Latn/navigation_handle_strings.xml
+@@ -0,0 +1,5 @@
++<?xml version="1.0" encoding="utf-8"?>
++<resources>
++    <string name="gesture_navigation_hide_handle_title">Sakrij ručicu za navigaciju</string>
++    <string name="gesture_navigation_hide_handle_summary">Uklanja traku u dnu ekrana i prostor ispod aplikacija. Pokreti i dalje rade.</string>
++</resources>
+diff --git a/res/values-be/navigation_handle_strings.xml b/res/values-be/navigation_handle_strings.xml
+new file mode 100644
+index 0000000..4de6a0b
+--- /dev/null
++++ b/res/values-be/navigation_handle_strings.xml
+@@ -0,0 +1,5 @@
++<?xml version="1.0" encoding="utf-8"?>
++<resources>
++    <string name="gesture_navigation_hide_handle_title">Схаваць маркер навігацыі</string>
++    <string name="gesture_navigation_hide_handle_summary">Выдаляе панэль унізе экрана і месца пад праграмамі. Жэсты працягваюць працаваць.</string>
++</resources>
+diff --git a/res/values-bg/navigation_handle_strings.xml b/res/values-bg/navigation_handle_strings.xml
+new file mode 100644
+index 0000000..fda7154
+--- /dev/null
++++ b/res/values-bg/navigation_handle_strings.xml
+@@ -0,0 +1,5 @@
++<?xml version="1.0" encoding="utf-8"?>
++<resources>
++    <string name="gesture_navigation_hide_handle_title">Скриване на манипулатора за навигация</string>
++    <string name="gesture_navigation_hide_handle_summary">Премахва лентата в долната част на екрана и мястото под приложенията. Жестовете продължават да работят.</string>
++</resources>
+diff --git a/res/values-bn/navigation_handle_strings.xml b/res/values-bn/navigation_handle_strings.xml
+new file mode 100644
+index 0000000..6bb163d
+--- /dev/null
++++ b/res/values-bn/navigation_handle_strings.xml
+@@ -0,0 +1,5 @@
++<?xml version="1.0" encoding="utf-8"?>
++<resources>
++    <string name="gesture_navigation_hide_handle_title">নেভিগেশন হ্যান্ডেল লুকান</string>
++    <string name="gesture_navigation_hide_handle_summary">স্ক্রিনের নিচের বার এবং অ্যাপের নিচের ফাঁকা জায়গা সরিয়ে দেয়। জেসচার কাজ করতে থাকে।</string>
++</resources>
+diff --git a/res/values-bs/navigation_handle_strings.xml b/res/values-bs/navigation_handle_strings.xml
+new file mode 100644
+index 0000000..483ab7f
+--- /dev/null
++++ b/res/values-bs/navigation_handle_strings.xml
+@@ -0,0 +1,5 @@
++<?xml version="1.0" encoding="utf-8"?>
++<resources>
++    <string name="gesture_navigation_hide_handle_title">Sakrij ručicu za navigaciju</string>
++    <string name="gesture_navigation_hide_handle_summary">Uklanja traku na dnu ekrana i prostor ispod aplikacija. Pokreti i dalje rade.</string>
++</resources>
+diff --git a/res/values-ca/navigation_handle_strings.xml b/res/values-ca/navigation_handle_strings.xml
+new file mode 100644
+index 0000000..4463327
+--- /dev/null
++++ b/res/values-ca/navigation_handle_strings.xml
+@@ -0,0 +1,5 @@
++<?xml version="1.0" encoding="utf-8"?>
++<resources>
++    <string name="gesture_navigation_hide_handle_title">Amaga el controlador de navegació</string>
++    <string name="gesture_navigation_hide_handle_summary">Suprimeix la barra de la part inferior de la pantalla i l\'espai sota les aplicacions. Els gestos continuen funcionant.</string>
++</resources>
+diff --git a/res/values-cs/navigation_handle_strings.xml b/res/values-cs/navigation_handle_strings.xml
+new file mode 100644
+index 0000000..4aa7f6e
+--- /dev/null
++++ b/res/values-cs/navigation_handle_strings.xml
+@@ -0,0 +1,5 @@
++<?xml version="1.0" encoding="utf-8"?>
++<resources>
++    <string name="gesture_navigation_hide_handle_title">Skrýt navigační úchyt</string>
++    <string name="gesture_navigation_hide_handle_summary">Odstraní lištu ve spodní části obrazovky a prostor pod aplikacemi. Gesta budou fungovat dál.</string>
++</resources>
+diff --git a/res/values-da/navigation_handle_strings.xml b/res/values-da/navigation_handle_strings.xml
+new file mode 100644
+index 0000000..6a015a4
+--- /dev/null
++++ b/res/values-da/navigation_handle_strings.xml
+@@ -0,0 +1,5 @@
++<?xml version="1.0" encoding="utf-8"?>
++<resources>
++    <string name="gesture_navigation_hide_handle_title">Skjul navigationshåndtag</string>
++    <string name="gesture_navigation_hide_handle_summary">Fjerner bjælken nederst på skærmen og pladsen under apps. Bevægelser virker stadig.</string>
++</resources>
+diff --git a/res/values-de/navigation_handle_strings.xml b/res/values-de/navigation_handle_strings.xml
+new file mode 100644
+index 0000000..5e06577
+--- /dev/null
++++ b/res/values-de/navigation_handle_strings.xml
+@@ -0,0 +1,5 @@
++<?xml version="1.0" encoding="utf-8"?>
++<resources>
++    <string name="gesture_navigation_hide_handle_title">Navigationsleiste ausblenden</string>
++    <string name="gesture_navigation_hide_handle_summary">Entfernt die Leiste am unteren Bildschirmrand und den Platz unter Apps. Gesten funktionieren weiterhin.</string>
++</resources>
+diff --git a/res/values-el/navigation_handle_strings.xml b/res/values-el/navigation_handle_strings.xml
+new file mode 100644
+index 0000000..670d118
+--- /dev/null
++++ b/res/values-el/navigation_handle_strings.xml
+@@ -0,0 +1,5 @@
++<?xml version="1.0" encoding="utf-8"?>
++<resources>
++    <string name="gesture_navigation_hide_handle_title">Απόκρυψη λαβής πλοήγησης</string>
++    <string name="gesture_navigation_hide_handle_summary">Καταργεί τη γραμμή στο κάτω μέρος της οθόνης και τον χώρο κάτω από τις εφαρμογές. Οι κινήσεις εξακολουθούν να λειτουργούν.</string>
++</resources>
+diff --git a/res/values-en-rAU/navigation_handle_strings.xml b/res/values-en-rAU/navigation_handle_strings.xml
+new file mode 100644
+index 0000000..3628886
+--- /dev/null
++++ b/res/values-en-rAU/navigation_handle_strings.xml
+@@ -0,0 +1,5 @@
++<?xml version="1.0" encoding="utf-8"?>
++<resources>
++    <string name="gesture_navigation_hide_handle_title">Hide navigation handle</string>
++    <string name="gesture_navigation_hide_handle_summary">Remove the bar at the bottom of the screen and the space under apps. Gestures keep working.</string>
++</resources>
+diff --git a/res/values-en-rCA/navigation_handle_strings.xml b/res/values-en-rCA/navigation_handle_strings.xml
+new file mode 100644
+index 0000000..3628886
+--- /dev/null
++++ b/res/values-en-rCA/navigation_handle_strings.xml
+@@ -0,0 +1,5 @@
++<?xml version="1.0" encoding="utf-8"?>
++<resources>
++    <string name="gesture_navigation_hide_handle_title">Hide navigation handle</string>
++    <string name="gesture_navigation_hide_handle_summary">Remove the bar at the bottom of the screen and the space under apps. Gestures keep working.</string>
++</resources>
+diff --git a/res/values-en-rGB/navigation_handle_strings.xml b/res/values-en-rGB/navigation_handle_strings.xml
+new file mode 100644
+index 0000000..3628886
+--- /dev/null
++++ b/res/values-en-rGB/navigation_handle_strings.xml
+@@ -0,0 +1,5 @@
++<?xml version="1.0" encoding="utf-8"?>
++<resources>
++    <string name="gesture_navigation_hide_handle_title">Hide navigation handle</string>
++    <string name="gesture_navigation_hide_handle_summary">Remove the bar at the bottom of the screen and the space under apps. Gestures keep working.</string>
++</resources>
+diff --git a/res/values-en-rIN/navigation_handle_strings.xml b/res/values-en-rIN/navigation_handle_strings.xml
+new file mode 100644
+index 0000000..3628886
+--- /dev/null
++++ b/res/values-en-rIN/navigation_handle_strings.xml
+@@ -0,0 +1,5 @@
++<?xml version="1.0" encoding="utf-8"?>
++<resources>
++    <string name="gesture_navigation_hide_handle_title">Hide navigation handle</string>
++    <string name="gesture_navigation_hide_handle_summary">Remove the bar at the bottom of the screen and the space under apps. Gestures keep working.</string>
++</resources>
+diff --git a/res/values-es-rUS/navigation_handle_strings.xml b/res/values-es-rUS/navigation_handle_strings.xml
+new file mode 100644
+index 0000000..9c6a66d
+--- /dev/null
++++ b/res/values-es-rUS/navigation_handle_strings.xml
+@@ -0,0 +1,5 @@
++<?xml version="1.0" encoding="utf-8"?>
++<resources>
++    <string name="gesture_navigation_hide_handle_title">Ocultar barra de navegación</string>
++    <string name="gesture_navigation_hide_handle_summary">Quita la barra de la parte inferior de la pantalla y el espacio debajo de las apps. Los gestos seguirán funcionando.</string>
++</resources>
+diff --git a/res/values-es/navigation_handle_strings.xml b/res/values-es/navigation_handle_strings.xml
+new file mode 100644
+index 0000000..590da82
+--- /dev/null
++++ b/res/values-es/navigation_handle_strings.xml
+@@ -0,0 +1,5 @@
++<?xml version="1.0" encoding="utf-8"?>
++<resources>
++    <string name="gesture_navigation_hide_handle_title">Ocultar barra de navegación</string>
++    <string name="gesture_navigation_hide_handle_summary">Quita la barra de la parte inferior de la pantalla y el espacio debajo de las aplicaciones. Los gestos siguen funcionando.</string>
++</resources>
+diff --git a/res/values-et/navigation_handle_strings.xml b/res/values-et/navigation_handle_strings.xml
+new file mode 100644
+index 0000000..efbb62e
+--- /dev/null
++++ b/res/values-et/navigation_handle_strings.xml
+@@ -0,0 +1,5 @@
++<?xml version="1.0" encoding="utf-8"?>
++<resources>
++    <string name="gesture_navigation_hide_handle_title">Peida navigeerimispide</string>
++    <string name="gesture_navigation_hide_handle_summary">Eemaldab ekraani allservas oleva riba ja rakenduste all oleva ruumi. Liigutused töötavad edasi.</string>
++</resources>
+diff --git a/res/values-eu/navigation_handle_strings.xml b/res/values-eu/navigation_handle_strings.xml
+new file mode 100644
+index 0000000..a15bdca
+--- /dev/null
++++ b/res/values-eu/navigation_handle_strings.xml
+@@ -0,0 +1,5 @@
++<?xml version="1.0" encoding="utf-8"?>
++<resources>
++    <string name="gesture_navigation_hide_handle_title">Ezkutatu nabigazio-heldulekua</string>
++    <string name="gesture_navigation_hide_handle_summary">Pantailaren behealdeko barra eta aplikazioen azpiko tartea kentzen ditu. Keinuek funtzionatzen jarraituko dute.</string>
++</resources>
+diff --git a/res/values-fa/navigation_handle_strings.xml b/res/values-fa/navigation_handle_strings.xml
+new file mode 100644
+index 0000000..37e33d2
+--- /dev/null
++++ b/res/values-fa/navigation_handle_strings.xml
+@@ -0,0 +1,5 @@
++<?xml version="1.0" encoding="utf-8"?>
++<resources>
++    <string name="gesture_navigation_hide_handle_title">پنهان کردن دستگیره پیمایش</string>
++    <string name="gesture_navigation_hide_handle_summary">نوار پایین صفحه و فضای زیر برنامه‌ها را حذف می‌کند. اشاره‌ها همچنان کار می‌کنند.</string>
++</resources>
+diff --git a/res/values-fi/navigation_handle_strings.xml b/res/values-fi/navigation_handle_strings.xml
+new file mode 100644
+index 0000000..37cf74c
+--- /dev/null
++++ b/res/values-fi/navigation_handle_strings.xml
+@@ -0,0 +1,5 @@
++<?xml version="1.0" encoding="utf-8"?>
++<resources>
++    <string name="gesture_navigation_hide_handle_title">Piilota navigointikahva</string>
++    <string name="gesture_navigation_hide_handle_summary">Poistaa näytön alareunan palkin ja sovellusten alla olevan tilan. Eleet toimivat edelleen.</string>
++</resources>
+diff --git a/res/values-fr-rCA/navigation_handle_strings.xml b/res/values-fr-rCA/navigation_handle_strings.xml
+new file mode 100644
+index 0000000..ff4b597
+--- /dev/null
++++ b/res/values-fr-rCA/navigation_handle_strings.xml
+@@ -0,0 +1,5 @@
++<?xml version="1.0" encoding="utf-8"?>
++<resources>
++    <string name="gesture_navigation_hide_handle_title">Masquer la barre de navigation</string>
++    <string name="gesture_navigation_hide_handle_summary">Supprime la barre au bas de l\'écran et l\'espace sous les applications. Les gestes continuent de fonctionner.</string>
++</resources>
+diff --git a/res/values-fr/navigation_handle_strings.xml b/res/values-fr/navigation_handle_strings.xml
+new file mode 100644
+index 0000000..f26c384
+--- /dev/null
++++ b/res/values-fr/navigation_handle_strings.xml
+@@ -0,0 +1,5 @@
++<?xml version="1.0" encoding="utf-8"?>
++<resources>
++    <string name="gesture_navigation_hide_handle_title">Masquer la barre de navigation</string>
++    <string name="gesture_navigation_hide_handle_summary">Supprime la barre en bas de l\'écran et l\'espace sous les applis. Les gestes continuent de fonctionner.</string>
++</resources>
+diff --git a/res/values-gl/navigation_handle_strings.xml b/res/values-gl/navigation_handle_strings.xml
+new file mode 100644
+index 0000000..db63cdb
+--- /dev/null
++++ b/res/values-gl/navigation_handle_strings.xml
+@@ -0,0 +1,5 @@
++<?xml version="1.0" encoding="utf-8"?>
++<resources>
++    <string name="gesture_navigation_hide_handle_title">Ocultar o controlador de navegación</string>
++    <string name="gesture_navigation_hide_handle_summary">Quita a barra da parte inferior da pantalla e o espazo debaixo das aplicacións. Os xestos seguen funcionando.</string>
++</resources>
+diff --git a/res/values-gu/navigation_handle_strings.xml b/res/values-gu/navigation_handle_strings.xml
+new file mode 100644
+index 0000000..e14d617
+--- /dev/null
++++ b/res/values-gu/navigation_handle_strings.xml
+@@ -0,0 +1,5 @@
++<?xml version="1.0" encoding="utf-8"?>
++<resources>
++    <string name="gesture_navigation_hide_handle_title">નેવિગેશન હૅન્ડલ છુપાવો</string>
++    <string name="gesture_navigation_hide_handle_summary">સ્ક્રીનના તળિયેનો બાર અને ઍપ નીચેની જગ્યા કાઢી નાખે છે. સંકેતો કામ કરતા રહે છે.</string>
++</resources>
+diff --git a/res/values-hi/navigation_handle_strings.xml b/res/values-hi/navigation_handle_strings.xml
+new file mode 100644
+index 0000000..4870b4a
+--- /dev/null
++++ b/res/values-hi/navigation_handle_strings.xml
+@@ -0,0 +1,5 @@
++<?xml version="1.0" encoding="utf-8"?>
++<resources>
++    <string name="gesture_navigation_hide_handle_title">नेविगेशन हैंडल छिपाएं</string>
++    <string name="gesture_navigation_hide_handle_summary">स्क्रीन के नीचे मौजूद बार और ऐप्लिकेशन के नीचे की जगह हटा देता है. जेस्चर काम करते रहेंगे.</string>
++</resources>
+diff --git a/res/values-hr/navigation_handle_strings.xml b/res/values-hr/navigation_handle_strings.xml
+new file mode 100644
+index 0000000..66d4e85
+--- /dev/null
++++ b/res/values-hr/navigation_handle_strings.xml
+@@ -0,0 +1,5 @@
++<?xml version="1.0" encoding="utf-8"?>
++<resources>
++    <string name="gesture_navigation_hide_handle_title">Sakrij ručicu za navigaciju</string>
++    <string name="gesture_navigation_hide_handle_summary">Uklanja traku na dnu zaslona i prostor ispod aplikacija. Pokreti i dalje funkcioniraju.</string>
++</resources>
+diff --git a/res/values-hu/navigation_handle_strings.xml b/res/values-hu/navigation_handle_strings.xml
+new file mode 100644
+index 0000000..bffc247
+--- /dev/null
++++ b/res/values-hu/navigation_handle_strings.xml
+@@ -0,0 +1,5 @@
++<?xml version="1.0" encoding="utf-8"?>
++<resources>
++    <string name="gesture_navigation_hide_handle_title">Navigációs fogantyú elrejtése</string>
++    <string name="gesture_navigation_hide_handle_summary">Eltávolítja a képernyő alján lévő sávot és az alkalmazások alatti helyet. A kézmozdulatok továbbra is működnek.</string>
++</resources>
+diff --git a/res/values-hy/navigation_handle_strings.xml b/res/values-hy/navigation_handle_strings.xml
+new file mode 100644
+index 0000000..8d7c059
+--- /dev/null
++++ b/res/values-hy/navigation_handle_strings.xml
+@@ -0,0 +1,5 @@
++<?xml version="1.0" encoding="utf-8"?>
++<resources>
++    <string name="gesture_navigation_hide_handle_title">Թաքցնել նավիգացիայի բռնակը</string>
++    <string name="gesture_navigation_hide_handle_summary">Հեռացնում է էկրանի ներքևի գոտին և հավելվածների տակի տարածքը։ Ժեստերը շարունակում են աշխատել։</string>
++</resources>
+diff --git a/res/values-in/navigation_handle_strings.xml b/res/values-in/navigation_handle_strings.xml
+new file mode 100644
+index 0000000..89914a8
+--- /dev/null
++++ b/res/values-in/navigation_handle_strings.xml
+@@ -0,0 +1,5 @@
++<?xml version="1.0" encoding="utf-8"?>
++<resources>
++    <string name="gesture_navigation_hide_handle_title">Sembunyikan tuas navigasi</string>
++    <string name="gesture_navigation_hide_handle_summary">Menghapus bilah di bagian bawah layar dan ruang di bawah aplikasi. Gestur tetap berfungsi.</string>
++</resources>
+diff --git a/res/values-is/navigation_handle_strings.xml b/res/values-is/navigation_handle_strings.xml
+new file mode 100644
+index 0000000..12fea2c
+--- /dev/null
++++ b/res/values-is/navigation_handle_strings.xml
+@@ -0,0 +1,5 @@
++<?xml version="1.0" encoding="utf-8"?>
++<resources>
++    <string name="gesture_navigation_hide_handle_title">Fela leiðsagnarhandfang</string>
++    <string name="gesture_navigation_hide_handle_summary">Fjarlægir stikuna neðst á skjánum og plássið undir forritum. Bendingar virka áfram.</string>
++</resources>
+diff --git a/res/values-it/navigation_handle_strings.xml b/res/values-it/navigation_handle_strings.xml
+new file mode 100644
+index 0000000..fd38f79
+--- /dev/null
++++ b/res/values-it/navigation_handle_strings.xml
+@@ -0,0 +1,5 @@
++<?xml version="1.0" encoding="utf-8"?>
++<resources>
++    <string name="gesture_navigation_hide_handle_title">Nascondi barra di navigazione</string>
++    <string name="gesture_navigation_hide_handle_summary">Rimuove la barra nella parte inferiore dello schermo e lo spazio sotto le app. I gesti continuano a funzionare.</string>
++</resources>
+diff --git a/res/values-iw/navigation_handle_strings.xml b/res/values-iw/navigation_handle_strings.xml
+new file mode 100644
+index 0000000..1e98ed9
+--- /dev/null
++++ b/res/values-iw/navigation_handle_strings.xml
+@@ -0,0 +1,5 @@
++<?xml version="1.0" encoding="utf-8"?>
++<resources>
++    <string name="gesture_navigation_hide_handle_title">הסתרה של ידית הניווט</string>
++    <string name="gesture_navigation_hide_handle_summary">הסרת הסרגל שבתחתית המסך והרווח שמתחת לאפליקציות. התנועות ימשיכו לפעול.</string>
++</resources>
+diff --git a/res/values-ja/navigation_handle_strings.xml b/res/values-ja/navigation_handle_strings.xml
+new file mode 100644
+index 0000000..6569d8c
+--- /dev/null
++++ b/res/values-ja/navigation_handle_strings.xml
+@@ -0,0 +1,5 @@
++<?xml version="1.0" encoding="utf-8"?>
++<resources>
++    <string name="gesture_navigation_hide_handle_title">ナビゲーション ハンドルを非表示にする</string>
++    <string name="gesture_navigation_hide_handle_summary">画面下部のバーとアプリの下のスペースを削除します。ジェスチャーは引き続き使用できます。</string>
++</resources>
+diff --git a/res/values-ka/navigation_handle_strings.xml b/res/values-ka/navigation_handle_strings.xml
+new file mode 100644
+index 0000000..80c747f
+--- /dev/null
++++ b/res/values-ka/navigation_handle_strings.xml
+@@ -0,0 +1,5 @@
++<?xml version="1.0" encoding="utf-8"?>
++<resources>
++    <string name="gesture_navigation_hide_handle_title">ნავიგაციის სახელურის დამალვა</string>
++    <string name="gesture_navigation_hide_handle_summary">შლის ზოლს ეკრანის ბოლოში და სივრცეს აპების ქვემოთ. ჟესტები კვლავ იმუშავებს.</string>
++</resources>
+diff --git a/res/values-kk/navigation_handle_strings.xml b/res/values-kk/navigation_handle_strings.xml
+new file mode 100644
+index 0000000..1f0ef42
+--- /dev/null
++++ b/res/values-kk/navigation_handle_strings.xml
+@@ -0,0 +1,5 @@
++<?xml version="1.0" encoding="utf-8"?>
++<resources>
++    <string name="gesture_navigation_hide_handle_title">Навигация тұтқасын жасыру</string>
++    <string name="gesture_navigation_hide_handle_summary">Экранның төменгі жағындағы жолақты және қолданбалар астындағы бос орынды өшіреді. Қимылдар жұмыс істей береді.</string>
++</resources>
+diff --git a/res/values-km/navigation_handle_strings.xml b/res/values-km/navigation_handle_strings.xml
+new file mode 100644
+index 0000000..36c85b4
+--- /dev/null
++++ b/res/values-km/navigation_handle_strings.xml
+@@ -0,0 +1,5 @@
++<?xml version="1.0" encoding="utf-8"?>
++<resources>
++    <string name="gesture_navigation_hide_handle_title">លាក់ដងរុករក</string>
++    <string name="gesture_navigation_hide_handle_summary">ដករបារនៅផ្នែកខាងក្រោមអេក្រង់ និងចន្លោះនៅខាងក្រោមកម្មវិធីចេញ។ ចលនានៅតែដំណើរការ។</string>
++</resources>
+diff --git a/res/values-kn/navigation_handle_strings.xml b/res/values-kn/navigation_handle_strings.xml
+new file mode 100644
+index 0000000..49f78e5
+--- /dev/null
++++ b/res/values-kn/navigation_handle_strings.xml
+@@ -0,0 +1,5 @@
++<?xml version="1.0" encoding="utf-8"?>
++<resources>
++    <string name="gesture_navigation_hide_handle_title">ನ್ಯಾವಿಗೇಷನ್ ಹ್ಯಾಂಡಲ್ ಮರೆಮಾಡಿ</string>
++    <string name="gesture_navigation_hide_handle_summary">ಸ್ಕ್ರೀನ್‌ನ ಕೆಳಭಾಗದ ಬಾರ್ ಮತ್ತು ಆ್ಯಪ್‌ಗಳ ಕೆಳಗಿನ ಸ್ಥಳವನ್ನು ತೆಗೆದುಹಾಕುತ್ತದೆ. ಗೆಸ್ಚರ್‌ಗಳು ಕೆಲಸ ಮಾಡುತ್ತಲೇ ಇರುತ್ತವೆ.</string>
++</resources>
+diff --git a/res/values-ko/navigation_handle_strings.xml b/res/values-ko/navigation_handle_strings.xml
+new file mode 100644
+index 0000000..8608400
+--- /dev/null
++++ b/res/values-ko/navigation_handle_strings.xml
+@@ -0,0 +1,5 @@
++<?xml version="1.0" encoding="utf-8"?>
++<resources>
++    <string name="gesture_navigation_hide_handle_title">탐색 핸들 숨기기</string>
++    <string name="gesture_navigation_hide_handle_summary">화면 하단의 바와 앱 아래의 공간을 없앱니다. 동작은 계속 작동합니다.</string>
++</resources>
+diff --git a/res/values-ky/navigation_handle_strings.xml b/res/values-ky/navigation_handle_strings.xml
+new file mode 100644
+index 0000000..ffb91ed
+--- /dev/null
++++ b/res/values-ky/navigation_handle_strings.xml
+@@ -0,0 +1,5 @@
++<?xml version="1.0" encoding="utf-8"?>
++<resources>
++    <string name="gesture_navigation_hide_handle_title">Чабыттоо туткасын жашыруу</string>
++    <string name="gesture_navigation_hide_handle_summary">Экрандын ылдый жагындагы тилкени жана колдонмолордун астындагы бош орунду алып салат. Жаңсоолор иштей берет.</string>
++</resources>
+diff --git a/res/values-lo/navigation_handle_strings.xml b/res/values-lo/navigation_handle_strings.xml
+new file mode 100644
+index 0000000..240f204
+--- /dev/null
++++ b/res/values-lo/navigation_handle_strings.xml
+@@ -0,0 +1,5 @@
++<?xml version="1.0" encoding="utf-8"?>
++<resources>
++    <string name="gesture_navigation_hide_handle_title">ເຊື່ອງມືຈັບການນຳທາງ</string>
++    <string name="gesture_navigation_hide_handle_summary">ລຶບແຖບຢູ່ລຸ່ມສຸດຂອງໜ້າຈໍ ແລະ ພື້ນທີ່ຢູ່ລຸ່ມແອັບອອກ. ທ່າທາງຍັງຄົງເຮັດວຽກໄດ້.</string>
++</resources>
+diff --git a/res/values-lt/navigation_handle_strings.xml b/res/values-lt/navigation_handle_strings.xml
+new file mode 100644
+index 0000000..c119110
+--- /dev/null
++++ b/res/values-lt/navigation_handle_strings.xml
+@@ -0,0 +1,5 @@
++<?xml version="1.0" encoding="utf-8"?>
++<resources>
++    <string name="gesture_navigation_hide_handle_title">Slėpti naršymo rankenėlę</string>
++    <string name="gesture_navigation_hide_handle_summary">Pašalina juostą ekrano apačioje ir vietą po programomis. Gestai toliau veikia.</string>
++</resources>
+diff --git a/res/values-lv/navigation_handle_strings.xml b/res/values-lv/navigation_handle_strings.xml
+new file mode 100644
+index 0000000..ef6d47c
+--- /dev/null
++++ b/res/values-lv/navigation_handle_strings.xml
+@@ -0,0 +1,5 @@
++<?xml version="1.0" encoding="utf-8"?>
++<resources>
++    <string name="gesture_navigation_hide_handle_title">Paslēpt navigācijas turi</string>
++    <string name="gesture_navigation_hide_handle_summary">Noņem joslu ekrāna apakšdaļā un vietu zem lietotnēm. Žesti turpina darboties.</string>
++</resources>
+diff --git a/res/values-mk/navigation_handle_strings.xml b/res/values-mk/navigation_handle_strings.xml
+new file mode 100644
+index 0000000..05f8518
+--- /dev/null
++++ b/res/values-mk/navigation_handle_strings.xml
+@@ -0,0 +1,5 @@
++<?xml version="1.0" encoding="utf-8"?>
++<resources>
++    <string name="gesture_navigation_hide_handle_title">Скриј ја рачката за навигација</string>
++    <string name="gesture_navigation_hide_handle_summary">Ја отстранува лентата на дното од екранот и просторот под апликациите. Движењата продолжуваат да работат.</string>
++</resources>
+diff --git a/res/values-ml/navigation_handle_strings.xml b/res/values-ml/navigation_handle_strings.xml
+new file mode 100644
+index 0000000..c096b5c
+--- /dev/null
++++ b/res/values-ml/navigation_handle_strings.xml
+@@ -0,0 +1,5 @@
++<?xml version="1.0" encoding="utf-8"?>
++<resources>
++    <string name="gesture_navigation_hide_handle_title">നാവിഗേഷൻ ഹാൻഡിൽ മറയ്ക്കുക</string>
++    <string name="gesture_navigation_hide_handle_summary">സ്ക്രീനിന്റെ താഴെയുള്ള ബാറും ആപ്പുകൾക്ക് താഴെയുള്ള ഇടവും നീക്കം ചെയ്യുന്നു. ജെസ്ച്ചറുകൾ തുടർന്നും പ്രവർത്തിക്കും.</string>
++</resources>
+diff --git a/res/values-mn/navigation_handle_strings.xml b/res/values-mn/navigation_handle_strings.xml
+new file mode 100644
+index 0000000..0aeae7e
+--- /dev/null
++++ b/res/values-mn/navigation_handle_strings.xml
+@@ -0,0 +1,5 @@
++<?xml version="1.0" encoding="utf-8"?>
++<resources>
++    <string name="gesture_navigation_hide_handle_title">Навигацын бариулыг нуух</string>
++    <string name="gesture_navigation_hide_handle_summary">Дэлгэцийн доод хэсэг дэх зурвас болон аппуудын доорх зайг хасна. Зангаа үргэлжлэн ажиллана.</string>
++</resources>
+diff --git a/res/values-mr/navigation_handle_strings.xml b/res/values-mr/navigation_handle_strings.xml
+new file mode 100644
+index 0000000..afcd213
+--- /dev/null
++++ b/res/values-mr/navigation_handle_strings.xml
+@@ -0,0 +1,5 @@
++<?xml version="1.0" encoding="utf-8"?>
++<resources>
++    <string name="gesture_navigation_hide_handle_title">नेव्हिगेशन हँडल लपवा</string>
++    <string name="gesture_navigation_hide_handle_summary">स्क्रीनच्या तळाशी असलेला बार आणि अ‍ॅप्सखालील जागा काढून टाकते. जेश्चर काम करत राहतात.</string>
++</resources>
+diff --git a/res/values-ms/navigation_handle_strings.xml b/res/values-ms/navigation_handle_strings.xml
+new file mode 100644
+index 0000000..a3b27f6
+--- /dev/null
++++ b/res/values-ms/navigation_handle_strings.xml
+@@ -0,0 +1,5 @@
++<?xml version="1.0" encoding="utf-8"?>
++<resources>
++    <string name="gesture_navigation_hide_handle_title">Sembunyikan pemegang navigasi</string>
++    <string name="gesture_navigation_hide_handle_summary">Mengalih keluar bar di bahagian bawah skrin dan ruang di bawah apl. Gerak isyarat masih berfungsi.</string>
++</resources>
+diff --git a/res/values-my/navigation_handle_strings.xml b/res/values-my/navigation_handle_strings.xml
+new file mode 100644
+index 0000000..30ca884
+--- /dev/null
++++ b/res/values-my/navigation_handle_strings.xml
+@@ -0,0 +1,5 @@
++<?xml version="1.0" encoding="utf-8"?>
++<resources>
++    <string name="gesture_navigation_hide_handle_title">လမ်းညွှန်ဘားကို ဖျောက်ရန်</string>
++    <string name="gesture_navigation_hide_handle_summary">မျက်နှာပြင်အောက်ခြေရှိ ဘားနှင့် အက်ပ်များအောက်ရှိ နေရာလွတ်ကို ဖယ်ရှားသည်။ လက်ဟန်များ ဆက်လက်အလုပ်လုပ်ပါမည်။</string>
++</resources>
+diff --git a/res/values-nb/navigation_handle_strings.xml b/res/values-nb/navigation_handle_strings.xml
+new file mode 100644
+index 0000000..68acaef
+--- /dev/null
++++ b/res/values-nb/navigation_handle_strings.xml
+@@ -0,0 +1,5 @@
++<?xml version="1.0" encoding="utf-8"?>
++<resources>
++    <string name="gesture_navigation_hide_handle_title">Skjul navigasjonshåndtaket</string>
++    <string name="gesture_navigation_hide_handle_summary">Fjerner linjen nederst på skjermen og plassen under apper. Bevegelser fungerer fortsatt.</string>
++</resources>
+diff --git a/res/values-ne/navigation_handle_strings.xml b/res/values-ne/navigation_handle_strings.xml
+new file mode 100644
+index 0000000..0aa551c
+--- /dev/null
++++ b/res/values-ne/navigation_handle_strings.xml
+@@ -0,0 +1,5 @@
++<?xml version="1.0" encoding="utf-8"?>
++<resources>
++    <string name="gesture_navigation_hide_handle_title">नेभिगेसन ह्यान्डल लुकाउनुहोस्</string>
++    <string name="gesture_navigation_hide_handle_summary">स्क्रिनको फेदमा रहेको बार र एपहरूमुनिको खाली ठाउँ हटाउँछ। इसाराहरूले काम गरिरहन्छन्।</string>
++</resources>
+diff --git a/res/values-nl/navigation_handle_strings.xml b/res/values-nl/navigation_handle_strings.xml
+new file mode 100644
+index 0000000..38b9d63
+--- /dev/null
++++ b/res/values-nl/navigation_handle_strings.xml
+@@ -0,0 +1,5 @@
++<?xml version="1.0" encoding="utf-8"?>
++<resources>
++    <string name="gesture_navigation_hide_handle_title">Navigatiehandgreep verbergen</string>
++    <string name="gesture_navigation_hide_handle_summary">Verwijdert de balk onderaan het scherm en de ruimte onder apps. Gebaren blijven werken.</string>
++</resources>
+diff --git a/res/values-or/navigation_handle_strings.xml b/res/values-or/navigation_handle_strings.xml
+new file mode 100644
+index 0000000..15ca4ab
+--- /dev/null
++++ b/res/values-or/navigation_handle_strings.xml
+@@ -0,0 +1,5 @@
++<?xml version="1.0" encoding="utf-8"?>
++<resources>
++    <string name="gesture_navigation_hide_handle_title">ନାଭିଗେସନ ହ୍ୟାଣ୍ଡେଲ ଲୁଚାନ୍ତୁ</string>
++    <string name="gesture_navigation_hide_handle_summary">ସ୍କ୍ରିନର ତଳେ ଥିବା ବାର ଏବଂ ଆପ୍ସ ତଳେ ଥିବା ସ୍ଥାନକୁ କାଢ଼ିଦିଏ। ଜେଶ୍ଚରଗୁଡ଼ିକ କାମ କରିବା ଜାରି ରଖେ।</string>
++</resources>
+diff --git a/res/values-pa/navigation_handle_strings.xml b/res/values-pa/navigation_handle_strings.xml
+new file mode 100644
+index 0000000..61c528c
+--- /dev/null
++++ b/res/values-pa/navigation_handle_strings.xml
+@@ -0,0 +1,5 @@
++<?xml version="1.0" encoding="utf-8"?>
++<resources>
++    <string name="gesture_navigation_hide_handle_title">ਨੈਵੀਗੇਸ਼ਨ ਹੈਂਡਲ ਲੁਕਾਓ</string>
++    <string name="gesture_navigation_hide_handle_summary">ਸਕ੍ਰੀਨ ਦੇ ਹੇਠਾਂ ਮੌਜੂਦ ਬਾਰ ਅਤੇ ਐਪਾਂ ਦੇ ਹੇਠਾਂ ਵਾਲੀ ਥਾਂ ਨੂੰ ਹਟਾਉਂਦਾ ਹੈ। ਇਸ਼ਾਰੇ ਕੰਮ ਕਰਦੇ ਰਹਿਣਗੇ।</string>
++</resources>
+diff --git a/res/values-pl/navigation_handle_strings.xml b/res/values-pl/navigation_handle_strings.xml
+new file mode 100644
+index 0000000..dff6dfa
+--- /dev/null
++++ b/res/values-pl/navigation_handle_strings.xml
+@@ -0,0 +1,5 @@
++<?xml version="1.0" encoding="utf-8"?>
++<resources>
++    <string name="gesture_navigation_hide_handle_title">Ukryj uchwyt nawigacji</string>
++    <string name="gesture_navigation_hide_handle_summary">Usuwa pasek u dołu ekranu i miejsce pod aplikacjami. Gesty nadal działają.</string>
++</resources>
+diff --git a/res/values-pt-rBR/navigation_handle_strings.xml b/res/values-pt-rBR/navigation_handle_strings.xml
+new file mode 100644
+index 0000000..a794dfc
+--- /dev/null
++++ b/res/values-pt-rBR/navigation_handle_strings.xml
+@@ -0,0 +1,5 @@
++<?xml version="1.0" encoding="utf-8"?>
++<resources>
++    <string name="gesture_navigation_hide_handle_title">Ocultar barra de navegação</string>
++    <string name="gesture_navigation_hide_handle_summary">Remove a barra na parte de baixo da tela e o espaço abaixo dos apps. Os gestos continuam funcionando.</string>
++</resources>
+diff --git a/res/values-pt-rPT/navigation_handle_strings.xml b/res/values-pt-rPT/navigation_handle_strings.xml
+new file mode 100644
+index 0000000..98b8bc8
+--- /dev/null
++++ b/res/values-pt-rPT/navigation_handle_strings.xml
+@@ -0,0 +1,5 @@
++<?xml version="1.0" encoding="utf-8"?>
++<resources>
++    <string name="gesture_navigation_hide_handle_title">Ocultar barra de navegação</string>
++    <string name="gesture_navigation_hide_handle_summary">Remove a barra na parte inferior do ecrã e o espaço por baixo das apps. Os gestos continuam a funcionar.</string>
++</resources>
+diff --git a/res/values-pt/navigation_handle_strings.xml b/res/values-pt/navigation_handle_strings.xml
+new file mode 100644
+index 0000000..a794dfc
+--- /dev/null
++++ b/res/values-pt/navigation_handle_strings.xml
+@@ -0,0 +1,5 @@
++<?xml version="1.0" encoding="utf-8"?>
++<resources>
++    <string name="gesture_navigation_hide_handle_title">Ocultar barra de navegação</string>
++    <string name="gesture_navigation_hide_handle_summary">Remove a barra na parte de baixo da tela e o espaço abaixo dos apps. Os gestos continuam funcionando.</string>
++</resources>
+diff --git a/res/values-ro/navigation_handle_strings.xml b/res/values-ro/navigation_handle_strings.xml
+new file mode 100644
+index 0000000..5dd8b0f
+--- /dev/null
++++ b/res/values-ro/navigation_handle_strings.xml
+@@ -0,0 +1,5 @@
++<?xml version="1.0" encoding="utf-8"?>
++<resources>
++    <string name="gesture_navigation_hide_handle_title">Ascunde mânerul de navigare</string>
++    <string name="gesture_navigation_hide_handle_summary">Elimină bara din partea de jos a ecranului și spațiul de sub aplicații. Gesturile funcționează în continuare.</string>
++</resources>
+diff --git a/res/values-ru/navigation_handle_strings.xml b/res/values-ru/navigation_handle_strings.xml
+new file mode 100644
+index 0000000..848dbdc
+--- /dev/null
++++ b/res/values-ru/navigation_handle_strings.xml
+@@ -0,0 +1,5 @@
++<?xml version="1.0" encoding="utf-8"?>
++<resources>
++    <string name="gesture_navigation_hide_handle_title">Скрыть маркер навигации</string>
++    <string name="gesture_navigation_hide_handle_summary">Убирает полосу внизу экрана и место под приложениями. Жесты продолжают работать.</string>
++</resources>
+diff --git a/res/values-si/navigation_handle_strings.xml b/res/values-si/navigation_handle_strings.xml
+new file mode 100644
+index 0000000..7155523
+--- /dev/null
++++ b/res/values-si/navigation_handle_strings.xml
+@@ -0,0 +1,5 @@
++<?xml version="1.0" encoding="utf-8"?>
++<resources>
++    <string name="gesture_navigation_hide_handle_title">සංචාලන හසුරුව සඟවන්න</string>
++    <string name="gesture_navigation_hide_handle_summary">තිරයේ පහළ ඇති තීරුව සහ යෙදුම් යට ඇති ඉඩ ඉවත් කරයි. ඉංගිත දිගටම ක්‍රියා කරයි.</string>
++</resources>
+diff --git a/res/values-sk/navigation_handle_strings.xml b/res/values-sk/navigation_handle_strings.xml
+new file mode 100644
+index 0000000..6b5a650
+--- /dev/null
++++ b/res/values-sk/navigation_handle_strings.xml
+@@ -0,0 +1,5 @@
++<?xml version="1.0" encoding="utf-8"?>
++<resources>
++    <string name="gesture_navigation_hide_handle_title">Skryť navigačný úchyt</string>
++    <string name="gesture_navigation_hide_handle_summary">Odstráni panel v dolnej časti obrazovky a priestor pod aplikáciami. Gestá budú naďalej fungovať.</string>
++</resources>
+diff --git a/res/values-sl/navigation_handle_strings.xml b/res/values-sl/navigation_handle_strings.xml
+new file mode 100644
+index 0000000..48d6ab9
+--- /dev/null
++++ b/res/values-sl/navigation_handle_strings.xml
+@@ -0,0 +1,5 @@
++<?xml version="1.0" encoding="utf-8"?>
++<resources>
++    <string name="gesture_navigation_hide_handle_title">Skrij ročico za krmarjenje</string>
++    <string name="gesture_navigation_hide_handle_summary">Odstrani vrstico na dnu zaslona in prostor pod aplikacijami. Kretnje še naprej delujejo.</string>
++</resources>
+diff --git a/res/values-sq/navigation_handle_strings.xml b/res/values-sq/navigation_handle_strings.xml
+new file mode 100644
+index 0000000..da9c891
+--- /dev/null
++++ b/res/values-sq/navigation_handle_strings.xml
+@@ -0,0 +1,5 @@
++<?xml version="1.0" encoding="utf-8"?>
++<resources>
++    <string name="gesture_navigation_hide_handle_title">Fshih dorezën e navigimit</string>
++    <string name="gesture_navigation_hide_handle_summary">Heq shiritin në fund të ekranit dhe hapësirën poshtë aplikacioneve. Gjestet vazhdojnë të funksionojnë.</string>
++</resources>
+diff --git a/res/values-sr/navigation_handle_strings.xml b/res/values-sr/navigation_handle_strings.xml
+new file mode 100644
+index 0000000..af14490
+--- /dev/null
++++ b/res/values-sr/navigation_handle_strings.xml
+@@ -0,0 +1,5 @@
++<?xml version="1.0" encoding="utf-8"?>
++<resources>
++    <string name="gesture_navigation_hide_handle_title">Сакриј ручицу за навигацију</string>
++    <string name="gesture_navigation_hide_handle_summary">Уклања траку у дну екрана и простор испод апликација. Покрети и даље раде.</string>
++</resources>
+diff --git a/res/values-sv/navigation_handle_strings.xml b/res/values-sv/navigation_handle_strings.xml
+new file mode 100644
+index 0000000..efffa38
+--- /dev/null
++++ b/res/values-sv/navigation_handle_strings.xml
+@@ -0,0 +1,5 @@
++<?xml version="1.0" encoding="utf-8"?>
++<resources>
++    <string name="gesture_navigation_hide_handle_title">Dölj navigeringshandtaget</string>
++    <string name="gesture_navigation_hide_handle_summary">Tar bort fältet längst ned på skärmen och utrymmet under appar. Rörelser fungerar fortfarande.</string>
++</resources>
+diff --git a/res/values-sw/navigation_handle_strings.xml b/res/values-sw/navigation_handle_strings.xml
+new file mode 100644
+index 0000000..8323d7b
+--- /dev/null
++++ b/res/values-sw/navigation_handle_strings.xml
+@@ -0,0 +1,5 @@
++<?xml version="1.0" encoding="utf-8"?>
++<resources>
++    <string name="gesture_navigation_hide_handle_title">Ficha kishikio cha usogezaji</string>
++    <string name="gesture_navigation_hide_handle_summary">Huondoa upau ulio sehemu ya chini ya skrini na nafasi iliyo chini ya programu. Ishara zitaendelea kufanya kazi.</string>
++</resources>
+diff --git a/res/values-ta/navigation_handle_strings.xml b/res/values-ta/navigation_handle_strings.xml
+new file mode 100644
+index 0000000..5f9db04
+--- /dev/null
++++ b/res/values-ta/navigation_handle_strings.xml
+@@ -0,0 +1,5 @@
++<?xml version="1.0" encoding="utf-8"?>
++<resources>
++    <string name="gesture_navigation_hide_handle_title">வழிசெலுத்தல் ஹேண்டிலை மறை</string>
++    <string name="gesture_navigation_hide_handle_summary">திரையின் கீழே உள்ள பட்டியையும் ஆப்ஸுக்குக் கீழே உள்ள இடத்தையும் அகற்றும். சைகைகள் தொடர்ந்து செயல்படும்.</string>
++</resources>
+diff --git a/res/values-te/navigation_handle_strings.xml b/res/values-te/navigation_handle_strings.xml
+new file mode 100644
+index 0000000..eae3b5a
+--- /dev/null
++++ b/res/values-te/navigation_handle_strings.xml
+@@ -0,0 +1,5 @@
++<?xml version="1.0" encoding="utf-8"?>
++<resources>
++    <string name="gesture_navigation_hide_handle_title">నావిగేషన్ హ్యాండిల్‌ను దాచండి</string>
++    <string name="gesture_navigation_hide_handle_summary">స్క్రీన్ దిగువన ఉన్న బార్‌ను, యాప్‌ల కింద ఉన్న ఖాళీని తీసివేస్తుంది. సంజ్ఞలు పని చేస్తూనే ఉంటాయి.</string>
++</resources>
+diff --git a/res/values-th/navigation_handle_strings.xml b/res/values-th/navigation_handle_strings.xml
+new file mode 100644
+index 0000000..49bb181
+--- /dev/null
++++ b/res/values-th/navigation_handle_strings.xml
+@@ -0,0 +1,5 @@
++<?xml version="1.0" encoding="utf-8"?>
++<resources>
++    <string name="gesture_navigation_hide_handle_title">ซ่อนแฮนเดิลการนำทาง</string>
++    <string name="gesture_navigation_hide_handle_summary">นำแถบที่ด้านล่างของหน้าจอและพื้นที่ใต้แอปออก ท่าทางสัมผัสยังคงใช้งานได้</string>
++</resources>
+diff --git a/res/values-tl/navigation_handle_strings.xml b/res/values-tl/navigation_handle_strings.xml
+new file mode 100644
+index 0000000..36c2284
+--- /dev/null
++++ b/res/values-tl/navigation_handle_strings.xml
+@@ -0,0 +1,5 @@
++<?xml version="1.0" encoding="utf-8"?>
++<resources>
++    <string name="gesture_navigation_hide_handle_title">Itago ang navigation handle</string>
++    <string name="gesture_navigation_hide_handle_summary">Inaalis ang bar sa ibaba ng screen at ang espasyo sa ilalim ng mga app. Gagana pa rin ang mga galaw.</string>
++</resources>
+diff --git a/res/values-tr/navigation_handle_strings.xml b/res/values-tr/navigation_handle_strings.xml
+new file mode 100644
+index 0000000..3ec3faa
+--- /dev/null
++++ b/res/values-tr/navigation_handle_strings.xml
+@@ -0,0 +1,5 @@
++<?xml version="1.0" encoding="utf-8"?>
++<resources>
++    <string name="gesture_navigation_hide_handle_title">Gezinme çubuğunu gizle</string>
++    <string name="gesture_navigation_hide_handle_summary">Ekranın altındaki çubuğu ve uygulamaların altındaki boşluğu kaldırır. Hareketler çalışmaya devam eder.</string>
++</resources>
+diff --git a/res/values-uk/navigation_handle_strings.xml b/res/values-uk/navigation_handle_strings.xml
+new file mode 100644
+index 0000000..26e5387
+--- /dev/null
++++ b/res/values-uk/navigation_handle_strings.xml
+@@ -0,0 +1,5 @@
++<?xml version="1.0" encoding="utf-8"?>
++<resources>
++    <string name="gesture_navigation_hide_handle_title">Сховати маркер навігації</string>
++    <string name="gesture_navigation_hide_handle_summary">Прибирає панель унизу екрана та місце під додатками. Жести й далі працюють.</string>
++</resources>
+diff --git a/res/values-ur/navigation_handle_strings.xml b/res/values-ur/navigation_handle_strings.xml
+new file mode 100644
+index 0000000..2505309
+--- /dev/null
++++ b/res/values-ur/navigation_handle_strings.xml
+@@ -0,0 +1,5 @@
++<?xml version="1.0" encoding="utf-8"?>
++<resources>
++    <string name="gesture_navigation_hide_handle_title">نیویگیشن ہینڈل چھپائیں</string>
++    <string name="gesture_navigation_hide_handle_summary">اسکرین کے نیچے موجود بار اور ایپس کے نیچے کی جگہ ہٹا دیتا ہے۔ اشارے کام کرتے رہیں گے۔</string>
++</resources>
+diff --git a/res/values-uz/navigation_handle_strings.xml b/res/values-uz/navigation_handle_strings.xml
+new file mode 100644
+index 0000000..f626933
+--- /dev/null
++++ b/res/values-uz/navigation_handle_strings.xml
+@@ -0,0 +1,5 @@
++<?xml version="1.0" encoding="utf-8"?>
++<resources>
++    <string name="gesture_navigation_hide_handle_title">Navigatsiya dastagini yashirish</string>
++    <string name="gesture_navigation_hide_handle_summary">Ekran pastidagi panel va ilovalar ostidagi boʻsh joyni olib tashlaydi. Ishoralar ishlashda davom etadi.</string>
++</resources>
+diff --git a/res/values-vi/navigation_handle_strings.xml b/res/values-vi/navigation_handle_strings.xml
+new file mode 100644
+index 0000000..343f714
+--- /dev/null
++++ b/res/values-vi/navigation_handle_strings.xml
+@@ -0,0 +1,5 @@
++<?xml version="1.0" encoding="utf-8"?>
++<resources>
++    <string name="gesture_navigation_hide_handle_title">Ẩn thanh điều hướng</string>
++    <string name="gesture_navigation_hide_handle_summary">Xoá thanh ở cuối màn hình và khoảng trống bên dưới ứng dụng. Cử chỉ vẫn hoạt động.</string>
++</resources>
+diff --git a/res/values-zh-rCN/navigation_handle_strings.xml b/res/values-zh-rCN/navigation_handle_strings.xml
+new file mode 100644
+index 0000000..e14f64a
+--- /dev/null
++++ b/res/values-zh-rCN/navigation_handle_strings.xml
+@@ -0,0 +1,5 @@
++<?xml version="1.0" encoding="utf-8"?>
++<resources>
++    <string name="gesture_navigation_hide_handle_title">隐藏导航手柄</string>
++    <string name="gesture_navigation_hide_handle_summary">移除屏幕底部的横条以及应用下方的空间。手势仍可正常使用。</string>
++</resources>
+diff --git a/res/values-zh-rHK/navigation_handle_strings.xml b/res/values-zh-rHK/navigation_handle_strings.xml
+new file mode 100644
+index 0000000..731cb00
+--- /dev/null
++++ b/res/values-zh-rHK/navigation_handle_strings.xml
+@@ -0,0 +1,5 @@
++<?xml version="1.0" encoding="utf-8"?>
++<resources>
++    <string name="gesture_navigation_hide_handle_title">隱藏導覽控點</string>
++    <string name="gesture_navigation_hide_handle_summary">移除螢幕底部的橫條及應用程式下方的空間。手勢仍可正常使用。</string>
++</resources>
+diff --git a/res/values-zh-rTW/navigation_handle_strings.xml b/res/values-zh-rTW/navigation_handle_strings.xml
+new file mode 100644
+index 0000000..306beec
+--- /dev/null
++++ b/res/values-zh-rTW/navigation_handle_strings.xml
+@@ -0,0 +1,5 @@
++<?xml version="1.0" encoding="utf-8"?>
++<resources>
++    <string name="gesture_navigation_hide_handle_title">隱藏導覽控制點</string>
++    <string name="gesture_navigation_hide_handle_summary">移除螢幕底部的橫條和應用程式下方的空間。手勢仍可正常使用。</string>
++</resources>
+diff --git a/res/values-zu/navigation_handle_strings.xml b/res/values-zu/navigation_handle_strings.xml
+new file mode 100644
+index 0000000..08f6454
+--- /dev/null
++++ b/res/values-zu/navigation_handle_strings.xml
+@@ -0,0 +1,5 @@
++<?xml version="1.0" encoding="utf-8"?>
++<resources>
++    <string name="gesture_navigation_hide_handle_title">Fihla isibambo sokuzulazula</string>
++    <string name="gesture_navigation_hide_handle_summary">Isusa ibha engezansi kwesikrini nesikhala esingaphansi kwama-app. Ukuthinta kuyaqhubeka kusebenza.</string>
++</resources>
+diff --git a/res/values/navigation_handle_strings.xml b/res/values/navigation_handle_strings.xml
+new file mode 100644
+index 0000000..3628886
+--- /dev/null
++++ b/res/values/navigation_handle_strings.xml
+@@ -0,0 +1,5 @@
++<?xml version="1.0" encoding="utf-8"?>
++<resources>
++    <string name="gesture_navigation_hide_handle_title">Hide navigation handle</string>
++    <string name="gesture_navigation_hide_handle_summary">Remove the bar at the bottom of the screen and the space under apps. Gestures keep working.</string>
++</resources>
+diff --git a/res/xml/gesture_navigation_settings.xml b/res/xml/gesture_navigation_settings.xml
+index d271985..f022e00 100644
+--- a/res/xml/gesture_navigation_settings.xml
++++ b/res/xml/gesture_navigation_settings.xml
+@@ -34,6 +34,19 @@
+             settings:buttonPreferenceType="filled" />
+     </PreferenceCategory>
+ 
++    <PreferenceCategory
++        android:key="gesture_navigation_handle_category"
++        android:persistent="false">
++
++        <SwitchPreferenceCompat
++            android:key="gesture_navigation_hide_handle"
++            android:title="@string/gesture_navigation_hide_handle_title"
++            android:summary="@string/gesture_navigation_hide_handle_summary"
++            settings:controller="com.android.settings.gestures.GestureNavigationHideHandleController"
++        />
++
++    </PreferenceCategory>
++
+     <PreferenceCategory
+         android:key="assistant_gesture_category"
+         android:persistent="false"
+diff --git a/src/com/android/settings/gestures/GestureNavigationHideHandleController.java b/src/com/android/settings/gestures/GestureNavigationHideHandleController.java
+new file mode 100644
+index 0000000..ed95788
+--- /dev/null
++++ b/src/com/android/settings/gestures/GestureNavigationHideHandleController.java
+@@ -0,0 +1,73 @@
++package com.android.settings.gestures;
++
++import static android.os.UserHandle.USER_CURRENT;
++import static android.view.WindowManagerPolicyConstants.NAV_BAR_MODE_GESTURAL_OVERLAY;
++
++import android.content.Context;
++import android.content.om.IOverlayManager;
++import android.content.om.OverlayInfo;
++import android.os.RemoteException;
++import android.os.ServiceManager;
++
++import com.android.settings.R;
++import com.android.settings.core.TogglePreferenceController;
++
++/**
++ * Switches gesture navigation between the default overlay and the one without the handle.
++ */
++public class GestureNavigationHideHandleController extends TogglePreferenceController {
++
++    static final String NAV_BAR_MODE_GESTURAL_NO_HANDLE_OVERLAY =
++            "com.android.internal.systemui.navbar.gestural_nohandle";
++    static final String LAUNCHER_NO_HANDLE_OVERLAY =
++            "com.android.internal.systemui.navbar.gestural_nohandle.launcher";
++
++    private final IOverlayManager mOverlayManager;
++
++    public GestureNavigationHideHandleController(Context context, String key) {
++        super(context, key);
++        mOverlayManager = IOverlayManager.Stub.asInterface(
++                ServiceManager.getService(Context.OVERLAY_SERVICE));
++    }
++
++    static boolean isHandleHidden(IOverlayManager overlayManager) {
++        try {
++            final OverlayInfo info = overlayManager.getOverlayInfo(
++                    NAV_BAR_MODE_GESTURAL_NO_HANDLE_OVERLAY, USER_CURRENT);
++            return info != null && info.isEnabled();
++        } catch (RemoteException e) {
++            return false;
++        }
++    }
++
++    @Override
++    public boolean isChecked() {
++        return isHandleHidden(mOverlayManager);
++    }
++
++    @Override
++    public boolean setChecked(boolean isChecked) {
++        try {
++            mOverlayManager.setEnabledExclusiveInCategory(isChecked
++                    ? NAV_BAR_MODE_GESTURAL_NO_HANDLE_OVERLAY
++                    : NAV_BAR_MODE_GESTURAL_OVERLAY, USER_CURRENT);
++            mOverlayManager.setEnabled(LAUNCHER_NO_HANDLE_OVERLAY, isChecked, USER_CURRENT);
++        } catch (RemoteException e) {
++            return false;
++        }
++        return true;
++    }
++
++    @Override
++    public int getAvailabilityStatus() {
++        return SystemNavigationPreferenceController.isGestureAvailable(mContext)
++                && SystemNavigationPreferenceController.isOverlayPackageAvailable(mContext,
++                        NAV_BAR_MODE_GESTURAL_NO_HANDLE_OVERLAY)
++                ? AVAILABLE : UNSUPPORTED_ON_DEVICE;
++    }
++
++    @Override
++    public int getSliceHighlightMenuRes() {
++        return R.string.menu_key_system;
++    }
++}
+diff --git a/src/com/android/settings/gestures/SystemNavigationGestureSettings.java b/src/com/android/settings/gestures/SystemNavigationGestureSettings.java
+index 5c542b6..61bc23d 100644
+--- a/src/com/android/settings/gestures/SystemNavigationGestureSettings.java
++++ b/src/com/android/settings/gestures/SystemNavigationGestureSettings.java
+@@ -246,7 +246,8 @@ public class SystemNavigationGestureSettings extends RadioButtonPickerFragment i
+         try {
+             info = overlayManager.getOverlayInfo(NAV_BAR_MODE_GESTURAL_OVERLAY, USER_CURRENT);
+         } catch (RemoteException e) { /* Do nothing */ }
+-        if (info != null && !info.isEnabled()) {
++        if (info != null && !info.isEnabled()
++                && !GestureNavigationHideHandleController.isHandleHidden(overlayManager)) {
+             // Enable the default gesture nav overlay. Back sensitivity for left and right are
+             // stored as separate settings values, and other gesture nav overlays are deprecated.
+             setCurrentSystemNavigationMode(overlayManager, KEY_SYSTEM_NAV_GESTURAL);
+@@ -285,6 +286,9 @@ public class SystemNavigationGestureSettings extends RadioButtonPickerFragment i
+ 
+         try {
+             overlayManager.setEnabledExclusiveInCategory(overlayPackage, USER_CURRENT);
++            overlayManager.setEnabled(
++                    GestureNavigationHideHandleController.LAUNCHER_NO_HANDLE_OVERLAY, false,
++                    USER_CURRENT);
+         } catch (RemoteException e) {
+             throw e.rethrowFromSystemServer();
+         }
+-- 
+2.39.2 (Apple Git-143)
+
