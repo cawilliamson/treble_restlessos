@@ -1,7 +1,7 @@
 From 0b0b06aa93c11eecb5e5491f1961dc05c6481791 Mon Sep 17 00:00:00 2001
 From: "Christopher A. Williamson" <contact@chrisaw.io>
 Date: Sat, 26 Sep 2026 21:33:52 +0100
-Subject: [PATCH 9/9] wallpaper: enable per-screen default wallpaper properties
+Subject: [PATCH 9/10] wallpaper: enable per-screen default wallpaper properties
 
 openRawDefaultWallpaper() hardcoded the system wallpaper property and
 resource for both home and lock screens; the per-flag branch was left
