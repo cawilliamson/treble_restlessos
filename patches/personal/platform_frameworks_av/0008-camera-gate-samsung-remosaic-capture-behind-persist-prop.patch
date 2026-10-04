@@ -1,7 +1,7 @@
 From 03c8a6a933ca74dd254c14209d2077e05d41bb92 Mon Sep 17 00:00:00 2001
 From: Langsdorff <131063968+clangsdorff@users.noreply.github.com>
 Date: Sat, 3 Oct 2026 01:43:26 +0300
-Subject: [PATCH 8/9] camera: gate samsung remosaic capture behind
+Subject: [PATCH 8/11] camera: gate samsung remosaic capture behind
  persist.sys.phh.samsung.remosaic
 
 ---
