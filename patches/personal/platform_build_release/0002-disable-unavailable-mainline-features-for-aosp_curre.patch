@@ -1,7 +1,7 @@
 From 250cce626c88af04fd889abf3152b0d416469c3c Mon Sep 17 00:00:00 2001
 From: "Christopher A. Williamson" <contact@chrisaw.io>
 Date: Mon, 28 Sep 2026 09:16:30 +0100
-Subject: [PATCH 2/3] disable unavailable mainline features for aosp_current
+Subject: [PATCH 2/4] disable unavailable mainline features for aosp_current
 
 these aosp_current features are unavailable or pointless on the gsi
 fleet: apexd data-mount and early-vm bootstrap crash on legacy vendor

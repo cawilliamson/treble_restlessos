@@ -1,7 +1,7 @@
 From cdcfbe0d686e9304f55438b2f89f3894319e2754 Mon Sep 17 00:00:00 2001
 From: Langsdorff <131063968+clangsdorff@users.noreply.github.com>
 Date: Fri, 2 Oct 2026 21:17:53 +0300
-Subject: [PATCH 3/3] Enable the ime switcher button in navbar setting
+Subject: [PATCH 3/4] Enable the ime switcher button in navbar setting
 
 ---
  ..._switcher_button_in_navbar_setting_flag_values.textproto | 6 ++++++
