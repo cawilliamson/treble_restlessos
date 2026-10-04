@@ -1,0 +1,76 @@
+From e4ec832d6f220adf19581c11daa78bc85299327a Mon Sep 17 00:00:00 2001
+From: Langsdorff <131063968+clangsdorff@users.noreply.github.com>
+Date: Sun, 4 Oct 2026 23:12:38 +0300
+Subject: [PATCH 11/11] camera: only force samsung 60fps video for grapheneos
+ camera
+
+---
+ .../camera/libcameraservice/common/Camera2ClientBase.cpp    | 2 ++
+ services/camera/libcameraservice/device3/Camera3Device.cpp  | 6 +++++-
+ services/camera/libcameraservice/device3/Camera3Device.h    | 6 ++++++
+ 3 files changed, 13 insertions(+), 1 deletion(-)
+
+diff --git a/services/camera/libcameraservice/common/Camera2ClientBase.cpp b/services/camera/libcameraservice/common/Camera2ClientBase.cpp
+index 9f8e03c..83f89de 100644
+--- a/services/camera/libcameraservice/common/Camera2ClientBase.cpp
++++ b/services/camera/libcameraservice/common/Camera2ClientBase.cpp
+@@ -147,6 +147,8 @@ status_t Camera2ClientBase<TClientBase>::initializeImpl(TProviderPtr providerPtr
+                 __FUNCTION__, TClientBase::mCameraIdStr.c_str());
+         return NO_INIT;
+     }
++    static_cast<Camera3Device*>(mDevice.get())->setClientPackageName(
++            TClientBase::getPackageName());
+ 
+     // Notify camera opening (check op if check_full_attribution_source_chain flag is off).
+     res = TClientBase::notifyCameraOpening();
+diff --git a/services/camera/libcameraservice/device3/Camera3Device.cpp b/services/camera/libcameraservice/device3/Camera3Device.cpp
+index 508444e..4602d53 100644
+--- a/services/camera/libcameraservice/device3/Camera3Device.cpp
++++ b/services/camera/libcameraservice/device3/Camera3Device.cpp
+@@ -2679,6 +2679,10 @@ status_t Camera3Device::configureStreamsLocked(int operatingMode,
+     mGroupIdPhysicalCameraMap.clear();
+     mComposerOutput = false;
+     bool samsungVideoFpsEnabled = property_get_bool("persist.sys.phh.samsung.video60", false);
++    // GrapheneOS Camera has no frame rate setting and always asks for 30fps
++    bool samsungVideoFpsForced = samsungVideoFpsEnabled &&
++            mClientPackageName == "app.grapheneos.camera" &&
++            property_get_bool("persist.sys.phh.samsung.video60_grapheneos", false);
+     int32_t samsungVideoFps = 0;
+     bool samsungVideoAspect = true;
+     for (size_t i = 0; i < mOutputStreams.size(); i++) {
+@@ -2737,7 +2741,7 @@ status_t Camera3Device::configureStreamsLocked(int operatingMode,
+             mComposerOutput = true;
+         }
+ 
+-        if (samsungVideoFpsEnabled && mOutputStreams[i]->isVideoStream()) {
++        if (samsungVideoFpsForced && mOutputStreams[i]->isVideoStream()) {
+             samsungVideoFps = std::max(samsungVideoFps, getSamsungHighFpsVideoFps(mDeviceInfo,
+                     outputStream->width, outputStream->height));
+         }
+diff --git a/services/camera/libcameraservice/device3/Camera3Device.h b/services/camera/libcameraservice/device3/Camera3Device.h
+index 493aaa2..aa94e94 100644
+--- a/services/camera/libcameraservice/device3/Camera3Device.h
++++ b/services/camera/libcameraservice/device3/Camera3Device.h
+@@ -157,6 +157,10 @@ class Camera3Device :
+         return mIsCompositeHeicUltraHDRDisabled;
+     }
+ 
++    void setClientPackageName(const std::string& packageName) {
++        mClientPackageName = packageName;
++    }
++
+     // Capture and setStreamingRequest will configure streams if currently in
+     // idle state
+     status_t capture(CameraMetadata &request, int64_t *lastFrameNumber = NULL) override;
+@@ -1670,6 +1674,8 @@ class Camera3Device :
+     camera_metadata_enum_android_scaler_rotate_and_crop_t mRotateAndCropOverride;
+     bool mComposerOutput;
+ 
++    std::string mClientPackageName;
++
+     // Auto framing override value
+     camera_metadata_enum_android_control_autoframing mAutoframingOverride;
+ 
+-- 
+2.39.2 (Apple Git-143)
+
