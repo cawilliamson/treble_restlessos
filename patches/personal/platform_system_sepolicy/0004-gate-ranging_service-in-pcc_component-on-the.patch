@@ -1,7 +1,7 @@
 From 3b0d230a93f56d2dd437913a65d15d3765210a0f Mon Sep 17 00:00:00 2001
 From: "Christopher A. Williamson" <contact@chrisaw.io>
 Date: Mon, 28 Sep 2026 13:09:42 +0100
-Subject: [PATCH 4/4] gate ranging_service in pcc_component on the ranging
+Subject: [PATCH 4/6] gate ranging_service in pcc_component on the ranging
  flag
 
 the ranging_service type is only declared when RELEASE_RANGING_STACK

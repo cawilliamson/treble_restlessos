@@ -1,7 +1,7 @@
 From 1d46227feba5d829b4236301efc0c654aa50bfee Mon Sep 17 00:00:00 2001
 From: "Christopher A. Williamson" <contact@chrisaw.io>
 Date: Sun, 27 Sep 2026 08:02:03 +0100
-Subject: [PATCH 3/4] declare early_virtmgr types unconditionally
+Subject: [PATCH 3/6] declare early_virtmgr types unconditionally
 
 early_virtmgr_exec and early_virtmgr_vendor are declared inside an
 is_flag_enabled(RELEASE_AVF_ENABLE_EARLY_VM) guard, but private/domain.te

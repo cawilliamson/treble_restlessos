@@ -1,7 +1,7 @@
 From 6d7faeaed457d1489c6e7f445d3da7a60c08ff9d Mon Sep 17 00:00:00 2001
 From: "Christopher A. Williamson" <contact@chrisaw.io>
 Date: Fri, 2 Oct 2026 10:00:06 +0100
-Subject: [PATCH 5/5] sepolicy: restore /dev/ion access for the graphics stack
+Subject: [PATCH 5/6] sepolicy: restore /dev/ion access for the graphics stack
 
 aosp's dma-buf migration dropped the ion rules and the /dev/ion label
 from platform policy, but legacy vendor graphics stacks still allocate

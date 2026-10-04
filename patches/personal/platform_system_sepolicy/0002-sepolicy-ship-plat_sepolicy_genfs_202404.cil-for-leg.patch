@@ -1,7 +1,7 @@
 From b83ae74b1d6ee1bb231e0680d9a68e470b23fb79 Mon Sep 17 00:00:00 2001
 From: "Christopher A. Williamson" <contact@chrisaw.io>
 Date: Thu, 9 Apr 2026 00:12:09 +0100
-Subject: [PATCH 2/4] sepolicy: ship plat_sepolicy_genfs_202404.cil for legacy
+Subject: [PATCH 2/6] sepolicy: ship plat_sepolicy_genfs_202404.cil for legacy
  vendor partitions
 
 get_genfs_labels_version() defaults to 202404 when the vendor partition

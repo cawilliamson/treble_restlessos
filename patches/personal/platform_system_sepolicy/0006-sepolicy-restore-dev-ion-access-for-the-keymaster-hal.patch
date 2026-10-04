@@ -1,0 +1,34 @@
+From 80567b484e31315ea24fe59319a88fa5a61bb0d6 Mon Sep 17 00:00:00 2001
+From: "Christopher A. Williamson" <contact@chrisaw.io>
+Date: Sun, 4 Oct 2026 20:09:57 +0100
+Subject: [PATCH 6/6] sepolicy: restore /dev/ion access for the keymaster hal
+
+aosp's dma-buf migration dropped the ion rule from platform policy, and
+the trebledroid compat mapping only reinstates it for vndk 28.0-30.0
+vendors.  legacy keymaster blobs that allocate qsee shared buffers via
+/dev/ion (observed on msm8998) are denied the open in enforcing mode,
+crash at startup in a loop, keystore2 never registers, and vold blocks
+waiting on it -- boot stalls at the oem logo before zygote ever starts.
+
+grant the hal_keymaster attribute rw access so vendor-specific keymaster
+domains are covered regardless of compat mapping.
+---
+ private/hal_keymaster.te | 5 +++++
+ 1 file changed, 5 insertions(+)
+
+diff --git a/private/hal_keymaster.te b/private/hal_keymaster.te
+index 51c218f47..80b0823de 100644
+--- a/private/hal_keymaster.te
++++ b/private/hal_keymaster.te
+@@ -4,3 +4,8 @@ binder_call(hal_keymaster_client, hal_keymaster_server)
+ hal_attribute_hwservice(hal_keymaster, hal_keymaster_hwservice)
+ 
+ allow hal_keymaster tee_device:chr_file rw_file_perms;
++
++# legacy vendor keymaster blobs (e.g. qcom msm8998) allocate their qsee shared
++# buffers through /dev/ion; the dma-buf migration removed the rule for it, so
++# the hal dies at startup and vold blocks forever waiting on keystore2
++allow hal_keymaster ion_device:chr_file rw_file_perms;
+-- 
+2.55.0
+
