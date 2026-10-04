@@ -12,7 +12,7 @@ on:
         description: "publish the github release flagged as pre-release"
         required: false
         type: boolean
-        default: true
+        default: false
 
 permissions:
   actions: write
@@ -410,7 +410,7 @@ jobs:
           name: "RestlessOS ${{ steps.compress.outputs.version_tag }}"
           bodyFile: /mnt/src/out/CHANGELOG.md
           artifacts: "/mnt/src/out/*.img.xz"
-          prerelease: ${{ github.event.inputs.pre_release != 'false' }}
+          prerelease: ${{ github.event.inputs.pre_release == 'true' }}
           token: ${{ github.token }}
       - name: Unmount data volume
         run: .github/scripts/ebs.sh umount
