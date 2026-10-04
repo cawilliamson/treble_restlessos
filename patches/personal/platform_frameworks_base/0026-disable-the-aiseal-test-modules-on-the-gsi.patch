@@ -1,7 +1,7 @@
 From 3004f678bfdc12b4747be8758ec2b88e8ea10bea Mon Sep 17 00:00:00 2001
 From: "Christopher A. Williamson" <contact@chrisaw.io>
 Date: Tue, 29 Sep 2026 12:44:36 +0100
-Subject: [PATCH 26/30] disable the aiseal test modules on the gsi
+Subject: [PATCH 26/33] disable the aiseal test modules on the gsi
 
 the aiseal test payload links against the virtualization vm payload
 library, which is not built on the gsi because the virtualization

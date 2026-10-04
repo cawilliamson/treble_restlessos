@@ -1,7 +1,7 @@
 From 99034257beeed9475e6e0c693e631f045c9fe9af Mon Sep 17 00:00:00 2001
 From: "Christopher A. Williamson" <contact@chrisaw.io>
 Date: Sat, 30 May 2026 08:28:18 +0100
-Subject: [PATCH 4/4] AssistScreenshot: show legacy kernel warning when feature is
+Subject: [PATCH 4/5] AssistScreenshot: show legacy kernel warning when feature is
  unavailable
 
 On kernel < 4.14 devices, the GPU-based screenshot capture path

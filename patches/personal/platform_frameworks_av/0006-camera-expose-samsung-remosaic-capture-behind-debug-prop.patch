@@ -1,7 +1,7 @@
 From f3673732a48cddb3ae8d8115cb6e306e09dbb106 Mon Sep 17 00:00:00 2001
 From: Langsdorff <131063968+clangsdorff@users.noreply.github.com>
 Date: Fri, 2 Oct 2026 20:03:45 +0300
-Subject: [PATCH 6/6] camera: expose samsung remosaic capture behind
+Subject: [PATCH 6/9] camera: expose samsung remosaic capture behind
  debug.phh.samsung.remosaic
 
 ---

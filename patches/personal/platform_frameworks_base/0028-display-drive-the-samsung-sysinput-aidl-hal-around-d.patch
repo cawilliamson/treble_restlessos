@@ -1,7 +1,7 @@
 From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: Langsdorff <131063968+clangsdorff@users.noreply.github.com>
 Date: Wed, 30 Sep 2026 23:51:11 +0300
-Subject: [PATCH 28/30] display: drive the samsung sysinput aidl hal around display
+Subject: [PATCH 28/33] display: drive the samsung sysinput aidl hal around display
  power changes
 
 ---

@@ -1,7 +1,7 @@
 From 4571a60ec0ab7009bbb3ba61567981c7c4c546a1 Mon Sep 17 00:00:00 2001
 From: "Christopher A. Williamson" <contact@chrisaw.io>
 Date: Tue, 29 Sep 2026 11:57:44 +0100
-Subject: [PATCH 25/30] frameworks: drop the AvfBuildFlags dep from services.core
+Subject: [PATCH 25/33] frameworks: drop the AvfBuildFlags dep from services.core
 
 the virtualization sources are excluded from the gsi manifest sync, so
 the AvfBuildFlags module defined there does not exist and soong analysis

@@ -1,7 +1,7 @@
 From 387413416e57098c2c8255face12f409cba620e0 Mon Sep 17 00:00:00 2001
 From: "Christopher A. Williamson" <contact@chrisaw.io>
 Date: Tue, 22 Sep 2026 18:46:51 +0100
-Subject: [PATCH 19/30] core api: add entries for restored FDE and network class APIs
+Subject: [PATCH 19/33] core api: add entries for restored FDE and network class APIs
 
 trebledroid patches restore StorageManager FDE methods and
 TelephonyManager getNetworkClass but do not update current.txt,

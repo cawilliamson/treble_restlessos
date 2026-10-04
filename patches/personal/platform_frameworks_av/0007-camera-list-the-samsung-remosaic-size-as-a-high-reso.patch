@@ -1,7 +1,7 @@
 From dd0baf44a1a3ee1605190042f5d37e138f8dbbb8 Mon Sep 17 00:00:00 2001
 From: Langsdorff <131063968+clangsdorff@users.noreply.github.com>
 Date: Sat, 3 Oct 2026 01:21:50 +0300
-Subject: [PATCH 7/8] camera: list the samsung remosaic size as a high resolution
+Subject: [PATCH 7/9] camera: list the samsung remosaic size as a high resolution
  size
 
 ---

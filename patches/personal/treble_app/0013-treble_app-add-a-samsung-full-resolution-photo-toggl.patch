@@ -1,7 +1,7 @@
 From eadb22311a01d5b7fb59f1598ababbc0019bcaed Mon Sep 17 00:00:00 2001
 From: Langsdorff <131063968+clangsdorff@users.noreply.github.com>
 Date: Sat, 3 Oct 2026 01:45:45 +0300
-Subject: [PATCH 13/13] treble_app: add a samsung full resolution photo toggle
+Subject: [PATCH 13/14] treble_app: add a samsung full resolution photo toggle
 
 ---
  app/src/main/java/me/phh/treble/app/Samsung.kt         | 4 ++++
