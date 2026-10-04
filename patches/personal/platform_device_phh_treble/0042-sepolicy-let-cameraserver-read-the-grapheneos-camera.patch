@@ -1,0 +1,22 @@
+From 0b5c6aadf06e0688adb28355a818cc9ed691a347 Mon Sep 17 00:00:00 2001
+From: Langsdorff <131063968+clangsdorff@users.noreply.github.com>
+Date: Sun, 4 Oct 2026 23:14:31 +0300
+Subject: [PATCH 42/42] sepolicy: let cameraserver read the grapheneos camera 60fps
+ toggle
+
+---
+ sepolicy/property_contexts | 1 +
+ 1 file changed, 1 insertion(+)
+
+diff --git a/sepolicy/property_contexts b/sepolicy/property_contexts
+index aa0a9d0..90d9239 100644
+--- a/sepolicy/property_contexts
++++ b/sepolicy/property_contexts
+@@ -3,3 +3,4 @@ hwc.exynos.vsync_mode      u:object_r:vendor_hwc_prop:s0
+ sys.phh.oplus.fppress    u:object_r:phh_oplus_prop:s0
+ persist.sys.phh.samsung.remosaic u:object_r:phh_samsung_camera_prop:s0
+ persist.sys.phh.samsung.video60 u:object_r:phh_samsung_camera_prop:s0
++persist.sys.phh.samsung.video60_grapheneos u:object_r:phh_samsung_camera_prop:s0
+-- 
+2.39.2 (Apple Git-143)
+
