@@ -1,7 +1,7 @@
 From 3712769da87c9a7b1a693dc0bb484d86477eca98 Mon Sep 17 00:00:00 2001
 From: "Christopher A. Williamson" <contact@chrisaw.io>
 Date: Fri, 2 Oct 2026 10:08:53 +0100
-Subject: [PATCH 39/41] ion: restore node label and permissions for legacy grallocs
+Subject: [PATCH 39/42] ion: restore node label and permissions for legacy grallocs
 
 mtk vendor grallocs allocate via /dev/ion, but the platform dma-buf
 migration left the node unlabelled and the unix permissions up to

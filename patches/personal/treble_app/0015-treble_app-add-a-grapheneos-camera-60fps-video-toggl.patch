@@ -1,0 +1,62 @@
+From ea74228aa21d9a4bc26150f7ad97f08020872d61 Mon Sep 17 00:00:00 2001
+From: Langsdorff <131063968+clangsdorff@users.noreply.github.com>
+Date: Sun, 4 Oct 2026 23:14:32 +0300
+Subject: [PATCH 15/15] treble_app: add a grapheneos camera 60fps video toggle
+
+---
+ app/src/main/java/me/phh/treble/app/Samsung.kt         |  4 ++++
+ app/src/main/java/me/phh/treble/app/SamsungSettings.kt |  1 +
+ app/src/main/res/xml/pref_samsung.xml                  | 10 ++++++++--
+ 3 files changed, 13 insertions(+), 2 deletions(-)
+
+diff --git a/app/src/main/java/me/phh/treble/app/Samsung.kt b/app/src/main/java/me/phh/treble/app/Samsung.kt
+index b15921a..ca9d0f0 100644
+--- a/app/src/main/java/me/phh/treble/app/Samsung.kt
++++ b/app/src/main/java/me/phh/treble/app/Samsung.kt
+@@ -88,6 +88,10 @@ class Samsung: EntryStartup {
+                 val value = sp.getBoolean(key, false)
+                 SystemProperties.set("persist.sys.phh.samsung.video60", value.toString())
+             }
++            SamsungSettings.video60GrapheneOS -> {
++                val value = sp.getBoolean(key, false)
++                SystemProperties.set("persist.sys.phh.samsung.video60_grapheneos", value.toString())
++            }
+             SamsungSettings.alternateAudioPolicy -> {
+                 val b = sp.getBoolean(key, false)
+                 val value = if(b) "1" else "0"
+diff --git a/app/src/main/java/me/phh/treble/app/SamsungSettings.kt b/app/src/main/java/me/phh/treble/app/SamsungSettings.kt
+index d2617d3..6cc2b01 100644
+--- a/app/src/main/java/me/phh/treble/app/SamsungSettings.kt
++++ b/app/src/main/java/me/phh/treble/app/SamsungSettings.kt
+@@ -13,6 +13,7 @@ object SamsungSettings : Settings {
+     val cameraIds = "key_samsung_camera_ids"
+     val remosaic = "key_samsung_remosaic"
+     val video60 = "key_samsung_video60"
++    val video60GrapheneOS = "key_samsung_video60_grapheneos"
+     val alternateAudioPolicy = "key_samsung_alternate_audio_policy"
+     val fodSingleClick = "key_samsung_fod_single_click"
+     val flashStrength = "key_samsung_flash_strength"
+diff --git a/app/src/main/res/xml/pref_samsung.xml b/app/src/main/res/xml/pref_samsung.xml
+index c7b5e25..d46a5f7 100644
+--- a/app/src/main/res/xml/pref_samsung.xml
++++ b/app/src/main/res/xml/pref_samsung.xml
+@@ -51,8 +51,14 @@
+         <SwitchPreference
+             android:defaultValue="false"
+             android:key="key_samsung_video60"
+-            android:title="Record 1080p and 720p video at 60fps"
+-            android:summary="On cameras that support it, records 16:9 video up to 1080p at 60fps. Reopen the camera app after changing" />
++            android:title="Offer 60fps video to camera apps"
++            android:summary="On cameras that support it, lets apps record 16:9 video up to 1080p at 60fps. Reopen the camera app after changing" />
++        <SwitchPreference
++            android:defaultValue="false"
++            android:dependency="key_samsung_video60"
++            android:key="key_samsung_video60_grapheneos"
++            android:title="Record GrapheneOS Camera videos at 60fps"
++            android:summary="GrapheneOS Camera has no frame rate setting. Records its 1080p and 720p videos at 60fps. Reopen the camera app after changing" />
+         <EditTextPreference
+             android:defaultValue="1"
+             android:key="key_samsung_flash_strength"
+-- 
+2.39.2 (Apple Git-143)
+
