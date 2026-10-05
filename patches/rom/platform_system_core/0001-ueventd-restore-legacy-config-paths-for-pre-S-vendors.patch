@@ -1,0 +1,67 @@
+From 7f5a8ce76ed94efb0c9404e15607378674ef9b2d Mon Sep 17 00:00:00 2001
+From: "Christopher A. Williamson" <contact@chrisaw.io>
+Date: Mon, 5 Oct 2026 09:28:20 +0100
+Subject: [PATCH] ueventd: restore legacy config paths for pre-S vendors
+
+a17 dropped the first_api_level<31 branch of GetConfiguration that
+parsed /vendor/ueventd.rc, /odm/ueventd.rc and /ueventd.$(ro.hardware).rc.
+vendors targeting api 30 and below keep all device permission rules in
+those files, and without them nodes such as the mobicore/keymaster
+devices never receive their vendor ownership and mode settings. vendor
+services then fail with permission denied at boot (lenovo tb-j716f,
+infinix mt6785).
+
+restore the android 16 behaviour verbatim, including the warning branch
+for modern vendors still shipping legacy files.
+---
+ init/ueventd.cpp | 34 +++++++++++++++++++++++++++++++++-
+ 1 file changed, 33 insertions(+), 1 deletion(-)
+
+diff --git a/init/ueventd.cpp b/init/ueventd.cpp
+index 28419d989..0f6f23c22 100644
+--- a/init/ueventd.cpp
++++ b/init/ueventd.cpp
+@@ -129,7 +129,39 @@ static UeventdConfiguration GetConfiguration() {
+         return ParseConfig({"/system/etc/ueventd.rc", "/vendor/etc/ueventd.rc"});
+     }
+ 
+-    return ParseConfig({"/system/etc/ueventd.rc"});
++    auto hardware = android::base::GetProperty("ro.hardware", "");
++
++    struct LegacyPathInfo {
++        std::string legacy_path;
++        std::string preferred;
++    };
++    std::vector<LegacyPathInfo> legacy_paths{
++            {"/vendor/ueventd.rc", "/vendor/etc/ueventd.rc"},
++            {"/odm/ueventd.rc", "/odm/etc/ueventd.rc"},
++            {"/ueventd." + hardware + ".rc", "another ueventd.rc file"}};
++
++    std::vector<std::string> canonical{"/system/etc/ueventd.rc"};
++
++    if (android::base::GetIntProperty("ro.product.first_api_level", 10000) < __ANDROID_API_T__) {
++        // restored for the gsi: vendors targeting api 30 and below keep their device
++        // permission rules in these legacy locations, and without them device nodes
++        // never receive the ownership/mode settings required by vendor services
++        for (const auto& info : legacy_paths) {
++            canonical.push_back(info.legacy_path);
++        }
++    } else {
++        // Warn if newer device is using legacy paths.
++        for (const auto& info : legacy_paths) {
++            if (access(info.legacy_path.c_str(), F_OK) == 0) {
++                LOG(FATAL_WITHOUT_ABORT)
++                        << "Legacy ueventd configuration file detected and will not be parsed: "
++                        << info.legacy_path << ". Please move your configuration to "
++                        << info.preferred << " instead.";
++            }
++        }
++    }
++
++    return ParseConfig(canonical);
+ }
+ 
+ void main_loop(const UeventListener& uevent_listener,
+-- 
+2.55.0
+
