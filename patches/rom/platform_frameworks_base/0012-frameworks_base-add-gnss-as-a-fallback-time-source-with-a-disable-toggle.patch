@@ -1,0 +1,60 @@
+From 2f6b090f46c3c510753a85fa92763f65f2d96a3d Mon Sep 17 00:00:00 2001
+From: "Christopher A. Williamson" <contact@chrisaw.io>
+Date: Mon, 5 Oct 2026 09:38:42 +0100
+Subject: [PATCH 12/12] frameworks_base: add gnss as a fallback time source with a disable toggle
+
+enable GnssTimeUpdateService and add gnss to
+config_autoTimeSourcesPriority below network, on by default. the service
+only listens passively on the gps provider while another app already
+holds an active location fix and respects the master location switch, so
+there is no proactive gps or battery cost. network and telephony
+suggestions still take precedence.
+
+the service start is gated on persist.sys.phh.hardening.gnss_time;
+absent or any value other than false keeps it enabled, setting it to
+false disables it (reboot required). gnss is an unauthenticated source,
+so the spoofing tradeoff is accepted here the same way as for the other
+vendor gnss halves the gsi already relies on.
+---
+ core/res/res/values/config.xml                     | 3 ++-
+ services/java/com/android/server/SystemServer.java | 3 ++-
+ 2 files changed, 4 insertions(+), 2 deletions(-)
+
+diff --git a/core/res/res/values/config.xml b/core/res/res/values/config.xml
+index d7a4004a2..c72ee3d15 100644
+--- a/core/res/res/values/config.xml
++++ b/core/res/res/values/config.xml
+@@ -2071,6 +2071,7 @@
+          See com.android.server.timedetector.TimeDetectorStrategy for available sources. -->
+     <string-array name="config_autoTimeSourcesPriority">
+         <item>network</item>
++        <item>gnss</item>
+     </string-array>
+ 
+     <!-- The difference in millis that has to exist between a time suggestion under
+@@ -2080,7 +2081,7 @@
+ 
+     <!-- Enables the GnssTimeUpdate service. This is the global switch for enabling Gnss time based
+          suggestions to TimeDetector service. See also config_autoTimeSourcesPriority. -->
+-    <bool name="config_enableGnssTimeUpdateService">false</bool>
++    <bool name="config_enableGnssTimeUpdateService">true</bool>
+ 
+     <!-- Whether the geolocation time zone detection feature is enabled. Setting this to false means
+          the feature cannot be used. Setting this to true means system server components can be
+diff --git a/services/java/com/android/server/SystemServer.java b/services/java/com/android/server/SystemServer.java
+index d34efa7e4..193c48be8 100644
+--- a/services/java/com/android/server/SystemServer.java
++++ b/services/java/com/android/server/SystemServer.java
+@@ -2442,7 +2442,8 @@ public final class SystemServer implements Dumpable {
+             }
+             t.traceEnd();
+ 
+-            if (context.getResources().getBoolean(R.bool.config_enableGnssTimeUpdateService)) {
++            if (context.getResources().getBoolean(R.bool.config_enableGnssTimeUpdateService)
++                    && !"false".equals(SystemProperties.get("persist.sys.phh.hardening.gnss_time"))) {
+                 t.traceBegin("StartGnssTimeUpdateService");
+                 try {
+                     mSystemServiceManager.startService(GnssTimeUpdateService.Lifecycle.class);
+-- 
+2.55.0
+

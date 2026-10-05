@@ -1,0 +1,69 @@
+From a69fdabe4bc0b4c21a8892be33dd7678391447ec Mon Sep 17 00:00:00 2001
+From: "Christopher A. Williamson" <contact@chrisaw.io>
+Date: Mon, 5 Oct 2026 09:43:44 +0100
+Subject: [PATCH 16/16] treble_app: add a GNSS time fallback toggle
+
+gnss time fallback is enabled by default on the framework side; the
+toggle writes persist.sys.phh.hardening.gnss_time which gates
+GnssTimeUpdateService startup in SystemServer. disabling it requires a
+reboot. the preference defaults to checked to match the framework
+default, and the boot re-apply writes the explicit value so the property
+always reflects the stored preference.
+---
+ app/src/main/java/me/phh/treble/app/Hardening.kt         | 5 +++++
+ app/src/main/java/me/phh/treble/app/HardeningSettings.kt | 1 +
+ app/src/main/res/xml/pref_hardening.xml                  | 5 +++++
+ 3 files changed, 11 insertions(+)
+
+diff --git a/app/src/main/java/me/phh/treble/app/Hardening.kt b/app/src/main/java/me/phh/treble/app/Hardening.kt
+index 1d55932..9422995 100644
+--- a/app/src/main/java/me/phh/treble/app/Hardening.kt
++++ b/app/src/main/java/me/phh/treble/app/Hardening.kt
+@@ -17,6 +17,10 @@ object Hardening : EntryStartup {
+                 val value = sp.getBoolean(key, false)
+                 Misc.safeSetprop("persist.sys.phh.hardening.stack_hardening", if (value) "true" else "false")
+             }
++            HardeningSettings.gnssTime -> {
++                val value = sp.getBoolean(key, true)
++                Misc.safeSetprop("persist.sys.phh.hardening.gnss_time", if (value) "true" else "false")
++            }
+         }
+     }
+ 
+@@ -28,5 +32,6 @@ object Hardening : EntryStartup {
+         // Re-apply on boot
+         spListener.onSharedPreferenceChanged(sp, HardeningSettings.mteVendor)
+         spListener.onSharedPreferenceChanged(sp, HardeningSettings.stackHardening)
++        spListener.onSharedPreferenceChanged(sp, HardeningSettings.gnssTime)
+     }
+ }
+diff --git a/app/src/main/java/me/phh/treble/app/HardeningSettings.kt b/app/src/main/java/me/phh/treble/app/HardeningSettings.kt
+index 389d44c..2f37e02 100644
+--- a/app/src/main/java/me/phh/treble/app/HardeningSettings.kt
++++ b/app/src/main/java/me/phh/treble/app/HardeningSettings.kt
+@@ -3,6 +3,7 @@ package me.phh.treble.app
+ object HardeningSettings : Settings {
+     val mteVendor = "key_hardening_mte_vendor"
+     val stackHardening = "key_hardening_stack_hardening"
++    val gnssTime = "key_hardening_gnss_time"
+ 
+     override fun enabled() = true
+ }
+diff --git a/app/src/main/res/xml/pref_hardening.xml b/app/src/main/res/xml/pref_hardening.xml
+index de0fca1..33672c7 100644
+--- a/app/src/main/res/xml/pref_hardening.xml
++++ b/app/src/main/res/xml/pref_hardening.xml
+@@ -11,5 +11,10 @@
+             android:key="key_hardening_stack_hardening"
+             android:title="Hardened thread stacks"
+             android:summary="Increases thread stack size from 1MB to 8MB and inserts randomly-sized unmapped guard regions between the stack and thread-local storage. Makes stack clash attacks and address prediction significantly harder.\n\nLikely to break: TEE drivers (fingerprint, KeyMint, Gatekeeper) and other vendor kernel drivers that assume contiguous thread memory layouts. Can cause intermittent failures that vary per boot due to the randomized guard gaps.\n\nReboot required." />
++        <SwitchPreference
++            android:defaultValue="true"
++            android:key="key_hardening_gnss_time"
++            android:title="GNSS time fallback"
++            android:summary="Allows the GNSS (GPS) time signal to be used as a fallback automatic time source when network or telephony time is unavailable. The service only listens passively while another app already holds an active location fix, so there is no proactive GPS or battery cost.\n\nGNSS time is unauthenticated and can be spoofed by a nearby transmitter. Network and telephony time always take precedence when available.\n\nReboot required." />
+     </PreferenceCategory>
+ </PreferenceScreen>
+-- 
+2.55.0
+
