@@ -1,7 +1,7 @@
 From 58bf95c23d72b08a5a764f4ae165ec31afac3e6a Mon Sep 17 00:00:00 2001
 From: "Christopher A. Williamson" <contact@chrisaw.io>
 Date: Wed, 22 Apr 2026 18:41:22 +0100
-Subject: [PATCH 2/2] libsepol: skip xperms entries when writing policy below
+Subject: [PATCH 3/3] libsepol: skip xperms entries when writing policy below
  version 30
 
 when secilc compiles SELinux policy with -c 29 (capped for kernels

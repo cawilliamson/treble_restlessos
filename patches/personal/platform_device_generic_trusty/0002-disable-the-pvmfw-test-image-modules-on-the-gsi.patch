@@ -1,7 +1,7 @@
 From 0fd7a19b90fdb08c669e7d81e5a1473cfdb328a5 Mon Sep 17 00:00:00 2001
 From: "Christopher A. Williamson" <contact@chrisaw.io>
 Date: Tue, 29 Sep 2026 13:40:40 +0100
-Subject: [PATCH] disable the pvmfw test image modules on the gsi
+Subject: [PATCH 2/2] disable the pvmfw test image modules on the gsi
 
 the pvmfw test image packages protected vm firmware artifacts built
 from the virtualization sources, which are excluded from the gsi

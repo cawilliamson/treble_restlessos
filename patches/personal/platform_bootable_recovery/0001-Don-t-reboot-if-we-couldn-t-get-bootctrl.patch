@@ -1,7 +1,7 @@
 From 1cda85388da9fef2821bc014886f1ed2ff4bf674 Mon Sep 17 00:00:00 2001
 From: Pierre-Hugues Husson <phh@phh.me>
 Date: Thu, 12 Sep 2019 20:31:07 +0200
-Subject: [PATCH] Don't reboot if we couldn't get bootctrl
+Subject: [PATCH 1/1] Don't reboot if we couldn't get bootctrl
 
 Change-Id: Id1793660bd1c97ab369607f58a772ca3512ec1af
 ---

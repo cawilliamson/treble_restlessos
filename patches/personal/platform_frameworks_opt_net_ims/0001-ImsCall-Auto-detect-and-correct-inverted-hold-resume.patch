@@ -1,7 +1,7 @@
 From f66178c280ee33be27dd99381a135931915ba6b9 Mon Sep 17 00:00:00 2001
 From: "Christopher A. Williamson" <contact@chrisaw.io>
 Date: Thu, 12 Mar 2026 23:59:40 +0000
-Subject: [PATCH] ImsCall: Auto-detect and correct inverted hold/resume
+Subject: [PATCH 1/1] ImsCall: Auto-detect and correct inverted hold/resume
  callbacks
 
 Some vendor IMS implementations (notably MediaTek) fire

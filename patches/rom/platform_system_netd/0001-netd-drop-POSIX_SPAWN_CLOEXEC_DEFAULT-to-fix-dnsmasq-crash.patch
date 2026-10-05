@@ -1,7 +1,7 @@
 From dfd49a3adb34ddcdb864c35ad02e523d20feee2b Mon Sep 17 00:00:00 2001
 From: "Christopher A. Williamson" <contact@chrisaw.io>
 Date: Fri, 29 May 2026 19:14:12 +0100
-Subject: [PATCH] netd: drop POSIX_SPAWN_CLOEXEC_DEFAULT to fix dnsmasq crash
+Subject: [PATCH 1/1] netd: drop POSIX_SPAWN_CLOEXEC_DEFAULT to fix dnsmasq crash
  on some devices
 
 On certain devices the dnsmasq child spawned by TetherController via

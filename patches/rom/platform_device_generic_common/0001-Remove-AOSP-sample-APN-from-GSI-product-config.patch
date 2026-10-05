@@ -1,7 +1,7 @@
 From 7638a4851ad18cec0c350f386ab2dee782597fb8 Mon Sep 17 00:00:00 2001
 From: "Christopher A. Williamson" <contact@chrisaw.io>
 Date: Sat, 25 Apr 2026 01:13:36 +0100
-Subject: [PATCH] product: Exclude AOSP sample APN list from GSI product config
+Subject: [PATCH 1/1] product: Exclude AOSP sample APN list from GSI product config
 
 Remove the PRODUCT_COPY_FILES directive that copies the AOSP sample
 APN database into the GSI product partition. Our build already

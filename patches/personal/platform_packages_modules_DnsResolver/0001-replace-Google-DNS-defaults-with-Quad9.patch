@@ -1,7 +1,7 @@
 From 59c41dbe968cc75b47d17f1ad6b079a43c549acc Mon Sep 17 00:00:00 2001
 From: Pierre-Hugues Husson <phh@phh.me>
 Date: Tue, 7 May 2024 22:44:25 +0000
-Subject: [PATCH 2/2] replace Google DNS defaults with Quad9
+Subject: [PATCH 1/2] replace Google DNS defaults with Quad9
 
 the hardcoded google dns endpoints (doh providers and the ipv4
 connectivity probe ip) are replaced with quad9 equivalents; both

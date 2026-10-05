@@ -1,7 +1,7 @@
 From 7f89278481e72e091c84d01c98cfa4dbdf3207dc Mon Sep 17 00:00:00 2001
 From: "Christopher A. Williamson" <contact@chrisaw.io>
 Date: Mon, 28 Sep 2026 08:32:18 +0100
-Subject: [PATCH] use scudo allocator with vendor-overridable hardening toggles
+Subject: [PATCH 1/1] use scudo allocator with vendor-overridable hardening toggles
 
 grapheneos hardened_malloc and its userspace hardening knobs assume
 pixel-grade kernels and vendor support. switch to the aosp scudo

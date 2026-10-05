@@ -1,7 +1,7 @@
 From f7c2331346f1e16df8df85a15ebaaa5bd6df9dc7 Mon Sep 17 00:00:00 2001
 From: "Christopher A. Williamson" <contact@chrisaw.io>
 Date: Sat, 26 Sep 2026 04:18:12 +0100
-Subject: [PATCH] DownloadProvider: don't trust stale uids for user-initiated
+Subject: [PATCH 1/1] DownloadProvider: don't trust stale uids for user-initiated
  jobs
 
 Download rows migrated from an older database can have no uid recorded,

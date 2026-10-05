@@ -1,7 +1,7 @@
 From fbac2a8036cfb87dd7ab5e93a2367a103b15bbfd Mon Sep 17 00:00:00 2001
 From: "Christopher A. Williamson" <contact@chrisaw.io>
 Date: Fri, 24 Apr 2026 20:49:33 +0100
-Subject: [PATCH] vold: use sdcardfs as fallback when FUSE BPF is unavailable
+Subject: [PATCH 1/1] vold: use sdcardfs as fallback when FUSE BPF is unavailable
 
 In Android 16 QPR2, the legacy FUSE daemon path does not correctly
 handle writes.  When FUSE BPF is unavailable (kernel lacks fuse_bpf

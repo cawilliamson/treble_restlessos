@@ -1,7 +1,7 @@
 From 5703092109db43cfa68b2f0d27726a7446f579bc Mon Sep 17 00:00:00 2001
 From: "Christopher A. Williamson" <contact@chrisaw.io>
 Date: Mon, 28 Sep 2026 08:23:34 +0100
-Subject: [PATCH]
+Subject: [PATCH 1/1]
 
 the auto_reboot timer fires spuriously on older vendor kernels and
 the callback does not guard against late invocations, rebooting

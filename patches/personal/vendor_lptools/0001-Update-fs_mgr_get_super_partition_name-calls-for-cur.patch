@@ -1,7 +1,7 @@
 From 7d0bfb0810e5f542fa5fd43f42fcb585772af8e5 Mon Sep 17 00:00:00 2001
 From: Christopher A. Williamson <contact@chrisaw.io>
 Date: Tue, 10 Feb 2026 00:00:00 +0000
-Subject: [PATCH] Update fs_mgr_get_super_partition_name calls for current API
+Subject: [PATCH 1/1] Update fs_mgr_get_super_partition_name calls for current API
 
 The function no longer takes a slot number argument.
 

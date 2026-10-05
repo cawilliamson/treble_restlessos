@@ -1,7 +1,7 @@
 From 7feb45af18de482f2f72bc2bf70e2b2fdd34c716 Mon Sep 17 00:00:00 2001
 From: "Christopher A. Williamson" <contact@chrisaw.io>
 Date: Mon, 28 Sep 2026 09:16:30 +0100
-Subject: [PATCH] bluetooth: legacy controller and kernel tolerance
+Subject: [PATCH 1/1] bluetooth: legacy controller and kernel tolerance
 
 old controllers and kernels trip over two bluetooth stack
 assumptions: apcf extended feature commands and sniff subrating

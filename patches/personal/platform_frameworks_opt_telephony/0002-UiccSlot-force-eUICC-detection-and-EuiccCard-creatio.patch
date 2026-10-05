@@ -1,7 +1,7 @@
 From abc69217ad30c5727c4933d294f97143350ca556 Mon Sep 17 00:00:00 2001
 From: "Christopher A. Williamson" <contact@chrisaw.io>
 Date: Sat, 9 May 2026 01:57:05 +0100
-Subject: [PATCH 2/2] UiccSlot: force eUICC detection and EuiccCard creation for
+Subject: [PATCH 2/3] UiccSlot: force eUICC detection and EuiccCard creation for
  non-standard eSIM
 
 Some devices (notably MediaTek devices with DL2005/HCT eSIM) do not

@@ -1,7 +1,7 @@
 From 7c912234f2c0ef657c269f0dec97e4b41e8dd303 Mon Sep 17 00:00:00 2001
 From: Pierre-Hugues Husson <phh@phh.me>
 Date: Tue, 7 May 2024 19:28:41 -0400
-Subject: [PATCH] Disable O_DIRECT for old kernels
+Subject: [PATCH 1/1] Disable O_DIRECT for old kernels
 
 On old kernels, mounting over O_DIRECT over FBE ext4 leads to corrupted
 reads.

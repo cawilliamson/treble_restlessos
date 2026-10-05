@@ -1,7 +1,7 @@
 From 80c313f03167863460633b349a6930861b9429e0 Mon Sep 17 00:00:00 2001
 From: Pierre-Hugues Husson <phh@phh.me>
 Date: Tue, 17 Jun 2025 02:38:46 -0400
-Subject: [PATCH] Add android.hardware.audio.common-util;
+Subject: [PATCH 1/1] Add android.hardware.audio.common-util;
  android.hardware.audio.common@5.0-util; libeffectsconfig. That is for Pixel
  1, they are lite vndk lite
 

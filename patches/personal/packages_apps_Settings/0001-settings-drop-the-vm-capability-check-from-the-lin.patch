@@ -1,7 +1,7 @@
 From 8a85266b769e50abe515b66008761c7cf5918d46 Mon Sep 17 00:00:00 2001
 From: "Christopher A. Williamson" <contact@chrisaw.io>
 Date: Mon, 28 Sep 2026 16:49:27 +0100
-Subject: [PATCH 1/1] settings: drop the vm capability check from the linux
+Subject: [PATCH 1/2] settings: drop the vm capability check from the linux
  terminal controller
 
 the terminal feature cannot run without the virtualization framework,

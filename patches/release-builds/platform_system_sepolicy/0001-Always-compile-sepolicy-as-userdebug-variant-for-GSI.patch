@@ -1,7 +1,7 @@
 From f651106c6179885ad4542a93de8fc99abf6738eb Mon Sep 17 00:00:00 2001
 From: "Christopher A. Williamson" <contact@chrisaw.io>
 Date: Sun, 29 Mar 2026 23:31:31 +0100
-Subject: [PATCH] Always compile sepolicy as userdebug variant for GSI compat
+Subject: [PATCH 1/1] Always compile sepolicy as userdebug variant for GSI compat
 
 Override buildVariant() to always return "userdebug" regardless of the
 actual build variant. GSI builds use the user variant for everything

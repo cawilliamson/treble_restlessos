@@ -1,7 +1,7 @@
 From 83fb6e49a4b3e61bc613c8e0d2cd87b6dd9039a1 Mon Sep 17 00:00:00 2001
 From: "Christopher A. Williamson" <contact@chrisaw.io>
 Date: Wed, 4 Mar 2026 23:40:13 +0000
-Subject: [PATCH 1/2] Replace Google DoH providers with Quad9
+Subject: [PATCH 2/2] Replace Google DoH providers with Quad9
 
 Remove the Google and Google DNS64 DoH provider entries, which cause
 automatic DNS-over-HTTPS connections to Google servers. Replace them

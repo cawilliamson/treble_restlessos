@@ -1,7 +1,7 @@
 From 437b89a71208a0b98a93881c1fd2464a29a36522 Mon Sep 17 00:00:00 2001
 From: "Christopher A. Williamson" <contact@chrisaw.io>
 Date: Mon, 15 Jun 2026 11:24:02 +0100
-Subject: [PATCH] securize: rework to property-based toggle with GSI
+Subject: [PATCH 1/1] securize: rework to property-based toggle with GSI
  fingerprint tracking
 
 ---

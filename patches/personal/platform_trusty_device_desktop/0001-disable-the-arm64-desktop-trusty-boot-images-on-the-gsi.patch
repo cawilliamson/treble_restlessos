@@ -1,7 +1,7 @@
 From 7ba40a8d1b53cddfde8222ade53c0f0edfc83a66 Mon Sep 17 00:00:00 2001
 From: "Christopher A. Williamson" <contact@chrisaw.io>
 Date: Tue, 29 Sep 2026 15:23:45 +0100
-Subject: [PATCH] disable the arm64 desktop trusty boot images on the gsi
+Subject: [PATCH 1/1] disable the arm64 desktop trusty boot images on the gsi
 
 they package the desktop vm images whose build is disabled because the
 virtualization sources are excluded from the gsi manifest sync.

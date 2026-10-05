@@ -1,7 +1,7 @@
 From ed502c1fa43eac615c1d65683765967e753ed7b7 Mon Sep 17 00:00:00 2001
 From: "Christopher A. Williamson" <contact@chrisaw.io>
 Date: Wed, 30 Sep 2026 16:55:11 +0100
-Subject: [PATCH] browser2: add download support via the system downloadmanager
+Subject: [PATCH 1/2] browser2: add download support via the system downloadmanager
 
 Change-Id: Id2acb0d57a386bce1511252cec8022fa88f241b5
 ---

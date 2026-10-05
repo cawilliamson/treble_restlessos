@@ -1,7 +1,7 @@
 From 17f9a92b27d0f2190b14d2728df2ce45d513417f Mon Sep 17 00:00:00 2001
 From: "Christopher A. Williamson" <contact@chrisaw.io>
 Date: Tue, 29 Sep 2026 16:09:53 +0100
-Subject: [PATCH] drop the virtualization apex from the aosp mainline modules
+Subject: [PATCH 1/1] drop the virtualization apex from the aosp mainline modules
  list
 
 the virtualization apex is not built on the gsi, so the mainline

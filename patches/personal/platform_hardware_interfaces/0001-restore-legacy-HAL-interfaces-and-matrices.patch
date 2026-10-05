@@ -1,7 +1,7 @@
 From 12e427485eb6e1d6bc3cb2fed1f275070907feb4 Mon Sep 17 00:00:00 2001
 From: "Christopher A. Williamson" <contact@chrisaw.io>
 Date: Mon, 28 Sep 2026 09:16:30 +0100
-Subject: [PATCH] restore legacy HAL interfaces and matrices
+Subject: [PATCH 1/1] restore legacy HAL interfaces and matrices
 
 legacy vendor HALs (hidl vibrator 1.0, light 2.0, boot 1.1) and the
 compatibility matrix kernel entries they depend on were dropped

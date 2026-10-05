@@ -1,7 +1,7 @@
 From fdf53121eb703415e6b81b481a9b3f5172c74c74 Mon Sep 17 00:00:00 2001
 From: "Christopher A. Williamson" <contact@chrisaw.io>
 Date: Sun, 4 Oct 2026 18:03:30 +0100
-Subject: [PATCH 10/10] SystemUI: toggle flashlight on Click for binary flashlights
+Subject: [PATCH 10/11] SystemUI: toggle flashlight on Click for binary flashlights
 
 When FlashlightStrength is enabled the Click handler only acted on
 Level devices; the tile never advertises ToggleClick for Binary
