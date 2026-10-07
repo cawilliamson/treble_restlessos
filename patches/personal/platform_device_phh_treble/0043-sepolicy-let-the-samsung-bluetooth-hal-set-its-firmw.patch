@@ -1,0 +1,25 @@
+From 40c665d1f0ed7860214e721ee91b4bec67511520 Mon Sep 17 00:00:00 2001
+From: Langsdorff <131063968+clangsdorff@users.noreply.github.com>
+Date: Wed, 7 Oct 2026 11:35:31 +0300
+Subject: [PATCH 43/43] sepolicy: let the samsung bluetooth hal set its firmware
+ version prop
+
+---
+ sepolicy/samsung.te | 4 ++++
+ 1 file changed, 4 insertions(+)
+
+diff --git a/sepolicy/samsung.te b/sepolicy/samsung.te
+index ce4eb7b..8b3b8fd 100644
+--- a/sepolicy/samsung.te
++++ b/sepolicy/samsung.te
+@@ -52,3 +52,7 @@ type phh_samsung_camera_prop, property_type;
+ set_prop(system_app, phh_samsung_camera_prop);
+ set_prop(platform_app, phh_samsung_camera_prop);
+ get_prop(cameraserver, phh_samsung_camera_prop);
++
++# scsc libbt-vendor sets the unlabeled vendor.bluetooth_fw_ver after every vendor op
++type hal_bluetooth_default, domain;
++allow hal_bluetooth_default vendor_default_prop:property_service set;
+-- 
+2.39.2 (Apple Git-143)
+
