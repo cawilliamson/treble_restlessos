@@ -1,0 +1,124 @@
+From 4108e5874c0d320890388bb4c459dbf1e7311497 Mon Sep 17 00:00:00 2001
+From: Langsdorff <hocaoglugeylani96@gmail.com>
+Date: Thu, 8 Oct 2026 00:15:04 +0300
+Subject: [PATCH] overlay: add langsdorff floss ims overlays for the voip audio
+ mode and the mmtel package
+
+---
+ LANGSDORFF-IMS/Android.mk                      |  8 ++++++++
+ LANGSDORFF-IMS/AndroidManifest.xml             | 10 ++++++++++
+ LANGSDORFF-IMS/res/values/config.xml           |  5 +++++
+ Telephony/LANGSDORFF-IMS/Android.mk            |  8 ++++++++
+ Telephony/LANGSDORFF-IMS/AndroidManifest.xml   |  8 ++++++++
+ Telephony/LANGSDORFF-IMS/res/values/config.xml |  4 ++++
+ overlay.mk                                     |  2 ++
+ 7 files changed, 45 insertions(+)
+ create mode 100644 LANGSDORFF-IMS/Android.mk
+ create mode 100644 LANGSDORFF-IMS/AndroidManifest.xml
+ create mode 100644 LANGSDORFF-IMS/res/values/config.xml
+ create mode 100644 Telephony/LANGSDORFF-IMS/Android.mk
+ create mode 100644 Telephony/LANGSDORFF-IMS/AndroidManifest.xml
+ create mode 100644 Telephony/LANGSDORFF-IMS/res/values/config.xml
+
+diff --git a/LANGSDORFF-IMS/Android.mk b/LANGSDORFF-IMS/Android.mk
+new file mode 100644
+index 0000000..58be854
+--- /dev/null
++++ b/LANGSDORFF-IMS/Android.mk
+@@ -0,0 +1,8 @@
++LOCAL_PATH := $(call my-dir)
++include $(CLEAR_VARS)
++LOCAL_MODULE_TAGS := optional
++LOCAL_PACKAGE_NAME := langsdorff-overlay-ims
++LOCAL_MODULE_PATH := $(TARGET_OUT_PRODUCT)/overlay
++LOCAL_IS_RUNTIME_RESOURCE_OVERLAY := true
++LOCAL_PRIVATE_PLATFORM_APIS := true
++include $(BUILD_PACKAGE)
+diff --git a/LANGSDORFF-IMS/AndroidManifest.xml b/LANGSDORFF-IMS/AndroidManifest.xml
+new file mode 100644
+index 0000000..19fd5fd
+--- /dev/null
++++ b/LANGSDORFF-IMS/AndroidManifest.xml
+@@ -0,0 +1,10 @@
++<manifest xmlns:android="http://schemas.android.com/apk/res/android"
++        package="com.langsdorff.overlay.ims"
++        android:versionCode="1"
++        android:versionName="1.0">
++        <overlay android:targetPackage="android"
++                android:requiredSystemPropertyName="persist.sys.phh.ims.floss"
++                android:requiredSystemPropertyValue="true"
++		android:priority="50"
++		android:isStatic="true" />
++</manifest>
+diff --git a/LANGSDORFF-IMS/res/values/config.xml b/LANGSDORFF-IMS/res/values/config.xml
+new file mode 100644
+index 0000000..5e70849
+--- /dev/null
++++ b/LANGSDORFF-IMS/res/values/config.xml
+@@ -0,0 +1,5 @@
++<?xml version="1.0" encoding="utf-8"?>
++<resources>
++	<!-- Samsung audio HAL starts a modem voice call that grabs the mic unless Telecom picks MODE_IN_COMMUNICATION -->
++	<bool name="config_use_voip_mode_for_ims">true</bool>
++</resources>
+diff --git a/Telephony/LANGSDORFF-IMS/Android.mk b/Telephony/LANGSDORFF-IMS/Android.mk
+new file mode 100644
+index 0000000..512ea78
+--- /dev/null
++++ b/Telephony/LANGSDORFF-IMS/Android.mk
+@@ -0,0 +1,8 @@
++LOCAL_PATH := $(call my-dir)
++include $(CLEAR_VARS)
++LOCAL_MODULE_TAGS := optional
++LOCAL_PACKAGE_NAME := langsdorff-overlay-telephony-ims
++LOCAL_MODULE_PATH := $(TARGET_OUT_PRODUCT)/overlay
++LOCAL_IS_RUNTIME_RESOURCE_OVERLAY := true
++LOCAL_PRIVATE_PLATFORM_APIS := true
++include $(BUILD_PACKAGE)
+diff --git a/Telephony/LANGSDORFF-IMS/AndroidManifest.xml b/Telephony/LANGSDORFF-IMS/AndroidManifest.xml
+new file mode 100644
+index 0000000..cd057f5
+--- /dev/null
++++ b/Telephony/LANGSDORFF-IMS/AndroidManifest.xml
+@@ -0,0 +1,8 @@
++<manifest xmlns:android="http://schemas.android.com/apk/res/android"
++        package="com.langsdorff.overlay.ims_telephony"
++        android:versionCode="1"
++        android:versionName="1.0">
++        <overlay android:targetPackage="com.android.phone"
++		android:priority="80"
++		/>
++</manifest>
+diff --git a/Telephony/LANGSDORFF-IMS/res/values/config.xml b/Telephony/LANGSDORFF-IMS/res/values/config.xml
+new file mode 100644
+index 0000000..7237ece
+--- /dev/null
++++ b/Telephony/LANGSDORFF-IMS/res/values/config.xml
+@@ -0,0 +1,4 @@
++<?xml version="1.0" encoding="utf-8"?>
++<resources>
++	<string name="config_ims_mmtel_package">com.langsdorff.flossims</string>
++</resources>
+diff --git a/overlay.mk b/overlay.mk
+index 4c43ee6..7058c43 100644
+--- a/overlay.mk
++++ b/overlay.mk
+@@ -22,6 +22,7 @@ PRODUCT_PACKAGES += \
+ 	treble-overlay-blackview-shark8-systemui \
+ 	treble-overlay-bq-jeice \
+ 	treble-overlay-caf-ims \
++	langsdorff-overlay-ims \
+ 	treble-overlay-devinputjack \
+ 	treble-overlay-doogee-vmax \
+ 	treble-overlay-duoqin-qin2pro \
+@@ -343,6 +344,7 @@ PRODUCT_PACKAGES += \
+ 	treble-overlay-tecno-spark6 \
+ 	treble-overlay-telephony-caf-ims \
+ 	treble-overlay-telephony-floss-ims \
++	langsdorff-overlay-telephony-ims \
+ 	treble-overlay-telephony-hw-ims \
+ 	treble-overlay-telephony-mtk-ims \
+ 	treble-overlay-telephony-slsi-ims \
+-- 
+2.39.2 (Apple Git-143)
+
