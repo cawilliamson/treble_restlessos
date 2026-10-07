@@ -1,0 +1,87 @@
+From 2809b0a2ccbb4b4a869619ab770c7469534b1962 Mon Sep 17 00:00:00 2001
+From: Langsdorff <131063968+clangsdorff@users.noreply.github.com>
+Date: Wed, 7 Oct 2026 11:04:34 +0300
+Subject: [PATCH 1/1] taskbar: drop the taskbar window when the gesture handle is
+ hidden
+
+---
+ .../launcher3/taskbar/StashedHandleViewController.java |  3 ++-
+ .../launcher3/taskbar/TaskbarActivityContext.java      | 10 ++++++++++
+ .../com/android/launcher3/taskbar/TaskbarInteractor.kt |  3 ++-
+ .../launcher3/taskbar/TaskbarStashController.java      |  4 ++--
+ 4 files changed, 16 insertions(+), 4 deletions(-)
+
+diff --git a/quickstep/src/com/android/launcher3/taskbar/StashedHandleViewController.java b/quickstep/src/com/android/launcher3/taskbar/StashedHandleViewController.java
+index 88997e1..51a1880 100644
+--- a/quickstep/src/com/android/launcher3/taskbar/StashedHandleViewController.java
++++ b/quickstep/src/com/android/launcher3/taskbar/StashedHandleViewController.java
+@@ -150,7 +150,8 @@ public class StashedHandleViewController implements TaskbarControllers.LoggableT
+                     .getDimensionPixelSize(R.dimen.taskbar_stashed_handle_width);
+         }
+         int taskbarBottomMargin = deviceProfile.getTaskbarProfile().getBottomMargin();
+-        mStashedHandleView.getLayoutParams().height = mTaskbarSize + taskbarBottomMargin;
++        mStashedHandleView.getLayoutParams().height = activity.isGestureHandleHidden()
++                ? 0 : mTaskbarSize + taskbarBottomMargin;
+ 
+         mTaskbarStashedHandleAlpha.get(ALPHA_INDEX_STASHED).setValue(
+                 activity.isPhoneGestureNavMode() ? 1 : 0);
+diff --git a/quickstep/src/com/android/launcher3/taskbar/TaskbarActivityContext.java b/quickstep/src/com/android/launcher3/taskbar/TaskbarActivityContext.java
+index c20622f..1d084be 100644
+--- a/quickstep/src/com/android/launcher3/taskbar/TaskbarActivityContext.java
++++ b/quickstep/src/com/android/launcher3/taskbar/TaskbarActivityContext.java
+@@ -711,6 +711,12 @@ public class TaskbarActivityContext extends BaseTaskbarContext {
+         return isPhoneMode() && !isThreeButtonNav();
+     }
+ 
++    /** Returns whether a navigation overlay hid the gesture handle. */
++    public boolean isGestureHandleHidden() {
++        return isPhoneGestureNavMode() && getResources().getDimensionPixelSize(
++                R.dimen.taskbar_stashed_handle_height) == 0;
++    }
++
+     /** Returns whether Taskbar draws its own background, vs being translucent for apps to draw. */
+     public boolean drawsTaskbarBackground() {
+         return !isPhoneMode();
+@@ -1608,6 +1614,10 @@ public class TaskbarActivityContext extends BaseTaskbarContext {
+     public int getDefaultTaskbarWindowSize() {
+         Resources resources = getResources();
+ 
++        if (isGestureHandleHidden()) {
++            return 0;
++        }
++
+         if (isPhoneMode()) {
+             return isThreeButtonNav() ?
+                     resources.getDimensionPixelSize(R.dimen.taskbar_phone_size) :
+diff --git a/quickstep/src/com/android/launcher3/taskbar/TaskbarInteractor.kt b/quickstep/src/com/android/launcher3/taskbar/TaskbarInteractor.kt
+index 1319e6c..b10ddea 100644
+--- a/quickstep/src/com/android/launcher3/taskbar/TaskbarInteractor.kt
++++ b/quickstep/src/com/android/launcher3/taskbar/TaskbarInteractor.kt
+@@ -218,7 +218,8 @@ class TaskbarInteractor(private val taskbarUIController: TaskbarUIController) {
+     @AnyThread
+     fun postOnRootViewDraw(callback: Runnable, callbackExecutor: Executor): Boolean {
+         val rootView = taskbarUIController.rootView
+-        return if (rootView != null) {
++        // A zero height taskbar window never draws, so there is no frame to wait for
++        return if (rootView != null && rootView.height != 0) {
+             getTaskbarUiThread().execute {
+                 ViewUtils.postFrameDrawn(rootView) { callbackExecutor.execute(callback) }
+             }
+diff --git a/quickstep/src/com/android/launcher3/taskbar/TaskbarStashController.java b/quickstep/src/com/android/launcher3/taskbar/TaskbarStashController.java
+index 624efe7..8ea9347 100644
+--- a/quickstep/src/com/android/launcher3/taskbar/TaskbarStashController.java
++++ b/quickstep/src/com/android/launcher3/taskbar/TaskbarStashController.java
+@@ -333,8 +333,8 @@ public class TaskbarStashController implements TaskbarControllers.LoggableTaskba
+         if (mActivity.isPhoneMode()) {
+             mUnstashedHeight = mActivity.getResources().getDimensionPixelSize(
+                     R.dimen.taskbar_phone_size);
+-            mStashedHeight = mActivity.getResources().getDimensionPixelSize(
+-                    R.dimen.taskbar_stashed_size);
++            mStashedHeight = mActivity.isGestureHandleHidden() ? 0
++                    : mActivity.getResources().getDimensionPixelSize(R.dimen.taskbar_stashed_size);
+         } else {
+             mUnstashedHeight = mActivity.getDeviceProfile().getTaskbarProfile().getHeight();
+             mStashedHeight = mActivity
+-- 
+2.39.2 (Apple Git-143)
+
