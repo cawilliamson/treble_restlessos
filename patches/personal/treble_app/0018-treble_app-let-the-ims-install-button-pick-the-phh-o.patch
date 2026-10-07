@@ -1,0 +1,453 @@
+From bc5e44d1b36fe7f9943091c54d98f8ca9ccfb7eb Mon Sep 17 00:00:00 2001
+From: Langsdorff <hocaoglugeylani96@gmail.com>
+Date: Thu, 8 Oct 2026 00:08:11 +0300
+Subject: [PATCH] treble_app: let the ims install button pick the phh or
+ langsdorff floss apk
+
+---
+ app/src/main/java/me/phh/treble/app/Ims.kt    |  20 +-
+ .../java/me/phh/treble/app/ImsSettings.kt     | 140 ++++++-----
+ ...he-ims-install-button-pick-the-phh-o.patch | 219 ++++++++++++++++++
+ 3 files changed, 313 insertions(+), 66 deletions(-)
+ create mode 100644 out/0018-treble_app-let-the-ims-install-button-pick-the-phh-o.patch
+
+diff --git a/app/src/main/java/me/phh/treble/app/Ims.kt b/app/src/main/java/me/phh/treble/app/Ims.kt
+index 1dc9880..aee7d35 100644
+--- a/app/src/main/java/me/phh/treble/app/Ims.kt
++++ b/app/src/main/java/me/phh/treble/app/Ims.kt
+@@ -88,15 +88,28 @@ object Ims: EntryStartup {
+ 
+     override fun startup(ctxt: Context) {
+         if (!ImsSettings.enabled()) return
+-        val gotFloss = ctxt.packageManager.getInstalledPackages(0).find { it.packageName == "me.phh.ims" } != null
+ 
+         val sp = PreferenceManager.getDefaultSharedPreferences(ctxt)
+         sp.registerOnSharedPreferenceChangeListener(spListener)
+ 
+         this.ctxt = WeakReference(ctxt.applicationContext)
+ 
+-        val allOverlays = listOf("me.phh.treble.overlay.mtkims_telephony", "me.phh.treble.overlay.cafims_telephony", "me.phh.treble.overlay.hwims_telephony")
++        selectImsOverlay(ctxt)
++
++        //Refresh parameters on boot
++        spListener.onSharedPreferenceChanged(sp, ImsSettings.requestNetwork)
++    }
++
++    // com.android.phone reads config_ims_mmtel_package only at start, so this must run before the next boot
++    fun selectImsOverlay(ctxt: Context) {
++        val installed = ctxt.packageManager.getInstalledPackages(0).map { it.packageName }
++        val gotLangsdorffFloss = "com.langsdorff.flossims" in installed
++        val gotFloss = gotLangsdorffFloss || "me.phh.ims" in installed
++
++        val allOverlays = listOf("me.phh.treble.overlay.mtkims_telephony", "me.phh.treble.overlay.cafims_telephony", "me.phh.treble.overlay.hwims_telephony",
++                "me.phh.treble.overlay.flossims_telephony", "com.langsdorff.overlay.ims_telephony")
+         val selectOverlay = when {
++            gotLangsdorffFloss -> "com.langsdorff.overlay.ims_telephony"
+             gotFloss -> "me.phh.treble.overlay.flossims_telephony"
+             gotMtkP || gotMtkQ || gotMtkR || gotMtkS || gotMtkAidl -> "me.phh.treble.overlay.mtkims_telephony"
+             gotQcomHidl || gotQcomAidl -> "me.phh.treble.overlay.cafims_telephony"
+@@ -116,8 +129,5 @@ object Ims: EntryStartup {
+                     .forEach { OverlayPicker.setOverlayEnabled(it, false) }
+             OverlayPicker.setOverlayEnabled(selectOverlay, true)
+         }
+-
+-        //Refresh parameters on boot
+-        spListener.onSharedPreferenceChanged(sp, ImsSettings.requestNetwork)
+     }
+ }
+diff --git a/app/src/main/java/me/phh/treble/app/ImsSettings.kt b/app/src/main/java/me/phh/treble/app/ImsSettings.kt
+index 37d87b7..6d00e9d 100644
+--- a/app/src/main/java/me/phh/treble/app/ImsSettings.kt
++++ b/app/src/main/java/me/phh/treble/app/ImsSettings.kt
+@@ -29,6 +29,7 @@ object ImsSettings : Settings {
+     val createApn = "key_ims_create_apn"
+     val forceEnableSettings = "key_ims_force_enable_setting"
+     val installImsApk = "key_ims_install_apn"
++    val flossLangsdorffUrl = "https://github.com/clangsdorff/ims/releases/latest/download/FlossIms.apk"
+ 
+     fun checkHasPhhSignature(): Boolean {
+         try {
+@@ -135,77 +136,94 @@ class ImsSettingsFragment : SettingsFragment() {
+ 
+         installIms!!.title = "Install IMS APK for $message"
+         installIms!!.setOnPreferenceClickListener {
+-            val dm = activity.getSystemService(DownloadManager::class.java)
++            val choices = arrayOf(
++                    Pair(url, "$message (treble.phh.me)"),
++                    Pair(ImsSettings.flossLangsdorffUrl, "Floss IMS, langsdorff build (github.com/clangsdorff/ims)"))
++            AlertDialog.Builder(activity)
++                    .setTitle("Download and install IMS APK")
++                    .setItems(choices.map { it.second }.toTypedArray()) { _, which -> downloadAndInstallIms(choices[which].first) }
++                    .show()
++            return@setOnPreferenceClickListener true
++        }
++    }
+ 
+-            val downloadRequest = DownloadManager.Request(Uri.parse(url))
+-            downloadRequest.setTitle("IMS APK")
+-            downloadRequest.setNotificationVisibility(DownloadManager.Request.VISIBILITY_VISIBLE_NOTIFY_COMPLETED)
++    private fun downloadAndInstallIms(url: String) {
++        val dm = activity.getSystemService(DownloadManager::class.java)
+ 
+-            downloadRequest.setDestinationInExternalFilesDir(activity, Environment.DIRECTORY_DOWNLOADS, "ims.apk")
++        val downloadRequest = DownloadManager.Request(Uri.parse(url))
++        downloadRequest.setTitle("IMS APK")
++        downloadRequest.setNotificationVisibility(DownloadManager.Request.VISIBILITY_VISIBLE_NOTIFY_COMPLETED)
+ 
+-            val myId: Long
+-            try {
+-                myId = dm!!.enqueue(downloadRequest)
+-            } catch (e: Exception) {
+-                Toast.makeText(activity, "IMS download failed: " + e.message, Toast.LENGTH_LONG).show()
+-                return@setOnPreferenceClickListener true
+-            }
++        downloadRequest.setDestinationInExternalFilesDir(activity, Environment.DIRECTORY_DOWNLOADS, "ims.apk")
+ 
+-            activity.registerReceiver(object: BroadcastReceiver() {
+-                override fun onReceive(context: Context, intent: Intent) {
+-                    Log.d("PHH", "Received download completed with intent $intent ${intent.data}")
+-                    if(intent.getLongExtra(DownloadManager.EXTRA_DOWNLOAD_ID, -1L) != myId) return
++        val myId: Long
++        try {
++            myId = dm!!.enqueue(downloadRequest)
++        } catch (e: Exception) {
++            Toast.makeText(activity, "IMS download failed: " + e.message, Toast.LENGTH_LONG).show()
++            return
++        }
+ 
+-                    val query = DownloadManager.Query().setFilterById(myId)
+-                    val cursor = dm.query(query)
+-                    if(!cursor.moveToFirst()) {
+-                        Log.d("PHH", "DownloadManager gave us an empty cursor")
+-                        return
+-                    }
++        activity.registerReceiver(object: BroadcastReceiver() {
++            override fun onReceive(context: Context, intent: Intent) {
++                Log.d("PHH", "Received download completed with intent $intent ${intent.data}")
++                if(intent.getLongExtra(DownloadManager.EXTRA_DOWNLOAD_ID, -1L) != myId) return
+ 
+-                    val localUri = Uri.parse(cursor.getString(cursor.getColumnIndex(DownloadManager.COLUMN_LOCAL_URI)))
+-                    Log.d("PHH", "Got localURI = $localUri")
+-                    val filename = localUri.lastPathSegment
+-                    val path = localUri.path!!
+-                    val pi = context.packageManager.packageInstaller
+-                    val sessionId = pi.createSession(PackageInstaller.SessionParams(PackageInstaller.SessionParams.MODE_FULL_INSTALL))
+-                    val session = pi.openSession(sessionId)
+-
+-                    Misc.safeSetprop("persist.vendor.vilte_support", "0")
+-
+-                    session.openWrite("hello", 0, -1).use { output ->
+-                        FileInputStream(path).use { input ->
+-                            val buf = ByteArray(512*1024)
+-                            while(input.available()>0) {
+-                                val l = input.read(buf)
+-                                output.write(buf, 0, l)
+-                            }
+-                            session.fsync(output)
++                val query = DownloadManager.Query().setFilterById(myId)
++                val cursor = dm.query(query)
++                if(!cursor.moveToFirst()) {
++                    Log.d("PHH", "DownloadManager gave us an empty cursor")
++                    return
++                }
++
++                val localUri = Uri.parse(cursor.getString(cursor.getColumnIndex(DownloadManager.COLUMN_LOCAL_URI)))
++                Log.d("PHH", "Got localURI = $localUri")
++                val filename = localUri.lastPathSegment
++                val path = localUri.path!!
++                val pi = context.packageManager.packageInstaller
++                val sessionId = pi.createSession(PackageInstaller.SessionParams(PackageInstaller.SessionParams.MODE_FULL_INSTALL))
++                val session = pi.openSession(sessionId)
++
++                Misc.safeSetprop("persist.vendor.vilte_support", "0")
++
++                session.openWrite("hello", 0, -1).use { output ->
++                    FileInputStream(path).use { input ->
++                        val buf = ByteArray(512*1024)
++                        while(input.available()>0) {
++                            val l = input.read(buf)
++                            output.write(buf, 0, l)
+                         }
++                        session.fsync(output)
+                     }
+-
+-                    activity.registerReceiver(
+-                            object: BroadcastReceiver() {
+-                                override fun onReceive(p0: Context?, intet: Intent?) {
+-                                    Log.e("PHH", "Apk install received $intent" )
+-                                    Toast.makeText(p0, "IMS apk installed! You may now reboot.", Toast.LENGTH_LONG).show()
+-                                }
+-                            },
+-                            IntentFilter("me.phh.treble.app.ImsInstalled")
+-                    )
+-
+-                    session.commit(
+-                            PendingIntent.getBroadcast(
+-                                    this@ImsSettingsFragment.activity,
+-                                    1,
+-                                    Intent("me.phh.treble.app.ImsInstalled"),
+-                                    PendingIntent.FLAG_ONE_SHOT or PendingIntent.FLAG_IMMUTABLE).intentSender)
+-                    activity.unregisterReceiver(this)
+                 }
+ 
+-            }, IntentFilter(DownloadManager.ACTION_DOWNLOAD_COMPLETE))
++                activity.registerReceiver(
++                        object: BroadcastReceiver() {
++                            override fun onReceive(p0: Context, result: Intent) {
++                                val status = result.getIntExtra(PackageInstaller.EXTRA_STATUS, PackageInstaller.STATUS_FAILURE)
++                                Log.e("PHH", "Apk install received $result status $status")
++                                if (status != PackageInstaller.STATUS_SUCCESS) {
++                                    val msg = result.getStringExtra(PackageInstaller.EXTRA_STATUS_MESSAGE)
++                                    Toast.makeText(p0, "IMS apk install failed: $msg", Toast.LENGTH_LONG).show()
++                                    return
++                                }
++                                Ims.selectImsOverlay(p0)
++                                Toast.makeText(p0, "IMS apk installed! You may now reboot.", Toast.LENGTH_LONG).show()
++                            }
++                        },
++                        IntentFilter("me.phh.treble.app.ImsInstalled"),
++                        Context.RECEIVER_NOT_EXPORTED
++                )
++
++                session.commit(
++                        PendingIntent.getBroadcast(
++                                this@ImsSettingsFragment.activity,
++                                1,
++                                Intent("me.phh.treble.app.ImsInstalled").setPackage(context.packageName),
++                                PendingIntent.FLAG_ONE_SHOT or PendingIntent.FLAG_MUTABLE).intentSender)
++                activity.unregisterReceiver(this)
++            }
+ 
+-            return@setOnPreferenceClickListener true
+-        }
++        }, IntentFilter(DownloadManager.ACTION_DOWNLOAD_COMPLETE), Context.RECEIVER_EXPORTED)
+     }
+ }
+diff --git a/out/0018-treble_app-let-the-ims-install-button-pick-the-phh-o.patch b/out/0018-treble_app-let-the-ims-install-button-pick-the-phh-o.patch
+new file mode 100644
+index 0000000..f2dfc7c
+--- /dev/null
++++ b/out/0018-treble_app-let-the-ims-install-button-pick-the-phh-o.patch
+@@ -0,0 +1,219 @@
++From b9047444ee6c30ac0facec7d38140cb42e5e51a3 Mon Sep 17 00:00:00 2001
++From: Langsdorff <hocaoglugeylani96@gmail.com>
++Date: Thu, 8 Oct 2026 00:08:11 +0300
++Subject: [PATCH] treble_app: let the ims install button pick the phh or
++ langsdorff floss apk
++
++---
++ app/src/main/java/me/phh/treble/app/Ims.kt    |  14 +-
++ .../java/me/phh/treble/app/ImsSettings.kt     | 140 ++++++++++--------
++ 2 files changed, 89 insertions(+), 65 deletions(-)
++
++diff --git a/app/src/main/java/me/phh/treble/app/Ims.kt b/app/src/main/java/me/phh/treble/app/Ims.kt
++index 1dc9880..d776448 100644
++--- a/app/src/main/java/me/phh/treble/app/Ims.kt
+++++ b/app/src/main/java/me/phh/treble/app/Ims.kt
++@@ -88,13 +88,22 @@ object Ims: EntryStartup {
++ 
++     override fun startup(ctxt: Context) {
++         if (!ImsSettings.enabled()) return
++-        val gotFloss = ctxt.packageManager.getInstalledPackages(0).find { it.packageName == "me.phh.ims" } != null
++ 
++         val sp = PreferenceManager.getDefaultSharedPreferences(ctxt)
++         sp.registerOnSharedPreferenceChangeListener(spListener)
++ 
++         this.ctxt = WeakReference(ctxt.applicationContext)
++ 
+++        selectImsOverlay(ctxt)
+++
+++        //Refresh parameters on boot
+++        spListener.onSharedPreferenceChanged(sp, ImsSettings.requestNetwork)
+++    }
+++
+++    // com.android.phone reads config_ims_mmtel_package only at start, so this must run before the next boot
+++    fun selectImsOverlay(ctxt: Context) {
+++        val gotFloss = ctxt.packageManager.getInstalledPackages(0).find { it.packageName == "me.phh.ims" } != null
+++
++         val allOverlays = listOf("me.phh.treble.overlay.mtkims_telephony", "me.phh.treble.overlay.cafims_telephony", "me.phh.treble.overlay.hwims_telephony")
++         val selectOverlay = when {
++             gotFloss -> "me.phh.treble.overlay.flossims_telephony"
++@@ -116,8 +125,5 @@ object Ims: EntryStartup {
++                     .forEach { OverlayPicker.setOverlayEnabled(it, false) }
++             OverlayPicker.setOverlayEnabled(selectOverlay, true)
++         }
++-
++-        //Refresh parameters on boot
++-        spListener.onSharedPreferenceChanged(sp, ImsSettings.requestNetwork)
++     }
++ }
++diff --git a/app/src/main/java/me/phh/treble/app/ImsSettings.kt b/app/src/main/java/me/phh/treble/app/ImsSettings.kt
++index 37d87b7..6d00e9d 100644
++--- a/app/src/main/java/me/phh/treble/app/ImsSettings.kt
+++++ b/app/src/main/java/me/phh/treble/app/ImsSettings.kt
++@@ -29,6 +29,7 @@ object ImsSettings : Settings {
++     val createApn = "key_ims_create_apn"
++     val forceEnableSettings = "key_ims_force_enable_setting"
++     val installImsApk = "key_ims_install_apn"
+++    val flossLangsdorffUrl = "https://github.com/clangsdorff/ims/releases/latest/download/FlossIms.apk"
++ 
++     fun checkHasPhhSignature(): Boolean {
++         try {
++@@ -135,77 +136,94 @@ class ImsSettingsFragment : SettingsFragment() {
++ 
++         installIms!!.title = "Install IMS APK for $message"
++         installIms!!.setOnPreferenceClickListener {
++-            val dm = activity.getSystemService(DownloadManager::class.java)
+++            val choices = arrayOf(
+++                    Pair(url, "$message (treble.phh.me)"),
+++                    Pair(ImsSettings.flossLangsdorffUrl, "Floss IMS, langsdorff build (github.com/clangsdorff/ims)"))
+++            AlertDialog.Builder(activity)
+++                    .setTitle("Download and install IMS APK")
+++                    .setItems(choices.map { it.second }.toTypedArray()) { _, which -> downloadAndInstallIms(choices[which].first) }
+++                    .show()
+++            return@setOnPreferenceClickListener true
+++        }
+++    }
++ 
++-            val downloadRequest = DownloadManager.Request(Uri.parse(url))
++-            downloadRequest.setTitle("IMS APK")
++-            downloadRequest.setNotificationVisibility(DownloadManager.Request.VISIBILITY_VISIBLE_NOTIFY_COMPLETED)
+++    private fun downloadAndInstallIms(url: String) {
+++        val dm = activity.getSystemService(DownloadManager::class.java)
++ 
++-            downloadRequest.setDestinationInExternalFilesDir(activity, Environment.DIRECTORY_DOWNLOADS, "ims.apk")
+++        val downloadRequest = DownloadManager.Request(Uri.parse(url))
+++        downloadRequest.setTitle("IMS APK")
+++        downloadRequest.setNotificationVisibility(DownloadManager.Request.VISIBILITY_VISIBLE_NOTIFY_COMPLETED)
++ 
++-            val myId: Long
++-            try {
++-                myId = dm!!.enqueue(downloadRequest)
++-            } catch (e: Exception) {
++-                Toast.makeText(activity, "IMS download failed: " + e.message, Toast.LENGTH_LONG).show()
++-                return@setOnPreferenceClickListener true
++-            }
+++        downloadRequest.setDestinationInExternalFilesDir(activity, Environment.DIRECTORY_DOWNLOADS, "ims.apk")
++ 
++-            activity.registerReceiver(object: BroadcastReceiver() {
++-                override fun onReceive(context: Context, intent: Intent) {
++-                    Log.d("PHH", "Received download completed with intent $intent ${intent.data}")
++-                    if(intent.getLongExtra(DownloadManager.EXTRA_DOWNLOAD_ID, -1L) != myId) return
+++        val myId: Long
+++        try {
+++            myId = dm!!.enqueue(downloadRequest)
+++        } catch (e: Exception) {
+++            Toast.makeText(activity, "IMS download failed: " + e.message, Toast.LENGTH_LONG).show()
+++            return
+++        }
++ 
++-                    val query = DownloadManager.Query().setFilterById(myId)
++-                    val cursor = dm.query(query)
++-                    if(!cursor.moveToFirst()) {
++-                        Log.d("PHH", "DownloadManager gave us an empty cursor")
++-                        return
++-                    }
+++        activity.registerReceiver(object: BroadcastReceiver() {
+++            override fun onReceive(context: Context, intent: Intent) {
+++                Log.d("PHH", "Received download completed with intent $intent ${intent.data}")
+++                if(intent.getLongExtra(DownloadManager.EXTRA_DOWNLOAD_ID, -1L) != myId) return
++ 
++-                    val localUri = Uri.parse(cursor.getString(cursor.getColumnIndex(DownloadManager.COLUMN_LOCAL_URI)))
++-                    Log.d("PHH", "Got localURI = $localUri")
++-                    val filename = localUri.lastPathSegment
++-                    val path = localUri.path!!
++-                    val pi = context.packageManager.packageInstaller
++-                    val sessionId = pi.createSession(PackageInstaller.SessionParams(PackageInstaller.SessionParams.MODE_FULL_INSTALL))
++-                    val session = pi.openSession(sessionId)
++-
++-                    Misc.safeSetprop("persist.vendor.vilte_support", "0")
++-
++-                    session.openWrite("hello", 0, -1).use { output ->
++-                        FileInputStream(path).use { input ->
++-                            val buf = ByteArray(512*1024)
++-                            while(input.available()>0) {
++-                                val l = input.read(buf)
++-                                output.write(buf, 0, l)
++-                            }
++-                            session.fsync(output)
+++                val query = DownloadManager.Query().setFilterById(myId)
+++                val cursor = dm.query(query)
+++                if(!cursor.moveToFirst()) {
+++                    Log.d("PHH", "DownloadManager gave us an empty cursor")
+++                    return
+++                }
+++
+++                val localUri = Uri.parse(cursor.getString(cursor.getColumnIndex(DownloadManager.COLUMN_LOCAL_URI)))
+++                Log.d("PHH", "Got localURI = $localUri")
+++                val filename = localUri.lastPathSegment
+++                val path = localUri.path!!
+++                val pi = context.packageManager.packageInstaller
+++                val sessionId = pi.createSession(PackageInstaller.SessionParams(PackageInstaller.SessionParams.MODE_FULL_INSTALL))
+++                val session = pi.openSession(sessionId)
+++
+++                Misc.safeSetprop("persist.vendor.vilte_support", "0")
+++
+++                session.openWrite("hello", 0, -1).use { output ->
+++                    FileInputStream(path).use { input ->
+++                        val buf = ByteArray(512*1024)
+++                        while(input.available()>0) {
+++                            val l = input.read(buf)
+++                            output.write(buf, 0, l)
++                         }
+++                        session.fsync(output)
++                     }
++-
++-                    activity.registerReceiver(
++-                            object: BroadcastReceiver() {
++-                                override fun onReceive(p0: Context?, intet: Intent?) {
++-                                    Log.e("PHH", "Apk install received $intent" )
++-                                    Toast.makeText(p0, "IMS apk installed! You may now reboot.", Toast.LENGTH_LONG).show()
++-                                }
++-                            },
++-                            IntentFilter("me.phh.treble.app.ImsInstalled")
++-                    )
++-
++-                    session.commit(
++-                            PendingIntent.getBroadcast(
++-                                    this@ImsSettingsFragment.activity,
++-                                    1,
++-                                    Intent("me.phh.treble.app.ImsInstalled"),
++-                                    PendingIntent.FLAG_ONE_SHOT or PendingIntent.FLAG_IMMUTABLE).intentSender)
++-                    activity.unregisterReceiver(this)
++                 }
++ 
++-            }, IntentFilter(DownloadManager.ACTION_DOWNLOAD_COMPLETE))
+++                activity.registerReceiver(
+++                        object: BroadcastReceiver() {
+++                            override fun onReceive(p0: Context, result: Intent) {
+++                                val status = result.getIntExtra(PackageInstaller.EXTRA_STATUS, PackageInstaller.STATUS_FAILURE)
+++                                Log.e("PHH", "Apk install received $result status $status")
+++                                if (status != PackageInstaller.STATUS_SUCCESS) {
+++                                    val msg = result.getStringExtra(PackageInstaller.EXTRA_STATUS_MESSAGE)
+++                                    Toast.makeText(p0, "IMS apk install failed: $msg", Toast.LENGTH_LONG).show()
+++                                    return
+++                                }
+++                                Ims.selectImsOverlay(p0)
+++                                Toast.makeText(p0, "IMS apk installed! You may now reboot.", Toast.LENGTH_LONG).show()
+++                            }
+++                        },
+++                        IntentFilter("me.phh.treble.app.ImsInstalled"),
+++                        Context.RECEIVER_NOT_EXPORTED
+++                )
+++
+++                session.commit(
+++                        PendingIntent.getBroadcast(
+++                                this@ImsSettingsFragment.activity,
+++                                1,
+++                                Intent("me.phh.treble.app.ImsInstalled").setPackage(context.packageName),
+++                                PendingIntent.FLAG_ONE_SHOT or PendingIntent.FLAG_MUTABLE).intentSender)
+++                activity.unregisterReceiver(this)
+++            }
++ 
++-            return@setOnPreferenceClickListener true
++-        }
+++        }, IntentFilter(DownloadManager.ACTION_DOWNLOAD_COMPLETE), Context.RECEIVER_EXPORTED)
++     }
++ }
++-- 
++2.39.2 (Apple Git-143)
++
+-- 
+2.39.2 (Apple Git-143)
+
