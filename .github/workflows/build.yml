@@ -214,7 +214,7 @@ jobs:
           EC2_AMI_ID: ${{ needs.deploy-infrastructure.outputs.ami_id }}
           GH_PAT: ${{ secrets.GH_PAT }}
           BUILD_SSH_KEY: ${{ secrets.BUILD_SSH_KEY }}
-          PACKAGES: "bc bison build-essential ccache curl flex g++-multilib gcc-multilib git git-lfs gnupg gperf imagemagick jq lib32readline-dev lib32z1-dev liblz4-tool libssl-dev libxml2 libxml2-utils lzop openjdk-11-jdk pngcrush python3 rsync schedtool squashfs-tools unzip wget xsltproc xz-utils zip zlib1g-dev zsync"
+          PACKAGES: "bc bison build-essential ccache curl flex g++-multilib gcc-multilib git git-lfs gnupg gperf imagemagick jq lib32readline-dev lib32z1-dev liblz4-tool libssl-dev libxml2 libxml2-utils lzop openjdk-11-jdk openjdk-17-jdk-headless pngcrush python3 rsync schedtool squashfs-tools unzip wget xsltproc xz-utils zip zlib1g-dev zsync"
           RUNNER_LABEL: ${{ steps.label.outputs.label }}
           EC2_MARKET_TYPE: spot
           EC2_ROOT_VOLUME: "100"
@@ -258,6 +258,14 @@ jobs:
       - name: Build treble_app
         working-directory: /mnt/src/treble_app
         run: bash build.sh release
+      - name: Build AppStore
+        working-directory: /mnt/src/AppStore
+        env:
+          ANDROID_HOME: /mnt/src/treble_app/sdk
+          JAVA_HOME: /usr/lib/jvm/java-17-openjdk-amd64
+        run: |
+          ./gradlew --no-daemon assembleRelease
+          cp -fv app/build/outputs/apk/release/app-release-unsigned.apk /mnt/src/external/AppStore/prebuilt/app-release.apk
       - name: Build system image and target files
         working-directory: /mnt/src/
         run: |
