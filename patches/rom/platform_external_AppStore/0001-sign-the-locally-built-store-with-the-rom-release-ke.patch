@@ -1,0 +1,25 @@
+From 9c30ca40e4732026edd03af98258fa5ea75d048c Mon Sep 17 00:00:00 2001
+From: Langsdorff <131063968+clangsdorff@users.noreply.github.com>
+Date: Thu, 8 Oct 2026 20:51:02 +0300
+Subject: [PATCH] sign the locally built store with the rom release key
+
+---
+ Android.bp | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/Android.bp b/Android.bp
+index 0f932d8..0bb2895 100644
+--- a/Android.bp
++++ b/Android.bp
+@@ -4,7 +4,7 @@ android_app_import {
+     privileged: true,
+ 
+     apk: "prebuilt/app-release.apk",
+-    preprocessed: true,
++    default_dev_cert: true,
+ 
+     optional_uses_libs: ["androidx.window.extensions", "androidx.window.sidecar"],
+ 
+-- 
+2.39.2 (Apple Git-143)
+

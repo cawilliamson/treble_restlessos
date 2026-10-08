@@ -1,0 +1,348 @@
+From da83fd08cc86f5208f07a7cb635b260dad47aef5 Mon Sep 17 00:00:00 2001
+From: Langsdorff <131063968+clangsdorff@users.noreply.github.com>
+Date: Thu, 8 Oct 2026 20:50:38 +0300
+Subject: [PATCH] merge a restlessos repo and allow vanadium without a
+ preinstalled copy
+
+---
+ app/build.gradle.kts                          |   9 ++
+ .../app/grapheneos/apps/core/InstallTask.kt   |   2 +-
+ .../java/app/grapheneos/apps/core/Repo.kt     |  23 ++-
+ .../app/grapheneos/apps/core/RepoRetriever.kt | 150 +++++++++++++-----
+ app/src/main/res/values/strings.xml           |   1 +
+ 5 files changed, 139 insertions(+), 46 deletions(-)
+
+diff --git a/app/build.gradle.kts b/app/build.gradle.kts
+index 45057cd..cfa1506 100644
+--- a/app/build.gradle.kts
++++ b/app/build.gradle.kts
+@@ -55,6 +55,15 @@ android {
+ 
+         buildConfigField(String::class.java.name, "REPO_KEY_VERSION",
+             "\"${System.getenv("REPO_KEY_VERSION") ?: "0"}\"")
++
++        buildConfigField(String::class.java.name, "RESTLESS_REPO_BASE_URL",
++            "\"${System.getenv("RESTLESS_REPO_BASE_URL") ?: "https://clangsdorff.github.io/restlessos-apps"}\"")
++
++        buildConfigField(String::class.java.name, "RESTLESS_REPO_PUBLIC_KEY",
++            "\"${System.getenv("RESTLESS_REPO_PUBLIC_KEY") ?: "RWRyXsktkagDSwTrfUzfoOofgXGfBzndeOF9hUp+D7hFSn/pZrWqGALi"}\"")
++
++        buildConfigField(String::class.java.name, "RESTLESS_REPO_KEY_VERSION",
++            "\"${System.getenv("RESTLESS_REPO_KEY_VERSION") ?: "0"}\"")
+     }
+ 
+     buildTypes {
+diff --git a/app/src/main/java/app/grapheneos/apps/core/InstallTask.kt b/app/src/main/java/app/grapheneos/apps/core/InstallTask.kt
+index 3b556a6..057ea43 100644
+--- a/app/src/main/java/app/grapheneos/apps/core/InstallTask.kt
++++ b/app/src/main/java/app/grapheneos/apps/core/InstallTask.kt
+@@ -331,7 +331,7 @@ class InstallTask(
+             val downloadProgress = AtomicLong()
+ 
+             httpDownloadSemaphore.withPermit {
+-                val url = "$REPO_BASE_URL/packages/${rPackage.manifestPackageName}/${rPackage.versionCode}/$downloadName"
++                val url = "${rPackage.common.baseUrl}/packages/${rPackage.manifestPackageName}/${rPackage.versionCode}/$downloadName"
+ 
+                 openConnection(params.network, url) {
+                     if (disableCompression) {
+diff --git a/app/src/main/java/app/grapheneos/apps/core/Repo.kt b/app/src/main/java/app/grapheneos/apps/core/Repo.kt
+index a4d789d..083b17d 100644
+--- a/app/src/main/java/app/grapheneos/apps/core/Repo.kt
++++ b/app/src/main/java/app/grapheneos/apps/core/Repo.kt
+@@ -73,6 +73,11 @@ class Repo(json: JSONObject, val eTag: String, val isDummy: Boolean = false) {
+         for (manifestPackageName in packagesJson.keys()) {
+             val packageContainerJson = packagesJson.getJSONObject(manifestPackageName)
+ 
++            // a store build signed with a different key can't take updates of the stock store
++            if (manifestPackageName == selfPkgName) {
++                continue
++            }
++
+             if (!checkStaticDeps(packageContainerJson, manifestPackageName, this)) {
+                 continue
+             }
+@@ -145,6 +150,7 @@ enum class PackageSource(@param:StringRes val uiName: Int) {
+     GrapheneOS_build(R.string.pkg_source_grapheneos_build),
+     Mirror(R.string.pkg_source_mirror),
+     Google(R.string.pkg_source_google),
++    RestlessOS(R.string.pkg_source_restlessos),
+ }
+ 
+ class RPackageGroup(val name: String) {
+@@ -176,6 +182,8 @@ class RPackageContainer(val repo: Repo, val packageName: String,
+ 
+     val isSharedLibrary = json.optBoolean("isSharedLibrary", false)
+ 
++    val baseUrl: String = json.optString("baseUrl", REPO_BASE_URL)
++
+     // if this is a noCode package, defines which packages are allowed to trigger its immediate update
+     val packagesAllowedToTriggerUpdate: List<String> =
+         json.optJSONArray("packagesAllowedToTriggerUpdate")?.asStringList()?.map {
+@@ -193,7 +201,7 @@ class RPackageContainer(val repo: Repo, val packageName: String,
+     val iconUrl: String? = run {
+         val iconType = json.opt("iconType") as String?
+         if (iconType != null) {
+-            "$REPO_BASE_URL/packages/$manifestPackageName/icon.$iconType"
++            "$baseUrl/packages/$manifestPackageName/icon.$iconType"
+         } else {
+             null
+         }
+@@ -501,7 +509,7 @@ class Apk(
+         }
+     }
+ 
+-    fun downloadUrl() = "$REPO_BASE_URL/packages/${pkg.manifestPackageName}/${pkg.versionCode}/$name.gz"
++    fun downloadUrl() = "${pkg.common.baseUrl}/packages/${pkg.manifestPackageName}/${pkg.versionCode}/$name.gz"
+ 
+     enum class Type {
+         UNCONDITIONAL,
+@@ -573,7 +581,11 @@ private fun checkStaticDeps(json: JSONObject, dependentManifestPkgName: String,
+             // there's currently no certificate checks for static dependencies, require them to
+             // be a system package instead, unless it's our own package
+             val enforceSystemPkg = dep.lhs != selfPkgName
+-            if (!checkPackageDep(dep, dependentManifestPkgName, repo, enforceSystemPkg)) {
++            // gates updates of a preinstalled package on its preinstalled version; the package is
++            // not preinstalled on restlessos, so allow installing it as a regular app
++            val isSelfDep = dep.lhs == dependentManifestPkgName
++            if (!checkPackageDep(dep, dependentManifestPkgName, repo,
++                    enforceSystemPkg && !isSelfDep, allowMissing = isSelfDep)) {
+                 return false
+             }
+         }
+@@ -588,10 +600,11 @@ private fun checkSystemFeatureDep(dep: ComplexDependency): Boolean {
+ }
+ 
+ private fun checkPackageDep(dep: ComplexDependency, dependentManifestPkgName: String,
+-                            repo: Repo, enforceSystemPkg: Boolean = false): Boolean {
++                            repo: Repo, enforceSystemPkg: Boolean = false,
++                            allowMissing: Boolean = false): Boolean {
+     val manifestPackageName = dep.lhs
+     val packageName = repo.translateManifestPackageName(manifestPackageName)
+-    val pi = pkgManager.getPackageInfoOrNull(packageName) ?: return false
++    val pi = pkgManager.getPackageInfoOrNull(packageName) ?: return allowMissing
+     val appInfo = pi.applicationInfo ?: return false
+     if (!appInfo.enabled && manifestPackageName != dependentManifestPkgName) {
+         return false
+diff --git a/app/src/main/java/app/grapheneos/apps/core/RepoRetriever.kt b/app/src/main/java/app/grapheneos/apps/core/RepoRetriever.kt
+index 11242da..9646922 100644
+--- a/app/src/main/java/app/grapheneos/apps/core/RepoRetriever.kt
++++ b/app/src/main/java/app/grapheneos/apps/core/RepoRetriever.kt
+@@ -1,5 +1,6 @@
+ package app.grapheneos.apps.core;
+ 
++import android.util.Log
+ import app.grapheneos.apps.BuildConfig
+ import app.grapheneos.apps.util.AtomicFile2
+ import app.grapheneos.apps.util.openConnection
+@@ -20,45 +21,76 @@ import java.nio.charset.StandardCharsets.UTF_8
+ import java.security.GeneralSecurityException
+ 
+ private const val METADATA_VERSION = 1
+-private const val CACHE_FILE_VERSION = 1
++private const val CACHE_FILE_VERSION = 2
+ 
+ private const val MIN_TIMESTAMP = 1_770_000_000L
+ private const val PUBLIC_KEY = BuildConfig.REPO_PUBLIC_KEY
+ private const val KEY_VERSION = BuildConfig.REPO_KEY_VERSION
+ 
++private const val RESTLESS_REPO_BASE_URL = BuildConfig.RESTLESS_REPO_BASE_URL
++private const val RESTLESS_PUBLIC_KEY = BuildConfig.RESTLESS_REPO_PUBLIC_KEY
++private const val RESTLESS_KEY_VERSION = BuildConfig.RESTLESS_REPO_KEY_VERSION
++private const val RESTLESS_MIN_TIMESTAMP = 0L
++
++private val restlessRepoEnabled = RESTLESS_REPO_BASE_URL.isNotEmpty() && RESTLESS_PUBLIC_KEY.isNotEmpty()
++
+ private val cacheFile = AtomicFile2("repo")
+ 
++private class RepoData(val eTag: String, val json: ByteArray) {
++    val timestamp: Long = JSONObject(json.toString(UTF_8)).getLong("time")
++}
++
++private class RepoSource(val baseUrl: String, val publicKey: String, val keyVersion: String,
++                         val minTimestamp: Long) {
++    val url = "$baseUrl/metadata.$METADATA_VERSION.$keyVersion.sjson"
++}
++
++private val mainSource = RepoSource(REPO_BASE_URL, PUBLIC_KEY, KEY_VERSION, MIN_TIMESTAMP)
++private val restlessSource = RepoSource(RESTLESS_REPO_BASE_URL, RESTLESS_PUBLIC_KEY,
++    RESTLESS_KEY_VERSION, RESTLESS_MIN_TIMESTAMP)
++
+ fun fetchRepo(currentRepo: Repo): Repo {
+-    val url = "$REPO_BASE_URL/metadata.$METADATA_VERSION.$KEY_VERSION.sjson"
+-
+-    return if (!currentRepo.isDummy) {
+-        openConnection(null, url) {
+-            setRequestProperty("If-None-Match", currentRepo.eTag)
+-        }.use { conn ->
+-            when (conn.v.responseCode) {
+-                HTTP_OK -> {
+-                    fetchInner(conn.v,
+-                        // in case MIN_TIMESTAMP was updated
+-                        maxOf(currentRepo.timestamp, MIN_TIMESTAMP))
+-                }
+-                HTTP_NOT_MODIFIED -> {
+-                    currentRepo
+-                }
+-                else -> throwResponseCodeException(conn.v)
+-            }
++    val cached = if (currentRepo.isDummy) null else readCache()
++
++    val main = fetchSource(mainSource, cached?.first)
++
++    val restless = if (restlessRepoEnabled) {
++        try {
++            fetchSource(restlessSource, cached?.second)
++        } catch (e: Exception) {
++            Log.w("RepoRetriever", "unable to fetch restlessos repo", e)
++            cached?.second
+         }
+     } else {
+-        openConnection(null, url, {}).use { conn ->
+-            if (conn.v.responseCode != HTTP_OK) {
+-                throwResponseCodeException(conn.v)
+-            }
++        null
++    }
++
++    if (cached != null && main === cached.first && restless === cached.second) {
++        return currentRepo
++    }
++
++    val repo = buildRepo(main, restless)
++    writeCache(main, restless)
++    return repo
++}
+ 
+-            fetchInner(conn.v, MIN_TIMESTAMP)
++private fun fetchSource(source: RepoSource, current: RepoData?): RepoData {
++    openConnection(null, source.url) {
++        if (current != null) {
++            setRequestProperty("If-None-Match", current.eTag)
++        }
++    }.use { conn ->
++        return when (conn.v.responseCode) {
++            HTTP_OK -> fetchInner(conn.v, source,
++                // in case minTimestamp was updated
++                maxOf(current?.timestamp ?: 0L, source.minTimestamp))
++            HTTP_NOT_MODIFIED -> current ?: throwResponseCodeException(conn.v)
++            else -> throwResponseCodeException(conn.v)
+         }
+     }
+ }
+ 
+-private fun fetchInner(conn: HttpURLConnection, minTimestamp: Long): Repo {
++private fun fetchInner(conn: HttpURLConnection, source: RepoSource, minTimestamp: Long): RepoData {
+     val eTag = conn.getHeaderField("ETag") ?: ""
+ 
+     val unverifiedBytes = conn.inputStream.use {
+@@ -76,41 +108,79 @@ private fun fetchInner(conn: HttpURLConnection, minTimestamp: Long): Repo {
+         unverifiedBytes.copyOfRange(unverifiedBytes.size - 101, unverifiedBytes.size - 1)
+             .toString(UTF_8)
+ 
+-    FileVerifier(PUBLIC_KEY).verifySignature(unverifiedJson, signature)
++    FileVerifier(source.publicKey).verifySignature(unverifiedJson, signature)
+ 
+-    val verifiedJson = unverifiedJson
++    val data = RepoData(eTag, unverifiedJson)
+ 
+-    val repo = Repo(JSONObject(verifiedJson.toString(UTF_8)), eTag)
+-
+-    if (repo.timestamp < minTimestamp) {
++    if (data.timestamp < minTimestamp) {
+         throw GeneralSecurityException("repo downgrade")
+     }
+ 
+-    val baos = ByteArrayOutputStream(verifiedJson.size + 100)
++    return data
++}
++
++// packages of the restlessos repo are added only if the main repo doesn't have them
++private fun buildRepo(main: RepoData, restless: RepoData?): Repo {
++    val json = JSONObject(main.json.toString(UTF_8))
++    val packages = json.getJSONObject("packages")
++
++    for (name in packages.keys()) {
++        packages.getJSONObject(name).remove("baseUrl")
++    }
++
++    if (restless != null) {
++        val restlessPackages = JSONObject(restless.json.toString(UTF_8)).getJSONObject("packages")
++        for (name in restlessPackages.keys()) {
++            if (packages.has(name)) {
++                continue
++            }
++            val pkg = restlessPackages.getJSONObject(name)
++            pkg.put("baseUrl", RESTLESS_REPO_BASE_URL)
++            pkg.put("source", PackageSource.RestlessOS.name)
++            packages.put(name, pkg)
++        }
++    }
++
++    return Repo(json, main.eTag)
++}
++
++private fun writeCache(main: RepoData, restless: RepoData?) {
++    val baos = ByteArrayOutputStream(main.json.size + (restless?.json?.size ?: 0) + 200)
+     DataOutputStream(baos).let {
+         it.writeInt(CACHE_FILE_VERSION)
+-        it.writeString(eTag)
+-        it.writeByteArray(verifiedJson)
++        it.writeString(main.eTag)
++        it.writeByteArray(main.json)
++        it.writeBoolean(restless != null)
++        if (restless != null) {
++            it.writeString(restless.eTag)
++            it.writeByteArray(restless.json)
++        }
+     }
+ 
+     cacheFile.write(baos.toByteArray())
+-
+-    return repo
+ }
+ 
+-fun getCachedRepo(): Repo {
+-    val bytes = cacheFile.read() ?: return createDummy()
++private fun readCache(): Pair<RepoData, RepoData?>? {
++    val bytes = cacheFile.read() ?: return null
+ 
+     val dis = DataInputStream(ByteArrayInputStream(bytes))
+     val fileVersion = dis.readInt()
+     check(fileVersion <= CACHE_FILE_VERSION)
+ 
+-    val eTag = dis.readString()
+-
+-    val json = dis.readByteArray().toString(UTF_8)
++    val main = RepoData(dis.readString(), dis.readByteArray())
++    val restless = if (fileVersion >= 2 && dis.readBoolean()) {
++        RepoData(dis.readString(), dis.readByteArray())
++    } else {
++        null
++    }
+     check(dis.available() == 0)
+ 
+-    return Repo(JSONObject(json), eTag)
++    return Pair(main, restless)
++}
++
++fun getCachedRepo(): Repo {
++    val cached = readCache() ?: return createDummy()
++    return buildRepo(cached.first, cached.second)
+ }
+ 
+ // make a dummy repo to remove the need to check for null Repo everywhere
+diff --git a/app/src/main/res/values/strings.xml b/app/src/main/res/values/strings.xml
+index 8765e0e..714b855 100644
+--- a/app/src/main/res/values/strings.xml
++++ b/app/src/main/res/values/strings.xml
+@@ -34,6 +34,7 @@
+     <string name="pkg_source_grapheneos_build">GrapheneOS build</string>
+     <string name="pkg_source_mirror">Mirror</string>
+     <string name="pkg_source_google">Google (mirror)</string>
++    <string name="pkg_source_restlessos">RestlessOS</string>
+ 
+     <string name="settings">Settings</string>
+     <string name="open_settings">Open settings</string>
+-- 
+2.39.2 (Apple Git-143)
+
