@@ -1,4 +1,4 @@
-From 437b89a71208a0b98a93881c1fd2464a29a36522 Mon Sep 17 00:00:00 2001
+From 806bbaddcea173a341eded58e9cffa75e7e17d02 Mon Sep 17 00:00:00 2001
 From: "Christopher A. Williamson" <contact@chrisaw.io>
 Date: Mon, 15 Jun 2026 11:24:02 +0100
 Subject: [PATCH 1/1] securize: rework to property-based toggle with GSI
@@ -8,12 +8,12 @@ Subject: [PATCH 1/1] securize: rework to property-based toggle with GSI
  base.mk             |   2 -
  phh-on-boot.sh      |  23 ++++++++
  phh-prop-handler.sh |  12 ++++
- rw-system.sh        | 140 +++++++++++++++++++++++++++++++-------------
+ rw-system.sh        | 135 ++++++++++++++++++++++++++++++--------------
  vndk.rc             |   7 +--
- 5 files changed, 136 insertions(+), 48 deletions(-)
+ 5 files changed, 131 insertions(+), 48 deletions(-)
 
 diff --git a/base.mk b/base.mk
-index 4845c84..bd3bf60 100644
+index a88eade..bdf2fa9 100644
 --- a/base.mk
 +++ b/base.mk
 @@ -40,7 +40,6 @@ PRODUCT_SYSTEM_DEFAULT_PROPERTIES += \
@@ -24,7 +24,7 @@ index 4845c84..bd3bf60 100644
      ro.cust.cdrom=/dev/null
  
  # VNDK config files
-@@ -174,7 +173,6 @@ PRODUCT_PACKAGES += \
+@@ -175,7 +174,6 @@ PRODUCT_PACKAGES += \
      resetprop_phh
  
  PRODUCT_COPY_FILES += \
@@ -90,10 +90,10 @@ index d9e3153..bdf7c24 100644
      if [[ "$prop_value" != "0" && "$prop_value" != "1" ]]; then
          exit 1
 diff --git a/rw-system.sh b/rw-system.sh
-index da58e34..2ce8483 100644
+index da58e34..5ed2ca2 100644
 --- a/rw-system.sh
 +++ b/rw-system.sh
-@@ -804,75 +804,131 @@ if [ "$brand" = OPPO ] || [ "$brand" = realme ]; then
+@@ -804,75 +804,126 @@ if [ "$brand" = OPPO ] || [ "$brand" = realme ]; then
      fi
  fi
  
@@ -228,11 +228,6 @@ index da58e34..2ce8483 100644
 +    copyprop ro.product.system.manufacturer ro.product.vendor.manufacturer
 +    copyprop ro.product.product.manufacturer ro.product.vendor.manufacturer
 +    copyprop ro.product.system_ext.manufacturer ro.product.vendor.manufacturer
-+
-+    # spoof security-sensitive props early so root detection apps cannot read
-+    # the real values before phh-on-boot.sh reinforces them post-boot
-+    resetprop_phh ro.debuggable 0
-+    resetprop_phh ro.secure 1
 +
 +    # update usb gadget strings so the device appears correctly when connected
 +    model="$(getprop ro.product.model)"
