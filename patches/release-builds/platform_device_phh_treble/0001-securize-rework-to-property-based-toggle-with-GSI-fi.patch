@@ -1,16 +1,16 @@
-From 806bbaddcea173a341eded58e9cffa75e7e17d02 Mon Sep 17 00:00:00 2001
+From 2a928bbdeec515a7cd0277c513f30f008d68119d Mon Sep 17 00:00:00 2001
 From: "Christopher A. Williamson" <contact@chrisaw.io>
 Date: Mon, 15 Jun 2026 11:24:02 +0100
-Subject: [PATCH 1/1] securize: rework to property-based toggle with GSI
+Subject: [PATCH] securize: rework to property-based toggle with GSI
  fingerprint tracking
 
 ---
  base.mk             |   2 -
  phh-on-boot.sh      |  23 ++++++++
  phh-prop-handler.sh |  12 ++++
- rw-system.sh        | 135 ++++++++++++++++++++++++++++++--------------
+ rw-system.sh        | 133 +++++++++++++++++++++++++++++++-------------
  vndk.rc             |   7 +--
- 5 files changed, 131 insertions(+), 48 deletions(-)
+ 5 files changed, 131 insertions(+), 46 deletions(-)
 
 diff --git a/base.mk b/base.mk
 index a88eade..bdf2fa9 100644
@@ -90,10 +90,10 @@ index d9e3153..bdf7c24 100644
      if [[ "$prop_value" != "0" && "$prop_value" != "1" ]]; then
          exit 1
 diff --git a/rw-system.sh b/rw-system.sh
-index da58e34..5ed2ca2 100644
+index da58e34..f155cc5 100644
 --- a/rw-system.sh
 +++ b/rw-system.sh
-@@ -804,75 +804,126 @@ if [ "$brand" = OPPO ] || [ "$brand" = realme ]; then
+@@ -804,72 +804,125 @@ if [ "$brand" = OPPO ] || [ "$brand" = realme ]; then
      fi
  fi
  
@@ -257,11 +257,8 @@ index da58e34..5ed2ca2 100644
 -
 -    mount -o bind /mnt/phh/xbin /system/xbin
  fi
--
--for abi in "" 64;do
-     f=/vendor/lib$abi/libstagefright_foundation.so
-     if [ -f "$f" ];then
-         for vndk in 26 27 28 29;do
+ 
+ for abi in "" 64;do
 diff --git a/vndk.rc b/vndk.rc
 index c61e712..c4c110a 100644
 --- a/vndk.rc
