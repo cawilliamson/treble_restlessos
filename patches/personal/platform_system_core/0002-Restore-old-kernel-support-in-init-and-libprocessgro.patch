@@ -1,7 +1,7 @@
 From df3c90d2b3c452a2aa186c3ee4ba858ca8f0c467 Mon Sep 17 00:00:00 2001
 From: "Christopher A. Williamson" <contact@chrisaw.io>
 Date: Tue, 17 Mar 2026 23:27:35 +0000
-Subject: [PATCH 2/3]
+Subject: [PATCH 2/4]
 
 Revert removal of 4.9/4.14 kernel support in init.rc:
 Re-add bootreceiver.enable 0 triggers for kernel versions 4.9 and

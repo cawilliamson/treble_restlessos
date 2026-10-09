@@ -1,0 +1,45 @@
+From 6ff484d46a6517e491621090561418e61d46216c Mon Sep 17 00:00:00 2001
+From: "Christopher A. Williamson" <contact@chrisaw.io>
+Date: Fri, 9 Oct 2026 22:24:59 +0100
+Subject: [PATCH 4/4] libprocessgroup: fall back to pre-4.14 cpuset v1 mount
+ options
+
+cpuset_v2_mode only exists on kernels >= 4.14 and older vendor
+kernels reject unknown v1 mount options, so the cpuset v1 mount
+fails outright on 4.4/4.9 devices: no /dev/cpuset hierarchy, every
+task-profile application warns and cpuset-dependent init.rc setup
+never completes. retry the mount without cpuset_v2_mode before
+giving up, mirroring the memory_recursiveprot retry already used
+for the v2 hierarchy.
+---
+ libprocessgroup/setup/cgroup_map_write.cpp | 14 ++++++++++++++
+ 1 file changed, 14 insertions(+)
+
+diff --git a/libprocessgroup/setup/cgroup_map_write.cpp b/libprocessgroup/setup/cgroup_map_write.cpp
+index 0e4547352..c88a5e41a 100644
+--- a/libprocessgroup/setup/cgroup_map_write.cpp
++++ b/libprocessgroup/setup/cgroup_map_write.cpp
+@@ -204,6 +204,20 @@ static bool MountV1CgroupController(const CgroupDescriptor& descriptor) {
+ 
+     if (mount("none", controller->path(), "cgroup", MS_NODEV | MS_NOEXEC | MS_NOSUID,
+               options.c_str())) {
++        // cpuset_v2_mode only exists on kernels >= 4.14; older vendor kernels
++        // reject unknown v1 mount options outright. retry with the option set
++        // used before 4.14, mirroring the memory_recursiveprot fallback in
++        // MountV2CgroupController() above.
++        if (!strcmp(controller->name(), "cpuset")) {
++            std::string legacy_options = controller->name();
++            legacy_options += ",noprefix";
++            if (!mount("none", controller->path(), "cgroup", MS_NODEV | MS_NOEXEC | MS_NOSUID,
++                       legacy_options.c_str())) {
++                LOG(INFO) << "Mounted cpuset without cpuset_v2_mode (kernel < 4.14)";
++                return true;
++            }
++            PLOG(INFO) << "cpuset fallback mount without cpuset_v2_mode failed";
++        }
+         if (IsOptionalController(controller)) {
+             PLOG(INFO) << "Failed to mount optional controller " << controller->name();
+             return true;
+-- 
+2.55.0
+
