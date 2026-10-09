@@ -1,13 +1,14 @@
-From 52b8c0d4ae48e8f7009f8d913f0136afcc6c72e4 Mon Sep 17 00:00:00 2001
+From daebf390a6e5a7af38538666fd8e7c5349ce98fc Mon Sep 17 00:00:00 2001
 From: "Christopher A. Williamson" <contact@chrisaw.io>
 Date: Mon, 28 Sep 2026 08:23:34 +0100
-Subject: [PATCH 3/4] libprocessgroup and init carry several assumptions that break
- on legacy vendor kernels: cgroup v2-only controllers, memcg layout expected
- by lmkd, selinux policy versions old kernels cannot compile, erofs restorecon
- behaviour, xperms cil rules and cgroup.procs write races. the patches form
- one dependent chain against the same files, so they are merged into a single
- legacy kernel tolerance change.
+Subject: [PATCH 3/4]
 
+libprocessgroup and init carry several assumptions that break on
+legacy vendor kernels: cgroup v2-only controllers, memcg layout
+expected by lmkd, selinux policy versions old kernels cannot compile,
+erofs restorecon behaviour, xperms cil rules and cgroup.procs write
+races. the patches form one dependent chain against the same files,
+so they are merged into a single legacy kernel tolerance change.
 ---
  init/selinux.cpp                           | 195 ++++++++++++++++++++-
  libprocessgroup/setup/cgroup_map_write.cpp |  80 +++++++++
@@ -15,7 +16,7 @@ Subject: [PATCH 3/4] libprocessgroup and init carry several assumptions that bre
  3 files changed, 280 insertions(+), 3 deletions(-)
 
 diff --git a/init/selinux.cpp b/init/selinux.cpp
-index 4baf9a4fe..eb22032ce 100644
+index b32b71e..09571b6 100644
 --- a/init/selinux.cpp
 +++ b/init/selinux.cpp
 @@ -58,6 +58,7 @@
@@ -24,9 +25,9 @@ index 4baf9a4fe..eb22032ce 100644
  #include <sys/wait.h>
 +#include <sys/utsname.h>
  #include <unistd.h>
- 
- #include <android-base/chrono_utils.h>
-@@ -226,6 +227,91 @@ struct PolicyFile {
+ #include <fcntl.h>
+ #include <strings.h>
+@@ -234,6 +235,91 @@ struct PolicyFile {
      std::string path;
  };
  
@@ -118,7 +119,7 @@ index 4baf9a4fe..eb22032ce 100644
  bool OpenSplitPolicy(PolicyFile* policy_file) {
      // IMPLEMENTATION NOTE: Split policy consists of three or more CIL files:
      // * platform -- policy needed due to logic contained in the system image,
-@@ -328,7 +414,36 @@ bool OpenSplitPolicy(PolicyFile* policy_file) {
+@@ -336,7 +422,36 @@ bool OpenSplitPolicy(PolicyFile* policy_file) {
      if (access(odm_policy_cil_file.c_str(), F_OK) == -1) {
          odm_policy_cil_file.clear();
      }
@@ -156,7 +157,7 @@ index 4baf9a4fe..eb22032ce 100644
  
      std::vector<std::string> genfs_cil_files;
  
-@@ -346,10 +461,67 @@ bool OpenSplitPolicy(PolicyFile* policy_file) {
+@@ -354,10 +469,67 @@ bool OpenSplitPolicy(PolicyFile* policy_file) {
          LOG(INFO) << "Using " << genfs_cil_file << " for genfs labels";
      }
  
@@ -225,7 +226,7 @@ index 4baf9a4fe..eb22032ce 100644
          "-m", "-M", "true", "-G", "-N", "-v",
          "-c", version_as_string.c_str(),
          plat_mapping_file.c_str(),
-@@ -819,8 +991,25 @@ int SetupSelinux(char** argv) {
+@@ -883,8 +1055,25 @@ int SetupSelinux(char** argv) {
      // store SELabels in their xattrs, such as ext4 do not need an explicit restorecon here,
      // but other file systems do.  In particular, this is needed for ramdisks such as the
      // recovery image for A/B devices.
@@ -253,7 +254,7 @@ index 4baf9a4fe..eb22032ce 100644
  
      setenv(kEnvSelinuxStartedAt, std::to_string(start_time.time_since_epoch().count()).c_str(), 1);
 diff --git a/libprocessgroup/setup/cgroup_map_write.cpp b/libprocessgroup/setup/cgroup_map_write.cpp
-index f497a8ae2..0e4547352 100644
+index f497a8a..0e45473 100644
 --- a/libprocessgroup/setup/cgroup_map_write.cpp
 +++ b/libprocessgroup/setup/cgroup_map_write.cpp
 @@ -22,12 +22,15 @@
@@ -357,7 +358,7 @@ index f497a8ae2..0e4547352 100644
              // issue a warning and proceed with the next cgroup
              LOG(WARNING) << "Failed to setup " << name << " cgroup";
 diff --git a/libprocessgroup/task_profiles.cpp b/libprocessgroup/task_profiles.cpp
-index 9d9c871b1..34ac0adca 100644
+index 9d9c871..34ac0ad 100644
 --- a/libprocessgroup/task_profiles.cpp
 +++ b/libprocessgroup/task_profiles.cpp
 @@ -332,6 +332,14 @@ bool SetCgroupAction::AddTidToCgroup(pid_t tid, int fd, ResourceCacheType cache_
