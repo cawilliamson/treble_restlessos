@@ -1,7 +1,7 @@
 From 2f6b090f46c3c510753a85fa92763f65f2d96a3d Mon Sep 17 00:00:00 2001
 From: "Christopher A. Williamson" <contact@chrisaw.io>
 Date: Mon, 5 Oct 2026 09:38:42 +0100
-Subject: [PATCH 12/12] frameworks_base: add gnss as a fallback time source with a disable toggle
+Subject: [PATCH 12/13] frameworks_base: add gnss as a fallback time source with a disable toggle
 
 enable GnssTimeUpdateService and add gnss to
 config_autoTimeSourcesPriority below network, on by default. the service

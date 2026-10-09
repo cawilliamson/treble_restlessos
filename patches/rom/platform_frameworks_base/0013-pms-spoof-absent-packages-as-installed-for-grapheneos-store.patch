@@ -1,0 +1,88 @@
+From 4383e6806e3c955fa27eafd987d0480fa460dd89 Mon Sep 17 00:00:00 2001
+From: "Christopher A. Williamson" <contact@chrisaw.io>
+Date: Fri, 9 Oct 2026 23:19:22 +0100
+Subject: [PATCH 13/13] pms: spoof absent packages as installed for the grapheneos
+ store
+
+the store drops a package from its repo view when a self-referential
+static dependency (pkg >= version per the store metadata) is
+unsatisfied, and that check requires the package to be installed.
+on images shipping without e.g. the vanadium apk this hides the entry
+and the store never offers the initial install.
+
+report a minimal installed-package state to the store uid alone for
+the packages on the spoof list while they are absent, so the entries
+stay listed and the store proceeds with a normal install; the spoof
+disappears once the real package exists.
+---
+ .../com/android/server/pm/ComputerEngine.java | 40 +++++++++++++++++++
+ 1 file changed, 40 insertions(+)
+
+diff --git a/services/core/java/com/android/server/pm/ComputerEngine.java b/services/core/java/com/android/server/pm/ComputerEngine.java
+index bf15b7c5e..5b83bae98 100644
+--- a/services/core/java/com/android/server/pm/ComputerEngine.java
++++ b/services/core/java/com/android/server/pm/ComputerEngine.java
+@@ -179,6 +179,7 @@ import java.util.Arrays;
+ import java.util.Collections;
+ import java.util.Comparator;
+ import java.util.List;
++import java.util.Map;
+ import java.util.Objects;
+ import java.util.Optional;
+ import java.util.Set;
+@@ -1716,6 +1717,12 @@ public class ComputerEngine implements Computer {
+ 
+             return generatePackageInfo(ps, flags, userId);
+         }
++        if (p == null) {
++            PackageInfo spoofed = maybeGetSpoofedPackageInfo(packageName, filterCallingUid);
++            if (spoofed != null) {
++                return spoofed;
++            }
++        }
+         if (!matchFactoryOnly && (flags & (MATCH_KNOWN_PACKAGES | MATCH_ARCHIVED_PACKAGES)) != 0) {
+             final PackageStateInternal ps = mSettings.getPackage(packageName);
+             if (ps == null) return null;
+@@ -1730,6 +1737,39 @@ public class ComputerEngine implements Computer {
+         return null;
+     }
+ 
++    // RestlessOS: the grapheneos store drops a package from its repo view when a
++    // self-referential static dependency (pkg >= version, declared in the store
++    // metadata) is unsatisfied, and that check requires the package to be
++    // installed. for packages stripped from the image to save space this hides
++    // the entry entirely, so the store never offers the initial install. the
++    // packages below are reported to the store as minimal installed packages
++    // while absent; the spoof disappears once the real package exists.
++    private static final String GOS_STORE_PKG = "app.grapheneos.apps";
++    private static final Map<String, Long> SPOOFED_ABSENT_PACKAGES = Map.of(
++            "app.vanadium.browser", 548106100L);
++
++    private PackageInfo maybeGetSpoofedPackageInfo(String packageName, int filterCallingUid) {
++        final Long version = SPOOFED_ABSENT_PACKAGES.get(packageName);
++        if (version == null) {
++            return null;
++        }
++        final var storeState = mSettings.getPackage(GOS_STORE_PKG);
++        if (storeState == null
++                || UserHandle.getAppId(filterCallingUid) != storeState.getAppId()) {
++            return null;
++        }
++        final PackageInfo pi = new PackageInfo();
++        pi.packageName = packageName;
++        pi.versionCode = (int) (long) version;
++        pi.longVersionCode = version;
++        final ApplicationInfo ai = new ApplicationInfo();
++        ai.packageName = packageName;
++        ai.flags |= ApplicationInfo.FLAG_SYSTEM;
++        ai.enabled = true;
++        pi.applicationInfo = ai;
++        return pi;
++    }
++
+     @Override
+     public String[] getAllAvailablePackageNames() {
+         return mPackages.keySet().toArray(new String[0]);
+-- 
+2.55.0
+
