@@ -1,4 +1,4 @@
-From e35e1a2c551fca86f1fec83de59888e9f6c53676 Mon Sep 17 00:00:00 2001
+From 66d97ba2c3f92ebef87b5c6a8b0f0a660ee8d30d Mon Sep 17 00:00:00 2001
 From: Langsdorff <131063968+clangsdorff@users.noreply.github.com>
 Date: Sat, 10 Oct 2026 14:24:23 +0300
 Subject: [PATCH 6/6] keyboard: add a toggle to hide the ime back button in the
@@ -182,14 +182,14 @@ Subject: [PATCH 6/6] keyboard: add a toggle to hide the ime back button in the
 
 diff --git a/res/values-af/ime_back_button_strings.xml b/res/values-af/ime_back_button_strings.xml
 new file mode 100644
-index 0000000..fa57701
+index 0000000..686ef50
 --- /dev/null
 +++ b/res/values-af/ime_back_button_strings.xml
 @@ -0,0 +1,5 @@
 +<?xml version="1.0" encoding="utf-8"?>
 +<resources>
 +    <string name="ime_back_button_in_navbar_title">Wys die versteek-sleutelbord-sleutel</string>
-+    <string name="ime_back_button_in_navbar_summary">Wys die knoppie wat die sleutelbord versteek in die navigasiebalk wanneer 'n invoerveld gekies is</string>
++    <string name="ime_back_button_in_navbar_summary">Wys die knoppie wat die sleutelbord versteek in die navigasiebalk wanneer \'n invoerveld gekies is</string>
 +</resources>
 diff --git a/res/values-am/ime_back_button_strings.xml b/res/values-am/ime_back_button_strings.xml
 new file mode 100644
@@ -292,14 +292,14 @@ index 0000000..a0a30e7
 +</resources>
 diff --git a/res/values-ca/ime_back_button_strings.xml b/res/values-ca/ime_back_button_strings.xml
 new file mode 100644
-index 0000000..ea388cc
+index 0000000..8a5bd94
 --- /dev/null
 +++ b/res/values-ca/ime_back_button_strings.xml
 @@ -0,0 +1,5 @@
 +<?xml version="1.0" encoding="utf-8"?>
 +<resources>
 +    <string name="ime_back_button_in_navbar_title">Mostra la tecla per amagar el teclat</string>
-+    <string name="ime_back_button_in_navbar_summary">Mostra el botó que amaga el teclat a la barra de navegació quan se selecciona un camp d'entrada</string>
++    <string name="ime_back_button_in_navbar_summary">Mostra el botó que amaga el teclat a la barra de navegació quan se selecciona un camp d\'entrada</string>
 +</resources>
 diff --git a/res/values-cs/ime_back_button_strings.xml b/res/values-cs/ime_back_button_strings.xml
 new file mode 100644
@@ -457,25 +457,25 @@ index 0000000..c99b5f2
 +</resources>
 diff --git a/res/values-fr-rCA/ime_back_button_strings.xml b/res/values-fr-rCA/ime_back_button_strings.xml
 new file mode 100644
-index 0000000..a88e3f3
+index 0000000..d635ba0
 --- /dev/null
 +++ b/res/values-fr-rCA/ime_back_button_strings.xml
 @@ -0,0 +1,5 @@
 +<?xml version="1.0" encoding="utf-8"?>
 +<resources>
 +    <string name="ime_back_button_in_navbar_title">Afficher la touche pour masquer le clavier</string>
-+    <string name="ime_back_button_in_navbar_summary">Afficher le bouton qui masque le clavier dans la barre de navigation lorsqu'un champ de saisie est sélectionné</string>
++    <string name="ime_back_button_in_navbar_summary">Afficher le bouton qui masque le clavier dans la barre de navigation lorsqu\'un champ de saisie est sélectionné</string>
 +</resources>
 diff --git a/res/values-fr/ime_back_button_strings.xml b/res/values-fr/ime_back_button_strings.xml
 new file mode 100644
-index 0000000..a88e3f3
+index 0000000..d635ba0
 --- /dev/null
 +++ b/res/values-fr/ime_back_button_strings.xml
 @@ -0,0 +1,5 @@
 +<?xml version="1.0" encoding="utf-8"?>
 +<resources>
 +    <string name="ime_back_button_in_navbar_title">Afficher la touche pour masquer le clavier</string>
-+    <string name="ime_back_button_in_navbar_summary">Afficher le bouton qui masque le clavier dans la barre de navigation lorsqu'un champ de saisie est sélectionné</string>
++    <string name="ime_back_button_in_navbar_summary">Afficher le bouton qui masque le clavier dans la barre de navigation lorsqu\'un champ de saisie est sélectionné</string>
 +</resources>
 diff --git a/res/values-gl/ime_back_button_strings.xml b/res/values-gl/ime_back_button_strings.xml
 new file mode 100644
@@ -809,14 +809,14 @@ index 0000000..18dc716
 +</resources>
 diff --git a/res/values-pa/ime_back_button_strings.xml b/res/values-pa/ime_back_button_strings.xml
 new file mode 100644
-index 0000000..9bfc72d
+index 0000000..e333cd1
 --- /dev/null
 +++ b/res/values-pa/ime_back_button_strings.xml
 @@ -0,0 +1,5 @@
 +<?xml version="1.0" encoding="utf-8"?>
 +<resources>
 +    <string name="ime_back_button_in_navbar_title">ਕੀ-ਬੋਰਡ ਲੁਕਾਉਣ ਵਾਲੀ ਕੁੰਜੀ ਦਿਖਾਓ</string>
-+    <string name="ime_back_button_in_navbar_summary">ਇਨਪੁੱਟ ਖੇਤਰ ਚੁਣੇ ਜਾਣ 'ਤੇ, ਨੈਵੀਗੇਸ਼ਨ ਬਾਰ ਵਿੱਚ ਕੀ-ਬੋਰਡ ਲੁਕਾਉਣ ਵਾਲਾ ਬਟਨ ਦਿਖਾਓ</string>
++    <string name="ime_back_button_in_navbar_summary">ਇਨਪੁੱਟ ਖੇਤਰ ਚੁਣੇ ਜਾਣ \'ਤੇ, ਨੈਵੀਗੇਸ਼ਨ ਬਾਰ ਵਿੱਚ ਕੀ-ਬੋਰਡ ਲੁਕਾਉਣ ਵਾਲਾ ਬਟਨ ਦਿਖਾਓ</string>
 +</resources>
 diff --git a/res/values-pl/ime_back_button_strings.xml b/res/values-pl/ime_back_button_strings.xml
 new file mode 100644
@@ -1184,5 +1184,5 @@ index 0000000..be936aa
 +    }
 +}
 -- 
-2.39.2 (Apple Git-143)
+2.55.0
 
