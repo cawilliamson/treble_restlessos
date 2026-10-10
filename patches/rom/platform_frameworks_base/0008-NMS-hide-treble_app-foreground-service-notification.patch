@@ -1,7 +1,7 @@
 From b9726838913dbcde49a0369c3885f88a50279703 Mon Sep 17 00:00:00 2001
 From: "Christopher A. Williamson" <contact@chrisaw.io>
 Date: Tue, 23 Jun 2026 09:50:39 +0100
-Subject: [PATCH 8/13] NMS: hide the treble_app foreground-service notification
+Subject: [PATCH 8/14] NMS: hide the treble_app foreground-service notification
 
 RestlessOS runs the treble_app as a freezer-exempt foreground service so
 device-specific sensor listeners (motorola chop-chop, handwave/pocket doze)

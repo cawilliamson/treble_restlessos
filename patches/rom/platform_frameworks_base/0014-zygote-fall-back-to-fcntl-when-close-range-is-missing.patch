@@ -1,0 +1,62 @@
+From b03baef4087e4aecece6d618067de4279bf5f958 Mon Sep 17 00:00:00 2001
+From: "Christopher A. Williamson" <contact@chrisaw.io>
+Date: Sat, 10 Oct 2026 10:57:23 +0100
+Subject: [PATCH 14/14] zygote: fall back to fcntl when close_range is missing
+
+exec spawned children hardened the exec path against nothing: a
+close_range failure (ENOSYS on pre-5.9 vendor kernels, EINVAL for the
+flag on 5.9/5.10) exited the child before exec, which manifests as
+every exec spawned app or renderer dying silently and the activity
+manager killing it on the start timeout - chromium browsers never
+render a page on such devices.
+
+on close_range failure, mark the descriptors cloexec by hand instead
+of exiting, matching the pre close_range behaviour.
+---
+ core/jni/com_android_internal_os_Zygote.cpp | 25 +++++++++++++++++----
+ 1 file changed, 21 insertions(+), 4 deletions(-)
+
+diff --git a/core/jni/com_android_internal_os_Zygote.cpp b/core/jni/com_android_internal_os_Zygote.cpp
+index 70ee67dbf..9c86a85fb 100644
+--- a/core/jni/com_android_internal_os_Zygote.cpp
++++ b/core/jni/com_android_internal_os_Zygote.cpp
+@@ -3155,15 +3155,32 @@ static int fork_exec(const char*const* argv, const char*const* extra_env_vars, c
+         // Set CLOEXEC for all file descriptors except for the command file descriptor. Note that
+         // the parent process is multithreaded at fork time since it has Java daemon threads in
+         // addition to the main thread.
++        // close_range(2) needs kernel 5.9 and CLOSE_RANGE_CLOEXEC needs 5.11; on older
++        // vendor kernels it fails with ENOSYS and the child would exit before exec. fall
++        // back to marking descriptors cloexec by hand, matching the pre-close_range
++        // behaviour, so exec spawning keeps working on legacy kernels.
++        auto cloexec_fallback = [](int from, int to, int keep) {
++            rlimit fd_limit;
++            int max_fd = 32768;
++            if (getrlimit(RLIMIT_NOFILE, &fd_limit) == 0 && fd_limit.rlim_cur != RLIM_INFINITY) {
++                max_fd = static_cast<int>(fd_limit.rlim_cur);
++            }
++            for (int fd = from; fd <= to && fd < max_fd; fd++) {
++                if (fd == keep) continue;
++                int flags = fcntl(fd, F_GETFD);
++                if (flags == -1) continue; // closed; nothing to do
++                fcntl(fd, F_SETFD, flags | FD_CLOEXEC);
++            }
++        };
+         if (fd_to_keep != 0) {
+             if (close_range(0, fd_to_keep - 1, CLOSE_RANGE_CLOEXEC) != 0) {
+-                async_safe_format_log(ANDROID_LOG_ERROR, "ZygoteForkExec", "close_range(CLOSE_RANGE_CLOEXEC) up to %d failed: %#m", fd_to_keep - 1);
+-                _exit(1);
++                async_safe_format_log(ANDROID_LOG_WARN, "ZygoteForkExec", "close_range(CLOSE_RANGE_CLOEXEC) up to %d failed: %#m", fd_to_keep - 1);
++                cloexec_fallback(0, fd_to_keep - 1, fd_to_keep);
+             }
+         }
+         if (close_range(fd_to_keep + 1, ~0U, CLOSE_RANGE_CLOEXEC) != 0) {
+-            async_safe_format_log(ANDROID_LOG_ERROR, "ZygoteForkExec", "close_range(CLOSE_RANGE_CLOEXEC) from %d failed: %#m", fd_to_keep + 1);
+-            _exit(1);
++            async_safe_format_log(ANDROID_LOG_WARN, "ZygoteForkExec", "close_range(CLOSE_RANGE_CLOEXEC) from %d failed: %#m", fd_to_keep + 1);
++            cloexec_fallback(fd_to_keep + 1, INT_MAX, fd_to_keep);
+         }
+ 
+         if (__rt_sigprocmask(SIG_SETMASK, &prev_sig_set, nullptr) != 0) {
+-- 
+2.55.0
+
