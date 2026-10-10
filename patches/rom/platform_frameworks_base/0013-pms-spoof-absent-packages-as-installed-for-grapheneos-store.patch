@@ -1,6 +1,6 @@
-From 12be48154a15f3e9ec7cb758d7fbeecf5b07cc2d Mon Sep 17 00:00:00 2001
+From 26b7450d17c60ae322d5636e1247b4e4c0c6b345 Mon Sep 17 00:00:00 2001
 From: "Christopher A. Williamson" <contact@chrisaw.io>
-Date: Sat, 10 Oct 2026 03:39:58 +0100
+Date: Sat, 10 Oct 2026 14:17:14 +0100
 Subject: [PATCH 13/14] pms: spoof absent packages as installed for the grapheneos
  store
 
@@ -15,11 +15,11 @@ the packages on the spoof list while they are absent, so the entries
 stay listed and the store proceeds with a normal install; the spoof
 disappears once the real package exists.
 ---
- .../com/android/server/pm/ComputerEngine.java | 39 +++++++++++++++++++
- 1 file changed, 39 insertions(+)
+ .../com/android/server/pm/ComputerEngine.java | 42 +++++++++++++++++++
+ 1 file changed, 42 insertions(+)
 
 diff --git a/services/core/java/com/android/server/pm/ComputerEngine.java b/services/core/java/com/android/server/pm/ComputerEngine.java
-index bf15b7c5e..96cb977df 100644
+index bf15b7c5e..162a80b23 100644
 --- a/services/core/java/com/android/server/pm/ComputerEngine.java
 +++ b/services/core/java/com/android/server/pm/ComputerEngine.java
 @@ -179,6 +179,7 @@ import java.util.Arrays;
@@ -43,7 +43,7 @@ index bf15b7c5e..96cb977df 100644
          if (!matchFactoryOnly && (flags & (MATCH_KNOWN_PACKAGES | MATCH_ARCHIVED_PACKAGES)) != 0) {
              final PackageStateInternal ps = mSettings.getPackage(packageName);
              if (ps == null) return null;
-@@ -1730,6 +1737,38 @@ public class ComputerEngine implements Computer {
+@@ -1730,6 +1737,41 @@ public class ComputerEngine implements Computer {
          return null;
      }
  
@@ -59,6 +59,9 @@ index bf15b7c5e..96cb977df 100644
 +            "app.vanadium.browser", 548106100L);
 +
 +    private PackageInfo maybeGetSpoofedPackageInfo(String packageName, int filterCallingUid) {
++        if (packageName == null) {
++            return null;
++        }
 +        final Long version = SPOOFED_ABSENT_PACKAGES.get(packageName);
 +        if (version == null) {
 +            return null;
