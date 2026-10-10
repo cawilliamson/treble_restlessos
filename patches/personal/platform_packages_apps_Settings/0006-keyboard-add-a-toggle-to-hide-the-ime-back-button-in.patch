@@ -182,927 +182,927 @@ Subject: [PATCH 6/6] keyboard: add a toggle to hide the ime back button in the
 
 diff --git a/res/values-af/ime_back_button_strings.xml b/res/values-af/ime_back_button_strings.xml
 new file mode 100644
-index 0000000..686ef50
+index 0000000..bff8d26
 --- /dev/null
 +++ b/res/values-af/ime_back_button_strings.xml
 @@ -0,0 +1,5 @@
 +<?xml version="1.0" encoding="utf-8"?>
 +<resources>
-+    <string name="ime_back_button_in_navbar_title">Wys die versteek-sleutelbord-sleutel</string>
-+    <string name="ime_back_button_in_navbar_summary">Wys die knoppie wat die sleutelbord versteek in die navigasiebalk wanneer \'n invoerveld gekies is</string>
++    <string name="ime_back_button_in_navbar_title">"Wys die sleutel om die sleutelbord te versteek"</string>
++    <string name="ime_back_button_in_navbar_summary">"Wys die knoppie om die sleutelbord te versteek in die navigasiebalk wanneer ’n invoerveld gekies is"</string>
 +</resources>
 diff --git a/res/values-am/ime_back_button_strings.xml b/res/values-am/ime_back_button_strings.xml
 new file mode 100644
-index 0000000..1dbae9c
+index 0000000..e1cbe46
 --- /dev/null
 +++ b/res/values-am/ime_back_button_strings.xml
 @@ -0,0 +1,5 @@
 +<?xml version="1.0" encoding="utf-8"?>
 +<resources>
-+    <string name="ime_back_button_in_navbar_title">የቁልፍ ሰሌዳ መደበቂያ ቁልፍን አሳይ</string>
-+    <string name="ime_back_button_in_navbar_summary">የግቤት መስክ ሲመረጥ የቁልፍ ሰሌዳውን የሚደብቀውን አዝራር በአሰሳ አሞሌው ላይ አሳይ</string>
++    <string name="ime_back_button_in_navbar_title">"የቁልፍ ሰሌዳ መደበቂያ ቁልፉን አሳይ"</string>
++    <string name="ime_back_button_in_navbar_summary">"የግብዓት መስክ ሲመረጥ፣ የቁልፍ ሰሌዳ መደበቂያ አዝራሩን በዳሰሳ አሞሌው ውስጥ አሳይ"</string>
 +</resources>
 diff --git a/res/values-ar/ime_back_button_strings.xml b/res/values-ar/ime_back_button_strings.xml
 new file mode 100644
-index 0000000..8019efd
+index 0000000..b1e6618
 --- /dev/null
 +++ b/res/values-ar/ime_back_button_strings.xml
 @@ -0,0 +1,5 @@
 +<?xml version="1.0" encoding="utf-8"?>
 +<resources>
-+    <string name="ime_back_button_in_navbar_title">إظهار مفتاح إخفاء لوحة المفاتيح</string>
-+    <string name="ime_back_button_in_navbar_summary">إظهار الزر الذي يُخفي لوحة المفاتيح في شريط التنقل عند تحديد حقل إدخال</string>
++    <string name="ime_back_button_in_navbar_title">"عرض مفتاح إخفاء لوحة المفاتيح"</string>
++    <string name="ime_back_button_in_navbar_summary">"عرض زر إخفاء لوحة المفاتيح على شريط التنقّل عند اختيار حقل إدخال"</string>
 +</resources>
 diff --git a/res/values-as/ime_back_button_strings.xml b/res/values-as/ime_back_button_strings.xml
 new file mode 100644
-index 0000000..3338827
+index 0000000..aa31e1f
 --- /dev/null
 +++ b/res/values-as/ime_back_button_strings.xml
 @@ -0,0 +1,5 @@
 +<?xml version="1.0" encoding="utf-8"?>
 +<resources>
-+    <string name="ime_back_button_in_navbar_title">কীব’ৰ্ড লুকুওৱা কী দেখুৱাওক</string>
-+    <string name="ime_back_button_in_navbar_summary">এটা ইনপুট ফিল্ড বাছনি কৰিলে নেভিগেশ্বন বাৰত কীব’ৰ্ড লুকুওৱা বুটামটো দেখুৱাওক</string>
++    <string name="ime_back_button_in_navbar_title">"কীব’ৰ্ড লুকুওৱা কী দেখুৱাওক"</string>
++    <string name="ime_back_button_in_navbar_summary">"কোনো ইনপুট ক্ষেত্ৰ বাছনি কৰা হ’লে কীব’ৰ্ড লুকুওৱা বুটামটো নেভিগেশ্বন বাৰত দেখুৱাওক"</string>
 +</resources>
 diff --git a/res/values-az/ime_back_button_strings.xml b/res/values-az/ime_back_button_strings.xml
 new file mode 100644
-index 0000000..9a03142
+index 0000000..bb91170
 --- /dev/null
 +++ b/res/values-az/ime_back_button_strings.xml
 @@ -0,0 +1,5 @@
 +<?xml version="1.0" encoding="utf-8"?>
 +<resources>
-+    <string name="ime_back_button_in_navbar_title">Klaviaturanı gizlətmə düyməsini göstərin</string>
-+    <string name="ime_back_button_in_navbar_summary">Daxiletmə sahəsi seçildikdə klaviaturanı gizlədən düyməni naviqasiya panelində göstərin</string>
++    <string name="ime_back_button_in_navbar_title">"Klaviaturanı gizlətmə açarını göstərin"</string>
++    <string name="ime_back_button_in_navbar_summary">"Daxiletmə sahəsi seçildikdə klaviaturanı gizlətmə düyməsini naviqasiya panelində göstərin"</string>
 +</resources>
 diff --git a/res/values-b+sr+Latn/ime_back_button_strings.xml b/res/values-b+sr+Latn/ime_back_button_strings.xml
 new file mode 100644
-index 0000000..dfeb382
+index 0000000..20bcc16
 --- /dev/null
 +++ b/res/values-b+sr+Latn/ime_back_button_strings.xml
 @@ -0,0 +1,5 @@
 +<?xml version="1.0" encoding="utf-8"?>
 +<resources>
-+    <string name="ime_back_button_in_navbar_title">Prikaži taster za skrivanje tastature</string>
-+    <string name="ime_back_button_in_navbar_summary">Prikaži dugme koje skriva tastaturu na traci za navigaciju kada je izabrano polje za unos</string>
++    <string name="ime_back_button_in_navbar_title">"Prikaži taster za skrivanje tastature"</string>
++    <string name="ime_back_button_in_navbar_summary">"Prikaži dugme za skrivanje tastature na traci za navigaciju kada je izabrano polje za unos"</string>
 +</resources>
 diff --git a/res/values-be/ime_back_button_strings.xml b/res/values-be/ime_back_button_strings.xml
 new file mode 100644
-index 0000000..c1b1695
+index 0000000..2f81f95
 --- /dev/null
 +++ b/res/values-be/ime_back_button_strings.xml
 @@ -0,0 +1,5 @@
 +<?xml version="1.0" encoding="utf-8"?>
 +<resources>
-+    <string name="ime_back_button_in_navbar_title">Паказваць клавішу для хавання клавіятуры</string>
-+    <string name="ime_back_button_in_navbar_summary">Паказваць на панэлі навігацыі кнопку, якая хавае клавіятуру, калі выбрана поле ўводу</string>
++    <string name="ime_back_button_in_navbar_title">"Паказваць клавішу хавання клавіятуры"</string>
++    <string name="ime_back_button_in_navbar_summary">"Паказваць кнопку хавання клавіятуры на панэлі навігацыі, калі выбрана поле ўводу"</string>
 +</resources>
 diff --git a/res/values-bg/ime_back_button_strings.xml b/res/values-bg/ime_back_button_strings.xml
 new file mode 100644
-index 0000000..90b807d
+index 0000000..1452f2d
 --- /dev/null
 +++ b/res/values-bg/ime_back_button_strings.xml
 @@ -0,0 +1,5 @@
 +<?xml version="1.0" encoding="utf-8"?>
 +<resources>
-+    <string name="ime_back_button_in_navbar_title">Показване на клавиша за скриване на клавиатурата</string>
-+    <string name="ime_back_button_in_navbar_summary">Показване на бутона за скриване на клавиатурата в лентата за навигация, когато е избрано поле за въвеждане</string>
++    <string name="ime_back_button_in_navbar_title">"Показване на клавиша за скриване на клавиатурата"</string>
++    <string name="ime_back_button_in_navbar_summary">"Показване на бутона за скриване на клавиатурата в лентата за навигация, когато е избрано поле за въвеждане"</string>
 +</resources>
 diff --git a/res/values-bn/ime_back_button_strings.xml b/res/values-bn/ime_back_button_strings.xml
 new file mode 100644
-index 0000000..0b264bc
+index 0000000..11b5343
 --- /dev/null
 +++ b/res/values-bn/ime_back_button_strings.xml
 @@ -0,0 +1,5 @@
 +<?xml version="1.0" encoding="utf-8"?>
 +<resources>
-+    <string name="ime_back_button_in_navbar_title">কীবোর্ড লুকানোর কী দেখান</string>
-+    <string name="ime_back_button_in_navbar_summary">কোনো ইনপুট ফিল্ড বেছে নেওয়া হলে নেভিগেশন বারে কীবোর্ড লুকানোর বোতাম দেখান</string>
++    <string name="ime_back_button_in_navbar_title">"কীবোর্ড লুকানোর কী দেখান"</string>
++    <string name="ime_back_button_in_navbar_summary">"ইনপুট ফিল্ড বেছে নেওয়া হলে, নেভিগেশন বারে কীবোর্ড লুকানোর বোতাম দেখান"</string>
 +</resources>
 diff --git a/res/values-bs/ime_back_button_strings.xml b/res/values-bs/ime_back_button_strings.xml
 new file mode 100644
-index 0000000..a0a30e7
+index 0000000..ecd3373
 --- /dev/null
 +++ b/res/values-bs/ime_back_button_strings.xml
 @@ -0,0 +1,5 @@
 +<?xml version="1.0" encoding="utf-8"?>
 +<resources>
-+    <string name="ime_back_button_in_navbar_title">Prikaži tipku za sakrivanje tastature</string>
-+    <string name="ime_back_button_in_navbar_summary">Prikaži dugme koje sakriva tastaturu na navigacijskoj traci kada je odabrano polje za unos</string>
++    <string name="ime_back_button_in_navbar_title">"Prikazuj tipku za sakrivanje tastature"</string>
++    <string name="ime_back_button_in_navbar_summary">"Prikazuj dugme za sakrivanje tastature na navigacijskoj traci kada je polje za unos odabrano"</string>
 +</resources>
 diff --git a/res/values-ca/ime_back_button_strings.xml b/res/values-ca/ime_back_button_strings.xml
 new file mode 100644
-index 0000000..8a5bd94
+index 0000000..bb20aad
 --- /dev/null
 +++ b/res/values-ca/ime_back_button_strings.xml
 @@ -0,0 +1,5 @@
 +<?xml version="1.0" encoding="utf-8"?>
 +<resources>
-+    <string name="ime_back_button_in_navbar_title">Mostra la tecla per amagar el teclat</string>
-+    <string name="ime_back_button_in_navbar_summary">Mostra el botó que amaga el teclat a la barra de navegació quan se selecciona un camp d\'entrada</string>
++    <string name="ime_back_button_in_navbar_title">"Mostra la tecla per amagar el teclat"</string>
++    <string name="ime_back_button_in_navbar_summary">"Mostra el botó per amagar el teclat a la barra de navegació quan se seleccioni un camp d\'entrada"</string>
 +</resources>
 diff --git a/res/values-cs/ime_back_button_strings.xml b/res/values-cs/ime_back_button_strings.xml
 new file mode 100644
-index 0000000..a289823
+index 0000000..ff25895
 --- /dev/null
 +++ b/res/values-cs/ime_back_button_strings.xml
 @@ -0,0 +1,5 @@
 +<?xml version="1.0" encoding="utf-8"?>
 +<resources>
-+    <string name="ime_back_button_in_navbar_title">Zobrazit klávesu pro skrytí klávesnice</string>
-+    <string name="ime_back_button_in_navbar_summary">Zobrazit na navigačním panelu tlačítko pro skrytí klávesnice, když je vybráno pole pro zadávání</string>
++    <string name="ime_back_button_in_navbar_title">"Zobrazovat tlačítko ke skrytí klávesnice"</string>
++    <string name="ime_back_button_in_navbar_summary">"Zobrazovat tlačítko ke skrytí klávesnice na navigačním panelu, když je vybráno vstupní pole"</string>
 +</resources>
 diff --git a/res/values-da/ime_back_button_strings.xml b/res/values-da/ime_back_button_strings.xml
 new file mode 100644
-index 0000000..2bb3639
+index 0000000..6851903
 --- /dev/null
 +++ b/res/values-da/ime_back_button_strings.xml
 @@ -0,0 +1,5 @@
 +<?xml version="1.0" encoding="utf-8"?>
 +<resources>
-+    <string name="ime_back_button_in_navbar_title">Vis knappen til at skjule tastaturet</string>
-+    <string name="ime_back_button_in_navbar_summary">Vis knappen, der skjuler tastaturet, i navigationslinjen, når et indtastningsfelt er valgt</string>
++    <string name="ime_back_button_in_navbar_title">"Vis tasten til at skjule tastaturet"</string>
++    <string name="ime_back_button_in_navbar_summary">"Vis knappen til at skjule tastaturet på navigationslinjen, når et indtastningsfelt er valgt"</string>
 +</resources>
 diff --git a/res/values-de/ime_back_button_strings.xml b/res/values-de/ime_back_button_strings.xml
 new file mode 100644
-index 0000000..b8eacad
+index 0000000..de275c6
 --- /dev/null
 +++ b/res/values-de/ime_back_button_strings.xml
 @@ -0,0 +1,5 @@
 +<?xml version="1.0" encoding="utf-8"?>
 +<resources>
-+    <string name="ime_back_button_in_navbar_title">Taste zum Ausblenden der Tastatur anzeigen</string>
-+    <string name="ime_back_button_in_navbar_summary">Schaltfläche zum Ausblenden der Tastatur in der Navigationsleiste anzeigen, wenn ein Eingabefeld ausgewählt ist</string>
++    <string name="ime_back_button_in_navbar_title">"Button zum Ausblenden der Tastatur anzeigen"</string>
++    <string name="ime_back_button_in_navbar_summary">"Button zum Ausblenden der Tastatur in der Navigationsleiste anzeigen, wenn ein Eingabefeld ausgewählt ist"</string>
 +</resources>
 diff --git a/res/values-el/ime_back_button_strings.xml b/res/values-el/ime_back_button_strings.xml
 new file mode 100644
-index 0000000..bfff107
+index 0000000..19b1fe1
 --- /dev/null
 +++ b/res/values-el/ime_back_button_strings.xml
 @@ -0,0 +1,5 @@
 +<?xml version="1.0" encoding="utf-8"?>
 +<resources>
-+    <string name="ime_back_button_in_navbar_title">Εμφάνιση πλήκτρου απόκρυψης πληκτρολογίου</string>
-+    <string name="ime_back_button_in_navbar_summary">Εμφάνιση του κουμπιού απόκρυψης του πληκτρολογίου στη γραμμή πλοήγησης, όταν είναι επιλεγμένο ένα πεδίο εισαγωγής</string>
++    <string name="ime_back_button_in_navbar_title">"Εμφάνιση του πλήκτρου απόκρυψης πληκτρολογίου"</string>
++    <string name="ime_back_button_in_navbar_summary">"Εμφάνιση του κουμπιού απόκρυψης πληκτρολογίου στη γραμμή πλοήγησης, όταν έχει επιλεγεί ένα πεδίο εισαγωγής"</string>
 +</resources>
 diff --git a/res/values-en-rAU/ime_back_button_strings.xml b/res/values-en-rAU/ime_back_button_strings.xml
 new file mode 100644
-index 0000000..a74e0fa
+index 0000000..87b00f3
 --- /dev/null
 +++ b/res/values-en-rAU/ime_back_button_strings.xml
 @@ -0,0 +1,5 @@
 +<?xml version="1.0" encoding="utf-8"?>
 +<resources>
-+    <string name="ime_back_button_in_navbar_title">Show the hide keyboard key</string>
-+    <string name="ime_back_button_in_navbar_summary">Show the button that hides the keyboard in the navigation bar, when an input field is selected</string>
++    <string name="ime_back_button_in_navbar_title">"Show the hide keyboard key"</string>
++    <string name="ime_back_button_in_navbar_summary">"Show the button that hides the keyboard in the navigation bar, when an input field is selected"</string>
 +</resources>
 diff --git a/res/values-en-rCA/ime_back_button_strings.xml b/res/values-en-rCA/ime_back_button_strings.xml
 new file mode 100644
-index 0000000..a74e0fa
+index 0000000..87b00f3
 --- /dev/null
 +++ b/res/values-en-rCA/ime_back_button_strings.xml
 @@ -0,0 +1,5 @@
 +<?xml version="1.0" encoding="utf-8"?>
 +<resources>
-+    <string name="ime_back_button_in_navbar_title">Show the hide keyboard key</string>
-+    <string name="ime_back_button_in_navbar_summary">Show the button that hides the keyboard in the navigation bar, when an input field is selected</string>
++    <string name="ime_back_button_in_navbar_title">"Show the hide keyboard key"</string>
++    <string name="ime_back_button_in_navbar_summary">"Show the button that hides the keyboard in the navigation bar, when an input field is selected"</string>
 +</resources>
 diff --git a/res/values-en-rGB/ime_back_button_strings.xml b/res/values-en-rGB/ime_back_button_strings.xml
 new file mode 100644
-index 0000000..a74e0fa
+index 0000000..87b00f3
 --- /dev/null
 +++ b/res/values-en-rGB/ime_back_button_strings.xml
 @@ -0,0 +1,5 @@
 +<?xml version="1.0" encoding="utf-8"?>
 +<resources>
-+    <string name="ime_back_button_in_navbar_title">Show the hide keyboard key</string>
-+    <string name="ime_back_button_in_navbar_summary">Show the button that hides the keyboard in the navigation bar, when an input field is selected</string>
++    <string name="ime_back_button_in_navbar_title">"Show the hide keyboard key"</string>
++    <string name="ime_back_button_in_navbar_summary">"Show the button that hides the keyboard in the navigation bar, when an input field is selected"</string>
 +</resources>
 diff --git a/res/values-en-rIN/ime_back_button_strings.xml b/res/values-en-rIN/ime_back_button_strings.xml
 new file mode 100644
-index 0000000..a74e0fa
+index 0000000..87b00f3
 --- /dev/null
 +++ b/res/values-en-rIN/ime_back_button_strings.xml
 @@ -0,0 +1,5 @@
 +<?xml version="1.0" encoding="utf-8"?>
 +<resources>
-+    <string name="ime_back_button_in_navbar_title">Show the hide keyboard key</string>
-+    <string name="ime_back_button_in_navbar_summary">Show the button that hides the keyboard in the navigation bar, when an input field is selected</string>
++    <string name="ime_back_button_in_navbar_title">"Show the hide keyboard key"</string>
++    <string name="ime_back_button_in_navbar_summary">"Show the button that hides the keyboard in the navigation bar, when an input field is selected"</string>
 +</resources>
 diff --git a/res/values-es-rUS/ime_back_button_strings.xml b/res/values-es-rUS/ime_back_button_strings.xml
 new file mode 100644
-index 0000000..33e766a
+index 0000000..d880752
 --- /dev/null
 +++ b/res/values-es-rUS/ime_back_button_strings.xml
 @@ -0,0 +1,5 @@
 +<?xml version="1.0" encoding="utf-8"?>
 +<resources>
-+    <string name="ime_back_button_in_navbar_title">Mostrar la tecla para ocultar el teclado</string>
-+    <string name="ime_back_button_in_navbar_summary">Muestra el botón que oculta el teclado en la barra de navegación cuando se selecciona un campo de entrada</string>
++    <string name="ime_back_button_in_navbar_title">"Mostrar la tecla para ocultar el teclado"</string>
++    <string name="ime_back_button_in_navbar_summary">"Mostrar el botón para ocultar el teclado en la barra de navegación cuando se selecciona un campo de entrada"</string>
 +</resources>
 diff --git a/res/values-es/ime_back_button_strings.xml b/res/values-es/ime_back_button_strings.xml
 new file mode 100644
-index 0000000..54a549d
+index 0000000..63c5bc9
 --- /dev/null
 +++ b/res/values-es/ime_back_button_strings.xml
 @@ -0,0 +1,5 @@
 +<?xml version="1.0" encoding="utf-8"?>
 +<resources>
-+    <string name="ime_back_button_in_navbar_title">Mostrar la tecla para ocultar el teclado</string>
-+    <string name="ime_back_button_in_navbar_summary">Muestra el botón que oculta el teclado en la barra de navegación al seleccionar un campo de texto</string>
++    <string name="ime_back_button_in_navbar_title">"Mostrar la tecla para ocultar el teclado"</string>
++    <string name="ime_back_button_in_navbar_summary">"Mostrar el botón para ocultar el teclado en la barra de navegación cuando se seleccione un campo de entrada"</string>
 +</resources>
 diff --git a/res/values-et/ime_back_button_strings.xml b/res/values-et/ime_back_button_strings.xml
 new file mode 100644
-index 0000000..3f44e08
+index 0000000..47978ba
 --- /dev/null
 +++ b/res/values-et/ime_back_button_strings.xml
 @@ -0,0 +1,5 @@
 +<?xml version="1.0" encoding="utf-8"?>
 +<resources>
-+    <string name="ime_back_button_in_navbar_title">Kuva klaviatuuri peitmise klahv</string>
-+    <string name="ime_back_button_in_navbar_summary">Kuva navigeerimisribal nupp, mis peidab klaviatuuri, kui sisestusväli on valitud</string>
++    <string name="ime_back_button_in_navbar_title">"Kuva klaviatuuri peitmise nupp"</string>
++    <string name="ime_back_button_in_navbar_summary">"Kuva navigeerimisribal klaviatuuri peitmise nupp, kui sisestusväli on valitud"</string>
 +</resources>
 diff --git a/res/values-eu/ime_back_button_strings.xml b/res/values-eu/ime_back_button_strings.xml
 new file mode 100644
-index 0000000..8b17432
+index 0000000..785a677
 --- /dev/null
 +++ b/res/values-eu/ime_back_button_strings.xml
 @@ -0,0 +1,5 @@
 +<?xml version="1.0" encoding="utf-8"?>
 +<resources>
-+    <string name="ime_back_button_in_navbar_title">Erakutsi teklatua ezkutatzeko tekla</string>
-+    <string name="ime_back_button_in_navbar_summary">Erakutsi teklatua ezkutatzen duen botoia nabigazio-barran, idazteko eremu bat hautatzen denean</string>
++    <string name="ime_back_button_in_navbar_title">"Erakutsi teklatua ezkutatzeko tekla"</string>
++    <string name="ime_back_button_in_navbar_summary">"Erakutsi teklatua ezkutatzeko botoia nabigazio-barran idazketa-eremu bat hautatuta dagoenean"</string>
 +</resources>
 diff --git a/res/values-fa/ime_back_button_strings.xml b/res/values-fa/ime_back_button_strings.xml
 new file mode 100644
-index 0000000..d0b718e
+index 0000000..5d05668
 --- /dev/null
 +++ b/res/values-fa/ime_back_button_strings.xml
 @@ -0,0 +1,5 @@
 +<?xml version="1.0" encoding="utf-8"?>
 +<resources>
-+    <string name="ime_back_button_in_navbar_title">نمایش کلید پنهان کردن صفحه‌کلید</string>
-+    <string name="ime_back_button_in_navbar_summary">نمایش دکمه پنهان کردن صفحه‌کلید در نوار پیمایش، هنگامی که یک فیلد ورودی انتخاب شده است</string>
++    <string name="ime_back_button_in_navbar_title">"نمایش دکمه پنهان کردن صفحه‌کلید"</string>
++    <string name="ime_back_button_in_navbar_summary">"وقتی فیلد ورودی انتخاب شده است، دکمه پنهان کردن صفحه‌کلید در نوار پیمایش نشان داده می‌شود"</string>
 +</resources>
 diff --git a/res/values-fi/ime_back_button_strings.xml b/res/values-fi/ime_back_button_strings.xml
 new file mode 100644
-index 0000000..c99b5f2
+index 0000000..86e91d8
 --- /dev/null
 +++ b/res/values-fi/ime_back_button_strings.xml
 @@ -0,0 +1,5 @@
 +<?xml version="1.0" encoding="utf-8"?>
 +<resources>
-+    <string name="ime_back_button_in_navbar_title">Näytä näppäimistön piilotusnäppäin</string>
-+    <string name="ime_back_button_in_navbar_summary">Näytä navigointipalkissa painike, joka piilottaa näppäimistön, kun syöttökenttä on valittuna</string>
++    <string name="ime_back_button_in_navbar_title">"Näytä näppäimistön piilotuspainike"</string>
++    <string name="ime_back_button_in_navbar_summary">"Näytä näppäimistön piilotuspainike navigointipalkissa, kun syötekenttä on valittu"</string>
 +</resources>
 diff --git a/res/values-fr-rCA/ime_back_button_strings.xml b/res/values-fr-rCA/ime_back_button_strings.xml
 new file mode 100644
-index 0000000..d635ba0
+index 0000000..2f584a1
 --- /dev/null
 +++ b/res/values-fr-rCA/ime_back_button_strings.xml
 @@ -0,0 +1,5 @@
 +<?xml version="1.0" encoding="utf-8"?>
 +<resources>
-+    <string name="ime_back_button_in_navbar_title">Afficher la touche pour masquer le clavier</string>
-+    <string name="ime_back_button_in_navbar_summary">Afficher le bouton qui masque le clavier dans la barre de navigation lorsqu\'un champ de saisie est sélectionné</string>
++    <string name="ime_back_button_in_navbar_title">"Afficher la touche de masquage du clavier"</string>
++    <string name="ime_back_button_in_navbar_summary">"Afficher le bouton de masquage du clavier dans la barre de navigation lorsqu\'un champ d\'entrée est sélectionné"</string>
 +</resources>
 diff --git a/res/values-fr/ime_back_button_strings.xml b/res/values-fr/ime_back_button_strings.xml
 new file mode 100644
-index 0000000..d635ba0
+index 0000000..c9ebcd0
 --- /dev/null
 +++ b/res/values-fr/ime_back_button_strings.xml
 @@ -0,0 +1,5 @@
 +<?xml version="1.0" encoding="utf-8"?>
 +<resources>
-+    <string name="ime_back_button_in_navbar_title">Afficher la touche pour masquer le clavier</string>
-+    <string name="ime_back_button_in_navbar_summary">Afficher le bouton qui masque le clavier dans la barre de navigation lorsqu\'un champ de saisie est sélectionné</string>
++    <string name="ime_back_button_in_navbar_title">"Afficher le bouton de masquage du clavier"</string>
++    <string name="ime_back_button_in_navbar_summary">"Afficher le bouton de masquage du clavier dans la barre de navigation lorsqu\'un champ de saisie est sélectionné"</string>
 +</resources>
 diff --git a/res/values-gl/ime_back_button_strings.xml b/res/values-gl/ime_back_button_strings.xml
 new file mode 100644
-index 0000000..df234a0
+index 0000000..a110942
 --- /dev/null
 +++ b/res/values-gl/ime_back_button_strings.xml
 @@ -0,0 +1,5 @@
 +<?xml version="1.0" encoding="utf-8"?>
 +<resources>
-+    <string name="ime_back_button_in_navbar_title">Mostrar a tecla para ocultar o teclado</string>
-+    <string name="ime_back_button_in_navbar_summary">Mostra na barra de navegación o botón que oculta o teclado cando se selecciona un campo de entrada</string>
++    <string name="ime_back_button_in_navbar_title">"Mostrar tecla para ocultar o teclado"</string>
++    <string name="ime_back_button_in_navbar_summary">"Mostra o botón para ocultar o teclado na barra de navegación cando se seleccione un campo de entrada"</string>
 +</resources>
 diff --git a/res/values-gu/ime_back_button_strings.xml b/res/values-gu/ime_back_button_strings.xml
 new file mode 100644
-index 0000000..23139e8
+index 0000000..402f5f3
 --- /dev/null
 +++ b/res/values-gu/ime_back_button_strings.xml
 @@ -0,0 +1,5 @@
 +<?xml version="1.0" encoding="utf-8"?>
 +<resources>
-+    <string name="ime_back_button_in_navbar_title">કીબોર્ડ છુપાવવાની કી બતાવો</string>
-+    <string name="ime_back_button_in_navbar_summary">જ્યારે કોઈ ઇનપુટ ફીલ્ડ પસંદ કરેલું હોય, ત્યારે નૅવિગેશન બારમાં કીબોર્ડ છુપાવતું બટન બતાવો</string>
++    <string name="ime_back_button_in_navbar_title">"કીબોર્ડ છુપાવવાની કી બતાવો"</string>
++    <string name="ime_back_button_in_navbar_summary">"જ્યારે ઇનપુટ ફીલ્ડ પસંદ કરવામાં આવે, ત્યારે કીબોર્ડ છુપાવવાનું બટન નૅવિગેશન બારમાં બતાવો"</string>
 +</resources>
 diff --git a/res/values-hi/ime_back_button_strings.xml b/res/values-hi/ime_back_button_strings.xml
 new file mode 100644
-index 0000000..4f8fde7
+index 0000000..f3970c8
 --- /dev/null
 +++ b/res/values-hi/ime_back_button_strings.xml
 @@ -0,0 +1,5 @@
 +<?xml version="1.0" encoding="utf-8"?>
 +<resources>
-+    <string name="ime_back_button_in_navbar_title">कीबोर्ड छिपाने वाली कुंजी दिखाएं</string>
-+    <string name="ime_back_button_in_navbar_summary">इनपुट फ़ील्ड चुने जाने पर, नेविगेशन बार में कीबोर्ड छिपाने वाला बटन दिखाएं</string>
++    <string name="ime_back_button_in_navbar_title">"कीबोर्ड छिपाने का बटन दिखाएं"</string>
++    <string name="ime_back_button_in_navbar_summary">"इनपुट फ़ील्ड चुने जाने पर, नेविगेशन बार में कीबोर्ड छिपाने का बटन दिखाएं"</string>
 +</resources>
 diff --git a/res/values-hr/ime_back_button_strings.xml b/res/values-hr/ime_back_button_strings.xml
 new file mode 100644
-index 0000000..32fa592
+index 0000000..264e4b3
 --- /dev/null
 +++ b/res/values-hr/ime_back_button_strings.xml
 @@ -0,0 +1,5 @@
 +<?xml version="1.0" encoding="utf-8"?>
 +<resources>
-+    <string name="ime_back_button_in_navbar_title">Prikaži tipku za skrivanje tipkovnice</string>
-+    <string name="ime_back_button_in_navbar_summary">Prikaži gumb koji skriva tipkovnicu na traci za navigaciju kada je odabrano polje za unos</string>
++    <string name="ime_back_button_in_navbar_title">"Prikaži tipku za skrivanje tipkovnice"</string>
++    <string name="ime_back_button_in_navbar_summary">"Prikaži gumb za skrivanje tipkovnice na navigacijskoj traci kad se odabere polje za unos"</string>
 +</resources>
 diff --git a/res/values-hu/ime_back_button_strings.xml b/res/values-hu/ime_back_button_strings.xml
 new file mode 100644
-index 0000000..d247d2d
+index 0000000..6bc0e16
 --- /dev/null
 +++ b/res/values-hu/ime_back_button_strings.xml
 @@ -0,0 +1,5 @@
 +<?xml version="1.0" encoding="utf-8"?>
 +<resources>
-+    <string name="ime_back_button_in_navbar_title">Billentyűzet elrejtése gomb megjelenítése</string>
-+    <string name="ime_back_button_in_navbar_summary">A billentyűzetet elrejtő gomb megjelenítése a navigációs sávon, amikor egy beviteli mező ki van jelölve</string>
++    <string name="ime_back_button_in_navbar_title">"A billentyűzetet elrejtő gomb megjelenítése"</string>
++    <string name="ime_back_button_in_navbar_summary">"A billentyűzetet elrejtő gomb megjelenítése a navigációs sávon beviteli mező kiválasztásakor"</string>
 +</resources>
 diff --git a/res/values-hy/ime_back_button_strings.xml b/res/values-hy/ime_back_button_strings.xml
 new file mode 100644
-index 0000000..3f92154
+index 0000000..0b2322a
 --- /dev/null
 +++ b/res/values-hy/ime_back_button_strings.xml
 @@ -0,0 +1,5 @@
 +<?xml version="1.0" encoding="utf-8"?>
 +<resources>
-+    <string name="ime_back_button_in_navbar_title">Ցույց տալ ստեղնաշարը թաքցնելու ստեղնը</string>
-+    <string name="ime_back_button_in_navbar_summary">Ցույց տալ ստեղնաշարը թաքցնող կոճակը նավիգացիայի գոտում, երբ ընտրված է մուտքագրման դաշտ</string>
++    <string name="ime_back_button_in_navbar_title">"Ցույց տալ ստեղնաշարը թաքցնելու ստեղնը"</string>
++    <string name="ime_back_button_in_navbar_summary">"Ցույց տալ ստեղնաշարը թաքցնելու կոճակը նավիգացիայի գոտում, երբ մուտքագրման դաշտ է ընտրված"</string>
 +</resources>
 diff --git a/res/values-in/ime_back_button_strings.xml b/res/values-in/ime_back_button_strings.xml
 new file mode 100644
-index 0000000..35392d0
+index 0000000..bd1e22a
 --- /dev/null
 +++ b/res/values-in/ime_back_button_strings.xml
 @@ -0,0 +1,5 @@
 +<?xml version="1.0" encoding="utf-8"?>
 +<resources>
-+    <string name="ime_back_button_in_navbar_title">Tampilkan tombol sembunyikan keyboard</string>
-+    <string name="ime_back_button_in_navbar_summary">Tampilkan tombol untuk menyembunyikan keyboard di menu navigasi saat kolom input dipilih</string>
++    <string name="ime_back_button_in_navbar_title">"Tampilkan tombol untuk menyembunyikan keyboard"</string>
++    <string name="ime_back_button_in_navbar_summary">"Tampilkan tombol untuk menyembunyikan keyboard di panel navigasi, saat kolom input dipilih"</string>
 +</resources>
 diff --git a/res/values-is/ime_back_button_strings.xml b/res/values-is/ime_back_button_strings.xml
 new file mode 100644
-index 0000000..350bc08
+index 0000000..66a713c
 --- /dev/null
 +++ b/res/values-is/ime_back_button_strings.xml
 @@ -0,0 +1,5 @@
 +<?xml version="1.0" encoding="utf-8"?>
 +<resources>
-+    <string name="ime_back_button_in_navbar_title">Sýna hnapp til að fela lyklaborð</string>
-+    <string name="ime_back_button_in_navbar_summary">Sýna hnappinn sem felur lyklaborðið á yfirlitsstikunni þegar innsláttarreitur er valinn</string>
++    <string name="ime_back_button_in_navbar_title">"Sýna hnapp til að fela lyklaborðið"</string>
++    <string name="ime_back_button_in_navbar_summary">"Sýna hnappinn til að fela lyklaborðið á yfirlitsstikunni þegar innsláttarreitur er valinn"</string>
 +</resources>
 diff --git a/res/values-it/ime_back_button_strings.xml b/res/values-it/ime_back_button_strings.xml
 new file mode 100644
-index 0000000..bb09738
+index 0000000..3eb09f6
 --- /dev/null
 +++ b/res/values-it/ime_back_button_strings.xml
 @@ -0,0 +1,5 @@
 +<?xml version="1.0" encoding="utf-8"?>
 +<resources>
-+    <string name="ime_back_button_in_navbar_title">Mostra il tasto per nascondere la tastiera</string>
-+    <string name="ime_back_button_in_navbar_summary">Mostra il pulsante che nasconde la tastiera nella barra di navigazione quando è selezionato un campo di immissione</string>
++    <string name="ime_back_button_in_navbar_title">"Mostra il tasto per nascondere la tastiera"</string>
++    <string name="ime_back_button_in_navbar_summary">"Mostra il tasto per nascondere la tastiera nella barra di navigazione quando viene selezionato un campo di immissione"</string>
 +</resources>
 diff --git a/res/values-iw/ime_back_button_strings.xml b/res/values-iw/ime_back_button_strings.xml
 new file mode 100644
-index 0000000..49fbec7
+index 0000000..9ab2ed1
 --- /dev/null
 +++ b/res/values-iw/ime_back_button_strings.xml
 @@ -0,0 +1,5 @@
 +<?xml version="1.0" encoding="utf-8"?>
 +<resources>
-+    <string name="ime_back_button_in_navbar_title">הצגת המקש להסתרת המקלדת</string>
-+    <string name="ime_back_button_in_navbar_summary">הצגת הלחצן שמסתיר את המקלדת בסרגל הניווט כששדה קלט נבחר</string>
++    <string name="ime_back_button_in_navbar_title">"הצגה של מקש הסתרת המקלדת"</string>
++    <string name="ime_back_button_in_navbar_summary">"הצגה של כפתור הסתרת המקלדת בפס הניווט כשנבחר שדה להזנת קלט"</string>
 +</resources>
 diff --git a/res/values-ja/ime_back_button_strings.xml b/res/values-ja/ime_back_button_strings.xml
 new file mode 100644
-index 0000000..b1b524c
+index 0000000..d308b7b
 --- /dev/null
 +++ b/res/values-ja/ime_back_button_strings.xml
 @@ -0,0 +1,5 @@
 +<?xml version="1.0" encoding="utf-8"?>
 +<resources>
-+    <string name="ime_back_button_in_navbar_title">キーボードを非表示にするキーを表示</string>
-+    <string name="ime_back_button_in_navbar_summary">入力欄が選択されているときに、キーボードを非表示にするボタンをナビゲーション バーに表示します</string>
++    <string name="ime_back_button_in_navbar_title">"キーボード非表示ボタンを表示する"</string>
++    <string name="ime_back_button_in_navbar_summary">"入力フィールドが選択されているときに、ナビゲーション バーにキーボード非表示ボタンを表示します"</string>
 +</resources>
 diff --git a/res/values-ka/ime_back_button_strings.xml b/res/values-ka/ime_back_button_strings.xml
 new file mode 100644
-index 0000000..4fff7b0
+index 0000000..00c86b1
 --- /dev/null
 +++ b/res/values-ka/ime_back_button_strings.xml
 @@ -0,0 +1,5 @@
 +<?xml version="1.0" encoding="utf-8"?>
 +<resources>
-+    <string name="ime_back_button_in_navbar_title">კლავიატურის დამალვის კლავიშის ჩვენება</string>
-+    <string name="ime_back_button_in_navbar_summary">შეყვანის ველის არჩევისას ნავიგაციის ზოლში კლავიატურის დამალვის ღილაკის ჩვენება</string>
++    <string name="ime_back_button_in_navbar_title">"კლავიატურის დამალვის კლავიშის ჩვენება"</string>
++    <string name="ime_back_button_in_navbar_summary">"კლავიატურის დამალვის ღილაკის ჩვენება ნავიგაციის ზოლში, როდესაც არჩეულია შეყვანის ველი"</string>
 +</resources>
 diff --git a/res/values-kk/ime_back_button_strings.xml b/res/values-kk/ime_back_button_strings.xml
 new file mode 100644
-index 0000000..4ada268
+index 0000000..1247e40
 --- /dev/null
 +++ b/res/values-kk/ime_back_button_strings.xml
 @@ -0,0 +1,5 @@
 +<?xml version="1.0" encoding="utf-8"?>
 +<resources>
-+    <string name="ime_back_button_in_navbar_title">Пернетақтаны жасыру пернесін көрсету</string>
-+    <string name="ime_back_button_in_navbar_summary">Енгізу өрісі таңдалғанда, навигация жолағында пернетақтаны жасыратын түймені көрсету</string>
++    <string name="ime_back_button_in_navbar_title">"Пернетақтаны жасыру пернесін көрсету"</string>
++    <string name="ime_back_button_in_navbar_summary">"Енгізу өрісі таңдалған кезде, пернетақтаны жасыру түймесін навигация жолағында көрсету"</string>
 +</resources>
 diff --git a/res/values-km/ime_back_button_strings.xml b/res/values-km/ime_back_button_strings.xml
 new file mode 100644
-index 0000000..1766866
+index 0000000..4f8820a
 --- /dev/null
 +++ b/res/values-km/ime_back_button_strings.xml
 @@ -0,0 +1,5 @@
 +<?xml version="1.0" encoding="utf-8"?>
 +<resources>
-+    <string name="ime_back_button_in_navbar_title">បង្ហាញគ្រាប់ចុចលាក់ក្ដារចុច</string>
-+    <string name="ime_back_button_in_navbar_summary">បង្ហាញប៊ូតុងដែលលាក់ក្ដារចុចនៅក្នុងរបាររុករក នៅពេលជ្រើសរើសកន្លែងបញ្ចូល</string>
++    <string name="ime_back_button_in_navbar_title">"បង្ហាញគ្រាប់ចុចលាក់ក្ដារចុច"</string>
++    <string name="ime_back_button_in_navbar_summary">"បង្ហាញប៊ូតុងលាក់ក្ដារចុចនៅក្នុងរបាររុករក នៅពេលជ្រើសរើសកន្លែងបញ្ចូល"</string>
 +</resources>
 diff --git a/res/values-kn/ime_back_button_strings.xml b/res/values-kn/ime_back_button_strings.xml
 new file mode 100644
-index 0000000..f1c749a
+index 0000000..1818fc9
 --- /dev/null
 +++ b/res/values-kn/ime_back_button_strings.xml
 @@ -0,0 +1,5 @@
 +<?xml version="1.0" encoding="utf-8"?>
 +<resources>
-+    <string name="ime_back_button_in_navbar_title">ಕೀಬೋರ್ಡ್ ಮರೆಮಾಡುವ ಕೀ ತೋರಿಸಿ</string>
-+    <string name="ime_back_button_in_navbar_summary">ಇನ್‌ಪುಟ್ ಫೀಲ್ಡ್ ಆಯ್ಕೆ ಮಾಡಿದಾಗ, ನ್ಯಾವಿಗೇಷನ್ ಬಾರ್‌ನಲ್ಲಿ ಕೀಬೋರ್ಡ್ ಮರೆಮಾಡುವ ಬಟನ್ ತೋರಿಸಿ</string>
++    <string name="ime_back_button_in_navbar_title">"ಕೀಬೋರ್ಡ್ ಮರೆಮಾಡುವ ಕೀಯನ್ನು ತೋರಿಸಿ"</string>
++    <string name="ime_back_button_in_navbar_summary">"ಇನ್‌ಪುಟ್ ಫೀಲ್ಡ್ ಅನ್ನು ಆಯ್ಕೆ ಮಾಡಿದಾಗ, ನ್ಯಾವಿಗೇಶನ್‌ ಬಾರ್‌ನಲ್ಲಿ ಕೀಬೋರ್ಡ್ ಮರೆಮಾಡುವ ಬಟನ್ ಅನ್ನು ತೋರಿಸಿ"</string>
 +</resources>
 diff --git a/res/values-ko/ime_back_button_strings.xml b/res/values-ko/ime_back_button_strings.xml
 new file mode 100644
-index 0000000..d2a2777
+index 0000000..0ef22bb
 --- /dev/null
 +++ b/res/values-ko/ime_back_button_strings.xml
 @@ -0,0 +1,5 @@
 +<?xml version="1.0" encoding="utf-8"?>
 +<resources>
-+    <string name="ime_back_button_in_navbar_title">키보드 숨기기 키 표시</string>
-+    <string name="ime_back_button_in_navbar_summary">입력란이 선택되었을 때 탐색 메뉴에 키보드를 숨기는 버튼을 표시합니다</string>
++    <string name="ime_back_button_in_navbar_title">"키보드 숨기기 버튼 표시"</string>
++    <string name="ime_back_button_in_navbar_summary">"입력란이 선택되면 탐색 메뉴에 키보드 숨기기 버튼을 표시합니다."</string>
 +</resources>
 diff --git a/res/values-ky/ime_back_button_strings.xml b/res/values-ky/ime_back_button_strings.xml
 new file mode 100644
-index 0000000..9f84d85
+index 0000000..1c058e7
 --- /dev/null
 +++ b/res/values-ky/ime_back_button_strings.xml
 @@ -0,0 +1,5 @@
 +<?xml version="1.0" encoding="utf-8"?>
 +<resources>
-+    <string name="ime_back_button_in_navbar_title">Баскычтопту жашыруу баскычын көрсөтүү</string>
-+    <string name="ime_back_button_in_navbar_summary">Киргизүү талаасы тандалганда, чабыттоо тилкесинде баскычтопту жашыруучу баскычты көрсөтүү</string>
++    <string name="ime_back_button_in_navbar_title">"Баскычтопту жашыруу баскычын көрсөтүү"</string>
++    <string name="ime_back_button_in_navbar_summary">"Киргизүү талаасы тандалганда баскычтопту жашыруу баскычын чабыттоо тилкесинде көрсөтүү"</string>
 +</resources>
 diff --git a/res/values-lo/ime_back_button_strings.xml b/res/values-lo/ime_back_button_strings.xml
 new file mode 100644
-index 0000000..9af5b60
+index 0000000..309991e
 --- /dev/null
 +++ b/res/values-lo/ime_back_button_strings.xml
 @@ -0,0 +1,5 @@
 +<?xml version="1.0" encoding="utf-8"?>
 +<resources>
-+    <string name="ime_back_button_in_navbar_title">ສະແດງປຸ່ມເຊື່ອງແປ້ນພິມ</string>
-+    <string name="ime_back_button_in_navbar_summary">ສະແດງປຸ່ມທີ່ເຊື່ອງແປ້ນພິມຢູ່ແຖບການນຳທາງ ເມື່ອເລືອກຊ່ອງປ້ອນຂໍ້ມູນ</string>
++    <string name="ime_back_button_in_navbar_title">"ສະແດງປຸ່ມເຊື່ອງແປ້ນພິມ"</string>
++    <string name="ime_back_button_in_navbar_summary">"ສະແດງປຸ່ມເຊື່ອງແປ້ນພິມໃນແຖບການນຳທາງເມື່ອເລືອກຊ່ອງຂໍ້ມູນອິນພຸດ"</string>
 +</resources>
 diff --git a/res/values-lt/ime_back_button_strings.xml b/res/values-lt/ime_back_button_strings.xml
 new file mode 100644
-index 0000000..bfe4043
+index 0000000..8e253c3
 --- /dev/null
 +++ b/res/values-lt/ime_back_button_strings.xml
 @@ -0,0 +1,5 @@
 +<?xml version="1.0" encoding="utf-8"?>
 +<resources>
-+    <string name="ime_back_button_in_navbar_title">Rodyti klaviatūros slėpimo klavišą</string>
-+    <string name="ime_back_button_in_navbar_summary">Rodyti naršymo juostoje mygtuką, kuris paslepia klaviatūrą, kai pasirinktas įvesties laukas</string>
++    <string name="ime_back_button_in_navbar_title">"Rodyti klaviatūros slėpimo klavišą"</string>
++    <string name="ime_back_button_in_navbar_summary">"Rodyti klaviatūros slėpimo mygtuką naršymo juostoje, kai pasirinktas įvesties laukas"</string>
 +</resources>
 diff --git a/res/values-lv/ime_back_button_strings.xml b/res/values-lv/ime_back_button_strings.xml
 new file mode 100644
-index 0000000..90f28c8
+index 0000000..a7e2e5e
 --- /dev/null
 +++ b/res/values-lv/ime_back_button_strings.xml
 @@ -0,0 +1,5 @@
 +<?xml version="1.0" encoding="utf-8"?>
 +<resources>
-+    <string name="ime_back_button_in_navbar_title">Rādīt tastatūras paslēpšanas taustiņu</string>
-+    <string name="ime_back_button_in_navbar_summary">Rādīt navigācijas joslā pogu, kas paslēpj tastatūru, kad ir atlasīts ievades lauks</string>
++    <string name="ime_back_button_in_navbar_title">"Rādīt tastatūras paslēpšanas taustiņu"</string>
++    <string name="ime_back_button_in_navbar_summary">"Rādīt tastatūras paslēpšanas pogu navigācijas joslā, kad ir atlasīts ievades lauks"</string>
 +</resources>
 diff --git a/res/values-mk/ime_back_button_strings.xml b/res/values-mk/ime_back_button_strings.xml
 new file mode 100644
-index 0000000..03e4271
+index 0000000..653bf2f
 --- /dev/null
 +++ b/res/values-mk/ime_back_button_strings.xml
 @@ -0,0 +1,5 @@
 +<?xml version="1.0" encoding="utf-8"?>
 +<resources>
-+    <string name="ime_back_button_in_navbar_title">Прикажи го копчето за сокривање на тастатурата</string>
-+    <string name="ime_back_button_in_navbar_summary">Прикажи го копчето што ја сокрива тастатурата во лентата за навигација кога е избрано поле за внесување</string>
++    <string name="ime_back_button_in_navbar_title">"Прикажувај го копчето за сокривање на тастатурата"</string>
++    <string name="ime_back_button_in_navbar_summary">"Прикажувај го копчето за сокривање на тастатурата во лентата за навигација кога е избрано поле за внесување"</string>
 +</resources>
 diff --git a/res/values-ml/ime_back_button_strings.xml b/res/values-ml/ime_back_button_strings.xml
 new file mode 100644
-index 0000000..bb2b8b5
+index 0000000..d6ee52b
 --- /dev/null
 +++ b/res/values-ml/ime_back_button_strings.xml
 @@ -0,0 +1,5 @@
 +<?xml version="1.0" encoding="utf-8"?>
 +<resources>
-+    <string name="ime_back_button_in_navbar_title">കീബോർഡ് മറയ്ക്കാനുള്ള കീ കാണിക്കുക</string>
-+    <string name="ime_back_button_in_navbar_summary">ഒരു ഇൻപുട്ട് ഫീൽഡ് തിരഞ്ഞെടുക്കുമ്പോൾ, നാവിഗേഷൻ ബാറിൽ കീബോർഡ് മറയ്ക്കുന്ന ബട്ടൺ കാണിക്കുക</string>
++    <string name="ime_back_button_in_navbar_title">"കീബോർഡ് മറയ്ക്കാനുള്ള കീ കാണിക്കുക"</string>
++    <string name="ime_back_button_in_navbar_summary">"ഇൻപുട്ട് ഫീൽഡ് തിരഞ്ഞെടുക്കുമ്പോൾ, നാവിഗേഷൻ ബാറിൽ കീബോർഡ് മറയ്ക്കാനുള്ള ബട്ടൺ കാണിക്കുക"</string>
 +</resources>
 diff --git a/res/values-mn/ime_back_button_strings.xml b/res/values-mn/ime_back_button_strings.xml
 new file mode 100644
-index 0000000..f07cd4c
+index 0000000..381fe9a
 --- /dev/null
 +++ b/res/values-mn/ime_back_button_strings.xml
 @@ -0,0 +1,5 @@
 +<?xml version="1.0" encoding="utf-8"?>
 +<resources>
-+    <string name="ime_back_button_in_navbar_title">Гарыг нуух товчийг харуулах</string>
-+    <string name="ime_back_button_in_navbar_summary">Оруулах талбар сонгогдсон үед навигацын самбарт гарыг нуудаг товчийг харуулах</string>
++    <string name="ime_back_button_in_navbar_title">"Товчлуурт гарыг нуух товчийг харуулах"</string>
++    <string name="ime_back_button_in_navbar_summary">"Оруулсан мэдээллийн талбарыг сонгосон үед навигацын самбарт товчлуурт гарыг нуух товчийг харуулах"</string>
 +</resources>
 diff --git a/res/values-mr/ime_back_button_strings.xml b/res/values-mr/ime_back_button_strings.xml
 new file mode 100644
-index 0000000..2c35c9a
+index 0000000..73fdcf3
 --- /dev/null
 +++ b/res/values-mr/ime_back_button_strings.xml
 @@ -0,0 +1,5 @@
 +<?xml version="1.0" encoding="utf-8"?>
 +<resources>
-+    <string name="ime_back_button_in_navbar_title">कीबोर्ड लपवण्याची की दाखवा</string>
-+    <string name="ime_back_button_in_navbar_summary">इनपुट फील्ड निवडलेले असताना, नेव्हिगेशन बारमध्ये कीबोर्ड लपवणारे बटण दाखवा</string>
++    <string name="ime_back_button_in_navbar_title">"कीबोर्ड लपवण्याची की दाखवा"</string>
++    <string name="ime_back_button_in_navbar_summary">"इनपुट फील्ड निवडल्यावर, नेव्हिगेशन बारमध्ये कीबोर्ड लपवण्याचे बटण दाखवा"</string>
 +</resources>
 diff --git a/res/values-ms/ime_back_button_strings.xml b/res/values-ms/ime_back_button_strings.xml
 new file mode 100644
-index 0000000..c376fe9
+index 0000000..bf79555
 --- /dev/null
 +++ b/res/values-ms/ime_back_button_strings.xml
 @@ -0,0 +1,5 @@
 +<?xml version="1.0" encoding="utf-8"?>
 +<resources>
-+    <string name="ime_back_button_in_navbar_title">Tunjukkan kekunci sembunyikan papan kekunci</string>
-+    <string name="ime_back_button_in_navbar_summary">Tunjukkan butang yang menyembunyikan papan kekunci dalam bar navigasi apabila medan input dipilih</string>
++    <string name="ime_back_button_in_navbar_title">"Tunjukkan kekunci sembunyikan papan kekunci"</string>
++    <string name="ime_back_button_in_navbar_summary">"Tunjukkan butang sembunyikan papan kekunci dalam bar navigasi, apabila medan input dipilih"</string>
 +</resources>
 diff --git a/res/values-my/ime_back_button_strings.xml b/res/values-my/ime_back_button_strings.xml
 new file mode 100644
-index 0000000..64cee69
+index 0000000..6c6a55d
 --- /dev/null
 +++ b/res/values-my/ime_back_button_strings.xml
 @@ -0,0 +1,5 @@
 +<?xml version="1.0" encoding="utf-8"?>
 +<resources>
-+    <string name="ime_back_button_in_navbar_title">ကီးဘုတ်ဖျောက်ရန် ကီးကို ပြပါ</string>
-+    <string name="ime_back_button_in_navbar_summary">ထည့်သွင်းရန်အကွက်ကို ရွေးထားသည့်အခါ ကီးဘုတ်ကို ဖျောက်သည့်ခလုတ်ကို လမ်းညွှန်ဘားတွင် ပြပါ</string>
++    <string name="ime_back_button_in_navbar_title">"ကီးဘုတ်ဖျောက်သည့် ခလုတ်ကို ပြပါ"</string>
++    <string name="ime_back_button_in_navbar_summary">"ထည့်သွင်းမှုအကွက်ကို ရွေးချယ်ထားချိန်တွင် လမ်းညွှန်ဘား၌ ကီးဘုတ်ဖျောက်သည့်ခလုတ်ကို ပြပါ"</string>
 +</resources>
 diff --git a/res/values-nb/ime_back_button_strings.xml b/res/values-nb/ime_back_button_strings.xml
 new file mode 100644
-index 0000000..bd66d4f
+index 0000000..4810a56
 --- /dev/null
 +++ b/res/values-nb/ime_back_button_strings.xml
 @@ -0,0 +1,5 @@
 +<?xml version="1.0" encoding="utf-8"?>
 +<resources>
-+    <string name="ime_back_button_in_navbar_title">Vis tasten for å skjule tastaturet</string>
-+    <string name="ime_back_button_in_navbar_summary">Vis knappen som skjuler tastaturet, i navigasjonsraden når et inndatafelt er valgt</string>
++    <string name="ime_back_button_in_navbar_title">"Vis knappen for å skjule tastaturet"</string>
++    <string name="ime_back_button_in_navbar_summary">"Vis knappen for å skjule tastaturet på navigasjonsraden når et inndatafelt er valgt"</string>
 +</resources>
 diff --git a/res/values-ne/ime_back_button_strings.xml b/res/values-ne/ime_back_button_strings.xml
 new file mode 100644
-index 0000000..dcfba02
+index 0000000..c87462d
 --- /dev/null
 +++ b/res/values-ne/ime_back_button_strings.xml
 @@ -0,0 +1,5 @@
 +<?xml version="1.0" encoding="utf-8"?>
 +<resources>
-+    <string name="ime_back_button_in_navbar_title">किबोर्ड लुकाउने की देखाउनुहोस्</string>
-+    <string name="ime_back_button_in_navbar_summary">इनपुट फिल्ड चयन गरिएका बेला नेभिगेसन बारमा किबोर्ड लुकाउने बटन देखाउनुहोस्</string>
++    <string name="ime_back_button_in_navbar_title">"किबोर्ड लुकाउने की देखाउनुहोस्"</string>
++    <string name="ime_back_button_in_navbar_summary">"कुनै इन्पुट फिल्ड चयन गरिएका बेला नेभिगेसन बारमा किबोर्ड लुकाउने बटन देखाउनुहोस्"</string>
 +</resources>
 diff --git a/res/values-nl/ime_back_button_strings.xml b/res/values-nl/ime_back_button_strings.xml
 new file mode 100644
-index 0000000..5327000
+index 0000000..3ec65ec
 --- /dev/null
 +++ b/res/values-nl/ime_back_button_strings.xml
 @@ -0,0 +1,5 @@
 +<?xml version="1.0" encoding="utf-8"?>
 +<resources>
-+    <string name="ime_back_button_in_navbar_title">Toets voor verbergen van toetsenbord tonen</string>
-+    <string name="ime_back_button_in_navbar_summary">De knop die het toetsenbord verbergt tonen in de navigatiebalk als een invoerveld is geselecteerd</string>
++    <string name="ime_back_button_in_navbar_title">"De toets voor het verbergen van het toetsenbord tonen"</string>
++    <string name="ime_back_button_in_navbar_summary">"De knop voor het verbergen van het toetsenbord tonen in de navigatiebalk als een invoerveld is geselecteerd"</string>
 +</resources>
 diff --git a/res/values-or/ime_back_button_strings.xml b/res/values-or/ime_back_button_strings.xml
 new file mode 100644
-index 0000000..18dc716
+index 0000000..7ab278b
 --- /dev/null
 +++ b/res/values-or/ime_back_button_strings.xml
 @@ -0,0 +1,5 @@
 +<?xml version="1.0" encoding="utf-8"?>
 +<resources>
-+    <string name="ime_back_button_in_navbar_title">କୀବୋର୍ଡ ଲୁଚାଇବା କୀ ଦେଖାନ୍ତୁ</string>
-+    <string name="ime_back_button_in_navbar_summary">ଏକ ଇନପୁଟ ଫିଲ୍ଡ ଚୟନ କରାଗଲେ, ନାଭିଗେସନ ବାରରେ କୀବୋର୍ଡ ଲୁଚାଉଥିବା ବଟନ ଦେଖାନ୍ତୁ</string>
++    <string name="ime_back_button_in_navbar_title">"କୀବୋର୍ଡ ଲୁଚାଇବା କୀ ଦେଖାନ୍ତୁ"</string>
++    <string name="ime_back_button_in_navbar_summary">"ଏକ ଇନପୁଟ ଫିଲ୍ଡ ଚୟନ କରାଗଲେ ନାଭିଗେସନ ବାରରେ କୀବୋର୍ଡ ଲୁଚାଇବା ବଟନ ଦେଖାନ୍ତୁ"</string>
 +</resources>
 diff --git a/res/values-pa/ime_back_button_strings.xml b/res/values-pa/ime_back_button_strings.xml
 new file mode 100644
-index 0000000..e333cd1
+index 0000000..f77f39a
 --- /dev/null
 +++ b/res/values-pa/ime_back_button_strings.xml
 @@ -0,0 +1,5 @@
 +<?xml version="1.0" encoding="utf-8"?>
 +<resources>
-+    <string name="ime_back_button_in_navbar_title">ਕੀ-ਬੋਰਡ ਲੁਕਾਉਣ ਵਾਲੀ ਕੁੰਜੀ ਦਿਖਾਓ</string>
-+    <string name="ime_back_button_in_navbar_summary">ਇਨਪੁੱਟ ਖੇਤਰ ਚੁਣੇ ਜਾਣ \'ਤੇ, ਨੈਵੀਗੇਸ਼ਨ ਬਾਰ ਵਿੱਚ ਕੀ-ਬੋਰਡ ਲੁਕਾਉਣ ਵਾਲਾ ਬਟਨ ਦਿਖਾਓ</string>
++    <string name="ime_back_button_in_navbar_title">"ਕੀ-ਬੋਰਡ ਲੁਕਾਉਣ ਵਾਲੀ ਕੁੰਜੀ ਦਿਖਾਓ"</string>
++    <string name="ime_back_button_in_navbar_summary">"ਇਨਪੁੱਟ ਖੇਤਰ ਚੁਣੇ ਜਾਣ \'ਤੇ, ਕੀ-ਬੋਰਡ ਲੁਕਾਉਣ ਵਾਲੇ ਬਟਨ ਨੂੰ ਨੈਵੀਗੇਸ਼ਨ ਵਾਲੀ ਪੱਟੀ ਵਿੱਚ ਦਿਖਾਓ"</string>
 +</resources>
 diff --git a/res/values-pl/ime_back_button_strings.xml b/res/values-pl/ime_back_button_strings.xml
 new file mode 100644
-index 0000000..7635d64
+index 0000000..38b6bdb
 --- /dev/null
 +++ b/res/values-pl/ime_back_button_strings.xml
 @@ -0,0 +1,5 @@
 +<?xml version="1.0" encoding="utf-8"?>
 +<resources>
-+    <string name="ime_back_button_in_navbar_title">Pokaż klawisz ukrywania klawiatury</string>
-+    <string name="ime_back_button_in_navbar_summary">Pokazuj na pasku nawigacyjnym przycisk ukrywający klawiaturę, gdy wybrane jest pole do wprowadzania tekstu</string>
++    <string name="ime_back_button_in_navbar_title">"Pokaż klawisz ukrywania klawiatury"</string>
++    <string name="ime_back_button_in_navbar_summary">"Pokazuj przycisk ukrywania klawiatury na pasku nawigacyjnym po wybraniu pola do wprowadzania danych"</string>
 +</resources>
 diff --git a/res/values-pt-rBR/ime_back_button_strings.xml b/res/values-pt-rBR/ime_back_button_strings.xml
 new file mode 100644
-index 0000000..0873507
+index 0000000..91b780e
 --- /dev/null
 +++ b/res/values-pt-rBR/ime_back_button_strings.xml
 @@ -0,0 +1,5 @@
 +<?xml version="1.0" encoding="utf-8"?>
 +<resources>
-+    <string name="ime_back_button_in_navbar_title">Mostrar a tecla de ocultar o teclado</string>
-+    <string name="ime_back_button_in_navbar_summary">Mostrar o botão que oculta o teclado na barra de navegação quando um campo de entrada for selecionado</string>
++    <string name="ime_back_button_in_navbar_title">"Mostrar o botão de ocultar o teclado"</string>
++    <string name="ime_back_button_in_navbar_summary">"Mostrar o botão de ocultar o teclado na barra de navegação quando um campo de entrada for selecionado"</string>
 +</resources>
 diff --git a/res/values-pt-rPT/ime_back_button_strings.xml b/res/values-pt-rPT/ime_back_button_strings.xml
 new file mode 100644
-index 0000000..ab3963e
+index 0000000..42d3c45
 --- /dev/null
 +++ b/res/values-pt-rPT/ime_back_button_strings.xml
 @@ -0,0 +1,5 @@
 +<?xml version="1.0" encoding="utf-8"?>
 +<resources>
-+    <string name="ime_back_button_in_navbar_title">Mostrar a tecla para ocultar o teclado</string>
-+    <string name="ime_back_button_in_navbar_summary">Mostrar o botão que oculta o teclado na barra de navegação quando um campo de introdução está selecionado</string>
++    <string name="ime_back_button_in_navbar_title">"Mostrar tecla para ocultar o teclado"</string>
++    <string name="ime_back_button_in_navbar_summary">"Mostrar o botão para ocultar o teclado na barra de navegação quando é selecionado um campo de entrada"</string>
 +</resources>
 diff --git a/res/values-pt/ime_back_button_strings.xml b/res/values-pt/ime_back_button_strings.xml
 new file mode 100644
-index 0000000..0873507
+index 0000000..91b780e
 --- /dev/null
 +++ b/res/values-pt/ime_back_button_strings.xml
 @@ -0,0 +1,5 @@
 +<?xml version="1.0" encoding="utf-8"?>
 +<resources>
-+    <string name="ime_back_button_in_navbar_title">Mostrar a tecla de ocultar o teclado</string>
-+    <string name="ime_back_button_in_navbar_summary">Mostrar o botão que oculta o teclado na barra de navegação quando um campo de entrada for selecionado</string>
++    <string name="ime_back_button_in_navbar_title">"Mostrar o botão de ocultar o teclado"</string>
++    <string name="ime_back_button_in_navbar_summary">"Mostrar o botão de ocultar o teclado na barra de navegação quando um campo de entrada for selecionado"</string>
 +</resources>
 diff --git a/res/values-ro/ime_back_button_strings.xml b/res/values-ro/ime_back_button_strings.xml
 new file mode 100644
-index 0000000..af17f0e
+index 0000000..4b6ec72
 --- /dev/null
 +++ b/res/values-ro/ime_back_button_strings.xml
 @@ -0,0 +1,5 @@
 +<?xml version="1.0" encoding="utf-8"?>
 +<resources>
-+    <string name="ime_back_button_in_navbar_title">Afișează tasta de ascundere a tastaturii</string>
-+    <string name="ime_back_button_in_navbar_summary">Afișează butonul care ascunde tastatura în bara de navigare când este selectat un câmp de introducere</string>
++    <string name="ime_back_button_in_navbar_title">"Afișează tasta de ascundere a tastaturii"</string>
++    <string name="ime_back_button_in_navbar_summary">"Afișează butonul de ascundere a tastaturii în bara de navigare când este selectat un câmp de introducere a textului"</string>
 +</resources>
 diff --git a/res/values-ru/ime_back_button_strings.xml b/res/values-ru/ime_back_button_strings.xml
 new file mode 100644
-index 0000000..9131da9
+index 0000000..1d53924
 --- /dev/null
 +++ b/res/values-ru/ime_back_button_strings.xml
 @@ -0,0 +1,5 @@
 +<?xml version="1.0" encoding="utf-8"?>
 +<resources>
-+    <string name="ime_back_button_in_navbar_title">Показывать кнопку скрытия клавиатуры</string>
-+    <string name="ime_back_button_in_navbar_summary">Показывать на панели навигации кнопку, которая скрывает клавиатуру, когда выбрано поле ввода</string>
++    <string name="ime_back_button_in_navbar_title">"Показывать кнопку скрытия клавиатуры"</string>
++    <string name="ime_back_button_in_navbar_summary">"Показывать кнопку скрытия клавиатуры на панели навигации, когда выбрано поле ввода"</string>
 +</resources>
 diff --git a/res/values-si/ime_back_button_strings.xml b/res/values-si/ime_back_button_strings.xml
 new file mode 100644
-index 0000000..dfdf9e3
+index 0000000..7121d9e
 --- /dev/null
 +++ b/res/values-si/ime_back_button_strings.xml
 @@ -0,0 +1,5 @@
 +<?xml version="1.0" encoding="utf-8"?>
 +<resources>
-+    <string name="ime_back_button_in_navbar_title">යතුරු පුවරුව සඟවන යතුර පෙන්වන්න</string>
-+    <string name="ime_back_button_in_navbar_summary">ආදාන ක්ෂේත්‍රයක් තෝරා ඇති විට, සංචාලන තීරුවේ යතුරු පුවරුව සඟවන බොත්තම පෙන්වන්න</string>
++    <string name="ime_back_button_in_navbar_title">"යතුරුපුවරුව සඟවන යතුර පෙන්වන්න"</string>
++    <string name="ime_back_button_in_navbar_summary">"ආදාන ක්ෂේත්‍රයක් තෝරා ගත් විට, යතුරුපුවරුව සඟවන බොත්තම සංචාලන තීරුවේ පෙන්වන්න"</string>
 +</resources>
 diff --git a/res/values-sk/ime_back_button_strings.xml b/res/values-sk/ime_back_button_strings.xml
 new file mode 100644
-index 0000000..ce7fe64
+index 0000000..9f817dc
 --- /dev/null
 +++ b/res/values-sk/ime_back_button_strings.xml
 @@ -0,0 +1,5 @@
 +<?xml version="1.0" encoding="utf-8"?>
 +<resources>
-+    <string name="ime_back_button_in_navbar_title">Zobraziť kláves na skrytie klávesnice</string>
-+    <string name="ime_back_button_in_navbar_summary">Zobraziť na navigačnom paneli tlačidlo na skrytie klávesnice, keď je vybraté pole na zadávanie</string>
++    <string name="ime_back_button_in_navbar_title">"Zobraziť tlačidlo na skrytie klávesnice"</string>
++    <string name="ime_back_button_in_navbar_summary">"Zobrazovať tlačidlo na skrytie klávesnice na navigačnom paneli, keď je vybrané vstupné pole"</string>
 +</resources>
 diff --git a/res/values-sl/ime_back_button_strings.xml b/res/values-sl/ime_back_button_strings.xml
 new file mode 100644
-index 0000000..4c4ddb6
+index 0000000..732f84f
 --- /dev/null
 +++ b/res/values-sl/ime_back_button_strings.xml
 @@ -0,0 +1,5 @@
 +<?xml version="1.0" encoding="utf-8"?>
 +<resources>
-+    <string name="ime_back_button_in_navbar_title">Prikaži tipko za skrivanje tipkovnice</string>
-+    <string name="ime_back_button_in_navbar_summary">Prikaži gumb, ki skrije tipkovnico, v vrstici za krmarjenje, ko je izbrano polje za vnos</string>
++    <string name="ime_back_button_in_navbar_title">"Prikaz gumba za skrivanje tipkovnice"</string>
++    <string name="ime_back_button_in_navbar_summary">"Prikaz gumba za skrivanje tipkovnice v vrstici za krmarjenje, ko je izbrano polje za vnos"</string>
 +</resources>
 diff --git a/res/values-sq/ime_back_button_strings.xml b/res/values-sq/ime_back_button_strings.xml
 new file mode 100644
-index 0000000..e0f6777
+index 0000000..7444b68
 --- /dev/null
 +++ b/res/values-sq/ime_back_button_strings.xml
 @@ -0,0 +1,5 @@
 +<?xml version="1.0" encoding="utf-8"?>
 +<resources>
-+    <string name="ime_back_button_in_navbar_title">Shfaq tastin për fshehjen e tastierës</string>
-+    <string name="ime_back_button_in_navbar_summary">Shfaq butonin që fsheh tastierën në shiritin e navigimit kur zgjidhet një fushë hyrëse</string>
++    <string name="ime_back_button_in_navbar_title">"Shfaq butonin për fshehjen e tastierës"</string>
++    <string name="ime_back_button_in_navbar_summary">"Shfaq butonin për fshehjen e tastierës në shiritin e navigimit kur zgjidhet një fushë hyrjeje"</string>
 +</resources>
 diff --git a/res/values-sr/ime_back_button_strings.xml b/res/values-sr/ime_back_button_strings.xml
 new file mode 100644
-index 0000000..3abcd4c
+index 0000000..67adc20
 --- /dev/null
 +++ b/res/values-sr/ime_back_button_strings.xml
 @@ -0,0 +1,5 @@
 +<?xml version="1.0" encoding="utf-8"?>
 +<resources>
-+    <string name="ime_back_button_in_navbar_title">Прикажи тастер за скривање тастатуре</string>
-+    <string name="ime_back_button_in_navbar_summary">Прикажи дугме које скрива тастатуру на траци за навигацију када је изабрано поље за унос</string>
++    <string name="ime_back_button_in_navbar_title">"Прикажи тастер за скривање тастатуре"</string>
++    <string name="ime_back_button_in_navbar_summary">"Прикажи дугме за скривање тастатуре на траци за навигацију када је изабрано поље за унос"</string>
 +</resources>
 diff --git a/res/values-sv/ime_back_button_strings.xml b/res/values-sv/ime_back_button_strings.xml
 new file mode 100644
-index 0000000..d3f315c
+index 0000000..9fc3391
 --- /dev/null
 +++ b/res/values-sv/ime_back_button_strings.xml
 @@ -0,0 +1,5 @@
 +<?xml version="1.0" encoding="utf-8"?>
 +<resources>
-+    <string name="ime_back_button_in_navbar_title">Visa knappen för att dölja tangentbordet</string>
-+    <string name="ime_back_button_in_navbar_summary">Visa knappen som döljer tangentbordet i navigeringsfältet när ett inmatningsfält är markerat</string>
++    <string name="ime_back_button_in_navbar_title">"Visa knappen för att dölja tangentbordet"</string>
++    <string name="ime_back_button_in_navbar_summary">"Visa knappen för att dölja tangentbordet i navigeringsfältet när ett inmatningsfält har valts"</string>
 +</resources>
 diff --git a/res/values-sw/ime_back_button_strings.xml b/res/values-sw/ime_back_button_strings.xml
 new file mode 100644
-index 0000000..2d4e94c
+index 0000000..7972da1
 --- /dev/null
 +++ b/res/values-sw/ime_back_button_strings.xml
 @@ -0,0 +1,5 @@
 +<?xml version="1.0" encoding="utf-8"?>
 +<resources>
-+    <string name="ime_back_button_in_navbar_title">Onyesha kitufe cha kuficha kibodi</string>
-+    <string name="ime_back_button_in_navbar_summary">Onyesha kitufe kinachoficha kibodi kwenye sehemu ya viungo muhimu, sehemu ya kuweka maandishi inapochaguliwa</string>
++    <string name="ime_back_button_in_navbar_title">"Onyesha kitufe cha kuficha kibodi"</string>
++    <string name="ime_back_button_in_navbar_summary">"Onyesha kitufe cha kuficha kibodi kwenye upau wa kuanzia, sehemu ya kuingiza data ikiteuliwa"</string>
 +</resources>
 diff --git a/res/values-ta/ime_back_button_strings.xml b/res/values-ta/ime_back_button_strings.xml
 new file mode 100644
-index 0000000..e1e467f
+index 0000000..ac63341
 --- /dev/null
 +++ b/res/values-ta/ime_back_button_strings.xml
 @@ -0,0 +1,5 @@
 +<?xml version="1.0" encoding="utf-8"?>
 +<resources>
-+    <string name="ime_back_button_in_navbar_title">கீபோர்டை மறைக்கும் பட்டனைக் காட்டு</string>
-+    <string name="ime_back_button_in_navbar_summary">உள்ளீட்டுப் புலம் தேர்ந்தெடுக்கப்படும்போது, வழிசெலுத்தல் பட்டியில் கீபோர்டை மறைக்கும் பட்டனைக் காட்டும்</string>
++    <string name="ime_back_button_in_navbar_title">"கீபோர்டை மறைக்கும் பட்டனைக் காட்டு"</string>
++    <string name="ime_back_button_in_navbar_summary">"உள்ளீட்டுப் புலம் தேர்ந்தெடுக்கப்படும்போது வழிசெலுத்தல் பட்டியில் கீபோர்டை மறைக்கும் பட்டனைக் காட்டும்"</string>
 +</resources>
 diff --git a/res/values-te/ime_back_button_strings.xml b/res/values-te/ime_back_button_strings.xml
 new file mode 100644
-index 0000000..3d7bef6
+index 0000000..a39cf79
 --- /dev/null
 +++ b/res/values-te/ime_back_button_strings.xml
 @@ -0,0 +1,5 @@
 +<?xml version="1.0" encoding="utf-8"?>
 +<resources>
-+    <string name="ime_back_button_in_navbar_title">కీబోర్డ్‌ను దాచే కీని చూపండి</string>
-+    <string name="ime_back_button_in_navbar_summary">ఇన్‌పుట్ ఫీల్డ్ ఎంచుకున్నప్పుడు, నావిగేషన్ బార్‌లో కీబోర్డ్‌ను దాచే బటన్‌ను చూపండి</string>
++    <string name="ime_back_button_in_navbar_title">"కీబోర్డ్‌ను దాచే కీని చూపండి"</string>
++    <string name="ime_back_button_in_navbar_summary">"ఇన్‌పుట్ ఫీల్డ్‌ను ఎంచుకున్నప్పుడు నావిగేషన్ బార్‌లో కీబోర్డ్‌ను దాచే బటన్‌ను చూపండి"</string>
 +</resources>
 diff --git a/res/values-th/ime_back_button_strings.xml b/res/values-th/ime_back_button_strings.xml
 new file mode 100644
-index 0000000..bd4d900
+index 0000000..52341aa
 --- /dev/null
 +++ b/res/values-th/ime_back_button_strings.xml
 @@ -0,0 +1,5 @@
 +<?xml version="1.0" encoding="utf-8"?>
 +<resources>
-+    <string name="ime_back_button_in_navbar_title">แสดงปุ่มซ่อนแป้นพิมพ์</string>
-+    <string name="ime_back_button_in_navbar_summary">แสดงปุ่มที่ใช้ซ่อนแป้นพิมพ์ในแถบนำทางเมื่อเลือกช่องป้อนข้อมูล</string>
++    <string name="ime_back_button_in_navbar_title">"แสดงปุ่มซ่อนแป้นพิมพ์"</string>
++    <string name="ime_back_button_in_navbar_summary">"แสดงปุ่มซ่อนแป้นพิมพ์ในแถบนำทาง เมื่อเลือกช่องป้อนข้อมูล"</string>
 +</resources>
 diff --git a/res/values-tl/ime_back_button_strings.xml b/res/values-tl/ime_back_button_strings.xml
 new file mode 100644
-index 0000000..3fb1203
+index 0000000..b0a6d63
 --- /dev/null
 +++ b/res/values-tl/ime_back_button_strings.xml
 @@ -0,0 +1,5 @@
 +<?xml version="1.0" encoding="utf-8"?>
 +<resources>
-+    <string name="ime_back_button_in_navbar_title">Ipakita ang key para itago ang keyboard</string>
-+    <string name="ime_back_button_in_navbar_summary">Ipakita ang button na nagtatago sa keyboard sa navigation bar kapag may napiling input field</string>
++    <string name="ime_back_button_in_navbar_title">"Ipakita ang key para itago ang keyboard"</string>
++    <string name="ime_back_button_in_navbar_summary">"Ipakita ang button para itago ang keyboard sa navigation bar, kapag may piniling field ng input"</string>
 +</resources>
 diff --git a/res/values-tr/ime_back_button_strings.xml b/res/values-tr/ime_back_button_strings.xml
 new file mode 100644
-index 0000000..a23ab0b
+index 0000000..5c79406
 --- /dev/null
 +++ b/res/values-tr/ime_back_button_strings.xml
 @@ -0,0 +1,5 @@
 +<?xml version="1.0" encoding="utf-8"?>
 +<resources>
-+    <string name="ime_back_button_in_navbar_title">Klavyeyi gizleme tuşunu göster</string>
-+    <string name="ime_back_button_in_navbar_summary">Bir giriş alanı seçildiğinde klavyeyi gizleyen düğmeyi gezinme çubuğunda göster</string>
++    <string name="ime_back_button_in_navbar_title">"Klavye gizleme tuşunu göster"</string>
++    <string name="ime_back_button_in_navbar_summary">"Bir giriş alanı seçildiğinde klavye gizleme düğmesini gezinme çubuğunda göster"</string>
 +</resources>
 diff --git a/res/values-uk/ime_back_button_strings.xml b/res/values-uk/ime_back_button_strings.xml
 new file mode 100644
-index 0000000..29bf0dc
+index 0000000..695e7f4
 --- /dev/null
 +++ b/res/values-uk/ime_back_button_strings.xml
 @@ -0,0 +1,5 @@
 +<?xml version="1.0" encoding="utf-8"?>
 +<resources>
-+    <string name="ime_back_button_in_navbar_title">Показувати клавішу приховування клавіатури</string>
-+    <string name="ime_back_button_in_navbar_summary">Показувати на панелі навігації кнопку, яка приховує клавіатуру, коли вибрано поле введення</string>
++    <string name="ime_back_button_in_navbar_title">"Показувати кнопку приховування клавіатури"</string>
++    <string name="ime_back_button_in_navbar_summary">"Показувати кнопку приховування клавіатури на панелі навігації, коли вибрано поле введення"</string>
 +</resources>
 diff --git a/res/values-ur/ime_back_button_strings.xml b/res/values-ur/ime_back_button_strings.xml
 new file mode 100644
-index 0000000..fc0ff7d
+index 0000000..5b56803
 --- /dev/null
 +++ b/res/values-ur/ime_back_button_strings.xml
 @@ -0,0 +1,5 @@
 +<?xml version="1.0" encoding="utf-8"?>
 +<resources>
-+    <string name="ime_back_button_in_navbar_title">کی بورڈ چھپانے والی کلید دکھائیں</string>
-+    <string name="ime_back_button_in_navbar_summary">ان پٹ فیلڈ منتخب ہونے پر نیویگیشن بار میں کی بورڈ چھپانے والا بٹن دکھائیں</string>
++    <string name="ime_back_button_in_navbar_title">"کی بورڈ چھپانے کی کلید دکھائیں"</string>
++    <string name="ime_back_button_in_navbar_summary">"ان پٹ فیلڈ منتخب ہونے پر، کی بورڈ چھپانے کے بٹن کو نیویگیشن بار میں دکھائیں"</string>
 +</resources>
 diff --git a/res/values-uz/ime_back_button_strings.xml b/res/values-uz/ime_back_button_strings.xml
 new file mode 100644
-index 0000000..98a8adf
+index 0000000..b818500
 --- /dev/null
 +++ b/res/values-uz/ime_back_button_strings.xml
 @@ -0,0 +1,5 @@
 +<?xml version="1.0" encoding="utf-8"?>
 +<resources>
-+    <string name="ime_back_button_in_navbar_title">Klaviaturani yashirish tugmasini chiqarish</string>
-+    <string name="ime_back_button_in_navbar_summary">Kiritish maydoni tanlanganda navigatsiya panelida klaviaturani yashiradigan tugmani chiqarish</string>
++    <string name="ime_back_button_in_navbar_title">"Klaviaturani yashirish tugmasini chiqarish"</string>
++    <string name="ime_back_button_in_navbar_summary">"Kiritish maydonchasi tanlanganda navigatsiya panelida klaviaturani yashirish tugmasini chiqarish"</string>
 +</resources>
 diff --git a/res/values-vi/ime_back_button_strings.xml b/res/values-vi/ime_back_button_strings.xml
 new file mode 100644
-index 0000000..e366eba
+index 0000000..109b565
 --- /dev/null
 +++ b/res/values-vi/ime_back_button_strings.xml
 @@ -0,0 +1,5 @@
 +<?xml version="1.0" encoding="utf-8"?>
 +<resources>
-+    <string name="ime_back_button_in_navbar_title">Hiện phím ẩn bàn phím</string>
-+    <string name="ime_back_button_in_navbar_summary">Hiện nút ẩn bàn phím trên thanh điều hướng khi một trường nhập được chọn</string>
++    <string name="ime_back_button_in_navbar_title">"Hiện nút ẩn bàn phím"</string>
++    <string name="ime_back_button_in_navbar_summary">"Hiện nút ẩn bàn phím trên thanh điều hướng khi chọn một trường nhập dữ liệu"</string>
 +</resources>
 diff --git a/res/values-zh-rCN/ime_back_button_strings.xml b/res/values-zh-rCN/ime_back_button_strings.xml
 new file mode 100644
-index 0000000..10d3ca8
+index 0000000..3006be5
 --- /dev/null
 +++ b/res/values-zh-rCN/ime_back_button_strings.xml
 @@ -0,0 +1,5 @@
 +<?xml version="1.0" encoding="utf-8"?>
 +<resources>
-+    <string name="ime_back_button_in_navbar_title">显示隐藏键盘按键</string>
-+    <string name="ime_back_button_in_navbar_summary">选中输入字段时，在导航栏中显示用于隐藏键盘的按钮</string>
++    <string name="ime_back_button_in_navbar_title">"显示键盘隐藏键"</string>
++    <string name="ime_back_button_in_navbar_summary">"选择输入字段时，在导航栏中显示键盘隐藏按钮"</string>
 +</resources>
 diff --git a/res/values-zh-rHK/ime_back_button_strings.xml b/res/values-zh-rHK/ime_back_button_strings.xml
 new file mode 100644
-index 0000000..ebdf2bd
+index 0000000..3290614
 --- /dev/null
 +++ b/res/values-zh-rHK/ime_back_button_strings.xml
 @@ -0,0 +1,5 @@
 +<?xml version="1.0" encoding="utf-8"?>
 +<resources>
-+    <string name="ime_back_button_in_navbar_title">顯示隱藏鍵盤按鍵</string>
-+    <string name="ime_back_button_in_navbar_summary">選取輸入欄位時，在導覽列中顯示用於隱藏鍵盤的按鈕</string>
++    <string name="ime_back_button_in_navbar_title">"顯示鍵盤隱藏按掣"</string>
++    <string name="ime_back_button_in_navbar_summary">"選取輸入欄位時，在導覽列中顯示鍵盤隱藏按鈕"</string>
 +</resources>
 diff --git a/res/values-zh-rTW/ime_back_button_strings.xml b/res/values-zh-rTW/ime_back_button_strings.xml
 new file mode 100644
-index 0000000..ebdf2bd
+index 0000000..5f2b04b
 --- /dev/null
 +++ b/res/values-zh-rTW/ime_back_button_strings.xml
 @@ -0,0 +1,5 @@
 +<?xml version="1.0" encoding="utf-8"?>
 +<resources>
-+    <string name="ime_back_button_in_navbar_title">顯示隱藏鍵盤按鍵</string>
-+    <string name="ime_back_button_in_navbar_summary">選取輸入欄位時，在導覽列中顯示用於隱藏鍵盤的按鈕</string>
++    <string name="ime_back_button_in_navbar_title">"顯示鍵盤隱藏鍵"</string>
++    <string name="ime_back_button_in_navbar_summary">"選取輸入欄位時，在導覽列中顯示「隱藏鍵盤」按鈕"</string>
 +</resources>
 diff --git a/res/values-zu/ime_back_button_strings.xml b/res/values-zu/ime_back_button_strings.xml
 new file mode 100644
-index 0000000..6ec0996
+index 0000000..4738b04
 --- /dev/null
 +++ b/res/values-zu/ime_back_button_strings.xml
 @@ -0,0 +1,5 @@
 +<?xml version="1.0" encoding="utf-8"?>
 +<resources>
-+    <string name="ime_back_button_in_navbar_title">Bonisa ukhiye wokufihla ikhibhodi</string>
-+    <string name="ime_back_button_in_navbar_summary">Bonisa inkinobho efihla ikhibhodi kubha yokufuna lapho kukhethwe inkambu yokufaka</string>
++    <string name="ime_back_button_in_navbar_title">"Bonisa ukhiye wokufihla ikhibhodi"</string>
++    <string name="ime_back_button_in_navbar_summary">"Bonisa inkinobho yokufihla ikhibhodi kubha yokuzula, lapho kukhethwe inkambu yokufaka"</string>
 +</resources>
 diff --git a/res/values/ime_back_button_strings.xml b/res/values/ime_back_button_strings.xml
 new file mode 100644
