@@ -1,7 +1,7 @@
 From 40c665d1f0ed7860214e721ee91b4bec67511520 Mon Sep 17 00:00:00 2001
 From: Langsdorff <131063968+clangsdorff@users.noreply.github.com>
 Date: Wed, 7 Oct 2026 11:35:31 +0300
-Subject: [PATCH 43/43] sepolicy: let the samsung bluetooth hal set its firmware
+Subject: [PATCH 43/44] sepolicy: let the samsung bluetooth hal set its firmware
  version prop
 
 ---

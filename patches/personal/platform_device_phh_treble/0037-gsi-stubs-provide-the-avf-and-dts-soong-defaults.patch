@@ -1,7 +1,7 @@
 From 1f2a6c33e1d21a90c69410fbfa83e2db9a4a1105 Mon Sep 17 00:00:00 2001
 From: Christopher A. Williamson <contact@chrisaw.io>
 Date: Mon, 28 Sep 2026 20:15:00 +0100
-Subject: [PATCH 37/43] gsi stubs: provide the avf and dts soong defaults
+Subject: [PATCH 37/44] gsi stubs: provide the avf and dts soong defaults
 
 the virtualization sources are excluded from the gsi manifest sync, but
 modules elsewhere in the tree (system/core init microdroid variant,

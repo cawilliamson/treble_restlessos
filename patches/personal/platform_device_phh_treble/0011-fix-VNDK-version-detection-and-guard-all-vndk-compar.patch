@@ -1,7 +1,7 @@
 From 38f2ba04c7e7c3841574107ba87f36044afff3a1 Mon Sep 17 00:00:00 2001
 From: "Christopher A. Williamson" <contact@chrisaw.io>
 Date: Sat, 26 Sep 2026 12:15:44 +0100
-Subject: [PATCH 11/43] fix VNDK version detection and guard all vndk comparisons
+Subject: [PATCH 11/44] fix VNDK version detection and guard all vndk comparisons
 
 vndk-detect falls back to ro.vndk.version / ro.vendor.build.version.sdk
 when persist.sys.vndk ends up empty, and every shell comparison against

@@ -1,7 +1,7 @@
 From 3dd91c521e1d1f32dff6b4853c5855de6881130e Mon Sep 17 00:00:00 2001
 From: Langsdorff <131063968+clangsdorff@users.noreply.github.com>
 Date: Sat, 3 Oct 2026 01:45:26 +0300
-Subject: [PATCH 40/43] sepolicy: let cameraserver read the samsung remosaic toggle
+Subject: [PATCH 40/44] sepolicy: let cameraserver read the samsung remosaic toggle
 
 ---
  sepolicy/property_contexts | 1 +

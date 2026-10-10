@@ -1,0 +1,58 @@
+From a45d615d748a5591f3cf4ddf7f68474edb5ab9cc Mon Sep 17 00:00:00 2001
+From: "Christopher A. Williamson" <contact@chrisaw.io>
+Date: Sat, 10 Oct 2026 14:53:50 +0100
+Subject: [PATCH 44/44] unihertz: expose the jelly max aux cameras on the gsi
+
+the mtk camera hal gates the aux (telephoto) sensor behind vendor
+props and keeps a stale camera list across restarts, so on the jelly
+max the telephoto never shows up under a gsi (#32). set the aux
+packagelist and enable props before the hal starts, and re-run the
+enumeration from phh-on-boot as insurance.
+
+fix pattern per the device community; the agold not-gsi quirk is
+already handled by the trebledroid patch in this tree
+---
+ phh-on-boot.sh |  7 +++++++
+ rw-system.sh   | 11 +++++++++++
+ 2 files changed, 18 insertions(+)
+
+diff --git a/phh-on-boot.sh b/phh-on-boot.sh
+index 5952ec0..2f62af2 100644
+--- a/phh-on-boot.sh
++++ b/phh-on-boot.sh
+@@ -154,3 +154,10 @@ getprop | \
+     while read -r svc ;do
+         setprop ctl.stop "$svc"
+     done
++
++# unihertz jelly max: re-run camera enumeration in case the hal started
++# before rw-system set the aux props; best effort, the props alone are
++# usually enough (see the camera block in rw-system)
++if getprop ro.vendor.build.fingerprint | grep -q -e Unihertz/;then
++    killall camerahalserver cameraserver 2>/dev/null || true
++fi
+diff --git a/rw-system.sh b/rw-system.sh
+index da58e34..8a9ea1f 100644
+--- a/rw-system.sh
++++ b/rw-system.sh
+@@ -262,6 +262,17 @@ changeKeylayout() {
+         changed=true
+     fi
+ 
++    # unihertz jelly max: the mtk camera hal enumerates the aux (telephoto)
++    # sensor only when told to, and caches the camera list across provider
++    # restarts, so the telephoto never appears on the gsi (#32). the props
++    # must be in place before the camera hal starts; phh-on-boot additionally
++    # restarts the camera daemons in case anything raced us.
++    if getprop ro.vendor.build.fingerprint | grep -q -e Unihertz/;then
++        resetprop_phh persist.vendor.camera.privapp.list "*"
++        resetprop_phh vendor.camera.aux.packagelist "*"
++        resetprop_phh vendor.camera.aux.enable 1
++    fi
++
+     if getprop ro.vendor.build.fingerprint | grep -q -i -e Blackview/BV9500Plus -e Ulefone/Armor_9 -e Blackview/BV9800;then
+         cp /system/phh/bv9500plus-mtk-kpd.kl /mnt/phh/keylayout/mtk-kpd.kl
+         chmod 0644 /mnt/phh/keylayout/mtk-kpd.kl
+-- 
+2.55.0
+

@@ -1,7 +1,7 @@
 From f78b406aa776f4a9fb5b8e3fe8e1f98b7ea5b45c Mon Sep 17 00:00:00 2001
 From: Langsdorff <131063968+clangsdorff@users.noreply.github.com>
 Date: Sat, 3 Oct 2026 04:11:05 +0300
-Subject: [PATCH 41/43] sepolicy: let cameraserver read the samsung 60fps video
+Subject: [PATCH 41/44] sepolicy: let cameraserver read the samsung 60fps video
  toggle
 
 ---
