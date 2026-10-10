@@ -1,7 +1,7 @@
 From ccaff836ad3ebfcc83520d25f06c05d3c77c28d3 Mon Sep 17 00:00:00 2001
 From: "Christopher A. Williamson" <contact@chrisaw.io>
 Date: Tue, 29 Sep 2026 10:56:56 +0100
-Subject: [PATCH 24/33] frameworks: drop framework-virtualization from the api module
+Subject: [PATCH 24/34] frameworks: drop framework-virtualization from the api module
  lists
 
 the virtualization sources are excluded from the gsi manifest sync, so

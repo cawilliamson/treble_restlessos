@@ -1,7 +1,7 @@
 From 4108e5874c0d320890388bb4c459dbf1e7311497 Mon Sep 17 00:00:00 2001
 From: Langsdorff <hocaoglugeylani96@gmail.com>
 Date: Thu, 8 Oct 2026 00:15:04 +0300
-Subject: [PATCH] overlay: add langsdorff floss ims overlays for the voip audio
+Subject: [PATCH 2/2] overlay: add langsdorff floss ims overlays for the voip audio
  mode and the mmtel package
 
 ---

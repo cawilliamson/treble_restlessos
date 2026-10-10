@@ -1,7 +1,7 @@
 From aa1cdc14aefbcb006731c83ecc1ed9bb80e2a3fa Mon Sep 17 00:00:00 2001
 From: Langsdorff <hocaoglugeylani96@gmail.com>
 Date: Thu, 8 Oct 2026 00:08:11 +0300
-Subject: [PATCH] treble_app: let the ims install button pick the phh or
+Subject: [PATCH 18/18] treble_app: let the ims install button pick the phh or
  alternative floss apk
 
 ---

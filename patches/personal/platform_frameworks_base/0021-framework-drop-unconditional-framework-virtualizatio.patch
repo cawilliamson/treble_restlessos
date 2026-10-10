@@ -1,7 +1,7 @@
 From 19b7fa40b9569c002a347b5921ef6b542432a2ea Mon Sep 17 00:00:00 2001
 From: "Christopher A. Williamson" <contact@chrisaw.io>
 Date: Mon, 28 Sep 2026 15:22:54 +0100
-Subject: [PATCH 21/33] framework: drop unconditional framework-virtualization refs
+Subject: [PATCH 21/34] framework: drop unconditional framework-virtualization refs
  references
 
 the com.android.virt apex and its framework-virtualization boot jar

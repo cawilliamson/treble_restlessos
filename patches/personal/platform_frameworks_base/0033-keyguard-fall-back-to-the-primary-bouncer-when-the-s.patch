@@ -1,7 +1,7 @@
 From a367a526b2bce810fa8838d47c81bde06b996878 Mon Sep 17 00:00:00 2001
 From: Langsdorff <hocaoglugeylani96@gmail.com>
 Date: Sat, 3 Oct 2026 02:59:38 +0300
-Subject: [PATCH 33/33] keyguard: fall back to the primary bouncer when the second
+Subject: [PATCH 33/34] keyguard: fall back to the primary bouncer when the second
  factor auth token is gone
 
 ---

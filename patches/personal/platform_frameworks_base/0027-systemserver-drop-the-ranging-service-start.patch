@@ -1,7 +1,7 @@
 From 5c8b6b92ca3144d79bac272a22b6b55d890788a9 Mon Sep 17 00:00:00 2001
 From: "Christopher A. Williamson" <contact@chrisaw.io>
 Date: Wed, 30 Sep 2026 10:15:07 +0100
-Subject: [PATCH 27/33] systemserver: drop the ranging service start
+Subject: [PATCH 27/34] systemserver: drop the ranging service start
 
 the ranging flag was finalized in sdk 36.1, so the generated accessor
 short-circuits to true on any device above that level and the value-set

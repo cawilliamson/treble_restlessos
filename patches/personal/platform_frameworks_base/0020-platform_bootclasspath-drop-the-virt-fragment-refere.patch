@@ -1,7 +1,7 @@
 From e036722785ff9b974a1ecbf72484c88ca6096a8b Mon Sep 17 00:00:00 2001
 From: "Christopher A. Williamson" <contact@chrisaw.io>
 Date: Mon, 28 Sep 2026 07:58:03 +0100
-Subject: [PATCH 20/33] platform_bootclasspath: drop the virt fragment reference
+Subject: [PATCH 20/34] platform_bootclasspath: drop the virt fragment reference
 
 the com.android.virt apex is no longer installed on the gsi and its
 bootclasspath fragment module was removed, so the platform
