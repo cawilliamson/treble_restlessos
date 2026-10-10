@@ -1,10 +1,6 @@
 # ROM configuration for RestlessOS builds
 # this file is copied to device/phh/treble/restlessos.mk during the build process
 
-# aosp Browser2: minimal webview-based browser for first boot
-# (user-disableable; most users install their own browser)
-PRODUCT_PACKAGES += Browser2
-
 # ensure product fonts directory exists for third-party font modules
 $(shell mkdir -p $(PRODUCT_OUT)/system/product/fonts)
 
