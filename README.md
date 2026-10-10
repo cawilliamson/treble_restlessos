@@ -70,6 +70,18 @@ These can be re-enabled in **TrebleApp → Hardening** or **Settings → Exploit
 - **hardened thread stacks** — non-standard memory layout breaks some vendor drivers
 - **secure (exec-based) app spawning** — breaks root solutions (Magisk / KernelSU)
 
+### Browsers and web engine
+
+The WebView implementation (Trichrome) is part of the system image and cannot
+be removed. The image ships **no browser at all**.
+
+To install Vanadium, open **Apps** (the preloaded GrapheneOS app store) and
+select it from the front page — it appears there even though it is not
+preinstalled, and the store handles the initial install and all later
+updates, including the matching Trichrome components. Any other browser works
+too, installed from the store, Accrescent, or wherever you got your usual
+software.
+
 ## Delta Updates with zsync2
 
 Each release includes a `.zsync` file alongside the uncompressed `.img`,
