@@ -1,0 +1,40 @@
+From 5431a8acd4c6da7dcf66877db18607fcf2f939fd Mon Sep 17 00:00:00 2001
+From: Langsdorff <131063968+clangsdorff@users.noreply.github.com>
+Date: Sat, 10 Oct 2026 15:12:35 +0300
+Subject: [PATCH] WifiLockManager: use low latency mode while the screen is on
+ on samsung
+
+---
+ .../java/com/android/server/wifi/WifiLockManager.java    | 9 +++++++++
+ 1 file changed, 9 insertions(+)
+
+diff --git a/service/java/com/android/server/wifi/WifiLockManager.java b/service/java/com/android/server/wifi/WifiLockManager.java
+index 7f65cb3..0da62f2 100644
+--- a/service/java/com/android/server/wifi/WifiLockManager.java
++++ b/service/java/com/android/server/wifi/WifiLockManager.java
+@@ -91,6 +91,11 @@ public class WifiLockManager {
+     private boolean mForceHiPerfMode = false;
+     private boolean mForceLowLatencyMode = false;
+ 
++    // Samsung slsi stays in 802.11 power save with screen on, adding up to a beacon interval per round trip
++    private final boolean mScreenOnLowLatency = android.os.SystemProperties.getBoolean(
++            "persist.sys.phh.wifi_screen_on_low_latency",
++            android.os.SystemProperties.get("ro.vendor.build.fingerprint").startsWith("samsung/"));
++
+     // some wifi lock statistics
+     private int mFullHighPerfLocksAcquired;
+     private int mFullHighPerfLocksReleased;
+@@ -289,6 +294,10 @@ public class WifiLockManager {
+             return WifiManager.WIFI_MODE_FULL_LOW_LATENCY;
+         }
+ 
++        if (mScreenOn && mScreenOnLowLatency) {
++            return WifiManager.WIFI_MODE_FULL_LOW_LATENCY;
++        }
++
+         if (mScreenOn && countFgLowLatencyUids(false) > 0) {
+             return WifiManager.WIFI_MODE_FULL_LOW_LATENCY;
+         }
+-- 
+2.39.2 (Apple Git-143)
+
