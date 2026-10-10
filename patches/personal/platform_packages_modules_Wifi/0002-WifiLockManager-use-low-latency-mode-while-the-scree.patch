@@ -1,7 +1,7 @@
 From 5431a8acd4c6da7dcf66877db18607fcf2f939fd Mon Sep 17 00:00:00 2001
 From: Langsdorff <131063968+clangsdorff@users.noreply.github.com>
 Date: Sat, 10 Oct 2026 15:12:35 +0300
-Subject: [PATCH] WifiLockManager: use low latency mode while the screen is on
+Subject: [PATCH 2/2] WifiLockManager: use low latency mode while the screen is on
  on samsung
 
 ---

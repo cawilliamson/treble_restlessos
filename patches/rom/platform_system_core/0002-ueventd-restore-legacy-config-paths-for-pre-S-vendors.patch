@@ -1,7 +1,7 @@
 From 7f5a8ce76ed94efb0c9404e15607378674ef9b2d Mon Sep 17 00:00:00 2001
 From: "Christopher A. Williamson" <contact@chrisaw.io>
 Date: Mon, 5 Oct 2026 09:28:20 +0100
-Subject: [PATCH] ueventd: restore legacy config paths for pre-S vendors
+Subject: [PATCH 2/2] ueventd: restore legacy config paths for pre-S vendors
 
 a17 dropped the first_api_level<31 branch of GetConfiguration that
 parsed /vendor/ueventd.rc, /odm/ueventd.rc and /ueventd.$(ro.hardware).rc.

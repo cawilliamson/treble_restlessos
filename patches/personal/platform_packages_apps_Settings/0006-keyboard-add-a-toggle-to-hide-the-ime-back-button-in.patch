@@ -1,7 +1,7 @@
 From e35e1a2c551fca86f1fec83de59888e9f6c53676 Mon Sep 17 00:00:00 2001
 From: Langsdorff <131063968+clangsdorff@users.noreply.github.com>
 Date: Sat, 10 Oct 2026 14:24:23 +0300
-Subject: [PATCH] keyboard: add a toggle to hide the ime back button in the
+Subject: [PATCH 6/6] keyboard: add a toggle to hide the ime back button in the
  navigation bar
 
 ---

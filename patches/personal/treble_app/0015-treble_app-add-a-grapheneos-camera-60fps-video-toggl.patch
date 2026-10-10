@@ -1,7 +1,7 @@
 From ea74228aa21d9a4bc26150f7ad97f08020872d61 Mon Sep 17 00:00:00 2001
 From: Langsdorff <131063968+clangsdorff@users.noreply.github.com>
 Date: Sun, 4 Oct 2026 23:14:32 +0300
-Subject: [PATCH 15/15] treble_app: add a grapheneos camera 60fps video toggle
+Subject: [PATCH 15/17] treble_app: add a grapheneos camera 60fps video toggle
 
 ---
  app/src/main/java/me/phh/treble/app/Samsung.kt         |  4 ++++

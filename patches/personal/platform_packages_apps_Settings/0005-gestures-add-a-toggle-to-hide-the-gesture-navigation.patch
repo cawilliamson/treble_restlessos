@@ -1,7 +1,7 @@
 From 6156a5ea476bca818fcacff1d43ec87b051c6494 Mon Sep 17 00:00:00 2001
 From: Langsdorff <131063968+clangsdorff@users.noreply.github.com>
 Date: Sat, 3 Oct 2026 02:21:51 +0300
-Subject: [PATCH 5/5] gestures: add a toggle to hide the gesture navigation handle
+Subject: [PATCH 5/6] gestures: add a toggle to hide the gesture navigation handle
 
 ---
  res/values-af/navigation_handle_strings.xml   |  5 ++
