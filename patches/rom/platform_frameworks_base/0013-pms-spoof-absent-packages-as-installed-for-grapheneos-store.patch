@@ -15,8 +15,8 @@ the packages on the spoof list while they are absent, so the entries
 stay listed and the store proceeds with a normal install; the spoof
 disappears once the real package exists.
 ---
- .../com/android/server/pm/ComputerEngine.java | 39 +++++++++++++++++++
- 1 file changed, 39 insertions(+)
+ .../com/android/server/pm/ComputerEngine.java | 42 +++++++++++++++++++
+ 1 file changed, 42 insertions(+)
 
 diff --git a/services/core/java/com/android/server/pm/ComputerEngine.java b/services/core/java/com/android/server/pm/ComputerEngine.java
 index bf15b7c5e..96cb977df 100644
@@ -43,7 +43,7 @@ index bf15b7c5e..96cb977df 100644
          if (!matchFactoryOnly && (flags & (MATCH_KNOWN_PACKAGES | MATCH_ARCHIVED_PACKAGES)) != 0) {
              final PackageStateInternal ps = mSettings.getPackage(packageName);
              if (ps == null) return null;
-@@ -1730,6 +1737,38 @@ public class ComputerEngine implements Computer {
+@@ -1730,6 +1737,41 @@ public class ComputerEngine implements Computer {
          return null;
      }
  
@@ -59,6 +59,9 @@ index bf15b7c5e..96cb977df 100644
 +            "app.vanadium.browser", 548106100L);
 +
 +    private PackageInfo maybeGetSpoofedPackageInfo(String packageName, int filterCallingUid) {
++        if (packageName == null) {
++            return null;
++        }
 +        final Long version = SPOOFED_ABSENT_PACKAGES.get(packageName);
 +        if (version == null) {
 +            return null;
