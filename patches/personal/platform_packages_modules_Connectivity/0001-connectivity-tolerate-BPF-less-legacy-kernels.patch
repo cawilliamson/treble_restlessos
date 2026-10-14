@@ -1,4 +1,4 @@
-From bb058fa7a284a19acbb277cbbab0cc42e98c9d66 Mon Sep 17 00:00:00 2001
+From de987f19611e2be086f404c7dee91f2b044a4632 Mon Sep 17 00:00:00 2001
 From: "Christopher A. Williamson" <contact@chrisaw.io>
 Date: Mon, 28 Sep 2026 09:16:30 +0100
 Subject: [PATCH 1/4] connectivity: tolerate BPF-less legacy kernels
@@ -16,8 +16,8 @@ they are merged into one change.
  .../src/android/net/BpfNetMapsUtils.java      |  67 ++++++++-
  .../server/net/NetworkStatsService.java       |  57 +++++++-
  ...id_server_connectivity_ClatCoordinator.cpp |  16 +--
- .../src/com/android/server/BpfNetMaps.java    |  12 ++
- 8 files changed, 280 insertions(+), 119 deletions(-)
+ .../src/com/android/server/BpfNetMaps.java    |  18 +++
+ 8 files changed, 286 insertions(+), 119 deletions(-)
 
 diff --git a/bpf/headers/include/bpf/BpfUtils.h b/bpf/headers/include/bpf/BpfUtils.h
 index 5ca52c6..86fe01e 100644
@@ -824,10 +824,18 @@ index 437e78f..01a0c2f 100644
  
  #undef V
 diff --git a/service/src/com/android/server/BpfNetMaps.java b/service/src/com/android/server/BpfNetMaps.java
-index be3b12b..3094cf4 100644
+index be3b12b..550d8ad 100644
 --- a/service/src/com/android/server/BpfNetMaps.java
 +++ b/service/src/com/android/server/BpfNetMaps.java
-@@ -1932,6 +1932,10 @@ public class BpfNetMaps {
+@@ -1868,6 +1868,7 @@ public class BpfNetMaps {
+     public boolean getLocalNetAccess(final int lpmBitlen, @Nullable final String iface,
+             final InetAddress address, final int protocol, final int remotePort) {
+         throwIfPre25Q2("getLocalNetAccess is not available on pre-B devices");
++        if (sLocalNetAccessMap == null) return true;
+         final int ifIndex;
+         if (iface == null) {
+             ifIndex = 0;
+@@ -1932,6 +1933,10 @@ public class BpfNetMaps {
      @RequiresApi(Build.VERSION_CODES.CUR_DEVELOPMENT)
      public void addUidToLocalNetBlockMap(final int uid) {
          throwIfPre25Q2("addUidToLocalNetBlockMap is not available on pre-B devices");
@@ -838,7 +846,7 @@ index be3b12b..3094cf4 100644
          try {
              sLocalNetBlockedUidMap.updateEntry(new U32(uid), new Bool(true));
          } catch (ErrnoException e) {
-@@ -1946,6 +1950,10 @@ public class BpfNetMaps {
+@@ -1946,6 +1951,10 @@ public class BpfNetMaps {
      @RequiresApi(Build.VERSION_CODES.CUR_DEVELOPMENT)
      public boolean isUidBlockedFromUsingLocalNetwork(final int uid) {
          throwIfPre25Q2("isUidBlockedFromUsingLocalNetwork is not available on pre-B devices");
@@ -849,7 +857,7 @@ index be3b12b..3094cf4 100644
          try {
              final Bool value = sLocalNetBlockedUidMap.getValue(new U32(uid));
              return value == null ? false : value.val;
-@@ -1963,6 +1971,10 @@ public class BpfNetMaps {
+@@ -1963,6 +1972,10 @@ public class BpfNetMaps {
      @RequiresApi(Build.VERSION_CODES.CUR_DEVELOPMENT)
      public void removeUidFromLocalNetBlockMap(final int uid) {
          throwIfPre25Q2("removeUidFromLocalNetBlockMap is not available on pre-B devices");
@@ -860,6 +868,46 @@ index be3b12b..3094cf4 100644
          try {
              sLocalNetBlockedUidMap.deleteEntry(new U32(uid));
          } catch (ErrnoException e) {
+@@ -1976,6 +1989,7 @@ public class BpfNetMaps {
+     @RequiresApi(Build.VERSION_CODES.BAKLAVA)
+     public void addLocalNetUidAccess(final int uid, @NonNull final String iface) {
+         throwIfPre25Q2("addLocalNetUidAccess is not available on pre-B devices");
++        if (sLocalNetUidHostAllowlistMap == null) return;
+         int ifIndex = mInterfaceTracker.getInterfaceIndex(iface);
+         if (ifIndex == 0) {
+             Log.e(TAG, "Failed to get if index, skip addLocalNetUidAccess for uid: " + uid
+@@ -1997,6 +2011,7 @@ public class BpfNetMaps {
+     @RequiresApi(Build.VERSION_CODES.BAKLAVA)
+     public void removeLocalNetUidAccess(final int uid, @NonNull final String iface) {
+         throwIfPre25Q2("removeLocalNetUidAccess is not available on pre-B devices");
++        if (sLocalNetUidHostAllowlistMap == null) return;
+         final int ifIndex = mInterfaceTracker.getInterfaceIndex(iface);
+         if (ifIndex == 0) {
+             Log.e(TAG, "Failed to get if index, skip removeLocalNetUidAccess for uid: " + uid
+@@ -2024,6 +2039,7 @@ public class BpfNetMaps {
+     public void addLocalNetUidHostAccess(final int uid, final int ifIndex,
+             @NonNull final InetAddress address) {
+         throwIfPre25Q2("addLocalNetUidHostAccess is not available on pre-B devices");
++        if (sLocalNetUidHostAllowlistMap == null) return;
+         final LocalNetUidHostAllowlistKey key = new LocalNetUidHostAllowlistKey(
+                 uid, ifIndex, address);
+         synchronized (sLocalNetAccessLock) {
+@@ -2039,6 +2055,7 @@ public class BpfNetMaps {
+     @RequiresApi(Build.VERSION_CODES.BAKLAVA)
+     public void removeLocalNetHostAllowlistForInterface(final int ifIndex) {
+         throwIfPre25Q2("removeLocalNetHostAllowlistForInterface is not available on pre-B devices");
++        if (sLocalNetUidHostAllowlistMap == null) return;
+         synchronized (sLocalNetAccessLock) {
+             incrementLnpGenerationId(true);
+             try {
+@@ -2370,6 +2387,7 @@ public class BpfNetMaps {
+ 
+     @GuardedBy("sLocalNetAccessLock")
+     private void incrementLnpGenerationId(boolean expectEven) throws IllegalStateException {
++        if (sLocalNetCacheGenerationIdMap == null) return;
+         if (expectEven != ((sLnpGenerationID & 1) == 0)) {
+             throw new IllegalStateException(
+                     "Parity error in the local net cache generation ID. This should never happen.");
 -- 
-2.55.0
+2.50.1 (Apple Git-155)
 
