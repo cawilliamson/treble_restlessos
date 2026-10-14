@@ -5,14 +5,14 @@ Subject: [PATCH 17/19] treble_app: default the a14 camera, display and wifi togg
  on first boot
 
 ---
- app/src/main/java/me/phh/treble/app/Samsung.kt | 23 +++++++++++++++++++++++
- 1 file changed, 23 insertions(+)
+ app/src/main/java/me/phh/treble/app/Samsung.kt | 25 +++++++++++++++++++++++++
+ 1 file changed, 25 insertions(+)
 
 diff --git a/app/src/main/java/me/phh/treble/app/Samsung.kt b/app/src/main/java/me/phh/treble/app/Samsung.kt
 index ca9d0f0..92fa1e2 100644
 --- a/app/src/main/java/me/phh/treble/app/Samsung.kt
 +++ b/app/src/main/java/me/phh/treble/app/Samsung.kt
-@@ -141,6 +141,28 @@ class Samsung: EntryStartup {
+@@ -141,6 +141,30 @@ class Samsung: EntryStartup {
  
          sp.registerOnSharedPreferenceChangeListener(spListener)
  
@@ -34,6 +34,8 @@ index ca9d0f0..92fa1e2 100644
 +                .putBoolean(MiscSettings.sfDisableBackpressure, true)
 +                .putBoolean(MiscSettings.sfLatchUnsignaled, true)
 +                .putBoolean(MiscSettings.sfAutoLatchUnsignaled, true)
++                .putBoolean(MiscSettings.headsetDevinput, true)
++                .putString(MiscSettings.escoTransportUnitSize, "16")
 +                .putBoolean(a14DefaultsApplied, true)
 +                .commit()
 +        }
@@ -41,7 +43,7 @@ index ca9d0f0..92fa1e2 100644
          //Refresh parameters on boot
          spListener.onSharedPreferenceChanged(sp, SamsungSettings.highBrightess)
          spListener.onSharedPreferenceChanged(sp, SamsungSettings.gloveMode)
-@@ -164,6 +186,7 @@ class Samsung: EntryStartup {
+@@ -164,6 +188,7 @@ class Samsung: EntryStartup {
      }
  
      companion object: EntryStartup {
