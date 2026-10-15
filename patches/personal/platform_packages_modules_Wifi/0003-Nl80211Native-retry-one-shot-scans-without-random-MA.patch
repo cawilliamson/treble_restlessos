@@ -1,0 +1,64 @@
+From 981fb2de088b19fdb5e4f47439449695d6c49e67 Mon Sep 17 00:00:00 2001
+From: Langsdorff <131063968+clangsdorff@users.noreply.github.com>
+Date: Fri, 16 Oct 2026 00:49:31 +0300
+Subject: [PATCH] Nl80211Native: retry one-shot scans without random MAC when
+ the kernel rejects it
+
+---
+ .../server/wifi/nl80211/Nl80211Native.java    | 19 +++++++++++++++++--
+ 1 file changed, 17 insertions(+), 2 deletions(-)
+
+diff --git a/service/java/com/android/server/wifi/nl80211/Nl80211Native.java b/service/java/com/android/server/wifi/nl80211/Nl80211Native.java
+index 663c40d..d8e4e83 100644
+--- a/service/java/com/android/server/wifi/nl80211/Nl80211Native.java
++++ b/service/java/com/android/server/wifi/nl80211/Nl80211Native.java
+@@ -129,6 +129,7 @@ public class Nl80211Native {
+         public boolean associated;
+         public boolean scanning;
+         public boolean pnoScanStarted;
++        public boolean randomMacScanRejected;
+         public int enodevCounter;
+         public Nl80211Utils.WiphyInfo wiphyInfo;
+         public @Nullable byte[] associatedBssid;
+@@ -1341,7 +1342,8 @@ public class Nl80211Native {
+ 
+             boolean requestRandomMac =
+                     ifaceInfo.wiphyInfo.wiphyFeatures.supportsRandomMacOneShotScan
+-                            && !ifaceInfo.associated;
++                            && !ifaceInfo.associated
++                            && !ifaceInfo.randomMacScanRejected;
+ 
+             boolean enable6GhzRnr = false;
+             byte[] vendorIes = null;
+@@ -1367,6 +1369,18 @@ public class Nl80211Native {
+             int result = mNl80211Utils.triggerScan(ifaceInfo.ifIndex, scanFlags, freqs,
+                     trimmedHiddenSsids, vendorIes);
+ 
++            // Legacy cfg80211 (4.4) answers RANDOM_ADDR with EOPNOTSUPP on some qcacld wiphys.
++            if (result == WifiScanner.REASON_UNSPECIFIED && requestRandomMac) {
++                int retry = mNl80211Utils.triggerScan(ifaceInfo.ifIndex,
++                        scanFlags & ~NL80211_SCAN_FLAG_RANDOM_ADDR, freqs,
++                        trimmedHiddenSsids, vendorIes);
++                if (retry == WifiScanner.REASON_SUCCEEDED) {
++                    Log.w(TAG, "Random MAC scan rejected on " + ifaceName + ", disabling it");
++                    ifaceInfo.randomMacScanRejected = true;
++                }
++                result = retry;
++            }
++
+             if (result == WifiScanner.REASON_NO_DEVICE) {
+                 ifaceInfo.enodevCounter++;
+                 Log.e(TAG, "Scan failed with error ENODEV. Counter: " + ifaceInfo.enodevCounter);
+@@ -1639,7 +1653,8 @@ public class Nl80211Native {
+ 
+             Nl80211Utils.WiphyFeatures wiphyFeatures = ifaceInfo.wiphyInfo.wiphyFeatures;
+             boolean requestRandomMac = wiphyFeatures.supportsRandomMacSchedScan
+-                    && !ifaceInfo.associated;
++                    && !ifaceInfo.associated
++                    && !ifaceInfo.randomMacScanRejected;
+             boolean requestLowPower = wiphyFeatures.supportsLowPowerOneShotScan;
+             boolean requestSchedScanRelativeRssi = wiphyFeatures.supportsExtSchedScanRelativeRssi;
+ 
+-- 
+2.50.1 (Apple Git-155)
+
