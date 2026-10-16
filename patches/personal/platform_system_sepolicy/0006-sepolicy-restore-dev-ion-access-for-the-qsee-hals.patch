@@ -1,0 +1,60 @@
+From 5cd4e625c36b178491498f61d7fe5cc528844d3c Mon Sep 17 00:00:00 2001
+From: "Christopher A. Williamson" <contact@chrisaw.io>
+Date: Sun, 4 Oct 2026 20:09:57 +0100
+Subject: [PATCH] sepolicy: restore /dev/ion access for the qsee hals
+
+aosp's dma-buf migration dropped the ion rule from platform policy, and
+the trebledroid compat mapping only reinstates it for vndk 28.0-30.0
+vendors.  legacy keymaster, gatekeeper and fingerprint blobs that
+allocate qsee shared buffers via /dev/ion (observed on msm8998) are
+denied the open in enforcing mode and crash at startup in a loop.
+without keymaster, keystore2 never registers and vold blocks waiting on
+it -- boot stalls at the oem logo before zygote ever starts.  without
+gatekeeper the hal aborts with "Unable to open GateKeeper HAL".
+
+grant the hal_keymaster, hal_gatekeeper and hal_fingerprint attributes
+rw access so vendor-specific domains are covered regardless of compat
+mapping.
+---
+ private/hal_fingerprint.te | 2 ++
+ private/hal_gatekeeper.te  | 2 ++
+ private/hal_keymaster.te   | 5 +++++
+ 3 files changed, 9 insertions(+)
+
+diff --git a/private/hal_fingerprint.te b/private/hal_fingerprint.te
+index 861f62f..8f5310c 100644
+--- a/private/hal_fingerprint.te
++++ b/private/hal_fingerprint.te
+@@ -18,4 +18,6 @@ r_dir_file(hal_fingerprint, cgroup)
+ r_dir_file(hal_fingerprint, cgroup_v2)
+ r_dir_file({hal_fingerprint -coredomain}, sysfs)
+ 
++allow hal_fingerprint ion_device:chr_file rw_file_perms;
++
+ 
+diff --git a/private/hal_gatekeeper.te b/private/hal_gatekeeper.te
+index 8fa931b..1e7c421 100644
+--- a/private/hal_gatekeeper.te
++++ b/private/hal_gatekeeper.te
+@@ -6,3 +6,5 @@ binder_call(hal_gatekeeper_server, servicemanager)
+ 
+ # TEE access.
+ allow hal_gatekeeper tee_device:chr_file rw_file_perms;
++
++allow hal_gatekeeper ion_device:chr_file rw_file_perms;
+diff --git a/private/hal_keymaster.te b/private/hal_keymaster.te
+index 51c218f..80b0823 100644
+--- a/private/hal_keymaster.te
++++ b/private/hal_keymaster.te
+@@ -4,3 +4,8 @@ binder_call(hal_keymaster_client, hal_keymaster_server)
+ hal_attribute_hwservice(hal_keymaster, hal_keymaster_hwservice)
+ 
+ allow hal_keymaster tee_device:chr_file rw_file_perms;
++
++# legacy vendor keymaster blobs (e.g. qcom msm8998) allocate their qsee shared
++# buffers through /dev/ion; the dma-buf migration removed the rule for it, so
++# the hal dies at startup and vold blocks forever waiting on keystore2
++allow hal_keymaster ion_device:chr_file rw_file_perms;
+-- 
+2.50.1 (Apple Git-155)
+
