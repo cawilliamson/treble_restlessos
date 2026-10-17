@@ -1,0 +1,40 @@
+From f0638e0819188d5b6ce925ca9f9028d81d33efec Mon Sep 17 00:00:00 2001
+From: Langsdorff <131063968+clangsdorff@users.noreply.github.com>
+Date: Sun, 18 Oct 2026 02:38:59 +0300
+Subject: [PATCH 35/35] contextualsearch: enable circle to search through the
+ google app
+
+---
+ core/res/res/values/config.xml   | 2 +-
+ data/etc/framework-sysconfig.xml | 2 ++
+ 2 files changed, 3 insertions(+), 1 deletion(-)
+
+diff --git a/core/res/res/values/config.xml b/core/res/res/values/config.xml
+index c53d2c8..8d043ae 100644
+--- a/core/res/res/values/config.xml
++++ b/core/res/res/values/config.xml
+@@ -7739,7 +7739,7 @@
+     <bool name="config_watchlistUseFileHashesCache">false</bool>
+ 
+     <!-- Name of the package responsible to handle Contextual Search. -->
+-    <string name="config_defaultContextualSearchPackageName" translatable="false" />
++    <string name="config_defaultContextualSearchPackageName" translatable="false">com.google.android.googlequicksearchbox</string>
+ 
+     <!-- The key containing the entrypoint for Contextual Search. -->
+     <string name="config_defaultContextualSearchKey" translatable="false" />
+diff --git a/data/etc/framework-sysconfig.xml b/data/etc/framework-sysconfig.xml
+index 2162ec4..6f7da86 100644
+--- a/data/etc/framework-sysconfig.xml
++++ b/data/etc/framework-sysconfig.xml
+@@ -51,6 +51,8 @@
+     <backup-transport-whitelisted-service
+         service="com.android.encryptedlocaltransport/.EncryptedLocalTransportService" />
+ 
++    <feature name="android.software.contextualsearch" />
++
+     <!-- Whitelist Shell to use the bugreport API -->
+     <bugreport-whitelisted package="com.android.shell" />
+ 
+-- 
+2.50.1 (Apple Git-155)
+
