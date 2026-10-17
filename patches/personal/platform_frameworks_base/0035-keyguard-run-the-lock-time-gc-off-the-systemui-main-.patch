@@ -1,0 +1,60 @@
+From 171b0447597621b44a99c37b625b7d404192a690 Mon Sep 17 00:00:00 2001
+From: Langsdorff <131063968+clangsdorff@users.noreply.github.com>
+Date: Sat, 17 Oct 2026 15:05:25 +0300
+Subject: [PATCH 35/35] keyguard: run the lock-time gc off the systemui main thread
+ and the keyguard binder call
+
+---
+ .../android/systemui/keyguard/KeyguardViewMediator.java  | 8 +++++---
+ .../server/policy/keyguard/KeyguardServiceDelegate.java  | 9 ++++++---
+ 2 files changed, 11 insertions(+), 6 deletions(-)
+
+diff --git a/packages/SystemUI/src/com/android/systemui/keyguard/KeyguardViewMediator.java b/packages/SystemUI/src/com/android/systemui/keyguard/KeyguardViewMediator.java
+index ccd0baf..fa12de5 100644
+--- a/packages/SystemUI/src/com/android/systemui/keyguard/KeyguardViewMediator.java
++++ b/packages/SystemUI/src/com/android/systemui/keyguard/KeyguardViewMediator.java
+@@ -3294,9 +3294,11 @@ public class KeyguardViewMediator implements CoreStartable,
+             userActivity();
+             mUpdateMonitor.setKeyguardGoingAway(false);
+             mKeyguardViewControllerLazy.get().setKeyguardGoingAwayState(false);
+-            System.gc();
+-            System.runFinalization();
+-            System.gc();
++            mUiBgExecutor.execute(() -> {
++                System.gc();
++                System.runFinalization();
++                System.gc();
++            });
+             mShowKeyguardWakeLock.release();
+         }
+         mKeyguardDisplayManager.show();
+diff --git a/services/core/java/com/android/server/policy/keyguard/KeyguardServiceDelegate.java b/services/core/java/com/android/server/policy/keyguard/KeyguardServiceDelegate.java
+index 81c072b..9021433 100644
+--- a/services/core/java/com/android/server/policy/keyguard/KeyguardServiceDelegate.java
++++ b/services/core/java/com/android/server/policy/keyguard/KeyguardServiceDelegate.java
+@@ -38,6 +38,7 @@ import android.util.Log;
+ import android.util.Slog;
+ import android.util.proto.ProtoOutputStream;
+ 
++import com.android.internal.os.BackgroundThread;
+ import com.android.internal.policy.IKeyguardDismissCallback;
+ import com.android.internal.policy.IKeyguardDrawnCallback;
+ import com.android.internal.policy.IKeyguardExitCallback;
+@@ -234,9 +235,11 @@ public class KeyguardServiceDelegate {
+         }
+ 
+         if (showing) {
+-            System.gc();
+-            System.runFinalization();
+-            System.gc();
++            BackgroundThread.getExecutor().execute(() -> {
++                System.gc();
++                System.runFinalization();
++                System.gc();
++            });
+         }
+     }
+ 
+-- 
+2.50.1 (Apple Git-155)
+
