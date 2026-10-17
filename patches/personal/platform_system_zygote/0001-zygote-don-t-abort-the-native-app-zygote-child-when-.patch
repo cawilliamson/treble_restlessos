@@ -1,0 +1,46 @@
+From c1b4ea41d5f89014bebe3b04d67fcdb801b59833 Mon Sep 17 00:00:00 2001
+From: Langsdorff <131063968+clangsdorff@users.noreply.github.com>
+Date: Sun, 18 Oct 2026 02:19:44 +0300
+Subject: [PATCH] zygote: don't abort the native app zygote child when cgroup
+ setup fails on legacy kernels
+
+---
+ zygote/src/species/android_native.rs | 12 +++++++-----
+ 1 file changed, 7 insertions(+), 5 deletions(-)
+
+diff --git a/zygote/src/species/android_native.rs b/zygote/src/species/android_native.rs
+index 42b747e..d7bee85 100644
+--- a/zygote/src/species/android_native.rs
++++ b/zygote/src/species/android_native.rs
+@@ -318,11 +318,12 @@ impl Species for App {
+ 
+         // Create a cgroup for the process
+         if sys::getuid() == 0 {
+-            cgroup::create(
++            if let Err(err) = cgroup::create(
+                 spawn_params.uid.expect("No UID specified").try_into().expect("Invalid UID"),
+                 sys::getpid(),
+-            )
+-            .expect("Unable to create cgroup for process");
++            ) {
++                log::error!("Unable to create cgroup for process: {err:?}");
++            }
+         }
+ 
+         let policy = if let SpawnPayload::AndroidNative { top_app, .. } = spawn_payload {
+@@ -335,9 +336,10 @@ impl Species for App {
+             SchedPolicy::Default
+         };
+ 
+-        // Set the cpuset policy and panic on failure
+         if cpusets_enabled() {
+-            sys::android::set_cpuset_policy(0, policy).expect("Failed to set cpuset policy");
++            if let Err(err) = sys::android::set_cpuset_policy(0, policy) {
++                log::error!("Failed to set cpuset policy: {err:?}");
++            }
+         }
+ 
+         // Set the scheduling policy and panic on failure.  Must be called
+-- 
+2.50.1 (Apple Git-155)
+
