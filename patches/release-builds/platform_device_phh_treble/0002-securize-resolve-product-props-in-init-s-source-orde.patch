@@ -1,0 +1,118 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Langsdorff <131063968+clangsdorff@users.noreply.github.com>
+Date: Sun, 18 Oct 2026 11:27:13 +0300
+Subject: [PATCH] securize: resolve product props in init's source order
+
+---
+ rw-system.sh | 88 ++++++++++++++++++++++++----------------------------
+ 1 file changed, 41 insertions(+), 47 deletions(-)
+
+diff --git a/rw-system.sh b/rw-system.sh
+index 28b44cd..28c189e 100644
+--- a/rw-system.sh
++++ b/rw-system.sh
+@@ -793,6 +793,26 @@ copyprop() {
+     fi
+ }
+ 
++# same lookup order as init's ro.product.property_source_order
++device_prop() {
++    for partition in $device_prop_partitions; do
++        value="$(getprop "$partition.$1")"
++        if [ "$value" ]; then
++            echo "$value"
++            return
++        fi
++    done
++}
++
++copy_device_prop() {
++    value="$(device_prop "$1")"
++    [ "$value" ] || return
++    shift
++    for target in "$@"; do
++        resetprop_phh "$target" "$value"
++    done
++}
++
+ # OPPO/Realme devices with MTK vendor kernels include an oppo_root_check
+ # kernel module or init service that detects an unlocked bootloader and forces
+ # a reboot to recovery.  set the boot-state properties to "locked" so any
+@@ -875,53 +895,27 @@ if [ ! -f /metadata/securize_disable ]; then
+     copyprop ro.build.fingerprint ro.vendor.build.fingerprint
+     copyprop ro.system_ext.build.fingerprint ro.vendor.build.fingerprint
+     copyprop ro.product.build.fingerprint ro.vendor.build.fingerprint
+-    copyprop ro.build.device ro.vendor.product.device
+-    copyprop ro.product.system.device ro.vendor.product.device
+-    copyprop ro.product.device ro.vendor.product.device
+-    copyprop ro.product.system.device ro.product.vendor.device
+-    copyprop ro.product.device ro.product.vendor.device
+-    copyprop ro.product.system_ext.device ro.vendor.product.device
+-    copyprop ro.product.product.device ro.vendor.product.device
+-    copyprop ro.product.system_ext.device ro.product.vendor.device
+-    copyprop ro.product.product.device ro.product.vendor.device
+-    copyprop ro.product.system.name ro.vendor.product.name
+-    copyprop ro.product.name ro.vendor.product.name
+-    copyprop ro.product.system.name ro.product.vendor.name
+-    copyprop ro.product.name ro.product.vendor.name
+-    copyprop ro.product.system_ext.name ro.vendor.product.name
+-    copyprop ro.product.product.name ro.vendor.product.name
+-    copyprop ro.product.system_ext.name ro.product.vendor.name
+-    copyprop ro.product.product.name ro.product.vendor.name
+-    copyprop ro.system.product.brand ro.vendor.product.brand
+-    copyprop ro.product.brand ro.vendor.product.brand
+-    copyprop ro.product.system.brand ro.vendor.product.brand
+-    copyprop ro.product.system_ext.brand ro.vendor.product.brand
+-    copyprop ro.product.product.brand ro.product.vendor.brand
+-    copyprop ro.system.product.brand ro.product.vendor.brand
+-    copyprop ro.product.brand ro.product.vendor.brand
+-    copyprop ro.product.system.brand ro.product.vendor.brand
+-    copyprop ro.product.system_ext.brand ro.product.vendor.brand
+-    copyprop ro.product.product.brand ro.product.vendor.brand
+-    copyprop ro.product.system.model ro.vendor.product.model
+-    copyprop ro.product.model ro.vendor.product.model
+-    copyprop ro.product.system_ext.model ro.vendor.product.model
+-    copyprop ro.product.product.model ro.vendor.product.model
+-    copyprop ro.product.system.model ro.product.vendor.model
+-    copyprop ro.product.model ro.product.vendor.model
+-    copyprop ro.build.product ro.vendor.product.model
+-    copyprop ro.build.product ro.product.vendor.model
+-    copyprop ro.product.system_ext.model ro.product.vendor.model
+-    copyprop ro.product.product.model ro.product.vendor.model
+-    copyprop ro.system.product.manufacturer ro.vendor.product.manufacturer
+-    copyprop ro.product.manufacturer ro.vendor.product.manufacturer
+-    copyprop ro.product.system.manufacturer ro.vendor.product.manufacturer
+-    copyprop ro.product.product.manufacturer ro.vendor.product.manufacturer
+-    copyprop ro.product.system_ext.manufacturer ro.vendor.product.manufacturer
+-    copyprop ro.system.product.manufacturer ro.product.vendor.manufacturer
+-    copyprop ro.product.manufacturer ro.product.vendor.manufacturer
+-    copyprop ro.product.system.manufacturer ro.product.vendor.manufacturer
+-    copyprop ro.product.product.manufacturer ro.product.vendor.manufacturer
+-    copyprop ro.product.system_ext.manufacturer ro.product.vendor.manufacturer
++
++    # a deleted or GSI-provided product carries the system build date
++    device_prop_partitions="ro.product.odm ro.product.vendor ro.vendor.product"
++    if [ "$(getprop ro.product.build.date.utc)" != "$(getprop ro.system.build.date.utc)" ]; then
++        device_prop_partitions="ro.product.product $device_prop_partitions"
++    fi
++
++    copy_device_prop device \
++        ro.product.device ro.product.system.device ro.product.system_ext.device ro.product.product.device \
++        ro.build.device
++    copy_device_prop name \
++        ro.product.name ro.product.system.name ro.product.system_ext.name ro.product.product.name
++    copy_device_prop brand \
++        ro.product.brand ro.product.system.brand ro.product.system_ext.brand ro.product.product.brand \
++        ro.system.product.brand
++    copy_device_prop model \
++        ro.product.model ro.product.system.model ro.product.system_ext.model ro.product.product.model \
++        ro.build.product
++    copy_device_prop manufacturer \
++        ro.product.manufacturer ro.product.system.manufacturer ro.product.system_ext.manufacturer ro.product.product.manufacturer \
++        ro.system.product.manufacturer
+ 
+     # Hide system/xbin/su
+     mount /mnt/phh/empty_dir /system/xbin
+-- 
+2.50.1 (Apple Git-155)
+
