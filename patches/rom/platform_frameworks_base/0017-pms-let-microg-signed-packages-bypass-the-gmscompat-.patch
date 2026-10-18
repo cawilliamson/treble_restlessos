@@ -1,0 +1,57 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Langsdorff <131063968+clangsdorff@users.noreply.github.com>
+Date: Sun, 18 Oct 2026 10:57:01 +0300
+Subject: [PATCH 17/17] pms: let microg-signed packages bypass the gmscompat
+ installer checks
+
+---
+ .../core/java/com/android/server/pm/ComputerEngine.java    | 6 +++++-
+ .../com/android/server/pm/PackageInstallerSession.java     | 7 ++++++-
+ 2 files changed, 11 insertions(+), 2 deletions(-)
+
+diff --git a/services/core/java/com/android/server/pm/ComputerEngine.java b/services/core/java/com/android/server/pm/ComputerEngine.java
+index 162a80b..fe27de8 100644
+--- a/services/core/java/com/android/server/pm/ComputerEngine.java
++++ b/services/core/java/com/android/server/pm/ComputerEngine.java
+@@ -1499,8 +1499,12 @@ public class ComputerEngine implements Computer {
+                 !p.getPackageName().equals("com.google.android.gms")) {
+             return false;
+         }
++        return isMicrogSigned(p.getSigningDetails());
++    }
++
++    public static boolean isMicrogSigned(SigningDetails signingDetails) {
+         return Signature.areExactMatch(
+-                p.getSigningDetails(), new Signature[]{MICROG_REAL_SIGNATURE});
++                signingDetails, new Signature[]{MICROG_REAL_SIGNATURE});
+     }
+ 
+     private static Optional<Signature> generateFakeSignature(AndroidPackage p) {
+diff --git a/services/core/java/com/android/server/pm/PackageInstallerSession.java b/services/core/java/com/android/server/pm/PackageInstallerSession.java
+index 55450b0..56de5f5 100644
+--- a/services/core/java/com/android/server/pm/PackageInstallerSession.java
++++ b/services/core/java/com/android/server/pm/PackageInstallerSession.java
+@@ -5016,7 +5016,8 @@ public class PackageInstallerSession extends IPackageInstallerSession.Stub {
+         // {@link PackageLite#getTargetSdk()}
+         mValidatedTargetSdk = packageLite.getTargetSdk();
+ 
+-        if (mPackageName.equals(PackageId.GSF_NAME)) {
++        if (mPackageName.equals(PackageId.GSF_NAME)
++                && !ComputerEngine.isMicrogSigned(mSigningDetails)) {
+             // Installation of GSF is not needed for GmsCompat. However, other apps might use
+             // package that holds the GSF package name without permission checks since GSF is a
+             // preinstalled package on GMS Android.
+@@ -5043,6 +5044,10 @@ public class PackageInstallerSession extends IPackageInstallerSession.Stub {
+                 switch (mPackageName) {
+                     case PackageId.GMS_CORE_NAME:
+                     case PackageId.PLAY_STORE_NAME: {
++                        if (ComputerEngine.isMicrogSigned(mSigningDetails)) {
++                            break;
++                        }
++
+                         if (isInstallerPlayStore) {
+                             if (mVersionCode <= params.maxAllowedVersion) {
+                                 break;
+-- 
+2.50.1 (Apple Git-155)
+
