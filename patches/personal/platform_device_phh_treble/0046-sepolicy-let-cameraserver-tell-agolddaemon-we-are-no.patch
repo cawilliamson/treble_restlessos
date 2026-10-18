@@ -1,0 +1,26 @@
+From 9e7078a8705e5e26cbef6eea89d568776a62cdd9 Mon Sep 17 00:00:00 2001
+From: Langsdorff <131063968+clangsdorff@users.noreply.github.com>
+Date: Sun, 18 Oct 2026 18:05:10 +0300
+Subject: [PATCH 46/46] sepolicy: let cameraserver tell agolddaemon we are not
+ a gsi
+
+---
+ sepolicy/mediatek.te | 5 +++++
+ 1 file changed, 5 insertions(+)
+
+diff --git a/sepolicy/mediatek.te b/sepolicy/mediatek.te
+index 09ccd9d..d5750da 100644
+--- a/sepolicy/mediatek.te
++++ b/sepolicy/mediatek.te
+@@ -51,3 +51,8 @@ type fuelgauged_nvram, domain;
+ allow fuelgauged_nvram sysfs_dt_firmware_android:dir r_dir_perms;
+ allow fuelgauged_nvram sysfs_dt_firmware_android:file r_file_perms;
+ allow fuelgauged_nvram sysfs_dt_firmware_android:lnk_file r_file_perms;
++
++# unihertz: the camera hal hides the aux cameras until cameraserver calls setNotGsi on agolddaemon
++type hal_aidl_agolddaemon_service, service_manager_type;
++allow cameraserver hal_aidl_agolddaemon_service:service_manager find;
++binder_call(cameraserver, hal_aidl_agolddaemon_default);
+-- 
+2.50.1 (Apple Git-155)
+
