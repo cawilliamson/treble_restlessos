@@ -1,15 +1,15 @@
-From c1b4ea41d5f89014bebe3b04d67fcdb801b59833 Mon Sep 17 00:00:00 2001
+From 362f17a57f8f334f1b3c5a9c3f83e98a498981fe Mon Sep 17 00:00:00 2001
 From: Langsdorff <131063968+clangsdorff@users.noreply.github.com>
 Date: Sun, 18 Oct 2026 02:19:44 +0300
 Subject: [PATCH] zygote: don't abort the native app zygote child when cgroup
  setup fails on legacy kernels
 
 ---
- zygote/src/species/android_native.rs | 12 +++++++-----
- 1 file changed, 7 insertions(+), 5 deletions(-)
+ zygote/src/species/android_native.rs | 20 ++++++++++++--------
+ 1 file changed, 12 insertions(+), 8 deletions(-)
 
 diff --git a/zygote/src/species/android_native.rs b/zygote/src/species/android_native.rs
-index 42b747e..d7bee85 100644
+index 42b747e..20ea02c 100644
 --- a/zygote/src/species/android_native.rs
 +++ b/zygote/src/species/android_native.rs
 @@ -318,11 +318,12 @@ impl Species for App {
@@ -28,7 +28,7 @@ index 42b747e..d7bee85 100644
          }
  
          let policy = if let SpawnPayload::AndroidNative { top_app, .. } = spawn_payload {
-@@ -335,9 +336,10 @@ impl Species for App {
+@@ -335,14 +336,17 @@ impl Species for App {
              SchedPolicy::Default
          };
  
@@ -40,7 +40,17 @@ index 42b747e..d7bee85 100644
 +            }
          }
  
-         // Set the scheduling policy and panic on failure.  Must be called
+-        // Set the scheduling policy and panic on failure.  Must be called
+-        // before losing the permission to set scheduler policy.
+-        sys::android::set_sched_policy(0, policy).expect("Failed to set scheduler policy");
++        // Set the scheduling policy.  Must be called before losing the
++        // permission to set scheduler policy.
++        if let Err(err) = sys::android::set_sched_policy(0, policy) {
++            log::error!("Failed to set scheduler policy: {err:?}");
++        }
+ 
+         // We are going to lose the permission to set scheduler policy during
+         // the specialization, so make sure that we don't cache the fd of
 -- 
 2.50.1 (Apple Git-155)
 
