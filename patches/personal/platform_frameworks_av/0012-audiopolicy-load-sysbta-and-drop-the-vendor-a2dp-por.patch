@@ -1,0 +1,63 @@
+From b1907f09d9b95f8bffcb2224aae067e0c079cf42 Mon Sep 17 00:00:00 2001
+From: Langsdorff <131063968+clangsdorff@users.noreply.github.com>
+Date: Sun, 18 Oct 2026 15:46:15 +0300
+Subject: [PATCH 12/12] audiopolicy: load sysbta and drop the vendor a2dp ports on
+ aidl audio hals
+
+---
+ media/libaudiohal/impl/DevicesFactoryHalAidl.cpp         | 7 +++++++
+ .../common/managerdefinitions/src/AudioPolicyConfig.cpp  | 9 +++++++++
+ 2 files changed, 16 insertions(+)
+
+diff --git a/media/libaudiohal/impl/DevicesFactoryHalAidl.cpp b/media/libaudiohal/impl/DevicesFactoryHalAidl.cpp
+index a14a1fc..b4c2d36 100644
+--- a/media/libaudiohal/impl/DevicesFactoryHalAidl.cpp
++++ b/media/libaudiohal/impl/DevicesFactoryHalAidl.cpp
+@@ -156,6 +156,13 @@ status_t DevicesFactoryHalAidl::getDeviceNames(std::vector<std::string> *names)
+                 if (strcmp(instance, "default") == 0) instance = "primary";
+                 static_cast<decltype(names)>(context)->push_back(instance);
+             });
++    // sysbta replaces the vendor bluetooth modules when enabled
++    const bool useSysbta = property_get_bool("persist.bluetooth.system_audio_hal.enabled", false);
++    std::erase_if(*names, [useSysbta](const std::string& name) {
++        if (!useSysbta) return name == "sysbta";
++        return name == "a2dp" || name == "a2dpsink" || name == "bluetooth" ||
++                name == "bluetooth_qti";
++    });
+     std::sort(names->begin(), names->end(), [](const std::string& lhs,
+                     const std::string& rhs) {
+         // This order corresponds to the canonical order of modules as specified in
+diff --git a/services/audiopolicy/common/managerdefinitions/src/AudioPolicyConfig.cpp b/services/audiopolicy/common/managerdefinitions/src/AudioPolicyConfig.cpp
+index 1097341..cc66773 100644
+--- a/services/audiopolicy/common/managerdefinitions/src/AudioPolicyConfig.cpp
++++ b/services/audiopolicy/common/managerdefinitions/src/AudioPolicyConfig.cpp
+@@ -79,10 +79,18 @@ status_t aidl2legacy_AudioHwModule_HwModule(const media::AudioHwModule& aidl,
+     DeviceVector devicePorts;
+     const int defaultDeviceFlag = 1 << AudioPortDeviceExt::FLAG_INDEX_DEFAULT_DEVICE;
+     std::unordered_map<int32_t, sp<PolicyAudioPort>> ports;
++    // A2DP ports of the primary module interfere with sysbta
++    const bool eraseA2dp = aidl.name == AUDIO_HARDWARE_MODULE_ID_PRIMARY &&
++            property_get_bool("persist.bluetooth.system_audio_hal.enabled", false);
+     for (const auto& aidlPort : aidl.ports) {
+         const bool isInput = aidlPort.flags.getTag() == AudioIoFlags::input;
+         audio_port_v7 legacyPort = VALUE_OR_RETURN_STATUS(
+                 aidl2legacy_AudioPort_audio_port_v7(aidlPort, isInput));
++        if (eraseA2dp && legacyPort.type == AUDIO_PORT_TYPE_DEVICE &&
++                audio_is_a2dp_out_device(legacyPort.ext.device.type)) {
++            ALOGI("Erasing A2DP device port %s", aidlPort.name.c_str());
++            continue;
++        }
+         // This conversion fills out both 'hal' and 'sys' parts.
+         media::AudioPortFw fwPort = VALUE_OR_RETURN_STATUS(
+                 legacy2aidl_audio_port_v7_AudioPortFw(legacyPort));
+@@ -139,6 +147,7 @@ status_t aidl2legacy_AudioHwModule_HwModule(const media::AudioHwModule& aidl,
+     (*legacy)->setDeclaredDevices(devicePorts);
+     AudioRouteVector routes;
+     for (const auto& aidlRoute : aidl.routes) {
++        if (eraseA2dp && ports.count(aidlRoute.sinkPortId) == 0) continue;
+         sp<AudioRoute> legacy = VALUE_OR_RETURN_STATUS(aidl2legacy_AudioRoute(aidlRoute, ports));
+         routes.add(legacy);
+     }
+-- 
+2.50.1 (Apple Git-155)
+

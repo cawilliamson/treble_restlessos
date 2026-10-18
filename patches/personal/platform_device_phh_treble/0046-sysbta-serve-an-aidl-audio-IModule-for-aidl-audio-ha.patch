@@ -1,0 +1,253 @@
+From f04c59c867361757b67cebd04f4a6e6c4509ece2 Mon Sep 17 00:00:00 2001
+From: Langsdorff <131063968+clangsdorff@users.noreply.github.com>
+Date: Sun, 18 Oct 2026 11:51:10 +0300
+Subject: [PATCH 46/46] sysbta: serve an aidl audio IModule for aidl audio hals
+
+---
+ bluetooth/audio/hal/Android.bp                | 19 ++++
+ bluetooth/audio/hal/ModuleSysbta.cpp          | 90 +++++++++++++++++++
+ ...hardware.bluetooth.audio-service-system.rc |  4 +-
+ .../audio/hal/bluetooth_audio_system.xml      |  5 ++
+ bluetooth/audio/hal/service_system.cpp        |  3 +
+ .../BluetoothAudioSessionControl.h            |  3 +-
+ sepolicy/hal_audio_sysbta.te                  |  3 +
+ sepolicy/service_contexts                     |  1 +
+ 8 files changed, 126 insertions(+), 2 deletions(-)
+ create mode 100644 bluetooth/audio/hal/ModuleSysbta.cpp
+
+diff --git a/bluetooth/audio/hal/Android.bp b/bluetooth/audio/hal/Android.bp
+index c51d481..16c5eef 100644
+--- a/bluetooth/audio/hal/Android.bp
++++ b/bluetooth/audio/hal/Android.bp
+@@ -16,15 +16,27 @@ cc_binary {
+         "HfpSoftwareAudioProvider.cpp",
+         "LeAudioOffloadAudioProvider.cpp",
+         "LeAudioSoftwareAudioProvider.cpp",
++        "ModuleSysbta.cpp",
+         "service_system.cpp",
+     ],
+     header_libs: [
++        "libaudio_system_headers",
++        "libaudioaidl_headers",
+         "libhardware_headers",
+     ],
+     defaults: [
++        "latest_android_hardware_audio_core_ndk_shared",
++        "latest_android_hardware_audio_core_sounddose_ndk_shared",
+         "latest_android_hardware_bluetooth_audio_ndk_shared",
++        "latest_android_media_audio_common_types_ndk_shared",
++    ],
++    static_libs: [
++        "libaudioserviceexampleimpl_system",
+     ],
+     shared_libs: [
++        "libaudio_aidl_conversion_common_ndk",
++        "libaudioaidlcommon",
++        "libaudioutils",
+         "libbase",
+         "libbinder",
+         "libbinder_ndk",
+@@ -32,8 +44,15 @@ cc_binary {
+         "libfmq",
+         "libhidlbase",
+         "liblog",
++        "libmedia_helper",
++        "libstagefright_foundation",
+         "libutils",
+         "libbluetooth_audio_session_aidl_system",
++        "android.hardware.common-V2-ndk",
++        "android.hardware.common.fmq-V1-ndk",
++    ],
++    cflags: [
++        "-DBACKEND_NDK",
+     ],
+     required: [
+         // Audio HAL impls
+diff --git a/bluetooth/audio/hal/ModuleSysbta.cpp b/bluetooth/audio/hal/ModuleSysbta.cpp
+new file mode 100644
+index 0000000..27ef46e
+--- /dev/null
++++ b/bluetooth/audio/hal/ModuleSysbta.cpp
+@@ -0,0 +1,90 @@
++/*
++ * Copyright (C) 2026 The Android Open Source Project
++ *
++ * Licensed under the Apache License, Version 2.0 (the "License");
++ * you may not use this file except in compliance with the License.
++ * You may obtain a copy of the License at
++ *
++ *      http://www.apache.org/licenses/LICENSE-2.0
++ *
++ * Unless required by applicable law or agreed to in writing, software
++ * distributed under the License is distributed on an "AS IS" BASIS,
++ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
++ * See the License for the specific language governing permissions and
++ * limitations under the License.
++ */
++
++#define LOG_TAG "BtAudioModuleSysbta"
++
++#include <algorithm>
++#include <set>
++#include <string>
++
++#include <android/binder_manager.h>
++#include <utils/Log.h>
++
++#include "core-impl/ChildInterface.h"
++#include "core-impl/Configuration.h"
++#include "core-impl/DevicePortProxy.h"
++#include "core-impl/ModuleBluetoothBase.h"
++
++using ::aidl::android::hardware::audio::core::ChildInterface;
++using ::aidl::android::hardware::audio::core::Module;
++using ::aidl::android::hardware::audio::core::ModuleBluetoothBase;
++using ::android::bluetooth::audio::aidl::BluetoothAudioPort;
++using ::android::bluetooth::audio::aidl::BluetoothAudioPortAidlIn;
++using ::android::bluetooth::audio::aidl::BluetoothAudioPortAidlOut;
++
++// Referenced by the AOSP ModuleBluetooth, the sysbta provider factory is registered in main()
++extern "C" binder_status_t createIBluetoothAudioProviderFactory() { return STATUS_OK; }
++
++namespace {
++
++class ModuleSysbta final : public ModuleBluetoothBase {
++ public:
++  explicit ModuleSysbta(std::unique_ptr<Module::Configuration>&& config)
++      : ModuleBluetoothBase(std::move(config)) {}
++
++ protected:
++  std::shared_ptr<BluetoothAudioPort> createProxyInstance(bool isInput) override {
++    if (isInput) return std::make_shared<BluetoothAudioPortAidlIn>();
++    return std::make_shared<BluetoothAudioPortAidlOut>();
++  }
++};
++
++// Same ports as sysbta_audio_policy_configuration.xml: A2DP and hearing aid, no LE audio
++std::unique_ptr<Module::Configuration> getSysbtaConfiguration() {
++  static const std::set<std::string> kLeAudioPorts = {
++      "BLE Headset Out", "BLE Headset In", "le audio output", "le audio input"};
++  auto config = ::aidl::android::hardware::audio::core::internal::getConfiguration(
++      Module::Type::BLUETOOTH);
++  std::set<int32_t> erased;
++  std::erase_if(config->ports, [&](const auto& port) {
++    if (kLeAudioPorts.count(port.name) == 0) return false;
++    erased.insert(port.id);
++    config->connectedProfiles.erase(port.id);
++    return true;
++  });
++  std::erase_if(config->routes, [&](const auto& route) {
++    return erased.count(route.sinkPortId) != 0 ||
++           std::any_of(route.sourcePortIds.begin(), route.sourcePortIds.end(),
++                       [&](int32_t id) { return erased.count(id) != 0; });
++  });
++  return config;
++}
++
++}  // namespace
++
++void registerAudioModule() {
++  const std::string vendor_name = std::string() + Module::descriptor + "/default";
++  if (!AServiceManager_isDeclared(vendor_name.c_str())) return;
++  static ChildInterface<Module> module;
++  std::shared_ptr<Module> instance =
++      ::ndk::SharedRefBase::make<ModuleSysbta>(getSysbtaConfiguration());
++  module = std::move(instance);
++  const std::string instance_name = std::string() + Module::descriptor + "/sysbta";
++  binder_status_t status =
++      AServiceManager_addService(module.getBinder(), instance_name.c_str());
++  ALOGW_IF(status != STATUS_OK, "Could not register %s, status=%d",
++           instance_name.c_str(), status);
++}
+diff --git a/bluetooth/audio/hal/android.hardware.bluetooth.audio-service-system.rc b/bluetooth/audio/hal/android.hardware.bluetooth.audio-service-system.rc
+index 34be159..8f0bd08 100644
+--- a/bluetooth/audio/hal/android.hardware.bluetooth.audio-service-system.rc
++++ b/bluetooth/audio/hal/android.hardware.bluetooth.audio-service-system.rc
+@@ -3,7 +3,9 @@ service system.bt-audio-hal /system/bin/hw/android.hardware.bluetooth.audio-serv
+     user audioserver
+     # media gid needed for /dev/fm (radio) and for /data/misc/media (tee)
+     group audio camera drmrpc inet media mediadrm net_bt net_bt_admin net_bw_acct wakelock context_hub
+-    capabilities BLOCK_SUSPEND
++    capabilities BLOCK_SUSPEND SYS_NICE
++    # setting RLIMIT_RTPRIO allows binder RT priority inheritance
++    rlimit rtprio 10 10
+     ioprio rt 4
+     task_profiles ProcessCapacityHigh HighPerformance
+     onrestart restart audioserver
+diff --git a/bluetooth/audio/hal/bluetooth_audio_system.xml b/bluetooth/audio/hal/bluetooth_audio_system.xml
+index 1d469e8..9658dea 100644
+--- a/bluetooth/audio/hal/bluetooth_audio_system.xml
++++ b/bluetooth/audio/hal/bluetooth_audio_system.xml
+@@ -4,6 +4,11 @@
+         <version>4</version>
+         <fqname>IBluetoothAudioProviderFactory/sysbta</fqname>
+     </hal>
++    <hal format="aidl">
++        <name>android.hardware.audio.core</name>
++        <version>4</version>
++        <fqname>IModule/sysbta</fqname>
++    </hal>
+     <hal>
+         <name>android.hardware.audio</name>
+         <transport>hwbinder</transport>
+diff --git a/bluetooth/audio/hal/service_system.cpp b/bluetooth/audio/hal/service_system.cpp
+index 515bb44..4f244f8 100644
+--- a/bluetooth/audio/hal/service_system.cpp
++++ b/bluetooth/audio/hal/service_system.cpp
+@@ -37,6 +37,8 @@ using ::aidl::android::hardware::bluetooth::audio::
+ #define HAL_LIBRARY_PATH "/system/lib/hw"
+ #endif
+ 
++void registerAudioModule();
++
+ void registerAudioInterfaces() {
+   const char *interface_libs[] = {
+     "android.hardware.audio@2.0-impl-system.so",
+@@ -87,6 +89,7 @@ int main() {
+   // We must also implement audio HAL interfaces in order to serve audio.sysbta.default.so
+   // It must be served in the *same* process to access the same libbluetooth_audio_session
+   registerAudioInterfaces();
++  registerAudioModule();
+ 
+   ::android::hardware::joinRpcThreadpool();
+ }
+diff --git a/bluetooth/audio/utils/aidl_session/BluetoothAudioSessionControl.h b/bluetooth/audio/utils/aidl_session/BluetoothAudioSessionControl.h
+index 5263222..dac49ce 100644
+--- a/bluetooth/audio/utils/aidl_session/BluetoothAudioSessionControl.h
++++ b/bluetooth/audio/utils/aidl_session/BluetoothAudioSessionControl.h
+@@ -30,7 +30,8 @@ class BluetoothAudioSessionControl {
+    * The control API helps to check if session is ready or not
+    * @return: true if the Bluetooth stack has started th specified session
+    ***/
+-  static bool IsSessionReady(const SessionType& session_type) {
++  static bool IsSessionReady(const SessionType& session_type,
++                             bool /*is_primary_hal*/ = true) {
+     std::shared_ptr<BluetoothAudioSession> session_ptr =
+         BluetoothAudioSessionInstance::GetSessionInstance(session_type);
+     if (session_ptr != nullptr) {
+diff --git a/sepolicy/hal_audio_sysbta.te b/sepolicy/hal_audio_sysbta.te
+index d871ed3..a9ddb76 100644
+--- a/sepolicy/hal_audio_sysbta.te
++++ b/sepolicy/hal_audio_sysbta.te
+@@ -8,3 +8,6 @@ hal_client_domain(hal_audio_sysbta, hal_allocator)
+ 
+ # allow audioserver to call hal_audio dump with its own fd to retrieve status
+ allow hal_audio_sysbta audioserver:fifo_file write;
++
++# AIDL IModule stream workers run at audio priority
++allow hal_audio_sysbta self:global_capability_class_set sys_nice;
+diff --git a/sepolicy/service_contexts b/sepolicy/service_contexts
+index 75491c6..2d87aa6 100644
+--- a/sepolicy/service_contexts
++++ b/sepolicy/service_contexts
+@@ -11,6 +11,7 @@ mtkIms                                    u:object_r:radio_service:s0
+ 
+ # Audio AIDL interface
+ android.hardware.bluetooth.audio.IBluetoothAudioProviderFactory/sysbta    u:object_r:hal_audio_service:s0
++android.hardware.audio.core.IModule/sysbta                                u:object_r:hal_audio_service:s0
+ 
+ # Fingerprint
+ android.hardware.biometrics.fingerprint.IFingerprint/defaultHIDL     u:object_r:fingerprint_hidl_service:s0
+-- 
+2.50.1 (Apple Git-155)
+

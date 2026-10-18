@@ -1,0 +1,128 @@
+From ed7f7f952305cc0cb7d4904da65be41c564fa711 Mon Sep 17 00:00:00 2001
+From: Langsdorff <131063968+clangsdorff@users.noreply.github.com>
+Date: Sun, 18 Oct 2026 11:50:58 +0300
+Subject: [PATCH 2/2] audio: build the aidl example module library for the system
+ side sysbta
+
+---
+ audio/aidl/default/Android.bp | 107 ++++++++++++++++++++++++++++++++++
+ 1 file changed, 107 insertions(+)
+
+diff --git a/audio/aidl/default/Android.bp b/audio/aidl/default/Android.bp
+index f46c2ee..4f82c10 100644
+--- a/audio/aidl/default/Android.bp
++++ b/audio/aidl/default/Android.bp
+@@ -469,3 +469,110 @@ prebuilt_etc {
+         default: false,
+     }),
+ }
++
++// System side copy for sysbta, linked against the system bluetooth audio session
++cc_library_static {
++    name: "libaudioserviceexampleimpl_system",
++    defaults: [
++        "latest_android_media_audio_common_types_ndk_shared",
++        "latest_android_hardware_audio_core_ndk_shared",
++        "latest_android_hardware_audio_core_sounddose_ndk_shared",
++        "latest_android_hardware_bluetooth_audio_ndk_shared",
++    ],
++    export_include_dirs: ["include"],
++    srcs: [
++        "AidlConversionXsdc.cpp",
++        "AudioPolicyConfigXmlConverter.cpp",
++        "Bluetooth.cpp",
++        "CapEngineConfigXmlConverter.cpp",
++        "Config.cpp",
++        "Configuration.cpp",
++        "EngineConfigXmlConverter.cpp",
++        "Module.cpp",
++        "ModulePrimary.cpp",
++        "SoundDose.cpp",
++        "Stream.cpp",
++        "Telephony.cpp",
++        "XsdcConversion.cpp",
++        "alsa/Mixer.cpp",
++        "alsa/ModuleAlsa.cpp",
++        "alsa/StreamAlsa.cpp",
++        "alsa/StreamAlsaBase.cpp",
++        "alsa/StreamAlsaMonoPipe.cpp",
++        "alsa/UtilsAlsa.cpp",
++        "bluetooth/DevicePortProxy.cpp",
++        "bluetooth/ModuleBluetoothBase.cpp",
++        "bluetooth/ModuleBluetooth.cpp",
++        "bluetooth/StreamBluetooth.cpp",
++        "deprecated/StreamSwitcher.cpp",
++        "primary/PrimaryMixer.cpp",
++        "primary/StreamPrimary.cpp",
++        "r_submix/ModuleRemoteSubmix.cpp",
++        "r_submix/SubmixRoute.cpp",
++        "r_submix/StreamRemoteSubmix.cpp",
++        "stub/ApeHeader.cpp",
++        "stub/DriverStubImpl.cpp",
++        "stub/ModuleStub.cpp",
++        "stub/MpegAudioHeader.cpp",
++        "stub/StreamMmapStub.cpp",
++        "stub/StreamOffloadStub.cpp",
++        "stub/StreamStub.cpp",
++        "usb/ModuleUsb.cpp",
++        "usb/StreamUsb.cpp",
++        "usb/UsbAlsaMixerControl.cpp",
++    ],
++    generated_sources: [
++        "audio_policy_capengine_configuration_aidl_default",
++        "audio_policy_configuration_aidl_default",
++        "audio_policy_engine_configuration_aidl_default",
++    ],
++    generated_headers: [
++        "audio_policy_capengine_configuration_aidl_default",
++        "audio_policy_configuration_aidl_default",
++        "audio_policy_engine_configuration_aidl_default",
++    ],
++    export_generated_headers: [
++        "audio_policy_capengine_configuration_aidl_default",
++        "audio_policy_configuration_aidl_default",
++        "audio_policy_engine_configuration_aidl_default",
++    ],
++    shared_libs: [
++        "libalsautilsv2",
++        "libaudio_aidl_conversion_common_ndk",
++        "libaudioaidlcommon",
++        "libaudioutils",
++        "libbase",
++        "libbinder_ndk",
++        "libbluetooth_audio_session_aidl_system",
++        "libcutils",
++        "libfmq",
++        "liblog",
++        "libmedia_helper",
++        "libmediautils_vendor",
++        "libnbaio",
++        "libstagefright_foundation",
++        "libtinyalsav2",
++        "libutils",
++        "libxml2",
++        "android.hardware.common-V2-ndk",
++        "android.hardware.common.fmq-V1-ndk",
++    ],
++    export_shared_lib_headers: [
++        "libaudio_aidl_conversion_common_ndk",
++    ],
++    header_libs: [
++        "libaudio_system_headers",
++        "libaudioaidl_headers",
++        "libxsdc-utils",
++    ],
++    cflags: [
++        "-Wall",
++        "-Wextra",
++        "-Werror",
++        "-Wthread-safety",
++        "-DBACKEND_NDK",
++    ] + select(release_flag("RELEASE_HARDWARE_AUDIO_USE_CAP_AIDL"), {
++        true: [],
++        default: ["-DDISABLE_CAP_AIDL"],
++    }),
++}
+-- 
+2.50.1 (Apple Git-155)
+
