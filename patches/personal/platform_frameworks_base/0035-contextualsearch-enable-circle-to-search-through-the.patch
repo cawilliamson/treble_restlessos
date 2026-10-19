@@ -23,14 +23,14 @@ index c53d2c8..8d043ae 100644
      <!-- The key containing the entrypoint for Contextual Search. -->
      <string name="config_defaultContextualSearchKey" translatable="false" />
 diff --git a/data/etc/framework-sysconfig.xml b/data/etc/framework-sysconfig.xml
-index 2162ec4..6f7da86 100644
+index 2162ec4..6334c2a 100644
 --- a/data/etc/framework-sysconfig.xml
 +++ b/data/etc/framework-sysconfig.xml
 @@ -51,6 +51,8 @@
      <backup-transport-whitelisted-service
          service="com.android.encryptedlocaltransport/.EncryptedLocalTransportService" />
  
-+    <feature name="android.software.contextualsearch" />
++    <feature name="com.google.android.feature.CONTEXTUAL_SEARCH" />
 +
      <!-- Whitelist Shell to use the bugreport API -->
      <bugreport-whitelisted package="com.android.shell" />
