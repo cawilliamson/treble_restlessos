@@ -1,43 +1,43 @@
-From 362f17a57f8f334f1b3c5a9c3f83e98a498981fe Mon Sep 17 00:00:00 2001
+From 2bfa5618b413106220a0f778f6ca2839bc168631 Mon Sep 17 00:00:00 2001
 From: Langsdorff <131063968+clangsdorff@users.noreply.github.com>
 Date: Sun, 18 Oct 2026 02:19:44 +0300
-Subject: [PATCH] zygote: don't abort the native app zygote child when cgroup
- setup fails on legacy kernels
+Subject: [PATCH 1/1] zygote: don't abort the native app zygote child when
+ cgroup setup fails on legacy kernels
 
 ---
- zygote/src/species/android_native.rs | 20 ++++++++++++--------
- 1 file changed, 12 insertions(+), 8 deletions(-)
+ zygote/src/species/android_native.rs | 20 +++++++++++---------
+ 1 file changed, 11 insertions(+), 9 deletions(-)
 
 diff --git a/zygote/src/species/android_native.rs b/zygote/src/species/android_native.rs
-index 42b747e..20ea02c 100644
+index 42b747e..8ea9010 100644
 --- a/zygote/src/species/android_native.rs
 +++ b/zygote/src/species/android_native.rs
-@@ -318,11 +318,12 @@ impl Species for App {
+@@ -317,12 +317,13 @@ impl Species for App {
+         }
  
          // Create a cgroup for the process
-         if sys::getuid() == 0 {
+-        if sys::getuid() == 0 {
 -            cgroup::create(
-+            if let Err(err) = cgroup::create(
++        if sys::getuid() == 0
++            && let Err(err) = cgroup::create(
                  spawn_params.uid.expect("No UID specified").try_into().expect("Invalid UID"),
                  sys::getpid(),
--            )
+             )
 -            .expect("Unable to create cgroup for process");
-+            ) {
-+                log::error!("Unable to create cgroup for process: {err:?}");
-+            }
++        {
++            log::error!("Unable to create cgroup for process: {err:?}");
          }
  
          let policy = if let SpawnPayload::AndroidNative { top_app, .. } = spawn_payload {
-@@ -335,14 +336,17 @@ impl Species for App {
+@@ -335,14 +336,15 @@ impl Species for App {
              SchedPolicy::Default
          };
  
 -        // Set the cpuset policy and panic on failure
-         if cpusets_enabled() {
+-        if cpusets_enabled() {
 -            sys::android::set_cpuset_policy(0, policy).expect("Failed to set cpuset policy");
-+            if let Err(err) = sys::android::set_cpuset_policy(0, policy) {
-+                log::error!("Failed to set cpuset policy: {err:?}");
-+            }
++        if cpusets_enabled() && let Err(err) = sys::android::set_cpuset_policy(0, policy) {
++            log::error!("Failed to set cpuset policy: {err:?}");
          }
  
 -        // Set the scheduling policy and panic on failure.  Must be called
