@@ -1,0 +1,39 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Langsdorff <131063968+clangsdorff@users.noreply.github.com>
+Date: Mon, 19 Oct 2026 03:32:18 +0300
+Subject: [PATCH 2/2] Revert "include boot animation"
+
+This reverts GrapheneOS commit 90e8e1d7f2. RestlessOS ships its own
+boot animation in /system/media, which the product copy would shadow.
+---
+ target/product/base_product.mk    | 1 -
+ target/product/generic/Android.bp | 1 -
+ 2 files changed, 2 deletions(-)
+
+diff --git a/target/product/base_product.mk b/target/product/base_product.mk
+index 612fa4c..3b23c0b 100644
+--- a/target/product/base_product.mk
++++ b/target/product/base_product.mk
+@@ -16,7 +16,6 @@
+ 
+ # Base modules and settings for the product partition.
+ PRODUCT_PACKAGES += \
+-    bootanimation_zip \
+     build_flag_product \
+     fs_config_dirs_product \
+     fs_config_files_product \
+diff --git a/target/product/generic/Android.bp b/target/product/generic/Android.bp
+index e7ddf8d..edef3a8 100644
+--- a/target/product/generic/Android.bp
++++ b/target/product/generic/Android.bp
+@@ -433,7 +433,6 @@ android_filesystem_defaults {
+         ///////////////////////////////////////////
+ 
+         // Base modules and settings for the product partition.
+-        "bootanimation_zip",
+         "build_flag_product",
+         "fs_config_dirs_product",
+         "fs_config_files_product",
+-- 
+2.50.1 (Apple Git-155)
+
