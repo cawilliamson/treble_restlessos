@@ -1,0 +1,298 @@
+From 3795425a4656d44fa547d6a2f2e2124fd2ceea71 Mon Sep 17 00:00:00 2001
+From: Langsdorff <131063968+clangsdorff@users.noreply.github.com>
+Date: Tue, 20 Oct 2026 22:02:08 +0300
+Subject: [PATCH 3/3] overlay: restore the samsung galaxy a14 framework and
+ systemui overlays
+
+---
+ Samsung/A14-SystemUI/Android.mk            |   8 ++
+ Samsung/A14-SystemUI/AndroidManifest.xml   |  10 ++
+ Samsung/A14-SystemUI/res/values/dimens.xml |   4 +
+ Samsung/A14/Android.mk                     |   8 ++
+ Samsung/A14/AndroidManifest.xml            |  10 ++
+ Samsung/A14/res/values/config.xml          |  50 +++++++++
+ Samsung/A14/res/xml/power_profile.xml      | 125 +++++++++++++++++++++
+ overlay.mk                                 |   2 +
+ 8 files changed, 217 insertions(+)
+ create mode 100644 Samsung/A14-SystemUI/Android.mk
+ create mode 100644 Samsung/A14-SystemUI/AndroidManifest.xml
+ create mode 100644 Samsung/A14-SystemUI/res/values/dimens.xml
+ create mode 100644 Samsung/A14/Android.mk
+ create mode 100644 Samsung/A14/AndroidManifest.xml
+ create mode 100644 Samsung/A14/res/values/config.xml
+ create mode 100644 Samsung/A14/res/xml/power_profile.xml
+
+diff --git a/Samsung/A14-SystemUI/Android.mk b/Samsung/A14-SystemUI/Android.mk
+new file mode 100644
+index 0000000..c529ea7
+--- /dev/null
++++ b/Samsung/A14-SystemUI/Android.mk
+@@ -0,0 +1,8 @@
++LOCAL_PATH := $(call my-dir)
++include $(CLEAR_VARS)
++LOCAL_MODULE_TAGS := optional
++LOCAL_PACKAGE_NAME := treble-overlay-samsung-a14-systemui
++LOCAL_MODULE_PATH := $(TARGET_OUT_PRODUCT)/overlay
++LOCAL_IS_RUNTIME_RESOURCE_OVERLAY := true
++LOCAL_PRIVATE_PLATFORM_APIS := true
++include $(BUILD_PACKAGE)
+diff --git a/Samsung/A14-SystemUI/AndroidManifest.xml b/Samsung/A14-SystemUI/AndroidManifest.xml
+new file mode 100644
+index 0000000..bd91503
+--- /dev/null
++++ b/Samsung/A14-SystemUI/AndroidManifest.xml
+@@ -0,0 +1,10 @@
++<manifest xmlns:android="http://schemas.android.com/apk/res/android"
++        package="me.phh.treble.overlay.samsung.a14.systemui"
++        android:versionCode="1"
++        android:versionName="1.0">
++        <overlay android:targetPackage="com.android.systemui"
++                android:requiredSystemPropertyName="ro.vendor.build.fingerprint"
++                android:requiredSystemPropertyValue="+*samsung/a14*"
++                android:priority="985"
++                android:isStatic="true" />
++</manifest>
+diff --git a/Samsung/A14-SystemUI/res/values/dimens.xml b/Samsung/A14-SystemUI/res/values/dimens.xml
+new file mode 100644
+index 0000000..fa458d2
+--- /dev/null
++++ b/Samsung/A14-SystemUI/res/values/dimens.xml
+@@ -0,0 +1,4 @@
++<?xml version="1.0" encoding="utf-8"?>
++<resources>
++    <dimen name="status_bar_padding_start">35px</dimen>
++</resources>
+diff --git a/Samsung/A14/Android.mk b/Samsung/A14/Android.mk
+new file mode 100644
+index 0000000..9c6d99a
+--- /dev/null
++++ b/Samsung/A14/Android.mk
+@@ -0,0 +1,8 @@
++LOCAL_PATH := $(call my-dir)
++include $(CLEAR_VARS)
++LOCAL_MODULE_TAGS := optional
++LOCAL_PACKAGE_NAME := treble-overlay-samsung-a14
++LOCAL_MODULE_PATH := $(TARGET_OUT_PRODUCT)/overlay
++LOCAL_IS_RUNTIME_RESOURCE_OVERLAY := true
++LOCAL_PRIVATE_PLATFORM_APIS := true
++include $(BUILD_PACKAGE)
+diff --git a/Samsung/A14/AndroidManifest.xml b/Samsung/A14/AndroidManifest.xml
+new file mode 100644
+index 0000000..e634837
+--- /dev/null
++++ b/Samsung/A14/AndroidManifest.xml
+@@ -0,0 +1,10 @@
++<manifest xmlns:android="http://schemas.android.com/apk/res/android"
++        package="me.phh.treble.overlay.samsung.a14"
++        android:versionCode="1"
++        android:versionName="1.0">
++        <overlay android:targetPackage="android"
++                android:requiredSystemPropertyName="ro.vendor.build.fingerprint"
++                android:requiredSystemPropertyValue="+*samsung/a14*"
++                android:priority="983"
++                android:isStatic="true" />
++</manifest>
+diff --git a/Samsung/A14/res/values/config.xml b/Samsung/A14/res/values/config.xml
+new file mode 100644
+index 0000000..96d7340
+--- /dev/null
++++ b/Samsung/A14/res/values/config.xml
+@@ -0,0 +1,50 @@
++<?xml version="1.0" encoding="utf-8"?>
++<resources>
++    <bool name="config_automatic_brightness_available">true</bool>
++    <integer-array name="config_autoBrightnessLevels">
++        <item>8</item>
++        <item>15</item>
++        <item>30</item>
++        <item>50</item>
++        <item>70</item>
++        <item>100</item>
++        <item>200</item>
++        <item>300</item>
++        <item>500</item>
++        <item>700</item>
++        <item>1000</item>
++        <item>2000</item>
++        <item>3000</item>
++        <item>4000</item>
++    </integer-array>
++    <integer-array name="config_autoBrightnessLcdBacklightValues">
++        <item>7</item>
++        <item>34</item>
++        <item>50</item>
++        <item>70</item>
++        <item>73</item>
++        <item>75</item>
++        <item>78</item>
++        <item>81</item>
++        <item>85</item>
++        <item>95</item>
++        <item>108</item>
++        <item>129</item>
++        <item>194</item>
++        <item>255</item>
++        <item>255</item>
++    </integer-array>
++    <integer name="config_screenBrightnessSettingMinimum">1</integer>
++    <integer name="config_screenBrightnessSettingMaximum">255</integer>
++    <integer name="config_screenBrightnessSettingDefault">128</integer>
++    <integer name="config_screenBrightnessDim">7</integer>
++    <item type="dimen" name="config_screenBrightnessSettingMinimumFloat">0.003921569</item>
++    <item type="dimen" name="config_screenBrightnessSettingMaximumFloat">1.0</item>
++    <item type="dimen" name="config_screenBrightnessSettingDefaultFloat">0.5019608</item>
++    <item type="dimen" name="config_screenBrightnessDimFloat">0.02745098</item>
++    <item type="dimen" name="config_letterboxHorizontalPositionMultiplier">0.5</item>
++    <item type="dimen" name="config_letterboxVerticalPositionMultiplier">0.5</item>
++    <dimen name="status_bar_height_portrait">4.069977mm</dimen>
++    <string name="config_mainBuiltInDisplayCutout">M 0,0 H -25.6 V 22.75555555555556 H 25.6 V 0 H 0 Z @dp</string>
++    <bool name="config_supportAudioSourceUnprocessed">false</bool>
++</resources>
+diff --git a/Samsung/A14/res/xml/power_profile.xml b/Samsung/A14/res/xml/power_profile.xml
+new file mode 100644
+index 0000000..02dd168
+--- /dev/null
++++ b/Samsung/A14/res/xml/power_profile.xml
+@@ -0,0 +1,125 @@
++<?xml version="1.0" encoding="utf-8"?>
++<device name="Android">
++    <item name="none">0</item>
++    <item name="screen.on">68</item>
++    <item name="screen.full">279.4</item>
++    <item name="audio">26.8</item>
++    <item name="video">25</item>
++    <item name="camera.avg">164.25</item>
++    <item name="camera.flashlight">48.52</item>
++    <item name="radio.scanning">55.2</item>
++    <array name="radio.on">
++        <value>1.88</value>
++        <value>1.88</value>
++    </array>
++    <item name="modem.controller.sleep">0</item>
++    <item name="modem.controller.idle">83</item>
++    <item name="modem.controller.rx">92</item>
++    <array name="modem.controller.tx">
++        <value>132</value>
++        <value>157</value>
++        <value>214</value>
++        <value>331</value>
++        <value>398</value>
++    </array>
++    <item name="modem.controller.voltage">3700</item>
++    <item name="wifi.controller.idle">1</item>
++    <item name="wifi.controller.rx">38</item>
++    <item name="wifi.controller.tx">345</item>
++    <array name="wifi.controller.tx_levels">
++        <value>0</value>
++    </array>
++    <item name="wifi.controller.voltage">3600</item>
++    <array name="wifi.batchedscan">
++        <value>.0002</value>
++        <value>.002</value>
++        <value>.02</value>
++        <value>.2</value>
++        <value>2</value>
++    </array>
++    <item name="gps.on">49</item>
++    <item name="bluetooth.controller.idle">1</item>
++    <item name="bluetooth.controller.rx">15</item>
++    <item name="bluetooth.controller.tx">55</item>
++    <item name="bluetooth.controller.voltage">3600</item>
++    <item name="cpu.suspend">3.37</item>
++    <item name="cpu.idle">15.2</item>
++    <array name="cpu.clusters.cores">
++        <value>4</value>
++        <value>4</value>
++    </array>
++    <array name="cpu.core_speeds.cluster0">
++        <value>546000</value>
++        <value>650000</value>
++        <value>806000</value>
++        <value>949000</value>
++        <value>1053000</value>
++        <value>1157000</value>
++        <value>1300000</value>
++        <value>1456000</value>
++        <value>1586000</value>
++        <value>1742000</value>
++        <value>1846000</value>
++        <value>2002000</value>
++    </array>
++    <array name="cpu.core_power.cluster0">
++        <value>16.6</value>
++        <value>18.2</value>
++        <value>21.4</value>
++        <value>24.1</value>
++        <value>27.0</value>
++        <value>30.5</value>
++        <value>39.6</value>
++        <value>46.7</value>
++        <value>53.4</value>
++        <value>65.7</value>
++        <value>76.8</value>
++        <value>95.7</value>
++    </array>
++    <array name="cpu.core_speeds.cluster1">
++        <value>546000</value>
++        <value>650000</value>
++        <value>806000</value>
++        <value>949000</value>
++        <value>1053000</value>
++        <value>1157000</value>
++        <value>1300000</value>
++        <value>1456000</value>
++        <value>1586000</value>
++        <value>1742000</value>
++        <value>1846000</value>
++        <value>2002000</value>
++    </array>
++    <array name="cpu.core_power.cluster1">
++        <value>16.6</value>
++        <value>18.2</value>
++        <value>21.4</value>
++        <value>24.1</value>
++        <value>27.0</value>
++        <value>30.5</value>
++        <value>39.6</value>
++        <value>46.7</value>
++        <value>53.4</value>
++        <value>65.7</value>
++        <value>76.8</value>
++        <value>95.7</value>
++    </array>
++    <array name="gpu.active">
++        <value>42.9</value>
++        <value>50.1</value>
++        <value>69.8</value>
++        <value>91.9</value>
++        <value>123.6</value>
++        <value>159.5</value>
++    </array>
++    <array name="gpu.speeds">
++        <value>377000</value>
++        <value>433000</value>
++        <value>598000</value>
++        <value>754000</value>
++        <value>865000</value>
++        <value>1001000</value>
++    </array>
++    <item name="battery.capacity">4900</item>
++    <item name="battery.typical.capacity">5000</item>
++</device>
+\ No newline at end of file
+diff --git a/overlay.mk b/overlay.mk
+index abc2122..7058c43 100644
+--- a/overlay.mk
++++ b/overlay.mk
+@@ -240,6 +240,8 @@ PRODUCT_PACKAGES += \
+ 	treble-overlay-samsung-a02q-systemui \
+ 	treble-overlay-samsung-a03 \
+ 	treble-overlay-samsung-a10s \
++	treble-overlay-samsung-a14 \
++	treble-overlay-samsung-a14-systemui \
+ 	treble-overlay-samsung-a20 \
+ 	treble-overlay-samsung-a20s \
+ 	treble-overlay-samsung-a20s-systemui \
+-- 
+2.50.1 (Apple Git-155)
+
