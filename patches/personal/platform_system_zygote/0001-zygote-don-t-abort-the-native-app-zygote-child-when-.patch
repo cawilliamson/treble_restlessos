@@ -1,13 +1,27 @@
-From 2bfa5618b413106220a0f778f6ca2839bc168631 Mon Sep 17 00:00:00 2001
+From 52fd4958f6391001dc17944e31447344ed8dba5d Mon Sep 17 00:00:00 2001
 From: Langsdorff <131063968+clangsdorff@users.noreply.github.com>
 Date: Sun, 18 Oct 2026 02:19:44 +0300
 Subject: [PATCH 1/1] zygote: don't abort the native app zygote child when
  cgroup setup fails on legacy kernels
 
 ---
+ zygote/src/child_process.rs          |  2 +-
  zygote/src/species/android_native.rs | 20 +++++++++++---------
- 1 file changed, 11 insertions(+), 9 deletions(-)
+ 2 files changed, 12 insertions(+), 10 deletions(-)
 
+diff --git a/zygote/src/child_process.rs b/zygote/src/child_process.rs
+index 9d91cbd..310f0bf 100644
+--- a/zygote/src/child_process.rs
++++ b/zygote/src/child_process.rs
+@@ -90,7 +90,7 @@ pub(crate) fn re_initialize(
+     if let Some(cap_bound) = spawn_params.cap_bound {
+         for flag in cap_bound.complement().iter() {
+             let cap = Capability::try_from(flag.bits().trailing_zeros()).unwrap();
+-            if cap::cap_within_bound(cap).expect("Failed to check capability bound") {
++            if cap::cap_within_bound(cap).unwrap_or(false) {
+                 cap::cap_drop_bound(cap).expect("Failed to drop capability bound");
+             }
+         }
 diff --git a/zygote/src/species/android_native.rs b/zygote/src/species/android_native.rs
 index 42b747e..8ea9010 100644
 --- a/zygote/src/species/android_native.rs
