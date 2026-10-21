@@ -1,4 +1,4 @@
-From f66aa39ee791fcae5fcb3ce5aa128f4f7f6502f4 Mon Sep 17 00:00:00 2001
+From 019fb757f553dcf292af2f7de512e2b2949decf8 Mon Sep 17 00:00:00 2001
 From: Langsdorff <131063968+clangsdorff@users.noreply.github.com>
 Date: Sat, 3 Oct 2026 02:20:24 +0300
 Subject: [PATCH 32/36] overlays: add a gestural navigation mode overlay without the
@@ -294,7 +294,7 @@ index 00000000..66fc2ae7
 +</resources>
 diff --git a/packages/overlays/NavigationBarModeGesturalNoHandleOverlay/res/values/dimens.xml b/packages/overlays/NavigationBarModeGesturalNoHandleOverlay/res/values/dimens.xml
 new file mode 100644
-index 00000000..22a1145c
+index 00000000..b58b0a4b
 --- /dev/null
 +++ b/packages/overlays/NavigationBarModeGesturalNoHandleOverlay/res/values/dimens.xml
 @@ -0,0 +1,32 @@
@@ -318,9 +318,9 @@ index 00000000..22a1145c
 +-->
 +<resources>
 +    <!-- Height of the bottom navigation / system bar. -->
-+    <dimen name="navigation_bar_height">1px</dimen>
++    <dimen name="navigation_bar_height">0px</dimen>
 +    <!-- Height of the bottom navigation bar in portrait; often the same as @dimen/navigation_bar_height -->
-+    <dimen name="navigation_bar_height_landscape">1px</dimen>
++    <dimen name="navigation_bar_height_landscape">0px</dimen>
 +    <!-- Width of the navigation bar when it is placed vertically on the screen -->
 +    <dimen name="navigation_bar_width">24dp</dimen>
 +    <!-- Height of the bottom navigation / system bar. -->
@@ -328,7 +328,7 @@ index 00000000..22a1145c
 +    <!-- The height of the bottom navigation gesture area. -->
 +    <dimen name="navigation_bar_gesture_height">32dp</dimen>
 +    <!-- Height of the stashed taskbar, which draws the gesture handle on phones. -->
-+    <dimen name="taskbar_stashed_size">1px</dimen>
++    <dimen name="taskbar_stashed_size">0px</dimen>
 +</resources>
 \ No newline at end of file
 diff --git a/packages/overlays/NavigationBarModeGesturalNoHandleOverlay/res/values/strings.xml b/packages/overlays/NavigationBarModeGesturalNoHandleOverlay/res/values/strings.xml
@@ -361,5 +361,5 @@ index 00000000..349ca14b
 +</resources>
 \ No newline at end of file
 -- 
-2.39.2 (Apple Git-143)
+2.50.1 (Apple Git-155)
 
