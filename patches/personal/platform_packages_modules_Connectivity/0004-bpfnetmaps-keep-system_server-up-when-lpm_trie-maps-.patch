@@ -1,7 +1,7 @@
 From ff9a3f2fa033a55d67731277b089be6461c12753 Mon Sep 17 00:00:00 2001
 From: Langsdorff <131063968+clangsdorff@users.noreply.github.com>
 Date: Fri, 2 Oct 2026 21:02:31 +0300
-Subject: [PATCH 4/4] bpfnetmaps: keep system_server up when lpm_trie maps cannot
+Subject: [PATCH 4/5] bpfnetmaps: keep system_server up when lpm_trie maps cannot
  be iterated on pre-4.16 kernels
 
 ---

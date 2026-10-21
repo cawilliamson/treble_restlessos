@@ -1,7 +1,7 @@
 From 54f06e3e2ab0ad50694bb46208d220b7bacfd0f5 Mon Sep 17 00:00:00 2001
 From: "Christopher A. Williamson" <contact@chrisaw.io>
 Date: Thu, 1 Oct 2026 20:09:40 +0100
-Subject: [PATCH 2/4] netbpfload: drop reboot_on_failure from the loader rc files
+Subject: [PATCH 2/5] netbpfload: drop reboot_on_failure from the loader rc files
 
 bpf-less and broken-bpf legacy kernels make netbpfload fail, and the
 reboot_on_failure triggers turn that failure into a reboot loop at the

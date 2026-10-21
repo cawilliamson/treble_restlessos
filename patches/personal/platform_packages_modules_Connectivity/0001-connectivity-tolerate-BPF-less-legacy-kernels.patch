@@ -1,7 +1,7 @@
 From de987f19611e2be086f404c7dee91f2b044a4632 Mon Sep 17 00:00:00 2001
 From: "Christopher A. Williamson" <contact@chrisaw.io>
 Date: Mon, 28 Sep 2026 09:16:30 +0100
-Subject: [PATCH 1/4] connectivity: tolerate BPF-less legacy kernels
+Subject: [PATCH 1/5] connectivity: tolerate BPF-less legacy kernels
 
 the eBPF networking stack assumes modern kernels across the loader,
 clat, bpfhandler, netbpfload and the firewall maps. every patch here

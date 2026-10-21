@@ -1,7 +1,7 @@
 From d381d2968d684e1ed427745ce4b1baea21bee28e Mon Sep 17 00:00:00 2001
 From: "Christopher A. Williamson" <contact@chrisaw.io>
 Date: Thu, 1 Oct 2026 20:33:06 +0100
-Subject: [PATCH 3/4] libeventpolling: degrade gracefully when the ringbuf maps are
+Subject: [PATCH 3/5] libeventpolling: degrade gracefully when the ringbuf maps are
  missing
 
 the a17 local net access and loopback metrics event pollers construct
