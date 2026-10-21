@@ -1,0 +1,29 @@
+From d8a99a5c3d3c7169b94c8feffbfee8bf61222a10 Mon Sep 17 00:00:00 2001
+From: Langsdorff <131063968+clangsdorff@users.noreply.github.com>
+Date: Wed, 21 Oct 2026 19:28:08 +0300
+Subject: [PATCH] rw-system: start qseecomd early for keymaster 3.0 vendors
+
+---
+ rw-system.sh | 6 ++++++
+ 1 file changed, 6 insertions(+)
+
+diff --git a/rw-system.sh b/rw-system.sh
+index cf30724..4e0d2d3 100644
+--- a/rw-system.sh
++++ b/rw-system.sh
+@@ -377,6 +377,12 @@ if ! getprop ro.product.vendor.model | grep -q -e oppo6771; then
+     fixSPL
+ fi
+ 
++# keymaster 3.0 can't register until qseecomd is up, some vendors only start it with class core on boot, which never comes since vold waits for keystore2
++if [ -f /vendor/bin/qseecomd ] && [ -f /vendor/bin/hw/android.hardware.keymaster@3.0-service ]; then
++    setprop ctl.start qseecomd
++    setprop ctl.start vendor.qseecomd
++fi
++
+ changeKeylayout
+ 
+ mount /mnt/phh/empty /vendor/bin/vendor.samsung.security.proca@1.0-service || true
+-- 
+2.50.1 (Apple Git-155)
+
