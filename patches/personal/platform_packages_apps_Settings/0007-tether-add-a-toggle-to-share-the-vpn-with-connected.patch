@@ -1,0 +1,496 @@
+From 41ef278c6bb64d8ca94da61dc426ac186c884e63 Mon Sep 17 00:00:00 2001
+From: Langsdorff <131063968+clangsdorff@users.noreply.github.com>
+Date: Wed, 21 Oct 2026 18:56:40 +0300
+Subject: [PATCH 7/7] tether: add a toggle to share the vpn with connected
+ devices
+
+---
+ res/values-az/tether_vpn_strings.xml          |  5 +++
+ res/values-bg/tether_vpn_strings.xml          |  5 +++
+ res/values-ca/tether_vpn_strings.xml          |  5 +++
+ res/values-cs/tether_vpn_strings.xml          |  5 +++
+ res/values-de/tether_vpn_strings.xml          |  5 +++
+ res/values-el/tether_vpn_strings.xml          |  5 +++
+ res/values-en-rAU/tether_vpn_strings.xml      |  5 +++
+ res/values-en-rCA/tether_vpn_strings.xml      |  5 +++
+ res/values-en-rGB/tether_vpn_strings.xml      |  5 +++
+ res/values-en-rIN/tether_vpn_strings.xml      |  5 +++
+ res/values-es/tether_vpn_strings.xml          |  5 +++
+ res/values-fa/tether_vpn_strings.xml          |  5 +++
+ res/values-fr/tether_vpn_strings.xml          |  5 +++
+ res/values-hu/tether_vpn_strings.xml          |  5 +++
+ res/values-in/tether_vpn_strings.xml          |  5 +++
+ res/values-it/tether_vpn_strings.xml          |  5 +++
+ res/values-iw/tether_vpn_strings.xml          |  5 +++
+ res/values-ja/tether_vpn_strings.xml          |  5 +++
+ res/values-ka/tether_vpn_strings.xml          |  5 +++
+ res/values-ko/tether_vpn_strings.xml          |  5 +++
+ res/values-pl/tether_vpn_strings.xml          |  5 +++
+ res/values-pt-rBR/tether_vpn_strings.xml      |  5 +++
+ res/values-pt-rPT/tether_vpn_strings.xml      |  5 +++
+ res/values-ro/tether_vpn_strings.xml          |  5 +++
+ res/values-ru/tether_vpn_strings.xml          |  5 +++
+ res/values-sl/tether_vpn_strings.xml          |  5 +++
+ res/values-ta/tether_vpn_strings.xml          |  5 +++
+ res/values-tr/tether_vpn_strings.xml          |  5 +++
+ res/values-vi/tether_vpn_strings.xml          |  5 +++
+ res/values-zh-rCN/tether_vpn_strings.xml      |  5 +++
+ res/values-zh-rTW/tether_vpn_strings.xml      |  5 +++
+ res/values/tether_vpn_strings.xml             |  5 +++
+ res/xml/tether_prefs.xml                      |  6 +++
+ ...erAllowVpnUpstreamsPreferenceController.kt | 42 +++++++++++++++++++
+ 34 files changed, 208 insertions(+)
+ create mode 100644 res/values-az/tether_vpn_strings.xml
+ create mode 100644 res/values-bg/tether_vpn_strings.xml
+ create mode 100644 res/values-ca/tether_vpn_strings.xml
+ create mode 100644 res/values-cs/tether_vpn_strings.xml
+ create mode 100644 res/values-de/tether_vpn_strings.xml
+ create mode 100644 res/values-el/tether_vpn_strings.xml
+ create mode 100644 res/values-en-rAU/tether_vpn_strings.xml
+ create mode 100644 res/values-en-rCA/tether_vpn_strings.xml
+ create mode 100644 res/values-en-rGB/tether_vpn_strings.xml
+ create mode 100644 res/values-en-rIN/tether_vpn_strings.xml
+ create mode 100644 res/values-es/tether_vpn_strings.xml
+ create mode 100644 res/values-fa/tether_vpn_strings.xml
+ create mode 100644 res/values-fr/tether_vpn_strings.xml
+ create mode 100644 res/values-hu/tether_vpn_strings.xml
+ create mode 100644 res/values-in/tether_vpn_strings.xml
+ create mode 100644 res/values-it/tether_vpn_strings.xml
+ create mode 100644 res/values-iw/tether_vpn_strings.xml
+ create mode 100644 res/values-ja/tether_vpn_strings.xml
+ create mode 100644 res/values-ka/tether_vpn_strings.xml
+ create mode 100644 res/values-ko/tether_vpn_strings.xml
+ create mode 100644 res/values-pl/tether_vpn_strings.xml
+ create mode 100644 res/values-pt-rBR/tether_vpn_strings.xml
+ create mode 100644 res/values-pt-rPT/tether_vpn_strings.xml
+ create mode 100644 res/values-ro/tether_vpn_strings.xml
+ create mode 100644 res/values-ru/tether_vpn_strings.xml
+ create mode 100644 res/values-sl/tether_vpn_strings.xml
+ create mode 100644 res/values-ta/tether_vpn_strings.xml
+ create mode 100644 res/values-tr/tether_vpn_strings.xml
+ create mode 100644 res/values-vi/tether_vpn_strings.xml
+ create mode 100644 res/values-zh-rCN/tether_vpn_strings.xml
+ create mode 100644 res/values-zh-rTW/tether_vpn_strings.xml
+ create mode 100644 res/values/tether_vpn_strings.xml
+ create mode 100644 src/com/android/settings/network/tether/TetherAllowVpnUpstreamsPreferenceController.kt
+
+diff --git a/res/values-az/tether_vpn_strings.xml b/res/values-az/tether_vpn_strings.xml
+new file mode 100644
+index 0000000..fa6454e
+--- /dev/null
++++ b/res/values-az/tether_vpn_strings.xml
+@@ -0,0 +1,5 @@
++<?xml version="1.0" encoding="utf-8"?>
++<resources>
++    <string name="tethering_allow_vpn_upstreams_title">Bağlantılı cihazlar üçün VPN istifadə et</string>
++    <string name="tethering_allow_vpn_upstreams_summary">Bu cihaz bir VPN istifadə edərkən, hotspot-a bağlanan bütün cihazlar eyni VPN-i istifadə edəcək</string>
++</resources>
+diff --git a/res/values-bg/tether_vpn_strings.xml b/res/values-bg/tether_vpn_strings.xml
+new file mode 100644
+index 0000000..a30af46
+--- /dev/null
++++ b/res/values-bg/tether_vpn_strings.xml
+@@ -0,0 +1,5 @@
++<?xml version="1.0" encoding="utf-8"?>
++<resources>
++    <string name="tethering_allow_vpn_upstreams_title">Използвай VPN за свързани устройства</string>
++    <string name="tethering_allow_vpn_upstreams_summary">Когато това устройство използва VPN, всички устройства, свързани към горещата точка ще ползват същия VPN.</string>
++</resources>
+diff --git a/res/values-ca/tether_vpn_strings.xml b/res/values-ca/tether_vpn_strings.xml
+new file mode 100644
+index 0000000..6e5210c
+--- /dev/null
++++ b/res/values-ca/tether_vpn_strings.xml
+@@ -0,0 +1,5 @@
++<?xml version="1.0" encoding="utf-8"?>
++<resources>
++    <string name="tethering_allow_vpn_upstreams_title">Utilitza una VPN per als dispositius connectats</string>
++    <string name="tethering_allow_vpn_upstreams_summary">Quan aquest dispositiu utilitza una VPN, tots els dispositius connectats al punt d\'accés utilitzaran la mateixa VPN</string>
++</resources>
+diff --git a/res/values-cs/tether_vpn_strings.xml b/res/values-cs/tether_vpn_strings.xml
+new file mode 100644
+index 0000000..c67f3bb
+--- /dev/null
++++ b/res/values-cs/tether_vpn_strings.xml
+@@ -0,0 +1,5 @@
++<?xml version="1.0" encoding="utf-8"?>
++<resources>
++    <string name="tethering_allow_vpn_upstreams_title">Použít VPN pro připojená zařízení</string>
++    <string name="tethering_allow_vpn_upstreams_summary">Pokud toto zařízení používá VPN, všechna zařízení připojená k hotspotu budou používat stejnou VPN</string>
++</resources>
+diff --git a/res/values-de/tether_vpn_strings.xml b/res/values-de/tether_vpn_strings.xml
+new file mode 100644
+index 0000000..a61b219
+--- /dev/null
++++ b/res/values-de/tether_vpn_strings.xml
+@@ -0,0 +1,5 @@
++<?xml version="1.0" encoding="utf-8"?>
++<resources>
++    <string name="tethering_allow_vpn_upstreams_title">VPN für verbundene Geräte verwenden</string>
++    <string name="tethering_allow_vpn_upstreams_summary">Wenn dieses Gerät ein VPN verwendet, werden alle Geräte, die mit dem Hotspot verbunden sind, dasselbe VPN verwenden</string>
++</resources>
+diff --git a/res/values-el/tether_vpn_strings.xml b/res/values-el/tether_vpn_strings.xml
+new file mode 100644
+index 0000000..80067a8
+--- /dev/null
++++ b/res/values-el/tether_vpn_strings.xml
+@@ -0,0 +1,5 @@
++<?xml version="1.0" encoding="utf-8"?>
++<resources>
++    <string name="tethering_allow_vpn_upstreams_title">Να χρησιμοποιείται το VPN για συνδεδεμένες συσκευές</string>
++    <string name="tethering_allow_vpn_upstreams_summary">Όταν η συσκευή χρησιμοποιεί VPN, όλες οι συνδεδεμένες συσκευές του σημείου πρόσβασης θα χρησιμοποιούν το ίδιο VPN</string>
++</resources>
+diff --git a/res/values-en-rAU/tether_vpn_strings.xml b/res/values-en-rAU/tether_vpn_strings.xml
+new file mode 100644
+index 0000000..d99960a
+--- /dev/null
++++ b/res/values-en-rAU/tether_vpn_strings.xml
+@@ -0,0 +1,5 @@
++<?xml version="1.0" encoding="utf-8"?>
++<resources>
++    <string name="tethering_allow_vpn_upstreams_title">Use VPN for connected devices</string>
++    <string name="tethering_allow_vpn_upstreams_summary">When this device is using a VPN, all devices connected to the hotspot will use the same VPN</string>
++</resources>
+diff --git a/res/values-en-rCA/tether_vpn_strings.xml b/res/values-en-rCA/tether_vpn_strings.xml
+new file mode 100644
+index 0000000..d99960a
+--- /dev/null
++++ b/res/values-en-rCA/tether_vpn_strings.xml
+@@ -0,0 +1,5 @@
++<?xml version="1.0" encoding="utf-8"?>
++<resources>
++    <string name="tethering_allow_vpn_upstreams_title">Use VPN for connected devices</string>
++    <string name="tethering_allow_vpn_upstreams_summary">When this device is using a VPN, all devices connected to the hotspot will use the same VPN</string>
++</resources>
+diff --git a/res/values-en-rGB/tether_vpn_strings.xml b/res/values-en-rGB/tether_vpn_strings.xml
+new file mode 100644
+index 0000000..d99960a
+--- /dev/null
++++ b/res/values-en-rGB/tether_vpn_strings.xml
+@@ -0,0 +1,5 @@
++<?xml version="1.0" encoding="utf-8"?>
++<resources>
++    <string name="tethering_allow_vpn_upstreams_title">Use VPN for connected devices</string>
++    <string name="tethering_allow_vpn_upstreams_summary">When this device is using a VPN, all devices connected to the hotspot will use the same VPN</string>
++</resources>
+diff --git a/res/values-en-rIN/tether_vpn_strings.xml b/res/values-en-rIN/tether_vpn_strings.xml
+new file mode 100644
+index 0000000..d99960a
+--- /dev/null
++++ b/res/values-en-rIN/tether_vpn_strings.xml
+@@ -0,0 +1,5 @@
++<?xml version="1.0" encoding="utf-8"?>
++<resources>
++    <string name="tethering_allow_vpn_upstreams_title">Use VPN for connected devices</string>
++    <string name="tethering_allow_vpn_upstreams_summary">When this device is using a VPN, all devices connected to the hotspot will use the same VPN</string>
++</resources>
+diff --git a/res/values-es/tether_vpn_strings.xml b/res/values-es/tether_vpn_strings.xml
+new file mode 100644
+index 0000000..026a4ef
+--- /dev/null
++++ b/res/values-es/tether_vpn_strings.xml
+@@ -0,0 +1,5 @@
++<?xml version="1.0" encoding="utf-8"?>
++<resources>
++    <string name="tethering_allow_vpn_upstreams_title">Usar VPN para dispositivos conectados</string>
++    <string name="tethering_allow_vpn_upstreams_summary">Cuando este dispositivo usa una VPN, todos los dispositivos conectados al punto de acceso usarán la misma VPN</string>
++</resources>
+diff --git a/res/values-fa/tether_vpn_strings.xml b/res/values-fa/tether_vpn_strings.xml
+new file mode 100644
+index 0000000..945a520
+--- /dev/null
++++ b/res/values-fa/tether_vpn_strings.xml
+@@ -0,0 +1,5 @@
++<?xml version="1.0" encoding="utf-8"?>
++<resources>
++    <string name="tethering_allow_vpn_upstreams_title">استفاده از فیلترشکن برای دستگاه‌های متصل</string>
++    <string name="tethering_allow_vpn_upstreams_summary">وقتی این دستگاه از فیلترشکن استفاده می‌کند، تمام دستگاه‌های متصل به نقطه اتصال از همان فیلترشکن استفاده خواهند کرد.</string>
++</resources>
+diff --git a/res/values-fr/tether_vpn_strings.xml b/res/values-fr/tether_vpn_strings.xml
+new file mode 100644
+index 0000000..cb0b7d8
+--- /dev/null
++++ b/res/values-fr/tether_vpn_strings.xml
+@@ -0,0 +1,5 @@
++<?xml version="1.0" encoding="utf-8"?>
++<resources>
++    <string name="tethering_allow_vpn_upstreams_title">Utiliser le VPN pour les appareils connectés</string>
++    <string name="tethering_allow_vpn_upstreams_summary">Lorsque cet appareil utilise un VPN, tous les appareils connectés au point d\'accès utiliseront le même VPN</string>
++</resources>
+diff --git a/res/values-hu/tether_vpn_strings.xml b/res/values-hu/tether_vpn_strings.xml
+new file mode 100644
+index 0000000..e9c2db7
+--- /dev/null
++++ b/res/values-hu/tether_vpn_strings.xml
+@@ -0,0 +1,5 @@
++<?xml version="1.0" encoding="utf-8"?>
++<resources>
++    <string name="tethering_allow_vpn_upstreams_title">VPN használata a csatlakoztatott eszközökhöz</string>
++    <string name="tethering_allow_vpn_upstreams_summary">Amikor ez a készülék VPN-t használ, a hotspothoz csatlakoztatott összes eszköz ugyanazt a VPN-t fogja használni.</string>
++</resources>
+diff --git a/res/values-in/tether_vpn_strings.xml b/res/values-in/tether_vpn_strings.xml
+new file mode 100644
+index 0000000..af6744c
+--- /dev/null
++++ b/res/values-in/tether_vpn_strings.xml
+@@ -0,0 +1,5 @@
++<?xml version="1.0" encoding="utf-8"?>
++<resources>
++    <string name="tethering_allow_vpn_upstreams_title">Gunakan VPN untuk perangkat terhubung</string>
++    <string name="tethering_allow_vpn_upstreams_summary">Ketika perangkat ini menggunakan VPN, semua perangkat yang terhubung ke hotspot akan menggunakan VPN yang sama</string>
++</resources>
+diff --git a/res/values-it/tether_vpn_strings.xml b/res/values-it/tether_vpn_strings.xml
+new file mode 100644
+index 0000000..b3ac364
+--- /dev/null
++++ b/res/values-it/tether_vpn_strings.xml
+@@ -0,0 +1,5 @@
++<?xml version="1.0" encoding="utf-8"?>
++<resources>
++    <string name="tethering_allow_vpn_upstreams_title">Usa la VPN per i dispositivi connessi</string>
++    <string name="tethering_allow_vpn_upstreams_summary">Quando questo dispositivo utilizza una VPN, tutti i dispositivi connessi all’hotspot utilizzeranno la stessa VPN</string>
++</resources>
+diff --git a/res/values-iw/tether_vpn_strings.xml b/res/values-iw/tether_vpn_strings.xml
+new file mode 100644
+index 0000000..84379a8
+--- /dev/null
++++ b/res/values-iw/tether_vpn_strings.xml
+@@ -0,0 +1,5 @@
++<?xml version="1.0" encoding="utf-8"?>
++<resources>
++    <string name="tethering_allow_vpn_upstreams_title">שימוש ב-VPN למכשירים מחוברים</string>
++    <string name="tethering_allow_vpn_upstreams_summary">כשמכשיר זה משתמש ב-VPN, כל המכשירים המחוברים לנקודה החמה ישתמשו באותו ה-VPN</string>
++</resources>
+diff --git a/res/values-ja/tether_vpn_strings.xml b/res/values-ja/tether_vpn_strings.xml
+new file mode 100644
+index 0000000..55d335c
+--- /dev/null
++++ b/res/values-ja/tether_vpn_strings.xml
+@@ -0,0 +1,5 @@
++<?xml version="1.0" encoding="utf-8"?>
++<resources>
++    <string name="tethering_allow_vpn_upstreams_title">接続されたデバイスに VPN を使用する</string>
++    <string name="tethering_allow_vpn_upstreams_summary">このデバイスが VPN を使用している場合、テザリング中のすべてのデバイスは同じ VPN を使用します</string>
++</resources>
+diff --git a/res/values-ka/tether_vpn_strings.xml b/res/values-ka/tether_vpn_strings.xml
+new file mode 100644
+index 0000000..59f3566
+--- /dev/null
++++ b/res/values-ka/tether_vpn_strings.xml
+@@ -0,0 +1,5 @@
++<?xml version="1.0" encoding="utf-8"?>
++<resources>
++    <string name="tethering_allow_vpn_upstreams_title">გამოიყენოს VPN შეერთებულ მოწყობილობებზეც</string>
++    <string name="tethering_allow_vpn_upstreams_summary">როცა ამ მოწყობილობაზე გამოიყენება VPN, მასზე დაერთებული ყველა მოწყობილობისთვის ასევე გამოყენებული იქნება იგივე VPN</string>
++</resources>
+diff --git a/res/values-ko/tether_vpn_strings.xml b/res/values-ko/tether_vpn_strings.xml
+new file mode 100644
+index 0000000..603a8ba
+--- /dev/null
++++ b/res/values-ko/tether_vpn_strings.xml
+@@ -0,0 +1,5 @@
++<?xml version="1.0" encoding="utf-8"?>
++<resources>
++    <string name="tethering_allow_vpn_upstreams_title">연결된 기기에 VPN 사용</string>
++    <string name="tethering_allow_vpn_upstreams_summary">기기가 VPN을 사용 중일 때 핫스팟을 켜면, 핫스팟에 연결된 기기도 같은 VPN을 사용합니다.</string>
++</resources>
+diff --git a/res/values-pl/tether_vpn_strings.xml b/res/values-pl/tether_vpn_strings.xml
+new file mode 100644
+index 0000000..9d0db82
+--- /dev/null
++++ b/res/values-pl/tether_vpn_strings.xml
+@@ -0,0 +1,5 @@
++<?xml version="1.0" encoding="utf-8"?>
++<resources>
++    <string name="tethering_allow_vpn_upstreams_title">Używaj VPN dla podłączonych urządzeń</string>
++    <string name="tethering_allow_vpn_upstreams_summary">Gdy to urządzenie korzysta z VPN, wszystkie urządzenia podłączone do hotspotu będą korzystać z tego samego VPN</string>
++</resources>
+diff --git a/res/values-pt-rBR/tether_vpn_strings.xml b/res/values-pt-rBR/tether_vpn_strings.xml
+new file mode 100644
+index 0000000..ea8197b
+--- /dev/null
++++ b/res/values-pt-rBR/tether_vpn_strings.xml
+@@ -0,0 +1,5 @@
++<?xml version="1.0" encoding="utf-8"?>
++<resources>
++    <string name="tethering_allow_vpn_upstreams_title">Compartilhar VPN com dispositivos conectados</string>
++    <string name="tethering_allow_vpn_upstreams_summary">Ao usar uma VPN nesse dispositivo, todos os dispositivos conectados no ponto de acesso usarão ela também</string>
++</resources>
+diff --git a/res/values-pt-rPT/tether_vpn_strings.xml b/res/values-pt-rPT/tether_vpn_strings.xml
+new file mode 100644
+index 0000000..b850738
+--- /dev/null
++++ b/res/values-pt-rPT/tether_vpn_strings.xml
+@@ -0,0 +1,5 @@
++<?xml version="1.0" encoding="utf-8"?>
++<resources>
++    <string name="tethering_allow_vpn_upstreams_title">Usar VPN nos dispositivos conectados</string>
++    <string name="tethering_allow_vpn_upstreams_summary">Quando este dispositivo estiver a usar uma VPN, todos os dispositivos conectados ao hotspot usarão a mesma VPN</string>
++</resources>
+diff --git a/res/values-ro/tether_vpn_strings.xml b/res/values-ro/tether_vpn_strings.xml
+new file mode 100644
+index 0000000..d2fd0d4
+--- /dev/null
++++ b/res/values-ro/tether_vpn_strings.xml
+@@ -0,0 +1,5 @@
++<?xml version="1.0" encoding="utf-8"?>
++<resources>
++    <string name="tethering_allow_vpn_upstreams_title">Folosește VPN pentru dispozitivele conectate</string>
++    <string name="tethering_allow_vpn_upstreams_summary">Când acest dispozitiv folosește un VPN, toate dispozitivele conectate la hotspot vor folosi același VPN</string>
++</resources>
+diff --git a/res/values-ru/tether_vpn_strings.xml b/res/values-ru/tether_vpn_strings.xml
+new file mode 100644
+index 0000000..a0c8c0c
+--- /dev/null
++++ b/res/values-ru/tether_vpn_strings.xml
+@@ -0,0 +1,5 @@
++<?xml version="1.0" encoding="utf-8"?>
++<resources>
++    <string name="tethering_allow_vpn_upstreams_title">Использовать VPN для подключенных устройств</string>
++    <string name="tethering_allow_vpn_upstreams_summary">Когда это устройство использует VPN, все устройства, подключенные к точке доступа, будут использовать тот же VPN</string>
++</resources>
+diff --git a/res/values-sl/tether_vpn_strings.xml b/res/values-sl/tether_vpn_strings.xml
+new file mode 100644
+index 0000000..417aea6
+--- /dev/null
++++ b/res/values-sl/tether_vpn_strings.xml
+@@ -0,0 +1,5 @@
++<?xml version="1.0" encoding="utf-8"?>
++<resources>
++    <string name="tethering_allow_vpn_upstreams_title">Uporabi VPN za povezane naprave</string>
++    <string name="tethering_allow_vpn_upstreams_summary">Ko ta naprava uporablja VPN, bodo vse naprave povezane na dostopno točko uporabljale isti VPN</string>
++</resources>
+diff --git a/res/values-ta/tether_vpn_strings.xml b/res/values-ta/tether_vpn_strings.xml
+new file mode 100644
+index 0000000..5701a5f
+--- /dev/null
++++ b/res/values-ta/tether_vpn_strings.xml
+@@ -0,0 +1,5 @@
++<?xml version="1.0" encoding="utf-8"?>
++<resources>
++    <string name="tethering_allow_vpn_upstreams_title">இணைக்கப்பட்ட கருவிகளுக்கு VPN ஐப் பயன்படுத்துக</string>
++    <string name="tethering_allow_vpn_upstreams_summary">இக்கருவி VPN ஐப் பயன்படுத்தும்போது, பகிரலையுடன் இணைக்கப்பட்டுள்ள எல்லாக் கருவிகளும் ஒரே VPN ஐப் பயன்படுத்தும்</string>
++</resources>
+diff --git a/res/values-tr/tether_vpn_strings.xml b/res/values-tr/tether_vpn_strings.xml
+new file mode 100644
+index 0000000..b8412da
+--- /dev/null
++++ b/res/values-tr/tether_vpn_strings.xml
+@@ -0,0 +1,5 @@
++<?xml version="1.0" encoding="utf-8"?>
++<resources>
++    <string name="tethering_allow_vpn_upstreams_title">Bağlanan aygıtlar için VPN kullan</string>
++    <string name="tethering_allow_vpn_upstreams_summary">Bu aygıt VPN kullanırken hotspot ile bağlanan tüm aygıtlar da aynı VPN\'yi kullanacaktır.</string>
++</resources>
+diff --git a/res/values-vi/tether_vpn_strings.xml b/res/values-vi/tether_vpn_strings.xml
+new file mode 100644
+index 0000000..17cd51d
+--- /dev/null
++++ b/res/values-vi/tether_vpn_strings.xml
+@@ -0,0 +1,5 @@
++<?xml version="1.0" encoding="utf-8"?>
++<resources>
++    <string name="tethering_allow_vpn_upstreams_title">Sử dụng VPN cho các thiết bị được kết nối</string>
++    <string name="tethering_allow_vpn_upstreams_summary">Khi thiết bị này sử dụng VPN, tất cả các thiết bị được kết nối với điểm phát sóng sẽ sử dụng cùng một VPN</string>
++</resources>
+diff --git a/res/values-zh-rCN/tether_vpn_strings.xml b/res/values-zh-rCN/tether_vpn_strings.xml
+new file mode 100644
+index 0000000..495179b
+--- /dev/null
++++ b/res/values-zh-rCN/tether_vpn_strings.xml
+@@ -0,0 +1,5 @@
++<?xml version="1.0" encoding="utf-8"?>
++<resources>
++    <string name="tethering_allow_vpn_upstreams_title">对已连接的设备使用VPN</string>
++    <string name="tethering_allow_vpn_upstreams_summary">当本设备使用VPN时，连接到热点的所有设备将共享此VPN</string>
++</resources>
+diff --git a/res/values-zh-rTW/tether_vpn_strings.xml b/res/values-zh-rTW/tether_vpn_strings.xml
+new file mode 100644
+index 0000000..568e157
+--- /dev/null
++++ b/res/values-zh-rTW/tether_vpn_strings.xml
+@@ -0,0 +1,5 @@
++<?xml version="1.0" encoding="utf-8"?>
++<resources>
++    <string name="tethering_allow_vpn_upstreams_title">讓連線的裝置使用 VPN</string>
++    <string name="tethering_allow_vpn_upstreams_summary">當此裝置使用 VPN 時，所有連線至熱點的裝置都會使用相同的 VPN</string>
++</resources>
+diff --git a/res/values/tether_vpn_strings.xml b/res/values/tether_vpn_strings.xml
+new file mode 100644
+index 0000000..d99960a
+--- /dev/null
++++ b/res/values/tether_vpn_strings.xml
+@@ -0,0 +1,5 @@
++<?xml version="1.0" encoding="utf-8"?>
++<resources>
++    <string name="tethering_allow_vpn_upstreams_title">Use VPN for connected devices</string>
++    <string name="tethering_allow_vpn_upstreams_summary">When this device is using a VPN, all devices connected to the hotspot will use the same VPN</string>
++</resources>
+diff --git a/res/xml/tether_prefs.xml b/res/xml/tether_prefs.xml
+index 33a51d8..744a185 100644
+--- a/res/xml/tether_prefs.xml
++++ b/res/xml/tether_prefs.xml
+@@ -49,6 +49,12 @@
+         android:summary="@string/ethernet_tethering_subtext"
+         settings:keywords="@string/keywords_hotspot_tethering" />
+ 
++    <SwitchPreferenceCompat
++        android:key="tethering_allow_vpn_upstreams"
++        android:title="@string/tethering_allow_vpn_upstreams_title"
++        android:summary="@string/tethering_allow_vpn_upstreams_summary"
++        settings:controller="com.android.settings.network.tether.TetherAllowVpnUpstreamsPreferenceController" />
++
+     <com.android.settingslib.widget.FooterPreference
+         android:key="disabled_on_data_saver"
+         android:title="@string/tether_settings_disabled_on_data_saver"
+diff --git a/src/com/android/settings/network/tether/TetherAllowVpnUpstreamsPreferenceController.kt b/src/com/android/settings/network/tether/TetherAllowVpnUpstreamsPreferenceController.kt
+new file mode 100644
+index 0000000..027e271
+--- /dev/null
++++ b/src/com/android/settings/network/tether/TetherAllowVpnUpstreamsPreferenceController.kt
+@@ -0,0 +1,42 @@
++package com.android.settings.network.tether
++
++import android.content.Context
++import android.provider.Settings
++import androidx.annotation.VisibleForTesting
++import com.android.settings.R
++import com.android.settings.core.TogglePreferenceController
++
++/** Preference controller that lets tethered devices use the VPN as their upstream. */
++class TetherAllowVpnUpstreamsPreferenceController(context: Context, key: String) :
++    TogglePreferenceController(context, key) {
++
++    override fun getAvailabilityStatus(): Int {
++        return AVAILABLE
++    }
++
++    override fun isChecked(): Boolean {
++        return Settings.Secure.getInt(
++            mContext.contentResolver,
++            Settings.Secure.TETHERING_ALLOW_VPN_UPSTREAMS,
++            SETTING_VALUE_OFF,
++        ) == SETTING_VALUE_ON
++    }
++
++    override fun setChecked(isChecked: Boolean): Boolean {
++        return Settings.Secure.putInt(
++            mContext.contentResolver,
++            Settings.Secure.TETHERING_ALLOW_VPN_UPSTREAMS,
++            if (isChecked) SETTING_VALUE_ON else SETTING_VALUE_OFF,
++        )
++    }
++
++    override fun getSliceHighlightMenuRes(): Int {
++        return R.string.menu_key_network
++    }
++
++    companion object {
++        @VisibleForTesting const val SETTING_VALUE_OFF = 0
++
++        @VisibleForTesting const val SETTING_VALUE_ON = 1
++    }
++}
+-- 
+2.50.1 (Apple Git-155)
+
