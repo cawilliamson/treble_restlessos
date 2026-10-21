@@ -362,7 +362,7 @@ jobs:
           rm -fv "${OUT}/signed-target_files.zip"
           mv -v "${OUT}/system.img" "/mnt/src/out/system.img"
       - id: compress
-        name: Compress image and generate zsync
+        name: Compress image and generate zsync and checksums
         run: |
           TAG="${ANDROID_VERSION}-${BUILD_NUMBER}"
           [ "${{ github.event.inputs.debug_build || 'false' }}" = "true" ] && TAG="${TAG}-debug"
@@ -372,7 +372,9 @@ jobs:
           mkdir -p zsync
           zsyncmake -o "zsync/${img}.zsync" -u "${img}" -v "${img}"
           cp -v "${img}" "zsync/${img}"
+          sha512sum "${img}" > "RestlessOS-arm64-ab-${TAG}.sha512sum"
           xz --best --compress --memlimit-compress=0 --threads=0 -v "${img}"
+          sha512sum "${img}.xz" >> "RestlessOS-arm64-ab-${TAG}.sha512sum"
           echo "version_tag=${TAG}" >> "$GITHUB_OUTPUT"
           echo "release_name=RestlessOS-ab-${TAG}" >> "$GITHUB_OUTPUT"
       - name: Generate changelog
@@ -397,7 +399,7 @@ jobs:
           command: |
             R="${{ steps.compress.outputs.release_name }}"
             REMOTE="build.chrisaw.io:/var/www/build.chrisaw.io/${R}"
-            rsync -acvz --mkpath --timeout=120 --partial --partial-dir=.rsync-partial /mnt/src/out/*.img.xz /mnt/src/out/CHANGELOG.md "${REMOTE}/"
+            rsync -acvz --mkpath --timeout=120 --partial --partial-dir=.rsync-partial /mnt/src/out/*.img.xz /mnt/src/out/*.sha512sum /mnt/src/out/CHANGELOG.md "${REMOTE}/"
             rsync -acvz --mkpath --timeout=120 --partial --partial-dir=.rsync-partial /mnt/src/out/zsync/ "${REMOTE}/zsync/"
       - if: github.event.inputs.debug_build != 'true'
         name: Publish GitHub release
@@ -406,7 +408,7 @@ jobs:
           tag: ${{ steps.compress.outputs.version_tag }}
           name: "RestlessOS ${{ steps.compress.outputs.version_tag }}"
           bodyFile: /mnt/src/out/CHANGELOG.md
-          artifacts: "/mnt/src/out/*.img.xz"
+          artifacts: "/mnt/src/out/*.img.xz,/mnt/src/out/*.sha512sum"
           prerelease: ${{ github.event.inputs.pre_release == 'true' }}
           token: ${{ github.token }}
       - name: Unmount data volume
