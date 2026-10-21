@@ -1,7 +1,7 @@
 From 7c1806d5499a1697d8817f004fae98120810880d Mon Sep 17 00:00:00 2001
 From: "Christopher A. Williamson" <contact@chrisaw.io>
 Date: Tue, 13 Oct 2026 22:31:02 +0100
-Subject: [PATCH 5/5] init: heal the persistent property store mode on load
+Subject: [PATCH 5/6] init: heal the persistent property store mode on load
 
 The persistent property file can end up group/world writable, e.g. via a
 data migration or a sloppy flash. ReadFile rejects such files, which

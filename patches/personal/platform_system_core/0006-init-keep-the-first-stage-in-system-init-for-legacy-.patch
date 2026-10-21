@@ -1,0 +1,31 @@
+From 09da1758ec33cad336b284fd012d20729453a7b2 Mon Sep 17 00:00:00 2001
+From: Langsdorff <131063968+clangsdorff@users.noreply.github.com>
+Date: Wed, 21 Oct 2026 18:54:27 +0300
+Subject: [PATCH 6/6] init: keep the first stage in system init for legacy
+ system-as-root devices
+
+---
+ init/Android.bp | 7 +++++++
+ 1 file changed, 7 insertions(+)
+
+diff --git a/init/Android.bp b/init/Android.bp
+index 9959daa52..b042bb556 100644
+--- a/init/Android.bp
++++ b/init/Android.bp
+@@ -337,6 +337,13 @@ cc_binary {
+     name: "init_second_stage",
+     defaults: ["init_second_stage_defaults"],
+     static_libs: ["libinit"],
++    // legacy system-as-root devices exec /system/bin/init as the first stage
++    cflags: ["-DFIRST_STAGE_INIT=1"],
++    srcs: [
++        "first_stage_init.cpp",
++        "first_stage_mount.cpp",
++        "first_stage_mount_android.cpp",
++    ],
+     visibility: ["//visibility:any_system_partition"],
+     required: [
+         "init.rc",
+-- 
+2.50.1 (Apple Git-155)
+

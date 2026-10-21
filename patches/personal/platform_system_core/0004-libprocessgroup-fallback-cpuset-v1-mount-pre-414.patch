@@ -1,7 +1,7 @@
 From 6ff484d46a6517e491621090561418e61d46216c Mon Sep 17 00:00:00 2001
 From: "Christopher A. Williamson" <contact@chrisaw.io>
 Date: Fri, 9 Oct 2026 22:24:59 +0100
-Subject: [PATCH 4/5] libprocessgroup: fall back to pre-4.14 cpuset v1 mount
+Subject: [PATCH 4/6] libprocessgroup: fall back to pre-4.14 cpuset v1 mount
  options
 
 cpuset_v2_mode only exists on kernels >= 4.14 and older vendor

@@ -1,7 +1,7 @@
 From daebf390a6e5a7af38538666fd8e7c5349ce98fc Mon Sep 17 00:00:00 2001
 From: "Christopher A. Williamson" <contact@chrisaw.io>
 Date: Mon, 28 Sep 2026 08:23:34 +0100
-Subject: [PATCH 3/5]
+Subject: [PATCH 3/6]
 
 libprocessgroup and init carry several assumptions that break on
 legacy vendor kernels: cgroup v2-only controllers, memcg layout
