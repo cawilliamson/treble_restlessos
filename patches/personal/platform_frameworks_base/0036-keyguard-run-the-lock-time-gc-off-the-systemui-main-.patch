@@ -1,7 +1,7 @@
 From 171b0447597621b44a99c37b625b7d404192a690 Mon Sep 17 00:00:00 2001
 From: Langsdorff <131063968+clangsdorff@users.noreply.github.com>
 Date: Sat, 17 Oct 2026 15:05:25 +0300
-Subject: [PATCH 36/37] keyguard: run the lock-time gc off the systemui main thread and the keyguard binder call
+Subject: [PATCH 36/38] keyguard: run the lock-time gc off the systemui main thread and the keyguard binder call
 
 ---
  .../android/systemui/keyguard/KeyguardViewMediator.java  | 8 +++++---
