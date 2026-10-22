@@ -1,7 +1,7 @@
 From 078a7a801d5e21237d1d5c988e4e4f2cd8eafae4 Mon Sep 17 00:00:00 2001
 From: Langsdorff <131063968+clangsdorff@users.noreply.github.com>
 Date: Sun, 18 Oct 2026 17:02:25 +0300
-Subject: [PATCH 49/51] partner-wallpapers: browse and download wallpapers from the restlessos wallpaper repo
+Subject: [PATCH 49/52] partner-wallpapers: browse and download wallpapers from the restlessos wallpaper repo
 
 ---
  partner-wallpapers/Android.bp                 |   5 +

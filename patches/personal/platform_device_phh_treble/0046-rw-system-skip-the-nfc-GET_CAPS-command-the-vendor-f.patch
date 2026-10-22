@@ -1,7 +1,7 @@
 From 32c1afd8b2895d4aab104b0c9682115ed37b6ea3 Mon Sep 17 00:00:00 2001
 From: Langsdorff <131063968+clangsdorff@users.noreply.github.com>
 Date: Sat, 17 Oct 2026 19:39:06 +0300
-Subject: [PATCH 46/51] rw-system: skip the nfc GET_CAPS command the vendor firmware may never answer
+Subject: [PATCH 46/52] rw-system: skip the nfc GET_CAPS command the vendor firmware may never answer
 
 ---
  rw-system.sh | 5 +++++

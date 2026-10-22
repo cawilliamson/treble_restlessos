@@ -1,7 +1,7 @@
 From d2b9fa72ea47ece4ca1d83dbd1ca8adcd769ca7b Mon Sep 17 00:00:00 2001
 From: "Christopher A. Williamson" <contact@chrisaw.io>
 Date: Thu, 15 Oct 2026 00:10:15 +0100
-Subject: [PATCH 45/51] sepolicy: let the xiaomi touch init set its panel property
+Subject: [PATCH 45/52] sepolicy: let the xiaomi touch init set its panel property
 
 ---
  sepolicy/xiaomi.te | 6 ++++++

@@ -1,7 +1,7 @@
 From d8a99a5c3d3c7169b94c8feffbfee8bf61222a10 Mon Sep 17 00:00:00 2001
 From: Langsdorff <131063968+clangsdorff@users.noreply.github.com>
 Date: Wed, 21 Oct 2026 19:28:08 +0300
-Subject: [PATCH 50/51] rw-system: start qseecomd early for keymaster 3.0 vendors
+Subject: [PATCH 50/52] rw-system: start qseecomd early for keymaster 3.0 vendors
 
 ---
  rw-system.sh | 6 ++++++

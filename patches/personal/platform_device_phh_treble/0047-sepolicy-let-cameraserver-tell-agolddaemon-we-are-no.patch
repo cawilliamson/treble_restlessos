@@ -1,7 +1,7 @@
 From 9e7078a8705e5e26cbef6eea89d568776a62cdd9 Mon Sep 17 00:00:00 2001
 From: Langsdorff <131063968+clangsdorff@users.noreply.github.com>
 Date: Sun, 18 Oct 2026 18:05:10 +0300
-Subject: [PATCH 47/51] sepolicy: let cameraserver tell agolddaemon we are not a gsi
+Subject: [PATCH 47/52] sepolicy: let cameraserver tell agolddaemon we are not a gsi
 
 ---
  sepolicy/mediatek.te | 5 +++++

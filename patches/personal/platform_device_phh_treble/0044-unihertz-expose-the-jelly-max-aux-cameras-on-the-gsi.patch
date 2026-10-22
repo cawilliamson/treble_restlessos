@@ -1,7 +1,7 @@
 From a45d615d748a5591f3cf4ddf7f68474edb5ab9cc Mon Sep 17 00:00:00 2001
 From: "Christopher A. Williamson" <contact@chrisaw.io>
 Date: Sat, 10 Oct 2026 14:53:50 +0100
-Subject: [PATCH 44/51] unihertz: expose the jelly max aux cameras on the gsi
+Subject: [PATCH 44/52] unihertz: expose the jelly max aux cameras on the gsi
 
 the mtk camera hal gates the aux (telephoto) sensor behind vendor
 props and keeps a stale camera list across restarts, so on the jelly

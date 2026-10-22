@@ -1,0 +1,508 @@
+From f01ef993329ece20bef667f61f193137fbdc0a74 Mon Sep 17 00:00:00 2001
+From: Langsdorff <131063968+clangsdorff@users.noreply.github.com>
+Date: Fri, 23 Oct 2026 00:26:48 +0300
+Subject: [PATCH 52/52] attention: keep the screen on while the user is looking
+ at it
+
+---
+ attention/Android.bp                          |   9 +
+ attention/AndroidManifest.xml                 |  21 +
+ .../attention/FaceAttentionService.java       | 411 ++++++++++++++++++
+ base.mk                                       |   4 +
+ .../base/core/res/res/values/config.xml       |   5 +
+ 5 files changed, 450 insertions(+)
+ create mode 100644 attention/Android.bp
+ create mode 100644 attention/AndroidManifest.xml
+ create mode 100644 attention/src/com/restlessos/attention/FaceAttentionService.java
+
+diff --git a/attention/Android.bp b/attention/Android.bp
+new file mode 100644
+index 0000000..db712a7
+--- /dev/null
++++ b/attention/Android.bp
+@@ -0,0 +1,9 @@
++android_app {
++    name: "RestlessAttention",
++    srcs: ["src/**/*.java"],
++    manifest: "AndroidManifest.xml",
++    sdk_version: "system_current",
++    optimize: {
++        enabled: true,
++    },
++}
+diff --git a/attention/AndroidManifest.xml b/attention/AndroidManifest.xml
+new file mode 100644
+index 0000000..c285a52
+--- /dev/null
++++ b/attention/AndroidManifest.xml
+@@ -0,0 +1,21 @@
++<?xml version="1.0" encoding="utf-8"?>
++<manifest xmlns:android="http://schemas.android.com/apk/res/android"
++    package="com.restlessos.attention">
++
++    <uses-permission android:name="android.permission.CAMERA" />
++
++    <application
++        android:label="Screen attention"
++        android:allowBackup="false">
++
++        <service
++            android:name=".FaceAttentionService"
++            android:exported="true"
++            android:permission="android.permission.BIND_ATTENTION_SERVICE">
++            <intent-filter>
++                <action android:name="android.service.attention.AttentionService" />
++            </intent-filter>
++        </service>
++
++    </application>
++</manifest>
+diff --git a/attention/src/com/restlessos/attention/FaceAttentionService.java b/attention/src/com/restlessos/attention/FaceAttentionService.java
+new file mode 100644
+index 0000000..568680b
+--- /dev/null
++++ b/attention/src/com/restlessos/attention/FaceAttentionService.java
+@@ -0,0 +1,411 @@
++package com.restlessos.attention;
++
++import android.graphics.Bitmap;
++import android.graphics.ImageFormat;
++import android.hardware.camera2.CameraAccessException;
++import android.hardware.camera2.CameraCaptureSession;
++import android.hardware.camera2.CameraCharacteristics;
++import android.hardware.camera2.CameraDevice;
++import android.hardware.camera2.CameraManager;
++import android.hardware.camera2.CameraMetadata;
++import android.hardware.camera2.CaptureRequest;
++import android.hardware.camera2.CaptureResult;
++import android.hardware.camera2.TotalCaptureResult;
++import android.hardware.camera2.params.Face;
++import android.hardware.camera2.params.OutputConfiguration;
++import android.hardware.camera2.params.SessionConfiguration;
++import android.hardware.camera2.params.StreamConfigurationMap;
++import android.hardware.display.DisplayManager;
++import android.media.FaceDetector;
++import android.media.Image;
++import android.media.ImageReader;
++import android.os.Handler;
++import android.os.HandlerThread;
++import android.os.SystemClock;
++import android.service.attention.AttentionService;
++import android.util.Log;
++import android.util.Size;
++import android.view.Display;
++import android.view.Surface;
++
++import java.nio.ByteBuffer;
++import java.util.ArrayList;
++import java.util.List;
++
++public class FaceAttentionService extends AttentionService {
++    private static final String TAG = "RestlessAttention";
++
++    private static final int MAX_WARMUP_FRAMES = 10;
++    private static final int ANALYZED_FRAMES = 3;
++    private static final int MIN_SHORT_SIDE = 240;
++    private static final int MIN_HAL_FACE_SCORE = 50;
++    // the framework cancels after its own timeout, this only guards a stuck camera
++    private static final long CHECK_TIMEOUT_MS = 3000;
++
++    private HandlerThread mThread;
++    private Handler mHandler;
++    private CameraManager mCameraManager;
++    private String mCameraId;
++    private boolean mCameraAvailable = true;
++    private final List<AttentionCallback> mPending = new ArrayList<>();
++    private Check mCheck;
++
++    private final CameraManager.AvailabilityCallback mAvailability =
++            new CameraManager.AvailabilityCallback() {
++        @Override
++        public void onCameraAvailable(String cameraId) {
++            if (cameraId.equals(mCameraId)) mCameraAvailable = true;
++        }
++
++        @Override
++        public void onCameraUnavailable(String cameraId) {
++            if (cameraId.equals(mCameraId) && mCheck == null) mCameraAvailable = false;
++        }
++    };
++
++    @Override
++    public void onCreate() {
++        super.onCreate();
++        mThread = new HandlerThread(TAG);
++        mThread.start();
++        mHandler = new Handler(mThread.getLooper());
++        mCameraManager = getSystemService(CameraManager.class);
++        mCameraId = findFrontCamera();
++        if (mCameraId != null) {
++            mCameraManager.registerAvailabilityCallback(mAvailability, mHandler);
++        }
++    }
++
++    @Override
++    public void onDestroy() {
++        mHandler.post(() -> {
++            if (mCameraId != null) mCameraManager.unregisterAvailabilityCallback(mAvailability);
++            if (mCheck != null) mCheck.fail(ATTENTION_FAILURE_CANCELLED);
++            mThread.quitSafely();
++        });
++        super.onDestroy();
++    }
++
++    @Override
++    public void onCheckAttention(AttentionCallback callback) {
++        mHandler.post(() -> {
++            mPending.add(callback);
++            if (mCheck != null) return;
++            if (mCameraId == null || !mCameraAvailable) {
++                deliverFailure(ATTENTION_FAILURE_UNKNOWN);
++                return;
++            }
++            mCheck = new Check();
++            mCheck.start();
++        });
++    }
++
++    @Override
++    public void onCancelAttentionCheck(AttentionCallback callback) {
++        mHandler.post(() -> {
++            if (mCheck != null) {
++                mCheck.fail(ATTENTION_FAILURE_CANCELLED);
++            } else {
++                safeFailure(callback, ATTENTION_FAILURE_CANCELLED);
++            }
++        });
++    }
++
++    private String findFrontCamera() {
++        try {
++            for (String id : mCameraManager.getCameraIdList()) {
++                CameraCharacteristics c = mCameraManager.getCameraCharacteristics(id);
++                Integer facing = c.get(CameraCharacteristics.LENS_FACING);
++                if (facing != null && facing == CameraMetadata.LENS_FACING_FRONT) return id;
++            }
++        } catch (CameraAccessException | RuntimeException e) {
++            Log.w(TAG, "camera enumeration failed", e);
++        }
++        return null;
++    }
++
++    private void deliverSuccess(int result) {
++        long now = SystemClock.uptimeMillis();
++        for (AttentionCallback cb : mPending) {
++            try {
++                cb.onSuccess(result, now);
++            } catch (RuntimeException e) {
++                Log.w(TAG, "callback failed", e);
++            }
++        }
++        mPending.clear();
++    }
++
++    private void deliverFailure(int error) {
++        for (AttentionCallback cb : mPending) safeFailure(cb, error);
++        mPending.clear();
++    }
++
++    private static void safeFailure(AttentionCallback cb, int error) {
++        try {
++            cb.onFailure(error);
++        } catch (RuntimeException e) {
++            Log.w(TAG, "callback failed", e);
++        }
++    }
++
++    private final class Check {
++        private final int mBaseRotation;
++        private final int mHalFaceMode;
++        private final Size mSize;
++        private ImageReader mReader;
++        private CameraDevice mDevice;
++        private boolean mSettled;
++        private int mFrames;
++        private int mAnalyzed;
++        private boolean mDone;
++        private final Runnable mTimeout = () -> fail(ATTENTION_FAILURE_TIMED_OUT);
++
++        Check() {
++            CameraCharacteristics c;
++            try {
++                c = mCameraManager.getCameraCharacteristics(mCameraId);
++            } catch (CameraAccessException | RuntimeException e) {
++                c = null;
++            }
++            Integer sensor = c == null ? null : c.get(CameraCharacteristics.SENSOR_ORIENTATION);
++            mBaseRotation = ((sensor == null ? 270 : sensor) + displayRotation()) % 360;
++            mHalFaceMode = c == null ? 0 : halFaceMode(c);
++            mSize = c == null ? null : pickSize(c);
++        }
++
++        void start() {
++            if (mSize == null) {
++                fail(ATTENTION_FAILURE_UNKNOWN);
++                return;
++            }
++            mHandler.postDelayed(mTimeout, CHECK_TIMEOUT_MS);
++            mReader = ImageReader.newInstance(mSize.getWidth(), mSize.getHeight(),
++                    ImageFormat.YUV_420_888, 2);
++            mReader.setOnImageAvailableListener(r -> onImage(), mHandler);
++            try {
++                mCameraManager.openCamera(mCameraId, mDeviceCallback, mHandler);
++            } catch (CameraAccessException | RuntimeException e) {
++                Log.w(TAG, "open failed", e);
++                fail(ATTENTION_FAILURE_UNKNOWN);
++            }
++        }
++
++        private final CameraDevice.StateCallback mDeviceCallback = new CameraDevice.StateCallback() {
++            @Override
++            public void onOpened(CameraDevice device) {
++                if (mDone) {
++                    device.close();
++                    return;
++                }
++                mDevice = device;
++                List<OutputConfiguration> outputs = new ArrayList<>();
++                outputs.add(new OutputConfiguration(mReader.getSurface()));
++                try {
++                    device.createCaptureSession(new SessionConfiguration(
++                            SessionConfiguration.SESSION_REGULAR, outputs, mHandler::post,
++                            mSessionCallback));
++                } catch (CameraAccessException | RuntimeException e) {
++                    Log.w(TAG, "session failed", e);
++                    fail(ATTENTION_FAILURE_UNKNOWN);
++                }
++            }
++
++            @Override
++            public void onDisconnected(CameraDevice device) {
++                device.close();
++                fail(ATTENTION_FAILURE_PREEMPTED);
++            }
++
++            @Override
++            public void onError(CameraDevice device, int error) {
++                Log.w(TAG, "camera error " + error);
++                device.close();
++                fail(error == ERROR_CAMERA_IN_USE || error == ERROR_MAX_CAMERAS_IN_USE
++                        ? ATTENTION_FAILURE_PREEMPTED : ATTENTION_FAILURE_UNKNOWN);
++            }
++        };
++
++        private final CameraCaptureSession.StateCallback mSessionCallback =
++                new CameraCaptureSession.StateCallback() {
++            @Override
++            public void onConfigured(CameraCaptureSession session) {
++                if (mDone) return;
++                try {
++                    CaptureRequest.Builder b =
++                            mDevice.createCaptureRequest(CameraDevice.TEMPLATE_PREVIEW);
++                    b.addTarget(mReader.getSurface());
++                    if (mHalFaceMode != 0) {
++                        b.set(CaptureRequest.STATISTICS_FACE_DETECT_MODE, mHalFaceMode);
++                    }
++                    session.setRepeatingRequest(b.build(), mCaptureCallback, mHandler);
++                } catch (CameraAccessException | RuntimeException e) {
++                    Log.w(TAG, "request failed", e);
++                    fail(ATTENTION_FAILURE_UNKNOWN);
++                }
++            }
++
++            @Override
++            public void onConfigureFailed(CameraCaptureSession session) {
++                fail(ATTENTION_FAILURE_UNKNOWN);
++            }
++        };
++
++        private final CameraCaptureSession.CaptureCallback mCaptureCallback =
++                new CameraCaptureSession.CaptureCallback() {
++            @Override
++            public void onCaptureCompleted(CameraCaptureSession session, CaptureRequest request,
++                    TotalCaptureResult result) {
++                if (mDone) return;
++                Integer ae = result.get(CaptureResult.CONTROL_AE_STATE);
++                if (ae == null || ae == CaptureResult.CONTROL_AE_STATE_CONVERGED
++                        || ae == CaptureResult.CONTROL_AE_STATE_FLASH_REQUIRED
++                        || ae == CaptureResult.CONTROL_AE_STATE_LOCKED) {
++                    mSettled = true;
++                }
++                if (mHalFaceMode == 0 || !mSettled) return;
++                Face[] faces = result.get(CaptureResult.STATISTICS_FACES);
++                if (faces == null) return;
++                for (Face f : faces) {
++                    if (f.getScore() >= MIN_HAL_FACE_SCORE) {
++                        succeed(ATTENTION_SUCCESS_PRESENT);
++                        return;
++                    }
++                }
++            }
++        };
++
++        private void onImage() {
++            Image image = mReader.acquireLatestImage();
++            if (image == null) return;
++            try {
++                if (mDone) return;
++                mFrames++;
++                if (!mSettled && mFrames < MAX_WARMUP_FRAMES) return;
++                if (detect(image)) {
++                    succeed(ATTENTION_SUCCESS_PRESENT);
++                } else if (++mAnalyzed >= ANALYZED_FRAMES) {
++                    succeed(ATTENTION_SUCCESS_ABSENT);
++                }
++            } finally {
++                image.close();
++            }
++        }
++
++        private boolean detect(Image image) {
++            Image.Plane plane = image.getPlanes()[0];
++            ByteBuffer buf = plane.getBuffer();
++            int rowStride = plane.getRowStride();
++            int pixelStride = plane.getPixelStride();
++            int step = Math.max(1, Math.min(image.getWidth(), image.getHeight()) / MIN_SHORT_SIDE);
++            int sw = image.getWidth() / step;
++            int sh = image.getHeight() / step;
++            byte[] luma = new byte[sw * sh];
++            for (int y = 0; y < sh; y++) {
++                int row = y * step * rowStride;
++                for (int x = 0; x < sw; x++) {
++                    luma[y * sw + x] = buf.get(row + x * step * pixelStride);
++                }
++            }
++            // with auto-rotate off the phone may be sideways relative to the display
++            int[] rotations = {mBaseRotation, (mBaseRotation + 90) % 360,
++                    (mBaseRotation + 270) % 360};
++            for (int rotation : rotations) {
++                if (findFace(luma, sw, sh, rotation)) return true;
++            }
++            return false;
++        }
++
++        private void succeed(int result) {
++            if (mDone) return;
++            finish();
++            deliverSuccess(result);
++        }
++
++        void fail(int error) {
++            if (mDone) return;
++            finish();
++            deliverFailure(error);
++        }
++
++        private void finish() {
++            mDone = true;
++            mHandler.removeCallbacks(mTimeout);
++            if (mDevice != null) mDevice.close();
++            if (mReader != null) mReader.close();
++            mCheck = null;
++        }
++    }
++
++    private static boolean findFace(byte[] luma, int sw, int sh, int rotation) {
++        boolean swap = rotation == 90 || rotation == 270;
++        // FaceDetector needs an even width
++        int w = (swap ? sh : sw) & ~1;
++        int h = swap ? sw : sh;
++        int[] px = new int[w * h];
++        for (int y = 0; y < h; y++) {
++            for (int x = 0; x < w; x++) {
++                int sx, sy;
++                switch (rotation) {
++                    case 90: sx = y; sy = sh - 1 - x; break;
++                    case 180: sx = sw - 1 - x; sy = sh - 1 - y; break;
++                    case 270: sx = sw - 1 - y; sy = x; break;
++                    default: sx = x; sy = y; break;
++                }
++                int l = luma[sy * sw + sx] & 0xff;
++                px[y * w + x] = 0xff000000 | (l << 16) | (l << 8) | l;
++            }
++        }
++        Bitmap argb = Bitmap.createBitmap(px, w, h, Bitmap.Config.ARGB_8888);
++        Bitmap bmp = argb.copy(Bitmap.Config.RGB_565, false);
++        argb.recycle();
++        FaceDetector.Face[] faces = new FaceDetector.Face[1];
++        int found = new FaceDetector(w, h, 1).findFaces(bmp, faces);
++        bmp.recycle();
++        return found > 0 && faces[0].confidence() >= FaceDetector.Face.CONFIDENCE_THRESHOLD;
++    }
++
++    private static int halFaceMode(CameraCharacteristics c) {
++        Integer max = c.get(CameraCharacteristics.STATISTICS_INFO_MAX_FACE_COUNT);
++        int[] modes = c.get(CameraCharacteristics.STATISTICS_INFO_AVAILABLE_FACE_DETECT_MODES);
++        if (max == null || max == 0 || modes == null) return 0;
++        int best = 0;
++        for (int m : modes) {
++            if (m == CameraMetadata.STATISTICS_FACE_DETECT_MODE_SIMPLE) return m;
++            if (m == CameraMetadata.STATISTICS_FACE_DETECT_MODE_FULL) best = m;
++        }
++        return best;
++    }
++
++    private static Size pickSize(CameraCharacteristics c) {
++        StreamConfigurationMap map = c.get(CameraCharacteristics.SCALER_STREAM_CONFIGURATION_MAP);
++        if (map == null) return null;
++        Size[] sizes = map.getOutputSizes(ImageFormat.YUV_420_888);
++        if (sizes == null || sizes.length == 0) return null;
++        Size best = null;
++        for (Size s : sizes) {
++            if (Math.min(s.getWidth(), s.getHeight()) < MIN_SHORT_SIDE) continue;
++            if (best == null || area(s) < area(best)) best = s;
++        }
++        if (best != null) return best;
++        for (Size s : sizes) {
++            if (best == null || area(s) > area(best)) best = s;
++        }
++        return best;
++    }
++
++    private static long area(Size s) {
++        return (long) s.getWidth() * s.getHeight();
++    }
++
++    private int displayRotation() {
++        Display d = getSystemService(DisplayManager.class).getDisplay(Display.DEFAULT_DISPLAY);
++        if (d == null) return 0;
++        switch (d.getRotation()) {
++            case Surface.ROTATION_90: return 90;
++            case Surface.ROTATION_180: return 180;
++            case Surface.ROTATION_270: return 270;
++            default: return 0;
++        }
++    }
++}
+diff --git a/base.mk b/base.mk
+index ee55992..c0c6586 100644
+--- a/base.mk
++++ b/base.mk
+@@ -257,6 +257,10 @@ PRODUCT_PACKAGES += \
+     WallpaperPicker2 \
+     RestlessWallpapers
+ 
++# screen attention: keeps the screen on while a face is in front of the camera
++PRODUCT_PACKAGES += \
++    RestlessAttention
++
+ PRODUCT_PACKAGES += \
+     xiaomi-touch
+ 
+diff --git a/overlay/frameworks/base/core/res/res/values/config.xml b/overlay/frameworks/base/core/res/res/values/config.xml
+index b832a66..2a1cd61 100644
+--- a/overlay/frameworks/base/core/res/res/values/config.xml
++++ b/overlay/frameworks/base/core/res/res/values/config.xml
+@@ -57,4 +57,9 @@
+     <string name="config_wlan_network_service_package">com.google.android.iwlan</string>
+   <string name="config_qualified_networks_service_package">com.android.telephony.qns</string>
+   <bool name="config_lidControlsSleep">true</bool>
++
++  <bool name="config_adaptive_sleep_available">true</bool>
++  <string name="config_defaultAttentionService" translatable="false">com.restlessos.attention/.FaceAttentionService</string>
++  <!-- role holders are exempt from the camera privacy indicator -->
++  <string name="config_systemVisualIntelligence" translatable="false">com.restlessos.attention</string>
+ </resources>
+-- 
+2.50.1 (Apple Git-155)
+
