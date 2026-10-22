@@ -1,18 +1,20 @@
-From 459ce7bad93935a6b6ba193804068e7bcf46bd97 Mon Sep 17 00:00:00 2001
+From cf27e5569d0f35117a57b6aa18c3a7a71600a49c Mon Sep 17 00:00:00 2001
 From: "Christopher A. Williamson" <contact@chrisaw.io>
 Date: Mon, 28 Sep 2026 09:16:30 +0100
 Subject: [PATCH 2/2] fs_mgr: legacy storage compatibility
 
 legacy vendor fstabs and storage setups hit several fatal assumptions
 in fs_mgr: dropped encryptable fstab flags with no fde fallback,
-project quotas on old filesystems, and disabled loop mapping in
-libfiemap. restore the legacy paths as one storage compatibility
+project quotas on old filesystems, disabled loop mapping in
+libfiemap and the dropped device tree fstab that legacy system-as-root
+devices mount vendor from. restore the legacy paths as one storage compatibility
 change.
 ---
- fs_mgr.cpp                  | 15 +++++++++++++++
- libfiemap/image_manager.cpp | 30 +++++++++++++++++-------------
- libfstab/fstab.cpp          | 17 +++--------------
- 3 files changed, 35 insertions(+), 27 deletions(-)
+ fs_mgr.cpp                     |  15 ++++
+ libfiemap/image_manager.cpp    |  30 +++----
+ libfstab/fstab.cpp             | 138 +++++++++++++++++++++++++++++----
+ libfstab/include/fstab/fstab.h |   1 +
+ 4 files changed, 157 insertions(+), 27 deletions(-)
 
 diff --git a/fs_mgr.cpp b/fs_mgr.cpp
 index adb1d50..305627b 100644
@@ -96,7 +98,7 @@ index ad78220..e2659c7 100644
      // Set a property so we remember this is mapped.
      auto prop_name = GetStatusPropertyName(name);
 diff --git a/libfstab/fstab.cpp b/libfstab/fstab.cpp
-index e3e5336..5855078 100644
+index e3e5336..e1b9bb8 100644
 --- a/libfstab/fstab.cpp
 +++ b/libfstab/fstab.cpp
 @@ -229,7 +229,7 @@ bool ParseFsMgrFlags(const std::string& flags, FstabEntry* entry) {
@@ -120,7 +122,7 @@ index e3e5336..5855078 100644
          } else if (StartsWith(flag, "voldmanaged=")) {
              // The voldmanaged flag is followed by an = and the label, a colon and the partition
              // number or the word "auto", e.g. voldmanaged=sdcard:3
-@@ -360,16 +359,6 @@ bool ParseFsMgrFlags(const std::string& flags, FstabEntry* entry) {
+@@ -360,19 +359,108 @@ bool ParseFsMgrFlags(const std::string& flags, FstabEntry* entry) {
          }
      }
  
@@ -137,6 +139,156 @@ index e3e5336..5855078 100644
      return true;
  }
  
++bool IsDtFstabCompatible() {
++    std::string dt_value;
++    std::string file_name = GetAndroidDtDir() + "fstab/compatible";
++
++    if (ReadDtFile(file_name, &dt_value) && dt_value == "android,fstab") {
++        // If there's no status property or its set to "ok" or "okay", then we use the DT fstab.
++        std::string status_value;
++        std::string status_file_name = GetAndroidDtDir() + "fstab/status";
++        return !ReadDtFile(status_file_name, &status_value) || status_value == "ok" ||
++               status_value == "okay";
++    }
++
++    return false;
++}
++
++std::string ReadFstabFromDt() {
++    if (!is_dt_compatible() || !IsDtFstabCompatible()) {
++        return {};
++    }
++
++    std::string fstabdir_name = GetAndroidDtDir() + "fstab";
++    std::unique_ptr<DIR, int (*)(DIR*)> fstabdir(opendir(fstabdir_name.c_str()), closedir);
++    if (!fstabdir) return {};
++
++    dirent* dp;
++    // Each element in fstab_dt_entries is <mount point, the line format in fstab file>.
++    std::vector<std::pair<std::string, std::string>> fstab_dt_entries;
++    while ((dp = readdir(fstabdir.get())) != NULL) {
++        // skip over name, compatible and .
++        if (dp->d_type != DT_DIR || dp->d_name[0] == '.') continue;
++
++        // create <dev> <mnt_point>  <type>  <mnt_flags>  <fsmgr_flags>\n
++        std::vector<std::string> fstab_entry;
++        std::string file_name;
++        std::string value;
++        // skip a partition entry if the status property is present and not set to ok
++        file_name = android::base::StringPrintf("%s/%s/status", fstabdir_name.c_str(), dp->d_name);
++        if (ReadDtFile(file_name, &value)) {
++            if (value != "okay" && value != "ok") {
++                LINFO << "dt_fstab: Skip disabled entry for partition " << dp->d_name;
++                continue;
++            }
++        }
++
++        file_name = android::base::StringPrintf("%s/%s/dev", fstabdir_name.c_str(), dp->d_name);
++        if (!ReadDtFile(file_name, &value)) {
++            LERROR << "dt_fstab: Failed to find device for partition " << dp->d_name;
++            return {};
++        }
++        fstab_entry.push_back(value);
++
++        std::string mount_point;
++        file_name =
++                android::base::StringPrintf("%s/%s/mnt_point", fstabdir_name.c_str(), dp->d_name);
++        if (ReadDtFile(file_name, &value)) {
++            LINFO << "dt_fstab: Using a specified mount point " << value << " for " << dp->d_name;
++            mount_point = value;
++        } else {
++            mount_point = android::base::StringPrintf("/%s", dp->d_name);
++        }
++        fstab_entry.push_back(mount_point);
++
++        file_name = android::base::StringPrintf("%s/%s/type", fstabdir_name.c_str(), dp->d_name);
++        if (!ReadDtFile(file_name, &value)) {
++            LERROR << "dt_fstab: Failed to find type for partition " << dp->d_name;
++            return {};
++        }
++        fstab_entry.push_back(value);
++
++        file_name =
++                android::base::StringPrintf("%s/%s/mnt_flags", fstabdir_name.c_str(), dp->d_name);
++        if (!ReadDtFile(file_name, &value)) {
++            LERROR << "dt_fstab: Failed to find type for partition " << dp->d_name;
++            return {};
++        }
++        fstab_entry.push_back(value);
++
++        file_name =
++                android::base::StringPrintf("%s/%s/fsmgr_flags", fstabdir_name.c_str(), dp->d_name);
++        if (!ReadDtFile(file_name, &value)) {
++            LERROR << "dt_fstab: Failed to find type for partition " << dp->d_name;
++            return {};
++        }
++        fstab_entry.push_back(value);
++        // Adds a fstab_entry to fstab_dt_entries, to be sorted by mount_point later.
++        fstab_dt_entries.emplace_back(mount_point, android::base::Join(fstab_entry, " "));
++    }
++
++    // Sort fstab_dt entries, to ensure /vendor is mounted before /vendor/abc is attempted.
++    std::sort(fstab_dt_entries.begin(), fstab_dt_entries.end(),
++              [](const auto& a, const auto& b) { return a.first < b.first; });
++
++    std::string fstab_result;
++    for (const auto& [_, dt_entry] : fstab_dt_entries) {
++        fstab_result += dt_entry + "\n";
++    }
++    return fstab_result;
++}
++
+ /* Extracts <device>s from the by-name symlinks specified in a fstab:
+  *   /dev/block/<type>/<device>/by-name/<partition>
+  *
+@@ -704,6 +792,27 @@ bool ReadFstabFromProcMounts(Fstab* fstab) {
+     return ReadFstabFromFileCommon(kProcMountsPath, fstab);
+ }
+ 
++// Returns fstab entries parsed from the device tree if they exist
++bool ReadFstabFromDt(Fstab* fstab, bool verbose) {
++    std::string fstab_buf = ReadFstabFromDt();
++    if (fstab_buf.empty()) {
++        if (verbose) LINFO << __FUNCTION__ << "(): failed to read fstab from dt";
++        return false;
++    }
++
++    if (!ParseFstabFromString(fstab_buf, /* proc_mounts = */ false, fstab)) {
++        if (verbose) {
++            LERROR << __FUNCTION__ << "(): failed to load fstab from kernel:" << std::endl
++                   << fstab_buf;
++        }
++        return false;
++    }
++
++    SkipMountingPartitions(fstab, verbose);
++
++    return true;
++}
++
+ #ifdef NO_SKIP_MOUNT
+ static constexpr bool kNoSkipMount = true;
+ #else
+@@ -764,6 +873,7 @@ bool SkipMountWithConfig(const std::string& skip_mount_config, Fstab* fstab, boo
+ // Loads the fstab file and combines with fstab entries passed in from device tree.
+ bool ReadDefaultFstab(Fstab* fstab) {
+     fstab->clear();
++    ReadFstabFromDt(fstab, false /* verbose */);
+ 
+     Fstab default_fstab;
+     const std::string default_fstab_path = GetFstabPath();
+diff --git a/libfstab/include/fstab/fstab.h b/libfstab/include/fstab/fstab.h
+index 8d8ad2b..4924ae3 100644
+--- a/libfstab/include/fstab/fstab.h
++++ b/libfstab/include/fstab/fstab.h
+@@ -101,6 +101,7 @@ using Fstab = std::vector<FstabEntry>;
+ 
+ bool ReadFstabFromFile(const std::string& path, Fstab* fstab);
+ bool ReadFstabFromProcMounts(Fstab* fstab);
++bool ReadFstabFromDt(Fstab* fstab, bool verbose = true);
+ bool ReadDefaultFstab(Fstab* fstab);
+ bool SkipMountingPartitions(Fstab* fstab, bool verbose = false);
+ 
 -- 
-2.55.0
+2.50.1 (Apple Git-155)
 
