@@ -319,7 +319,7 @@ jobs:
           EC2_AMI_ID: ${{ needs.deploy-infrastructure.outputs.ami_id }}
           GH_PAT: ${{ secrets.GH_PAT }}
           BUILD_SSH_KEY: ${{ secrets.BUILD_SSH_KEY }}
-          PACKAGES: "bc curl git git-lfs gh jq python3 rsync unzip wget xz-utils zip zsync"
+          PACKAGES: "attr bc curl erofs-utils git git-lfs gh jq python3 rsync unzip wget xz-utils zip zsync"
           RUNNER_LABEL: ${{ steps.label.outputs.label }}
       - name: Attach data volume
         run: .github/scripts/ebs.sh attach
@@ -362,6 +362,57 @@ jobs:
           unzip -j -q "${OUT}/signed-target_files.zip" IMAGES/system.img -d "${OUT}/"
           rm -fv "${OUT}/signed-target_files.zip"
           mv -v "${OUT}/system.img" "/mnt/src/out/system.img"
+      - name: Build EROFS image
+        working-directory: /mnt/src/out/
+        run: |
+          set -o pipefail
+
+          finish() {
+            local status=$?
+            set +e
+            for dir in erofs-work/ext4 erofs-work/erofs; do
+              if mountpoint -q "$dir"; then
+                sudo umount -l "$dir"
+              fi
+            done
+            rm -rf erofs-work
+            if [ "$status" -ne 0 ]; then
+              sudo rm -f system-erofs.img
+              echo "::warning title=EROFS image skipped::erofs build failed (exit ${status}), releasing ext4 image only"
+            fi
+            exit 0
+          }
+          trap finish EXIT
+
+          list_metadata() {
+            (cd "$1" && sudo find . -printf '%U %G %m %l %p\n') | sort
+          }
+          list_xattrs() {
+            (cd "$1" && sudo getfattr --recursive --no-dereference --dump --match=- --encoding=hex .) \
+              | awk '/^# file: / { file = substr($0, 9); next } /=/ { print file " " $0 }' \
+              | sort
+          }
+
+          if ! sudo modprobe erofs; then
+            sudo apt-get install -y "linux-modules-extra-$(uname -r)"
+            sudo modprobe erofs
+          fi
+
+          mkdir -p erofs-work/ext4 erofs-work/erofs
+          sudo mount -o ro,loop,noload system.img erofs-work/ext4
+          sudo mkfs.erofs -zlz4hc,12 -b4096 -Lsystem -E^xattr-name-filter system-erofs.img erofs-work/ext4
+          sudo fsck.erofs system-erofs.img
+          sudo mount -o ro,loop system-erofs.img erofs-work/erofs
+
+          for fs in ext4 erofs; do
+            list_metadata "erofs-work/${fs}" > "erofs-work/${fs}.meta"
+            list_xattrs "erofs-work/${fs}" > "erofs-work/${fs}.xattr"
+          done
+          diff -u erofs-work/ext4.meta erofs-work/erofs.meta
+          diff -u erofs-work/ext4.xattr erofs-work/erofs.xattr
+
+          sudo chown "$(id -u):$(id -g)" system-erofs.img
+          ls -lh system-erofs.img
       - id: compress
         name: Compress image and generate zsync and checksums
         run: |
@@ -370,12 +421,17 @@ jobs:
           cd /mnt/src/out
           img="RestlessOS-arm64-ab-${TAG}.img"
           mv -v system.img "${img}"
+          erofs=""
+          if [ -f system-erofs.img ]; then
+            erofs="${img%.img}-erofs.img"
+            mv -v system-erofs.img "${erofs}"
+          fi
           mkdir -p zsync
           zsyncmake -o "zsync/${img}.zsync" -u "${img}" -v "${img}"
           cp -v "${img}" "zsync/${img}"
-          sha512sum "${img}" > "RestlessOS-arm64-ab-${TAG}.sha512sum"
-          xz --best --compress --memlimit-compress=0 --threads=0 -v "${img}"
-          sha512sum "${img}.xz" >> "RestlessOS-arm64-ab-${TAG}.sha512sum"
+          sha512sum "${img}" ${erofs:+"${erofs}"} > "RestlessOS-arm64-ab-${TAG}.sha512sum"
+          xz --best --compress --memlimit-compress=0 --threads=0 -v "${img}" ${erofs:+"${erofs}"}
+          sha512sum "${img}.xz" ${erofs:+"${erofs}.xz"} >> "RestlessOS-arm64-ab-${TAG}.sha512sum"
           echo "version_tag=${TAG}" >> "$GITHUB_OUTPUT"
           echo "release_name=RestlessOS-ab-${TAG}" >> "$GITHUB_OUTPUT"
       - name: Generate changelog
