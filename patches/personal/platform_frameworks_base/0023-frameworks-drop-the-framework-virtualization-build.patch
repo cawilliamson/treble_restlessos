@@ -1,7 +1,7 @@
 From ae5adf5cef9be9bf7e4446c3e886aa7b059ca3b0 Mon Sep 17 00:00:00 2001
 From: "Christopher A. Williamson" <contact@chrisaw.io>
 Date: Mon, 28 Sep 2026 16:59:35 +0100
-Subject: [PATCH 23/37] frameworks: drop the framework-virtualization build refs references
+Subject: [PATCH 23/38] frameworks: drop the framework-virtualization build refs references
 
 the virtualization sources are removed from the gsi manifest sync, so
 the impl library and the combined apis entry pointing at them cannot

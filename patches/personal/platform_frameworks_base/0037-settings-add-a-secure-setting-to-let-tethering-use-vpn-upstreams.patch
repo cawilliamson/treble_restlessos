@@ -1,7 +1,7 @@
 From 948c897425e652c4075284dd0128d194f3b7f4fb Mon Sep 17 00:00:00 2001
 From: Langsdorff <131063968+clangsdorff@users.noreply.github.com>
 Date: Wed, 21 Oct 2026 18:56:39 +0300
-Subject: [PATCH 37/37] settings: add a secure setting to let tethering use vpn upstreams
+Subject: [PATCH 37/38] settings: add a secure setting to let tethering use vpn upstreams
 
 ---
  core/java/android/provider/Settings.java                 | 9 +++++++++

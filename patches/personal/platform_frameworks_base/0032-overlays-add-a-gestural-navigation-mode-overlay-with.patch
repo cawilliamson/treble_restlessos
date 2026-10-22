@@ -1,7 +1,7 @@
 From 019fb757f553dcf292af2f7de512e2b2949decf8 Mon Sep 17 00:00:00 2001
 From: Langsdorff <131063968+clangsdorff@users.noreply.github.com>
 Date: Sat, 3 Oct 2026 02:20:24 +0300
-Subject: [PATCH 32/37] overlays: add a gestural navigation mode overlay without the gesture handle
+Subject: [PATCH 32/38] overlays: add a gestural navigation mode overlay without the gesture handle
 
 ---
  ...reinstalled-packages-platform-overlays.xml |  6 ++

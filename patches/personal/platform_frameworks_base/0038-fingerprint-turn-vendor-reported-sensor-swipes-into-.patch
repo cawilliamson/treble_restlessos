@@ -1,0 +1,326 @@
+From e09ceb6dc253d6aafd794dcb44c408067297c3b8 Mon Sep 17 00:00:00 2001
+From: Langsdorff <131063968+clangsdorff@users.noreply.github.com>
+Date: Fri, 23 Oct 2026 00:41:48 +0300
+Subject: [PATCH 38/38] fingerprint: turn vendor reported sensor swipes into system
+ navigation keys
+
+---
+ .../fingerprint/aidl/AidlResponseHandler.java |   7 +-
+ .../aidl/FingerprintNavigation.java           | 193 ++++++++++++++++++
+ .../fingerprint/aidl/FingerprintProvider.java |   6 +
+ .../aidl/SamsungFingerprintNavigation.java    |  68 ++++++
+ 4 files changed, 272 insertions(+), 2 deletions(-)
+ create mode 100644 services/core/java/com/android/server/biometrics/sensors/fingerprint/aidl/FingerprintNavigation.java
+ create mode 100644 services/core/java/com/android/server/biometrics/sensors/fingerprint/aidl/SamsungFingerprintNavigation.java
+
+diff --git a/services/core/java/com/android/server/biometrics/sensors/fingerprint/aidl/AidlResponseHandler.java b/services/core/java/com/android/server/biometrics/sensors/fingerprint/aidl/AidlResponseHandler.java
+index df05a181..86c6890e 100644
+--- a/services/core/java/com/android/server/biometrics/sensors/fingerprint/aidl/AidlResponseHandler.java
++++ b/services/core/java/com/android/server/biometrics/sensors/fingerprint/aidl/AidlResponseHandler.java
+@@ -133,8 +133,11 @@ public class AidlResponseHandler extends ISessionCallback.Stub {
+ 
+     @Override
+     public void onAcquired(byte info, int vendorCode) {
+-        handleResponse(AcquisitionClient.class, (c) -> c.onAcquired(
+-                AidlConversionUtils.toFrameworkAcquiredInfo(info), vendorCode));
++        final int acquiredInfo = AidlConversionUtils.toFrameworkAcquiredInfo(info);
++        if (FingerprintNavigation.onAcquired(acquiredInfo, vendorCode)) {
++            return;
++        }
++        handleResponse(AcquisitionClient.class, (c) -> c.onAcquired(acquiredInfo, vendorCode));
+     }
+ 
+     /**
+diff --git a/services/core/java/com/android/server/biometrics/sensors/fingerprint/aidl/FingerprintNavigation.java b/services/core/java/com/android/server/biometrics/sensors/fingerprint/aidl/FingerprintNavigation.java
+new file mode 100644
+index 00000000..18a7cda8
+--- /dev/null
++++ b/services/core/java/com/android/server/biometrics/sensors/fingerprint/aidl/FingerprintNavigation.java
+@@ -0,0 +1,193 @@
++package com.android.server.biometrics.sensors.fingerprint.aidl;
++
++import android.annotation.NonNull;
++import android.annotation.Nullable;
++import android.content.BroadcastReceiver;
++import android.content.Context;
++import android.content.Intent;
++import android.content.IntentFilter;
++import android.database.ContentObserver;
++import android.hardware.biometrics.BiometricFingerprintConstants;
++import android.hardware.biometrics.fingerprint.IFingerprint;
++import android.hardware.input.InputManager;
++import android.hardware.input.InputManagerGlobal;
++import android.os.Handler;
++import android.os.IBinder;
++import android.os.PowerManager;
++import android.os.RemoteException;
++import android.os.SystemClock;
++import android.os.SystemProperties;
++import android.os.UserHandle;
++import android.provider.Settings;
++import android.util.Slog;
++import android.view.InputDevice;
++import android.view.KeyCharacterMap;
++import android.view.KeyEvent;
++
++/**
++ * Fingerprint swipe gestures for HALs that report them as vendor acquired codes instead of input
++ * events. A vendor backend found through the HAL's binder extension arms the sensor while the
++ * swipe setting is on, and the reported swipes are injected as system navigation keys so they
++ * take the same path as sensors that emit those keys through a keylayout.
++ */
++final class FingerprintNavigation {
++    private static final String TAG = "FingerprintNavigation";
++
++    /** Lets Settings offer the swipe toggle when no input device maps the navigation keys. */
++    private static final String PROP_SUPPORTED = "sys.phh.fp_nav_keys";
++
++    interface Backend {
++        void setEnabled(boolean enabled) throws RemoteException;
++
++        void setScreenOn(boolean screenOn) throws RemoteException;
++
++        /** Returns the navigation key a vendor acquired code stands for, or KEYCODE_UNKNOWN. */
++        int keyCodeFor(int vendorCode);
++    }
++
++    @Nullable
++    private static Backend createBackend(@NonNull IBinder extension, int sensorId)
++            throws RemoteException {
++        return SamsungFingerprintNavigation.create(extension, sensorId);
++    }
++
++    @Nullable private static volatile FingerprintNavigation sInstance;
++
++    @NonNull private final Context mContext;
++    @NonNull private final Handler mHandler;
++    @NonNull private final Backend mBackend;
++    private boolean mEnabled;
++
++    private final BroadcastReceiver mReceiver = new BroadcastReceiver() {
++        @Override
++        public void onReceive(Context context, Intent intent) {
++            switch (intent.getAction()) {
++                case Intent.ACTION_SCREEN_ON:
++                case Intent.ACTION_SCREEN_OFF:
++                    if (mEnabled) {
++                        setScreenOn(isInteractive());
++                    }
++                    break;
++                default:
++                    updateEnabled();
++                    break;
++            }
++        }
++    };
++
++    private final ContentObserver mSettingObserver;
++
++    static void attach(@NonNull Context context, @NonNull Handler handler,
++            @NonNull IFingerprint daemon, int sensorId) {
++        final Backend backend;
++        try {
++            final IBinder extension = daemon.asBinder().getExtension();
++            backend = extension != null ? createBackend(extension, sensorId) : null;
++        } catch (RemoteException e) {
++            Slog.w(TAG, "Unable to query the fingerprint HAL extension", e);
++            return;
++        }
++        if (backend == null) {
++            return;
++        }
++        Slog.i(TAG, "Using " + backend.getClass().getSimpleName());
++
++        final FingerprintNavigation previous = sInstance;
++        if (previous != null) {
++            previous.detach();
++        }
++        final FingerprintNavigation navigation =
++                new FingerprintNavigation(context, handler, backend);
++        sInstance = navigation;
++        SystemProperties.set(PROP_SUPPORTED, "1");
++        // Before boot completes, BOOT_COMPLETED triggers the first update.
++        if (SystemProperties.getBoolean("sys.boot_completed", false)) {
++            handler.post(navigation::updateEnabled);
++        }
++    }
++
++    /** Returns true if the acquired event was a swipe and should not reach the client. */
++    static boolean onAcquired(int acquiredInfo, int vendorCode) {
++        final FingerprintNavigation navigation = sInstance;
++        if (navigation == null
++                || acquiredInfo != BiometricFingerprintConstants.FINGERPRINT_ACQUIRED_VENDOR) {
++            return false;
++        }
++        final int keyCode = navigation.mBackend.keyCodeFor(vendorCode);
++        if (keyCode == KeyEvent.KEYCODE_UNKNOWN) {
++            return false;
++        }
++        // Inject from our own thread so the permission check sees system_server, not the HAL.
++        navigation.mHandler.post(() -> {
++            if (navigation.isInteractive()) {
++                navigation.injectKey(keyCode);
++            }
++        });
++        return true;
++    }
++
++    private FingerprintNavigation(@NonNull Context context, @NonNull Handler handler,
++            @NonNull Backend backend) {
++        mContext = context;
++        mHandler = handler;
++        mBackend = backend;
++        mSettingObserver = new ContentObserver(handler) {
++            @Override
++            public void onChange(boolean selfChange) {
++                updateEnabled();
++            }
++        };
++
++        final IntentFilter filter = new IntentFilter();
++        filter.addAction(Intent.ACTION_SCREEN_ON);
++        filter.addAction(Intent.ACTION_SCREEN_OFF);
++        filter.addAction(Intent.ACTION_USER_SWITCHED);
++        filter.addAction(Intent.ACTION_BOOT_COMPLETED);
++        mContext.registerReceiverAsUser(mReceiver, UserHandle.ALL, filter, null, handler);
++        mContext.getContentResolver().registerContentObserver(
++                Settings.Secure.getUriFor(Settings.Secure.SYSTEM_NAVIGATION_KEYS_ENABLED), false,
++                mSettingObserver, UserHandle.USER_ALL);
++    }
++
++    private void detach() {
++        mContext.unregisterReceiver(mReceiver);
++        mContext.getContentResolver().unregisterContentObserver(mSettingObserver);
++    }
++
++    private boolean isInteractive() {
++        return mContext.getSystemService(PowerManager.class).isInteractive();
++    }
++
++    private void updateEnabled() {
++        final boolean enabled = Settings.Secure.getIntForUser(mContext.getContentResolver(),
++                Settings.Secure.SYSTEM_NAVIGATION_KEYS_ENABLED, 0, UserHandle.USER_CURRENT) == 1;
++        if (enabled == mEnabled) {
++            return;
++        }
++        try {
++            mBackend.setEnabled(enabled);
++            mEnabled = enabled;
++        } catch (RemoteException e) {
++            Slog.w(TAG, "Unable to " + (enabled ? "enable" : "disable") + " swipe gestures", e);
++        }
++    }
++
++    private void setScreenOn(boolean screenOn) {
++        try {
++            mBackend.setScreenOn(screenOn);
++        } catch (RemoteException e) {
++            Slog.w(TAG, "Unable to report the screen state", e);
++        }
++    }
++
++    private void injectKey(int keyCode) {
++        final long now = SystemClock.uptimeMillis();
++        for (int action : new int[] {KeyEvent.ACTION_DOWN, KeyEvent.ACTION_UP}) {
++            final KeyEvent event = new KeyEvent(now, now, action, keyCode, 0 /* repeat */,
++                    0 /* metaState */, KeyCharacterMap.VIRTUAL_KEYBOARD, 0 /* scancode */,
++                    KeyEvent.FLAG_FROM_SYSTEM, InputDevice.SOURCE_KEYBOARD);
++            InputManagerGlobal.getInstance().injectInputEvent(event,
++                    InputManager.INJECT_INPUT_EVENT_MODE_ASYNC);
++        }
++    }
++}
+diff --git a/services/core/java/com/android/server/biometrics/sensors/fingerprint/aidl/FingerprintProvider.java b/services/core/java/com/android/server/biometrics/sensors/fingerprint/aidl/FingerprintProvider.java
+index 7132a07c..aa63515c 100644
+--- a/services/core/java/com/android/server/biometrics/sensors/fingerprint/aidl/FingerprintProvider.java
++++ b/services/core/java/com/android/server/biometrics/sensors/fingerprint/aidl/FingerprintProvider.java
+@@ -368,6 +368,12 @@ public class FingerprintProvider implements IBinder.DeathRecipient, ServiceProvi
+             Slog.e(getTag(), "Unable to linkToDeath", e);
+         }
+ 
++        if (!mHalInstanceNameCurrent.contains("virtual") && mFingerprintSensors.size() > 0
++                && !mFingerprintSensors.valueAt(0).getSensorProperties().isAnyUdfpsType()) {
++            FingerprintNavigation.attach(mContext, mHandler, mDaemon,
++                    mFingerprintSensors.keyAt(0));
++        }
++
+         for (int i = 0; i < mFingerprintSensors.size(); i++) {
+             final int sensorId = mFingerprintSensors.keyAt(i);
+             processFingerprintForProfiles(sensorId);
+diff --git a/services/core/java/com/android/server/biometrics/sensors/fingerprint/aidl/SamsungFingerprintNavigation.java b/services/core/java/com/android/server/biometrics/sensors/fingerprint/aidl/SamsungFingerprintNavigation.java
+new file mode 100644
+index 00000000..e7a6a7d2
+--- /dev/null
++++ b/services/core/java/com/android/server/biometrics/sensors/fingerprint/aidl/SamsungFingerprintNavigation.java
+@@ -0,0 +1,68 @@
++package com.android.server.biometrics.sensors.fingerprint.aidl;
++
++import android.annotation.NonNull;
++import android.annotation.Nullable;
++import android.os.IBinder;
++import android.os.RemoteException;
++import android.util.Slog;
++import android.view.KeyEvent;
++
++import vendor.samsung.hardware.biometrics.fingerprint.ISehFingerprint;
++import vendor.samsung.hardware.biometrics.fingerprint.SehResult;
++
++/** Samsung capacitive sensors, driven the way One UI's SemFpGestureManager does. */
++final class SamsungFingerprintNavigation implements FingerprintNavigation.Backend {
++    private static final String TAG = "SamsungFpNavigation";
++
++    private static final int SEH_GESTURE_MODE_ON = 15;
++    private static final int SEH_GESTURE_MODE_OFF = 16;
++    private static final int SEH_GESTURE_SCREEN_STATE = 17;
++    private static final int VENDOR_SWIPE_UP = 20001;
++    private static final int VENDOR_SWIPE_DOWN = 20002;
++
++    @NonNull private final ISehFingerprint mSeh;
++    private final int mSensorId;
++
++    @Nullable
++    static SamsungFingerprintNavigation create(@NonNull IBinder extension, int sensorId)
++            throws RemoteException {
++        // Other vendors hang their own interface off the same extension slot.
++        if (!ISehFingerprint.DESCRIPTOR.equals(extension.getInterfaceDescriptor())) {
++            return null;
++        }
++        return new SamsungFingerprintNavigation(ISehFingerprint.Stub.asInterface(extension),
++                sensorId);
++    }
++
++    private SamsungFingerprintNavigation(@NonNull ISehFingerprint seh, int sensorId) {
++        mSeh = seh;
++        mSensorId = sensorId;
++    }
++
++    @Override
++    public void setEnabled(boolean enabled) throws RemoteException {
++        request(enabled ? SEH_GESTURE_MODE_ON : SEH_GESTURE_MODE_OFF, 0);
++    }
++
++    @Override
++    public void setScreenOn(boolean screenOn) throws RemoteException {
++        request(SEH_GESTURE_SCREEN_STATE, screenOn ? 1 : 0);
++    }
++
++    @Override
++    public int keyCodeFor(int vendorCode) {
++        switch (vendorCode) {
++            case VENDOR_SWIPE_DOWN:
++                return KeyEvent.KEYCODE_SYSTEM_NAVIGATION_DOWN;
++            case VENDOR_SWIPE_UP:
++                return KeyEvent.KEYCODE_SYSTEM_NAVIGATION_UP;
++            default:
++                return KeyEvent.KEYCODE_UNKNOWN;
++        }
++    }
++
++    private void request(int command, int param) throws RemoteException {
++        final SehResult result = mSeh.sehRequest(mSensorId, command, param, new byte[0]);
++        Slog.d(TAG, "sehRequest(" + command + ", " + param + "): " + result.retValue);
++    }
++}
+-- 
+2.50.1 (Apple Git-155)
+

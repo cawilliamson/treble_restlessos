@@ -1,0 +1,56 @@
+From 01e1262dc140e14950ca6447ff9a1d10b68d1c2b Mon Sep 17 00:00:00 2001
+From: Langsdorff <131063968+clangsdorff@users.noreply.github.com>
+Date: Fri, 23 Oct 2026 00:41:49 +0300
+Subject: [PATCH 8/8] gestures: offer fingerprint swipe when the sensor reports
+ navigation keys
+
+---
+ ...ipeToNotificationPreferenceController.java | 23 +++++++++++++++++--
+ 1 file changed, 21 insertions(+), 2 deletions(-)
+
+diff --git a/src/com/android/settings/gestures/SwipeToNotificationPreferenceController.java b/src/com/android/settings/gestures/SwipeToNotificationPreferenceController.java
+index b173868..6924005 100644
+--- a/src/com/android/settings/gestures/SwipeToNotificationPreferenceController.java
++++ b/src/com/android/settings/gestures/SwipeToNotificationPreferenceController.java
+@@ -20,8 +20,12 @@ import static android.provider.Settings.Secure.SYSTEM_NAVIGATION_KEYS_ENABLED;
+ 
+ import android.content.Context;
+ import android.content.SharedPreferences;
++import android.hardware.input.InputManager;
++import android.os.SystemProperties;
+ import android.provider.Settings;
+ import android.text.TextUtils;
++import android.view.InputDevice;
++import android.view.KeyEvent;
+ 
+ import com.android.settings.Utils;
+ 
+@@ -47,8 +51,23 @@ public class SwipeToNotificationPreferenceController extends GesturePreferenceCo
+ 
+     private static boolean isGestureAvailable(Context context) {
+         return Utils.hasFingerprintHardware(context)
+-                && context.getResources()
+-                .getBoolean(com.android.internal.R.bool.config_supportSystemNavigationKeys);
++                && (context.getResources()
++                .getBoolean(com.android.internal.R.bool.config_supportSystemNavigationKeys)
++                || SystemProperties.getBoolean("sys.phh.fp_nav_keys", false)
++                || hasSystemNavigationKeys(context));
++    }
++
++    // A GSI can't know the vendor's fingerprint keylayout, so look for a device that maps it.
++    private static boolean hasSystemNavigationKeys(Context context) {
++        final InputManager im = context.getSystemService(InputManager.class);
++        for (int id : im.getInputDeviceIds()) {
++            final InputDevice device = im.getInputDevice(id);
++            if (device != null && !device.isVirtual()
++                    && device.hasKeys(KeyEvent.KEYCODE_SYSTEM_NAVIGATION_DOWN)[0]) {
++                return true;
++            }
++        }
++        return false;
+     }
+ 
+     @Override
+-- 
+2.50.1 (Apple Git-155)
+

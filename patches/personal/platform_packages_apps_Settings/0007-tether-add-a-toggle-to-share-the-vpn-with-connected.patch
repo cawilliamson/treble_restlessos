@@ -1,7 +1,7 @@
 From 41ef278c6bb64d8ca94da61dc426ac186c884e63 Mon Sep 17 00:00:00 2001
 From: Langsdorff <131063968+clangsdorff@users.noreply.github.com>
 Date: Wed, 21 Oct 2026 18:56:40 +0300
-Subject: [PATCH 7/7] tether: add a toggle to share the vpn with connected devices
+Subject: [PATCH 7/8] tether: add a toggle to share the vpn with connected devices
 
 ---
  res/values-az/tether_vpn_strings.xml          |  5 +++
