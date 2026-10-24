@@ -1,23 +1,21 @@
-From 82b2c27d8c1f44f1bf4901ac02665cf990a573ec Mon Sep 17 00:00:00 2001
-From: Langsdorff <131063968+clangsdorff@users.noreply.github.com>
-Date: Sat, 24 Oct 2026 00:08:46 +0300
-Subject: [PATCH 19/19] SystemUI: don't re-announce the sd card after a reboot
+From a5c89e7ace6170953d32aba9c3d475023b2e7836 Mon Sep 17 00:00:00 2001
+From: Chara <bionichuman07@gmail.com>
+Date: Fri, 23 Oct 2026 15:44:38 -0700
+Subject: [PATCH 19/19] SystemUI: don't re-announce known public volumes
 
+Use persisted VolumeRecord creation times instead of shutdown preferences and a boot timeout. Only records predating this boot suppress healthy mount notifications; new cards, read-only mounts and error states keep stock behavior.
+
+Co-authored-by: Langsdorff <131063968+clangsdorff@users.noreply.github.com>
+Signed-off-by: Chara <bionichuman07@gmail.com>
 ---
- .../systemui/usb/StorageNotification.java     | 68 +++++++++++++++++++
- 1 file changed, 68 insertions(+)
+ .../systemui/usb/StorageNotification.java     | 54 +++++++++++++++++++
+ 1 file changed, 54 insertions(+)
 
 diff --git a/packages/SystemUI/src/com/android/systemui/usb/StorageNotification.java b/packages/SystemUI/src/com/android/systemui/usb/StorageNotification.java
-index 6a364af1e..45460919c 100644
+index 6a364af..86a40fd 100644
 --- a/packages/SystemUI/src/com/android/systemui/usb/StorageNotification.java
 +++ b/packages/SystemUI/src/com/android/systemui/usb/StorageNotification.java
-@@ -25,11 +25,13 @@ import android.content.BroadcastReceiver;
- import android.content.Context;
- import android.content.Intent;
- import android.content.IntentFilter;
-+import android.content.SharedPreferences;
- import android.content.pm.PackageManager;
- import android.content.pm.PackageManager.MoveCallback;
+@@ -30,6 +30,7 @@ import android.content.pm.PackageManager.MoveCallback;
  import android.os.Bundle;
  import android.os.Handler;
  import android.os.StrictMode;
@@ -25,7 +23,7 @@ index 6a364af1e..45460919c 100644
  import android.os.UserHandle;
  import android.os.storage.DiskInfo;
  import android.os.storage.StorageEventListener;
-@@ -39,6 +41,7 @@ import android.os.storage.VolumeRecord;
+@@ -39,6 +40,7 @@ import android.os.storage.VolumeRecord;
  import android.provider.Settings;
  import android.text.TextUtils;
  import android.text.format.DateUtils;
@@ -33,141 +31,87 @@ index 6a364af1e..45460919c 100644
  import android.util.Log;
  import android.util.SparseArray;
  
-@@ -52,6 +55,7 @@ import com.android.systemui.statusbar.notification.NotificationUtils;
- import com.android.systemui.util.NotificationChannels;
- 
- import java.util.List;
-+import java.util.Set;
- 
- import javax.inject.Inject;
- 
-@@ -62,6 +66,11 @@ public class StorageNotification implements CoreStartable {
- 
-     private static final String ACTION_SNOOZE_VOLUME = "com.android.systemui.action.SNOOZE_VOLUME";
-     private static final String ACTION_FINISH_WIZARD = "com.android.systemui.action.FINISH_WIZARD";
-+
-+    private static final String PREFS_NAME = "storage_notification";
-+    private static final String KEY_SHUTDOWN_VOLUMES = "mounted_at_shutdown";
-+    private static final long BOOT_REMOUNT_WINDOW_MS = 2 * DateUtils.MINUTE_IN_MILLIS;
-+
-     private final Context mContext;
-     private final BroadcastDispatcher mBroadcastDispatcher;
- 
-@@ -93,6 +102,12 @@ public class StorageNotification implements CoreStartable {
+@@ -93,6 +95,15 @@ public class StorageNotification implements CoreStartable {
  
      private final SparseArray<MoveInfo> mMoves = new SparseArray<>();
  
-+    // fs UUIDs of the public volumes that were mounted when the device last shut down
-+    private final Set<String> mShutdownVolumes = new ArraySet<>();
-+    // fs UUIDs whose current mount is a boot remount and stays without a notification
-+    private final Set<String> mQuietVolumes = new ArraySet<>();
-+    private long mBootRemountDeadline;
++    // VolumeRecord timestamps use wall time. Fix the boot boundary once, rather than
++    // aging newly inserted cards into known cards on later metadata callbacks.
++    private final long mBootTimeMillis = System.currentTimeMillis() - SystemClock.elapsedRealtime();
++
++    // Consumed UUIDs never get another quiet mount in this SystemUI lifetime.
++    private final ArraySet<String> mHandledVolumes = new ArraySet<>();
++    // Keep metadata callbacks quiet for the current mount, but not reinsertion.
++    private final ArraySet<String> mQuietVolumes = new ArraySet<>();
 +
      private final StorageEventListener mListener = new StorageEventListener() {
          @Override
          public void onVolumeStateChanged(VolumeInfo vol, int oldState, int newState) {
-@@ -147,6 +162,20 @@ public class StorageNotification implements CoreStartable {
-         }
-     };
- 
-+    private final BroadcastReceiver mShutdownReceiver = new BroadcastReceiver() {
-+        @Override
-+        public void onReceive(Context context, Intent intent) {
-+            final Set<String> mounted = new ArraySet<>();
-+            for (VolumeInfo vol : mStorageManager.getVolumes()) {
-+                if (vol.getType() == VolumeInfo.TYPE_PUBLIC && vol.isMountedReadable()
-+                        && vol.getFsUuid() != null) {
-+                    mounted.add(vol.getFsUuid());
-+                }
-+            }
-+            getPrefs().edit().putStringSet(KEY_SHUTDOWN_VOLUMES, mounted).commit();
-+        }
-+    };
-+
-     private final MoveCallback mMoveCallback = new MoveCallback() {
-         @Override
-         public void onCreated(int moveId, Bundle extras) {
-@@ -181,6 +210,14 @@ public class StorageNotification implements CoreStartable {
- 
-     @Override
-     public void start() {
-+        final SharedPreferences prefs = getPrefs();
-+        final Set<String> shutdownVolumes = prefs.getStringSet(KEY_SHUTDOWN_VOLUMES, null);
-+        if (shutdownVolumes != null) {
-+            mShutdownVolumes.addAll(shutdownVolumes);
-+            prefs.edit().remove(KEY_SHUTDOWN_VOLUMES).apply();
-+        }
-+        mBootRemountDeadline = SystemClock.elapsedRealtime() + BOOT_REMOUNT_WINDOW_MS;
-+
-         mStorageManager.registerListener(mListener);
- 
-         mBroadcastDispatcher.registerReceiver(
-@@ -197,6 +234,9 @@ public class StorageNotification implements CoreStartable {
-                 null,
-                 Context.RECEIVER_EXPORTED_UNAUDITED,
-                 android.Manifest.permission.MOUNT_UNMOUNT_FILESYSTEMS);
-+        mBroadcastDispatcher.registerReceiver(
-+                mShutdownReceiver,
-+                new IntentFilter(Intent.ACTION_SHUTDOWN));
- 
-         // Kick current state into place
-         final List<DiskInfo> disks = mStorageManager.getDisks();
-@@ -217,6 +257,16 @@ public class StorageNotification implements CoreStartable {
-             com.android.systemui.res.R.bool.config_storageNotificationsUseAlertsChannel);
-     }
- 
-+    private SharedPreferences getPrefs() {
-+        return mContext.createDeviceProtectedStorageContext()
-+                .getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE);
-+    }
-+
-+    private boolean inBootRemountWindow() {
-+        return !mShutdownVolumes.isEmpty()
-+                && SystemClock.elapsedRealtime() < mBootRemountDeadline;
-+    }
-+
-     private void updateMissingPrivateVolumes() {
-         if (isTv() || isAutomotive()) {
-             // On TV, TvSettings displays a modal full-screen activity in this case.
-@@ -337,6 +387,10 @@ public class StorageNotification implements CoreStartable {
+@@ -337,6 +348,21 @@ public class StorageNotification implements CoreStartable {
              return;
          }
  
-+        if (!vol.isMountedReadable() && vol.getState() != VolumeInfo.STATE_CHECKING) {
-+            mQuietVolumes.remove(vol.getFsUuid());
++        final String fsUuid = vol.getFsUuid();
++        if (!TextUtils.isEmpty(fsUuid)) {
++            switch (vol.getState()) {
++                case VolumeInfo.STATE_UNMOUNTED:
++                case VolumeInfo.STATE_EJECTING:
++                case VolumeInfo.STATE_REMOVED:
++                case VolumeInfo.STATE_BAD_REMOVAL:
++                case VolumeInfo.STATE_UNMOUNTABLE:
++                case VolumeInfo.STATE_MOUNTED_READ_ONLY:
++                    mHandledVolumes.add(fsUuid);
++                    mQuietVolumes.remove(fsUuid);
++                    break;
++            }
 +        }
 +
          final Notification notif;
          switch (vol.getState()) {
              case VolumeInfo.STATE_CHECKING:
-@@ -384,6 +438,13 @@ public class StorageNotification implements CoreStartable {
+@@ -383,7 +409,20 @@ public class StorageNotification implements CoreStartable {
+         }
      }
  
++    private boolean wasKnownBeforeBoot(VolumeRecord rec) {
++        // Zero is a legacy/unknown timestamp: keep stock notifications in that case.
++        return rec != null && rec.createdMillis > 0 && rec.createdMillis < mBootTimeMillis;
++    }
++
      private Notification onVolumeChecking(VolumeInfo vol) {
-+        // vold reads the fs UUID only after it starts checking, so a card that is still unknown
-+        // here may be the one being remounted at boot
-+        if (inBootRemountWindow() && (vol.getFsUuid() == null
-+                || mShutdownVolumes.contains(vol.getFsUuid()))) {
++        // The UUID may not be available until checking finishes. Never guess that
++        // an unidentified card is known, as it could be a newly inserted card.
++        if (!TextUtils.isEmpty(vol.getFsUuid())
++                && !mHandledVolumes.contains(vol.getFsUuid())
++                && wasKnownBeforeBoot(mStorageManager.findRecordByUuid(vol.getFsUuid()))) {
 +            return null;
 +        }
 +
          final DiskInfo disk = vol.getDisk();
          final CharSequence title = mContext.getString(
                  R.string.ext_media_checking_notification_title, disk.getDescription());
-@@ -405,6 +466,13 @@ public class StorageNotification implements CoreStartable {
+@@ -405,6 +444,21 @@ public class StorageNotification implements CoreStartable {
          if (rec == null || (rec.isSnoozed() && disk.isAdoptable())) {
              return null;
          }
-+        // Don't announce a card that was already mounted before the device rebooted
-+        if (inBootRemountWindow() && mShutdownVolumes.contains(vol.getFsUuid())) {
-+            mQuietVolumes.add(vol.getFsUuid());
-+        }
-+        if (mQuietVolumes.contains(vol.getFsUuid())) {
-+            return null;
++        // StorageManagerService persists the record before delivering the mount event,
++        // even for a new card. Existence alone is not enough: only records from a
++        // previous boot are known. Quiet only the first mount; removal or ejection
++        // consumes that opportunity, so reinsertion uses stock notifications.
++        // Keep read-only mounts and all error states on their stock notification paths.
++        if (vol.getState() == VolumeInfo.STATE_MOUNTED) {
++            final String fsUuid = vol.getFsUuid();
++            if (mQuietVolumes.contains(fsUuid)) {
++                return null;
++            }
++            if (mHandledVolumes.add(fsUuid) && wasKnownBeforeBoot(rec)) {
++                mQuietVolumes.add(fsUuid);
++                return null;
++            }
 +        }
          if (disk.isAdoptable() && !rec.isInited() && rec.getType() != VolumeInfo.TYPE_PUBLIC
              && rec.getType() != VolumeInfo.TYPE_PRIVATE) {
              final CharSequence title = disk.getDescription();
 -- 
-2.50.1 (Apple Git-155)
+2.43.0
 
