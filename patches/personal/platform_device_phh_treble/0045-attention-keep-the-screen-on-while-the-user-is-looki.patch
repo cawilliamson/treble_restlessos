@@ -8,10 +8,10 @@ Subject: [PATCH 45/49] attention: keep the screen on while the user is looking
  attention/Android.bp                          |  10 +
  attention/AndroidManifest.xml                 |  22 +
  ...p-permissions-com.restlessos.attention.xml |   7 +
- .../attention/FaceAttentionService.java       | 419 ++++++++++++++++++
+ .../attention/FaceAttentionService.java       | 410 ++++++++++++++++++
  base.mk                                       |   6 +
  .../base/core/res/res/values/config.xml       |   5 +
- 6 files changed, 469 insertions(+)
+ 6 files changed, 460 insertions(+)
  create mode 100644 attention/Android.bp
  create mode 100644 attention/AndroidManifest.xml
  create mode 100644 attention/privapp-permissions-com.restlessos.attention.xml
@@ -76,10 +76,10 @@ index 0000000..03e2dc7
 +</permissions>
 diff --git a/attention/src/com/restlessos/attention/FaceAttentionService.java b/attention/src/com/restlessos/attention/FaceAttentionService.java
 new file mode 100644
-index 0000000..d325a6c
+index 0000000..e1dc80f
 --- /dev/null
 +++ b/attention/src/com/restlessos/attention/FaceAttentionService.java
-@@ -0,0 +1,419 @@
+@@ -0,0 +1,410 @@
 +package com.restlessos.attention;
 +
 +import android.graphics.Bitmap;
@@ -243,8 +243,6 @@ index 0000000..d325a6c
 +        private boolean mSettled;
 +        private int mFrames;
 +        private int mAnalyzed;
-+        private int mBestScore = -1;
-+        private long mStartTime;
 +        private boolean mDone;
 +        private final Runnable mTimeout = () -> fail(ATTENTION_FAILURE_TIMED_OUT);
 +
@@ -268,7 +266,6 @@ index 0000000..d325a6c
 +                fail(ATTENTION_FAILURE_UNKNOWN);
 +                return;
 +            }
-+            mStartTime = SystemClock.uptimeMillis();
 +            mHandler.postDelayed(mTimeout, CHECK_TIMEOUT_MS);
 +            mReader = ImageReader.newInstance(mSize.getWidth(), mSize.getHeight(),
 +                    ImageFormat.YUV_420_888, 2);
@@ -357,7 +354,6 @@ index 0000000..d325a6c
 +                Face[] faces = result.get(CaptureResult.STATISTICS_FACES);
 +                if (faces == null) return;
 +                for (Face f : faces) {
-+                    mBestScore = Math.max(mBestScore, f.getScore());
 +                    if (f.getScore() >= MIN_HAL_FACE_SCORE) {
 +                        succeed(ATTENTION_SUCCESS_PRESENT);
 +                        return;
@@ -403,17 +399,12 @@ index 0000000..d325a6c
 +
 +        private void succeed(int result) {
 +            if (mDone) return;
-+            Log.i(TAG, (result == ATTENTION_SUCCESS_PRESENT ? "present" : "absent") + " via "
-+                    + (mHalFaceMode != 0 ? "hal, best score " + mBestScore : "system") + ", "
-+                    + (SystemClock.uptimeMillis() - mStartTime) + " ms");
 +            finish();
 +            deliverSuccess(result);
 +        }
 +
 +        void fail(int error) {
 +            if (mDone) return;
-+            Log.i(TAG, "failed with " + error + ", "
-+                    + (SystemClock.uptimeMillis() - mStartTime) + " ms");
 +            finish();
 +            deliverFailure(error);
 +        }
