@@ -1,4 +1,4 @@
-From 798d3671c725de54d7873563ab178c3c1686006b Mon Sep 17 00:00:00 2001
+From 47a8d38edf7cbac0a4018abe6dbb3c0d906a0e4d Mon Sep 17 00:00:00 2001
 From: Langsdorff <131063968+clangsdorff@users.noreply.github.com>
 Date: Sun, 18 Oct 2026 10:57:01 +0300
 Subject: [PATCH 17/20] pms: let microg-signed packages bypass the gmscompat installer checks
@@ -9,7 +9,7 @@ Subject: [PATCH 17/20] pms: let microg-signed packages bypass the gmscompat inst
  2 files changed, 11 insertions(+), 2 deletions(-)
 
 diff --git a/services/core/java/com/android/server/pm/ComputerEngine.java b/services/core/java/com/android/server/pm/ComputerEngine.java
-index 162a80b23..fe27de836 100644
+index 6b4571f77..8fcd9ae89 100644
 --- a/services/core/java/com/android/server/pm/ComputerEngine.java
 +++ b/services/core/java/com/android/server/pm/ComputerEngine.java
 @@ -1499,8 +1499,12 @@ public class ComputerEngine implements Computer {
@@ -52,5 +52,5 @@ index af9170320..73d08f9be 100644
                              // lock that is held at this point is per-session lock, call into
                              // PackageManager is safe
 -- 
-2.55.0
+2.56.0
 
