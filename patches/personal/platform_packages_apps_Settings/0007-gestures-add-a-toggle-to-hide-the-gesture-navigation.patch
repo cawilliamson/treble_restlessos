@@ -1,7 +1,7 @@
 From 7de5618c0fb05295c74056ba439348c706505fac Mon Sep 17 00:00:00 2001
 From: Langsdorff <131063968+clangsdorff@users.noreply.github.com>
 Date: Sat, 3 Oct 2026 02:21:51 +0300
-Subject: [PATCH 7/13] gestures: add a toggle to hide the gesture navigation
+Subject: [PATCH 7/14] gestures: add a toggle to hide the gesture navigation
  handle
 
 ---

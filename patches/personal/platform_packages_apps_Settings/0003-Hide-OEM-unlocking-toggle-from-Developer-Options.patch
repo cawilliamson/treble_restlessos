@@ -1,7 +1,7 @@
 From 261444ea00e51cff63a3ffb5ccf7ee282294e876 Mon Sep 17 00:00:00 2001
 From: "Christopher A. Williamson" <contact@chrisaw.io>
 Date: Mon, 16 Feb 2026 10:35:25 +0000
-Subject: [PATCH 3/13] Hide OEM unlocking toggle from Developer Options
+Subject: [PATCH 3/14] Hide OEM unlocking toggle from Developer Options
 
 A GSI requires an unlocked bootloader. Exposing the OEM unlock toggle
 in Developer Options risks the user accidentally disabling OEM

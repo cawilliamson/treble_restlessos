@@ -1,7 +1,7 @@
 From 84af6bc15894045636ba0b654c87bafdef2b1d44 Mon Sep 17 00:00:00 2001
 From: Langsdorff <131063968+clangsdorff@users.noreply.github.com>
 Date: Tue, 27 Oct 2026 21:44:38 +0300
-Subject: [PATCH 13/13] fingerprint: don't clip the udfps enroll view at the
+Subject: [PATCH 13/14] fingerprint: don't clip the udfps enroll view at the
  footer bar
 
 on devices with the sensor close to the bottom edge the udfps enroll

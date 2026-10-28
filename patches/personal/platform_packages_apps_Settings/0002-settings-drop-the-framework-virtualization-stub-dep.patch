@@ -1,7 +1,7 @@
 From c1bd608c30d6124732c044176e78a20eeb6f600a Mon Sep 17 00:00:00 2001
 From: "Christopher A. Williamson" <contact@chrisaw.io>
 Date: Mon, 28 Sep 2026 16:59:35 +0100
-Subject: [PATCH 2/13] settings: drop the framework-virtualization stub dep
+Subject: [PATCH 2/14] settings: drop the framework-virtualization stub dep
 
 the virtualization sources are removed from the gsi manifest sync;
 nothing in settings references the stubs any more.

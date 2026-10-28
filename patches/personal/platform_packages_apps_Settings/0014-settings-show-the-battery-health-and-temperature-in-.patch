@@ -1,0 +1,1893 @@
+From 0e84400652eb6d2f7b199a4bb6e5878cedeb9b5f Mon Sep 17 00:00:00 2001
+From: Langsdorff <131063968+clangsdorff@users.noreply.github.com>
+Date: Wed, 28 Oct 2026 20:00:58 +0300
+Subject: [PATCH 14/14] settings: show the battery health and temperature in
+ battery info
+
+add battery health and temperature to battery information. health shows
+overheat, cold, over voltage and failures first since they are transient
+and need attention. otherwise it shows the samsung wear verdict when the
+framework provides it and falls back to the standard battery health.
+---
+ res/values-af/battery_info_strings.xml        | 13 +++
+ res/values-am/battery_info_strings.xml        | 13 +++
+ res/values-ar/battery_info_strings.xml        | 13 +++
+ res/values-as/battery_info_strings.xml        | 13 +++
+ res/values-az/battery_info_strings.xml        | 13 +++
+ res/values-b+sr+Latn/battery_info_strings.xml | 13 +++
+ res/values-be/battery_info_strings.xml        | 13 +++
+ res/values-bg/battery_info_strings.xml        | 13 +++
+ res/values-bn/battery_info_strings.xml        | 13 +++
+ res/values-bs/battery_info_strings.xml        | 13 +++
+ res/values-ca/battery_info_strings.xml        | 13 +++
+ res/values-cs/battery_info_strings.xml        | 13 +++
+ res/values-da/battery_info_strings.xml        | 13 +++
+ res/values-de/battery_info_strings.xml        | 13 +++
+ res/values-el/battery_info_strings.xml        | 13 +++
+ res/values-es-rUS/battery_info_strings.xml    | 13 +++
+ res/values-es/battery_info_strings.xml        | 13 +++
+ res/values-et/battery_info_strings.xml        | 13 +++
+ res/values-eu/battery_info_strings.xml        | 13 +++
+ res/values-fa/battery_info_strings.xml        | 13 +++
+ res/values-fi/battery_info_strings.xml        | 13 +++
+ res/values-fr-rCA/battery_info_strings.xml    | 13 +++
+ res/values-fr/battery_info_strings.xml        | 13 +++
+ res/values-gl/battery_info_strings.xml        | 13 +++
+ res/values-gu/battery_info_strings.xml        | 13 +++
+ res/values-hi/battery_info_strings.xml        | 13 +++
+ res/values-hr/battery_info_strings.xml        | 13 +++
+ res/values-hu/battery_info_strings.xml        | 13 +++
+ res/values-hy/battery_info_strings.xml        | 13 +++
+ res/values-in/battery_info_strings.xml        | 13 +++
+ res/values-is/battery_info_strings.xml        | 13 +++
+ res/values-it/battery_info_strings.xml        | 13 +++
+ res/values-iw/battery_info_strings.xml        | 13 +++
+ res/values-ja/battery_info_strings.xml        | 13 +++
+ res/values-ka/battery_info_strings.xml        | 13 +++
+ res/values-kk/battery_info_strings.xml        | 13 +++
+ res/values-km/battery_info_strings.xml        | 13 +++
+ res/values-kn/battery_info_strings.xml        | 13 +++
+ res/values-ko/battery_info_strings.xml        | 13 +++
+ res/values-ky/battery_info_strings.xml        | 13 +++
+ res/values-lo/battery_info_strings.xml        | 13 +++
+ res/values-lt/battery_info_strings.xml        | 13 +++
+ res/values-lv/battery_info_strings.xml        | 13 +++
+ res/values-mk/battery_info_strings.xml        | 13 +++
+ res/values-ml/battery_info_strings.xml        | 13 +++
+ res/values-mn/battery_info_strings.xml        | 13 +++
+ res/values-mr/battery_info_strings.xml        | 13 +++
+ res/values-ms/battery_info_strings.xml        | 13 +++
+ res/values-my/battery_info_strings.xml        | 13 +++
+ res/values-nb/battery_info_strings.xml        | 13 +++
+ res/values-ne/battery_info_strings.xml        | 13 +++
+ res/values-nl/battery_info_strings.xml        | 13 +++
+ res/values-or/battery_info_strings.xml        | 13 +++
+ res/values-pa/battery_info_strings.xml        | 13 +++
+ res/values-pl/battery_info_strings.xml        | 13 +++
+ res/values-pt-rBR/battery_info_strings.xml    | 13 +++
+ res/values-pt-rPT/battery_info_strings.xml    | 13 +++
+ res/values-pt/battery_info_strings.xml        | 13 +++
+ res/values-ro/battery_info_strings.xml        | 13 +++
+ res/values-ru/battery_info_strings.xml        | 13 +++
+ res/values-si/battery_info_strings.xml        | 13 +++
+ res/values-sk/battery_info_strings.xml        | 13 +++
+ res/values-sl/battery_info_strings.xml        | 13 +++
+ res/values-sq/battery_info_strings.xml        | 13 +++
+ res/values-sr/battery_info_strings.xml        | 13 +++
+ res/values-sv/battery_info_strings.xml        | 13 +++
+ res/values-sw/battery_info_strings.xml        | 13 +++
+ res/values-ta/battery_info_strings.xml        | 13 +++
+ res/values-te/battery_info_strings.xml        | 13 +++
+ res/values-th/battery_info_strings.xml        | 13 +++
+ res/values-tl/battery_info_strings.xml        | 13 +++
+ res/values-tr/battery_info_strings.xml        | 13 +++
+ res/values-uk/battery_info_strings.xml        | 13 +++
+ res/values-ur/battery_info_strings.xml        | 13 +++
+ res/values-uz/battery_info_strings.xml        | 13 +++
+ res/values-vi/battery_info_strings.xml        | 13 +++
+ res/values-zh-rCN/battery_info_strings.xml    | 13 +++
+ res/values-zh-rHK/battery_info_strings.xml    | 13 +++
+ res/values-zh-rTW/battery_info_strings.xml    | 13 +++
+ res/values-zu/battery_info_strings.xml        | 13 +++
+ res/values/battery_info_strings.xml           | 14 ++++
+ res/xml/battery_info.xml                      | 14 ++++
+ .../BatteryHealthPreferenceController.java    | 82 +++++++++++++++++++
+ ...atteryTemperaturePreferenceController.java | 51 ++++++++++++
+ 84 files changed, 1201 insertions(+)
+ create mode 100644 res/values-af/battery_info_strings.xml
+ create mode 100644 res/values-am/battery_info_strings.xml
+ create mode 100644 res/values-ar/battery_info_strings.xml
+ create mode 100644 res/values-as/battery_info_strings.xml
+ create mode 100644 res/values-az/battery_info_strings.xml
+ create mode 100644 res/values-b+sr+Latn/battery_info_strings.xml
+ create mode 100644 res/values-be/battery_info_strings.xml
+ create mode 100644 res/values-bg/battery_info_strings.xml
+ create mode 100644 res/values-bn/battery_info_strings.xml
+ create mode 100644 res/values-bs/battery_info_strings.xml
+ create mode 100644 res/values-ca/battery_info_strings.xml
+ create mode 100644 res/values-cs/battery_info_strings.xml
+ create mode 100644 res/values-da/battery_info_strings.xml
+ create mode 100644 res/values-de/battery_info_strings.xml
+ create mode 100644 res/values-el/battery_info_strings.xml
+ create mode 100644 res/values-es-rUS/battery_info_strings.xml
+ create mode 100644 res/values-es/battery_info_strings.xml
+ create mode 100644 res/values-et/battery_info_strings.xml
+ create mode 100644 res/values-eu/battery_info_strings.xml
+ create mode 100644 res/values-fa/battery_info_strings.xml
+ create mode 100644 res/values-fi/battery_info_strings.xml
+ create mode 100644 res/values-fr-rCA/battery_info_strings.xml
+ create mode 100644 res/values-fr/battery_info_strings.xml
+ create mode 100644 res/values-gl/battery_info_strings.xml
+ create mode 100644 res/values-gu/battery_info_strings.xml
+ create mode 100644 res/values-hi/battery_info_strings.xml
+ create mode 100644 res/values-hr/battery_info_strings.xml
+ create mode 100644 res/values-hu/battery_info_strings.xml
+ create mode 100644 res/values-hy/battery_info_strings.xml
+ create mode 100644 res/values-in/battery_info_strings.xml
+ create mode 100644 res/values-is/battery_info_strings.xml
+ create mode 100644 res/values-it/battery_info_strings.xml
+ create mode 100644 res/values-iw/battery_info_strings.xml
+ create mode 100644 res/values-ja/battery_info_strings.xml
+ create mode 100644 res/values-ka/battery_info_strings.xml
+ create mode 100644 res/values-kk/battery_info_strings.xml
+ create mode 100644 res/values-km/battery_info_strings.xml
+ create mode 100644 res/values-kn/battery_info_strings.xml
+ create mode 100644 res/values-ko/battery_info_strings.xml
+ create mode 100644 res/values-ky/battery_info_strings.xml
+ create mode 100644 res/values-lo/battery_info_strings.xml
+ create mode 100644 res/values-lt/battery_info_strings.xml
+ create mode 100644 res/values-lv/battery_info_strings.xml
+ create mode 100644 res/values-mk/battery_info_strings.xml
+ create mode 100644 res/values-ml/battery_info_strings.xml
+ create mode 100644 res/values-mn/battery_info_strings.xml
+ create mode 100644 res/values-mr/battery_info_strings.xml
+ create mode 100644 res/values-ms/battery_info_strings.xml
+ create mode 100644 res/values-my/battery_info_strings.xml
+ create mode 100644 res/values-nb/battery_info_strings.xml
+ create mode 100644 res/values-ne/battery_info_strings.xml
+ create mode 100644 res/values-nl/battery_info_strings.xml
+ create mode 100644 res/values-or/battery_info_strings.xml
+ create mode 100644 res/values-pa/battery_info_strings.xml
+ create mode 100644 res/values-pl/battery_info_strings.xml
+ create mode 100644 res/values-pt-rBR/battery_info_strings.xml
+ create mode 100644 res/values-pt-rPT/battery_info_strings.xml
+ create mode 100644 res/values-pt/battery_info_strings.xml
+ create mode 100644 res/values-ro/battery_info_strings.xml
+ create mode 100644 res/values-ru/battery_info_strings.xml
+ create mode 100644 res/values-si/battery_info_strings.xml
+ create mode 100644 res/values-sk/battery_info_strings.xml
+ create mode 100644 res/values-sl/battery_info_strings.xml
+ create mode 100644 res/values-sq/battery_info_strings.xml
+ create mode 100644 res/values-sr/battery_info_strings.xml
+ create mode 100644 res/values-sv/battery_info_strings.xml
+ create mode 100644 res/values-sw/battery_info_strings.xml
+ create mode 100644 res/values-ta/battery_info_strings.xml
+ create mode 100644 res/values-te/battery_info_strings.xml
+ create mode 100644 res/values-th/battery_info_strings.xml
+ create mode 100644 res/values-tl/battery_info_strings.xml
+ create mode 100644 res/values-tr/battery_info_strings.xml
+ create mode 100644 res/values-uk/battery_info_strings.xml
+ create mode 100644 res/values-ur/battery_info_strings.xml
+ create mode 100644 res/values-uz/battery_info_strings.xml
+ create mode 100644 res/values-vi/battery_info_strings.xml
+ create mode 100644 res/values-zh-rCN/battery_info_strings.xml
+ create mode 100644 res/values-zh-rHK/battery_info_strings.xml
+ create mode 100644 res/values-zh-rTW/battery_info_strings.xml
+ create mode 100644 res/values-zu/battery_info_strings.xml
+ create mode 100644 res/values/battery_info_strings.xml
+ create mode 100644 src/com/android/settings/deviceinfo/batteryinfo/BatteryHealthPreferenceController.java
+ create mode 100644 src/com/android/settings/deviceinfo/batteryinfo/BatteryTemperaturePreferenceController.java
+
+diff --git a/res/values-af/battery_info_strings.xml b/res/values-af/battery_info_strings.xml
+new file mode 100644
+index 0000000..256e7f2
+--- /dev/null
++++ b/res/values-af/battery_info_strings.xml
+@@ -0,0 +1,13 @@
++<?xml version="1.0" encoding="utf-8"?>
++<resources>
++    <string name="battery_health_title">Batterygesondheid</string>
++    <string name="battery_temperature_title">Batterytemperatuur</string>
++    <string name="battery_health_good">Goed</string>
++    <string name="battery_health_normal">Normaal</string>
++    <string name="battery_health_weak">Swak</string>
++    <string name="battery_health_overheat">Oorverhitting</string>
++    <string name="battery_health_dead">Defek</string>
++    <string name="battery_health_over_voltage">Oorspanning</string>
++    <string name="battery_health_failure">Fout</string>
++    <string name="battery_health_cold">Koud</string>
++</resources>
+diff --git a/res/values-am/battery_info_strings.xml b/res/values-am/battery_info_strings.xml
+new file mode 100644
+index 0000000..a210977
+--- /dev/null
++++ b/res/values-am/battery_info_strings.xml
+@@ -0,0 +1,13 @@
++<?xml version="1.0" encoding="utf-8"?>
++<resources>
++    <string name="battery_health_title">የባትሪ ጤና</string>
++    <string name="battery_temperature_title">የባትሪ ሙቀት</string>
++    <string name="battery_health_good">ጥሩ</string>
++    <string name="battery_health_normal">መደበኛ</string>
++    <string name="battery_health_weak">ደካማ</string>
++    <string name="battery_health_overheat">ከመጠን በላይ መሞቅ</string>
++    <string name="battery_health_dead">የተበላሸ</string>
++    <string name="battery_health_over_voltage">ከመጠን በላይ ቮልቴጅ</string>
++    <string name="battery_health_failure">ብልሽት</string>
++    <string name="battery_health_cold">ቀዝቃዛ</string>
++</resources>
+diff --git a/res/values-ar/battery_info_strings.xml b/res/values-ar/battery_info_strings.xml
+new file mode 100644
+index 0000000..82637af
+--- /dev/null
++++ b/res/values-ar/battery_info_strings.xml
+@@ -0,0 +1,13 @@
++<?xml version="1.0" encoding="utf-8"?>
++<resources>
++    <string name="battery_health_title">حالة البطارية</string>
++    <string name="battery_temperature_title">درجة حرارة البطارية</string>
++    <string name="battery_health_good">جيدة</string>
++    <string name="battery_health_normal">عادية</string>
++    <string name="battery_health_weak">ضعيفة</string>
++    <string name="battery_health_overheat">سخونة زائدة</string>
++    <string name="battery_health_dead">تالفة</string>
++    <string name="battery_health_over_voltage">جهد زائد</string>
++    <string name="battery_health_failure">عطل</string>
++    <string name="battery_health_cold">باردة</string>
++</resources>
+diff --git a/res/values-as/battery_info_strings.xml b/res/values-as/battery_info_strings.xml
+new file mode 100644
+index 0000000..0ef6878
+--- /dev/null
++++ b/res/values-as/battery_info_strings.xml
+@@ -0,0 +1,13 @@
++<?xml version="1.0" encoding="utf-8"?>
++<resources>
++    <string name="battery_health_title">বেটাৰীৰ স্বাস্থ্য</string>
++    <string name="battery_temperature_title">বেটাৰীৰ উষ্ণতা</string>
++    <string name="battery_health_good">ভাল</string>
++    <string name="battery_health_normal">সাধাৰণ</string>
++    <string name="battery_health_weak">দুৰ্বল</string>
++    <string name="battery_health_overheat">অত্যধিক গৰম</string>
++    <string name="battery_health_dead">বিকল</string>
++    <string name="battery_health_over_voltage">অতিৰিক্ত ভ’ল্টেজ</string>
++    <string name="battery_health_failure">বিফলতা</string>
++    <string name="battery_health_cold">ঠাণ্ডা</string>
++</resources>
+diff --git a/res/values-az/battery_info_strings.xml b/res/values-az/battery_info_strings.xml
+new file mode 100644
+index 0000000..cffcd08
+--- /dev/null
++++ b/res/values-az/battery_info_strings.xml
+@@ -0,0 +1,13 @@
++<?xml version="1.0" encoding="utf-8"?>
++<resources>
++    <string name="battery_health_title">Batareya vəziyyəti</string>
++    <string name="battery_temperature_title">Batareya temperaturu</string>
++    <string name="battery_health_good">Yaxşı</string>
++    <string name="battery_health_normal">Normal</string>
++    <string name="battery_health_weak">Zəif</string>
++    <string name="battery_health_overheat">Həddindən artıq qızma</string>
++    <string name="battery_health_dead">Sıradan çıxıb</string>
++    <string name="battery_health_over_voltage">Həddindən artıq gərginlik</string>
++    <string name="battery_health_failure">Nasazlıq</string>
++    <string name="battery_health_cold">Soyuq</string>
++</resources>
+diff --git a/res/values-b+sr+Latn/battery_info_strings.xml b/res/values-b+sr+Latn/battery_info_strings.xml
+new file mode 100644
+index 0000000..b457946
+--- /dev/null
++++ b/res/values-b+sr+Latn/battery_info_strings.xml
+@@ -0,0 +1,13 @@
++<?xml version="1.0" encoding="utf-8"?>
++<resources>
++    <string name="battery_health_title">Stanje baterije</string>
++    <string name="battery_temperature_title">Temperatura baterije</string>
++    <string name="battery_health_good">Dobro</string>
++    <string name="battery_health_normal">Normalno</string>
++    <string name="battery_health_weak">Slabo</string>
++    <string name="battery_health_overheat">Pregrevanje</string>
++    <string name="battery_health_dead">Neispravno</string>
++    <string name="battery_health_over_voltage">Previsok napon</string>
++    <string name="battery_health_failure">Greška</string>
++    <string name="battery_health_cold">Hladno</string>
++</resources>
+diff --git a/res/values-be/battery_info_strings.xml b/res/values-be/battery_info_strings.xml
+new file mode 100644
+index 0000000..f058fbc
+--- /dev/null
++++ b/res/values-be/battery_info_strings.xml
+@@ -0,0 +1,13 @@
++<?xml version="1.0" encoding="utf-8"?>
++<resources>
++    <string name="battery_health_title">Стан акумулятара</string>
++    <string name="battery_temperature_title">Тэмпература акумулятара</string>
++    <string name="battery_health_good">Добры</string>
++    <string name="battery_health_normal">Звычайны</string>
++    <string name="battery_health_weak">Слабы</string>
++    <string name="battery_health_overheat">Перагрэў</string>
++    <string name="battery_health_dead">Няспраўны</string>
++    <string name="battery_health_over_voltage">Перанапружанне</string>
++    <string name="battery_health_failure">Збой</string>
++    <string name="battery_health_cold">Пераахаладжэнне</string>
++</resources>
+diff --git a/res/values-bg/battery_info_strings.xml b/res/values-bg/battery_info_strings.xml
+new file mode 100644
+index 0000000..8378cab
+--- /dev/null
++++ b/res/values-bg/battery_info_strings.xml
+@@ -0,0 +1,13 @@
++<?xml version="1.0" encoding="utf-8"?>
++<resources>
++    <string name="battery_health_title">Състояние на батерията</string>
++    <string name="battery_temperature_title">Температура на батерията</string>
++    <string name="battery_health_good">Добро</string>
++    <string name="battery_health_normal">Нормално</string>
++    <string name="battery_health_weak">Слабо</string>
++    <string name="battery_health_overheat">Прегряване</string>
++    <string name="battery_health_dead">Повредено</string>
++    <string name="battery_health_over_voltage">Пренапрежение</string>
++    <string name="battery_health_failure">Неизправност</string>
++    <string name="battery_health_cold">Преохлаждане</string>
++</resources>
+diff --git a/res/values-bn/battery_info_strings.xml b/res/values-bn/battery_info_strings.xml
+new file mode 100644
+index 0000000..f6b1fd9
+--- /dev/null
++++ b/res/values-bn/battery_info_strings.xml
+@@ -0,0 +1,13 @@
++<?xml version="1.0" encoding="utf-8"?>
++<resources>
++    <string name="battery_health_title">ব্যাটারির স্বাস্থ্য</string>
++    <string name="battery_temperature_title">ব্যাটারির তাপমাত্রা</string>
++    <string name="battery_health_good">ভাল</string>
++    <string name="battery_health_normal">সাধারণ</string>
++    <string name="battery_health_weak">দুর্বল</string>
++    <string name="battery_health_overheat">অতিরিক্ত গরম</string>
++    <string name="battery_health_dead">অকেজো</string>
++    <string name="battery_health_over_voltage">অতিরিক্ত ভোল্টেজ</string>
++    <string name="battery_health_failure">ত্রুটি</string>
++    <string name="battery_health_cold">ঠান্ডা</string>
++</resources>
+diff --git a/res/values-bs/battery_info_strings.xml b/res/values-bs/battery_info_strings.xml
+new file mode 100644
+index 0000000..d2e8272
+--- /dev/null
++++ b/res/values-bs/battery_info_strings.xml
+@@ -0,0 +1,13 @@
++<?xml version="1.0" encoding="utf-8"?>
++<resources>
++    <string name="battery_health_title">Stanje baterije</string>
++    <string name="battery_temperature_title">Temperatura baterije</string>
++    <string name="battery_health_good">Dobro</string>
++    <string name="battery_health_normal">Normalno</string>
++    <string name="battery_health_weak">Slabo</string>
++    <string name="battery_health_overheat">Pregrijavanje</string>
++    <string name="battery_health_dead">Neispravno</string>
++    <string name="battery_health_over_voltage">Previsok napon</string>
++    <string name="battery_health_failure">Greška</string>
++    <string name="battery_health_cold">Hladno</string>
++</resources>
+diff --git a/res/values-ca/battery_info_strings.xml b/res/values-ca/battery_info_strings.xml
+new file mode 100644
+index 0000000..a4e5928
+--- /dev/null
++++ b/res/values-ca/battery_info_strings.xml
+@@ -0,0 +1,13 @@
++<?xml version="1.0" encoding="utf-8"?>
++<resources>
++    <string name="battery_health_title">Estat de la bateria</string>
++    <string name="battery_temperature_title">Temperatura de la bateria</string>
++    <string name="battery_health_good">Bo</string>
++    <string name="battery_health_normal">Normal</string>
++    <string name="battery_health_weak">Feble</string>
++    <string name="battery_health_overheat">Sobreescalfament</string>
++    <string name="battery_health_dead">Inservible</string>
++    <string name="battery_health_over_voltage">Sobretensió</string>
++    <string name="battery_health_failure">Fallada</string>
++    <string name="battery_health_cold">Fred</string>
++</resources>
+diff --git a/res/values-cs/battery_info_strings.xml b/res/values-cs/battery_info_strings.xml
+new file mode 100644
+index 0000000..de7b51c
+--- /dev/null
++++ b/res/values-cs/battery_info_strings.xml
+@@ -0,0 +1,13 @@
++<?xml version="1.0" encoding="utf-8"?>
++<resources>
++    <string name="battery_health_title">Stav baterie</string>
++    <string name="battery_temperature_title">Teplota baterie</string>
++    <string name="battery_health_good">Dobrý</string>
++    <string name="battery_health_normal">Normální</string>
++    <string name="battery_health_weak">Slabý</string>
++    <string name="battery_health_overheat">Přehřátí</string>
++    <string name="battery_health_dead">Nefunkční</string>
++    <string name="battery_health_over_voltage">Přepětí</string>
++    <string name="battery_health_failure">Porucha</string>
++    <string name="battery_health_cold">Studený</string>
++</resources>
+diff --git a/res/values-da/battery_info_strings.xml b/res/values-da/battery_info_strings.xml
+new file mode 100644
+index 0000000..9942f4b
+--- /dev/null
++++ b/res/values-da/battery_info_strings.xml
+@@ -0,0 +1,13 @@
++<?xml version="1.0" encoding="utf-8"?>
++<resources>
++    <string name="battery_health_title">Batteritilstand</string>
++    <string name="battery_temperature_title">Batteritemperatur</string>
++    <string name="battery_health_good">God</string>
++    <string name="battery_health_normal">Normal</string>
++    <string name="battery_health_weak">Svag</string>
++    <string name="battery_health_overheat">Overophedning</string>
++    <string name="battery_health_dead">Defekt</string>
++    <string name="battery_health_over_voltage">Overspænding</string>
++    <string name="battery_health_failure">Fejl</string>
++    <string name="battery_health_cold">Kold</string>
++</resources>
+diff --git a/res/values-de/battery_info_strings.xml b/res/values-de/battery_info_strings.xml
+new file mode 100644
+index 0000000..5c4c896
+--- /dev/null
++++ b/res/values-de/battery_info_strings.xml
+@@ -0,0 +1,13 @@
++<?xml version="1.0" encoding="utf-8"?>
++<resources>
++    <string name="battery_health_title">Akkuzustand</string>
++    <string name="battery_temperature_title">Akkutemperatur</string>
++    <string name="battery_health_good">Gut</string>
++    <string name="battery_health_normal">Normal</string>
++    <string name="battery_health_weak">Schwach</string>
++    <string name="battery_health_overheat">Überhitzung</string>
++    <string name="battery_health_dead">Defekt</string>
++    <string name="battery_health_over_voltage">Überspannung</string>
++    <string name="battery_health_failure">Fehler</string>
++    <string name="battery_health_cold">Kalt</string>
++</resources>
+diff --git a/res/values-el/battery_info_strings.xml b/res/values-el/battery_info_strings.xml
+new file mode 100644
+index 0000000..80e5df2
+--- /dev/null
++++ b/res/values-el/battery_info_strings.xml
+@@ -0,0 +1,13 @@
++<?xml version="1.0" encoding="utf-8"?>
++<resources>
++    <string name="battery_health_title">Κατάσταση μπαταρίας</string>
++    <string name="battery_temperature_title">Θερμοκρασία μπαταρίας</string>
++    <string name="battery_health_good">Καλή</string>
++    <string name="battery_health_normal">Κανονική</string>
++    <string name="battery_health_weak">Αδύναμη</string>
++    <string name="battery_health_overheat">Υπερθέρμανση</string>
++    <string name="battery_health_dead">Ελαττωματική</string>
++    <string name="battery_health_over_voltage">Υπέρταση</string>
++    <string name="battery_health_failure">Σφάλμα</string>
++    <string name="battery_health_cold">Κρύα</string>
++</resources>
+diff --git a/res/values-es-rUS/battery_info_strings.xml b/res/values-es-rUS/battery_info_strings.xml
+new file mode 100644
+index 0000000..546bf12
+--- /dev/null
++++ b/res/values-es-rUS/battery_info_strings.xml
+@@ -0,0 +1,13 @@
++<?xml version="1.0" encoding="utf-8"?>
++<resources>
++    <string name="battery_health_title">Estado de la batería</string>
++    <string name="battery_temperature_title">Temperatura de la batería</string>
++    <string name="battery_health_good">Bueno</string>
++    <string name="battery_health_normal">Normal</string>
++    <string name="battery_health_weak">Débil</string>
++    <string name="battery_health_overheat">Sobrecalentamiento</string>
++    <string name="battery_health_dead">Inservible</string>
++    <string name="battery_health_over_voltage">Sobretensión</string>
++    <string name="battery_health_failure">Falla</string>
++    <string name="battery_health_cold">Frío</string>
++</resources>
+diff --git a/res/values-es/battery_info_strings.xml b/res/values-es/battery_info_strings.xml
+new file mode 100644
+index 0000000..732815f
+--- /dev/null
++++ b/res/values-es/battery_info_strings.xml
+@@ -0,0 +1,13 @@
++<?xml version="1.0" encoding="utf-8"?>
++<resources>
++    <string name="battery_health_title">Estado de la batería</string>
++    <string name="battery_temperature_title">Temperatura de la batería</string>
++    <string name="battery_health_good">Bueno</string>
++    <string name="battery_health_normal">Normal</string>
++    <string name="battery_health_weak">Débil</string>
++    <string name="battery_health_overheat">Sobrecalentamiento</string>
++    <string name="battery_health_dead">Inservible</string>
++    <string name="battery_health_over_voltage">Sobretensión</string>
++    <string name="battery_health_failure">Fallo</string>
++    <string name="battery_health_cold">Frío</string>
++</resources>
+diff --git a/res/values-et/battery_info_strings.xml b/res/values-et/battery_info_strings.xml
+new file mode 100644
+index 0000000..ef36071
+--- /dev/null
++++ b/res/values-et/battery_info_strings.xml
+@@ -0,0 +1,13 @@
++<?xml version="1.0" encoding="utf-8"?>
++<resources>
++    <string name="battery_health_title">Aku seisukord</string>
++    <string name="battery_temperature_title">Aku temperatuur</string>
++    <string name="battery_health_good">Hea</string>
++    <string name="battery_health_normal">Normaalne</string>
++    <string name="battery_health_weak">Nõrk</string>
++    <string name="battery_health_overheat">Ülekuumenemine</string>
++    <string name="battery_health_dead">Rikkis</string>
++    <string name="battery_health_over_voltage">Liigpinge</string>
++    <string name="battery_health_failure">Tõrge</string>
++    <string name="battery_health_cold">Külm</string>
++</resources>
+diff --git a/res/values-eu/battery_info_strings.xml b/res/values-eu/battery_info_strings.xml
+new file mode 100644
+index 0000000..f2a99cf
+--- /dev/null
++++ b/res/values-eu/battery_info_strings.xml
+@@ -0,0 +1,13 @@
++<?xml version="1.0" encoding="utf-8"?>
++<resources>
++    <string name="battery_health_title">Bateriaren egoera</string>
++    <string name="battery_temperature_title">Bateriaren tenperatura</string>
++    <string name="battery_health_good">Ona</string>
++    <string name="battery_health_normal">Normala</string>
++    <string name="battery_health_weak">Ahula</string>
++    <string name="battery_health_overheat">Gehiegizko berotzea</string>
++    <string name="battery_health_dead">Hondatuta</string>
++    <string name="battery_health_over_voltage">Gaintentsioa</string>
++    <string name="battery_health_failure">Errorea</string>
++    <string name="battery_health_cold">Hotza</string>
++</resources>
+diff --git a/res/values-fa/battery_info_strings.xml b/res/values-fa/battery_info_strings.xml
+new file mode 100644
+index 0000000..361d45c
+--- /dev/null
++++ b/res/values-fa/battery_info_strings.xml
+@@ -0,0 +1,13 @@
++<?xml version="1.0" encoding="utf-8"?>
++<resources>
++    <string name="battery_health_title">سلامت باتری</string>
++    <string name="battery_temperature_title">دمای باتری</string>
++    <string name="battery_health_good">خوب</string>
++    <string name="battery_health_normal">عادی</string>
++    <string name="battery_health_weak">ضعیف</string>
++    <string name="battery_health_overheat">داغ شدن بیش از حد</string>
++    <string name="battery_health_dead">از کار افتاده</string>
++    <string name="battery_health_over_voltage">ولتاژ بیش از حد</string>
++    <string name="battery_health_failure">خرابی</string>
++    <string name="battery_health_cold">سرد</string>
++</resources>
+diff --git a/res/values-fi/battery_info_strings.xml b/res/values-fi/battery_info_strings.xml
+new file mode 100644
+index 0000000..3c7311a
+--- /dev/null
++++ b/res/values-fi/battery_info_strings.xml
+@@ -0,0 +1,13 @@
++<?xml version="1.0" encoding="utf-8"?>
++<resources>
++    <string name="battery_health_title">Akun kunto</string>
++    <string name="battery_temperature_title">Akun lämpötila</string>
++    <string name="battery_health_good">Hyvä</string>
++    <string name="battery_health_normal">Normaali</string>
++    <string name="battery_health_weak">Heikko</string>
++    <string name="battery_health_overheat">Ylikuumeneminen</string>
++    <string name="battery_health_dead">Viallinen</string>
++    <string name="battery_health_over_voltage">Ylijännite</string>
++    <string name="battery_health_failure">Vika</string>
++    <string name="battery_health_cold">Kylmä</string>
++</resources>
+diff --git a/res/values-fr-rCA/battery_info_strings.xml b/res/values-fr-rCA/battery_info_strings.xml
+new file mode 100644
+index 0000000..ebbde7e
+--- /dev/null
++++ b/res/values-fr-rCA/battery_info_strings.xml
+@@ -0,0 +1,13 @@
++<?xml version="1.0" encoding="utf-8"?>
++<resources>
++    <string name="battery_health_title">État de la pile</string>
++    <string name="battery_temperature_title">Température de la pile</string>
++    <string name="battery_health_good">Bon</string>
++    <string name="battery_health_normal">Normal</string>
++    <string name="battery_health_weak">Faible</string>
++    <string name="battery_health_overheat">Surchauffe</string>
++    <string name="battery_health_dead">Hors service</string>
++    <string name="battery_health_over_voltage">Surtension</string>
++    <string name="battery_health_failure">Défaillance</string>
++    <string name="battery_health_cold">Froid</string>
++</resources>
+diff --git a/res/values-fr/battery_info_strings.xml b/res/values-fr/battery_info_strings.xml
+new file mode 100644
+index 0000000..caee259
+--- /dev/null
++++ b/res/values-fr/battery_info_strings.xml
+@@ -0,0 +1,13 @@
++<?xml version="1.0" encoding="utf-8"?>
++<resources>
++    <string name="battery_health_title">État de la batterie</string>
++    <string name="battery_temperature_title">Température de la batterie</string>
++    <string name="battery_health_good">Bon</string>
++    <string name="battery_health_normal">Normal</string>
++    <string name="battery_health_weak">Faible</string>
++    <string name="battery_health_overheat">Surchauffe</string>
++    <string name="battery_health_dead">Hors service</string>
++    <string name="battery_health_over_voltage">Surtension</string>
++    <string name="battery_health_failure">Défaillance</string>
++    <string name="battery_health_cold">Froid</string>
++</resources>
+diff --git a/res/values-gl/battery_info_strings.xml b/res/values-gl/battery_info_strings.xml
+new file mode 100644
+index 0000000..a5a5504
+--- /dev/null
++++ b/res/values-gl/battery_info_strings.xml
+@@ -0,0 +1,13 @@
++<?xml version="1.0" encoding="utf-8"?>
++<resources>
++    <string name="battery_health_title">Estado da batería</string>
++    <string name="battery_temperature_title">Temperatura da batería</string>
++    <string name="battery_health_good">Bo</string>
++    <string name="battery_health_normal">Normal</string>
++    <string name="battery_health_weak">Débil</string>
++    <string name="battery_health_overheat">Sobrequecemento</string>
++    <string name="battery_health_dead">Inservible</string>
++    <string name="battery_health_over_voltage">Sobretensión</string>
++    <string name="battery_health_failure">Fallo</string>
++    <string name="battery_health_cold">Frío</string>
++</resources>
+diff --git a/res/values-gu/battery_info_strings.xml b/res/values-gu/battery_info_strings.xml
+new file mode 100644
+index 0000000..e84d772
+--- /dev/null
++++ b/res/values-gu/battery_info_strings.xml
+@@ -0,0 +1,13 @@
++<?xml version="1.0" encoding="utf-8"?>
++<resources>
++    <string name="battery_health_title">બૅટરીની સ્થિતિ</string>
++    <string name="battery_temperature_title">બૅટરીનું તાપમાન</string>
++    <string name="battery_health_good">સારી</string>
++    <string name="battery_health_normal">સામાન્ય</string>
++    <string name="battery_health_weak">નબળી</string>
++    <string name="battery_health_overheat">વધુ પડતી ગરમ</string>
++    <string name="battery_health_dead">નિષ્ક્રિય</string>
++    <string name="battery_health_over_voltage">વધુ પડતો વોલ્ટેજ</string>
++    <string name="battery_health_failure">નિષ્ફળતા</string>
++    <string name="battery_health_cold">ઠંડી</string>
++</resources>
+diff --git a/res/values-hi/battery_info_strings.xml b/res/values-hi/battery_info_strings.xml
+new file mode 100644
+index 0000000..0dafd72
+--- /dev/null
++++ b/res/values-hi/battery_info_strings.xml
+@@ -0,0 +1,13 @@
++<?xml version="1.0" encoding="utf-8"?>
++<resources>
++    <string name="battery_health_title">बैटरी की स्थिति</string>
++    <string name="battery_temperature_title">बैटरी का तापमान</string>
++    <string name="battery_health_good">अच्छी</string>
++    <string name="battery_health_normal">सामान्य</string>
++    <string name="battery_health_weak">कमज़ोर</string>
++    <string name="battery_health_overheat">ज़्यादा गरम</string>
++    <string name="battery_health_dead">खराब</string>
++    <string name="battery_health_over_voltage">ज़्यादा वोल्टेज</string>
++    <string name="battery_health_failure">गड़बड़ी</string>
++    <string name="battery_health_cold">ठंडी</string>
++</resources>
+diff --git a/res/values-hr/battery_info_strings.xml b/res/values-hr/battery_info_strings.xml
+new file mode 100644
+index 0000000..6a7c3c8
+--- /dev/null
++++ b/res/values-hr/battery_info_strings.xml
+@@ -0,0 +1,13 @@
++<?xml version="1.0" encoding="utf-8"?>
++<resources>
++    <string name="battery_health_title">Stanje baterije</string>
++    <string name="battery_temperature_title">Temperatura baterije</string>
++    <string name="battery_health_good">Dobro</string>
++    <string name="battery_health_normal">Normalno</string>
++    <string name="battery_health_weak">Slabo</string>
++    <string name="battery_health_overheat">Pregrijavanje</string>
++    <string name="battery_health_dead">Neispravno</string>
++    <string name="battery_health_over_voltage">Prenapon</string>
++    <string name="battery_health_failure">Kvar</string>
++    <string name="battery_health_cold">Hladno</string>
++</resources>
+diff --git a/res/values-hu/battery_info_strings.xml b/res/values-hu/battery_info_strings.xml
+new file mode 100644
+index 0000000..8cb16be
+--- /dev/null
++++ b/res/values-hu/battery_info_strings.xml
+@@ -0,0 +1,13 @@
++<?xml version="1.0" encoding="utf-8"?>
++<resources>
++    <string name="battery_health_title">Akkumulátor állapota</string>
++    <string name="battery_temperature_title">Akkumulátor hőmérséklete</string>
++    <string name="battery_health_good">Jó</string>
++    <string name="battery_health_normal">Normál</string>
++    <string name="battery_health_weak">Gyenge</string>
++    <string name="battery_health_overheat">Túlmelegedés</string>
++    <string name="battery_health_dead">Tönkrement</string>
++    <string name="battery_health_over_voltage">Túlfeszültség</string>
++    <string name="battery_health_failure">Hiba</string>
++    <string name="battery_health_cold">Hideg</string>
++</resources>
+diff --git a/res/values-hy/battery_info_strings.xml b/res/values-hy/battery_info_strings.xml
+new file mode 100644
+index 0000000..0efbe80
+--- /dev/null
++++ b/res/values-hy/battery_info_strings.xml
+@@ -0,0 +1,13 @@
++<?xml version="1.0" encoding="utf-8"?>
++<resources>
++    <string name="battery_health_title">Մարտկոցի վիճակը</string>
++    <string name="battery_temperature_title">Մարտկոցի ջերմաստիճանը</string>
++    <string name="battery_health_good">Լավ</string>
++    <string name="battery_health_normal">Նորմալ</string>
++    <string name="battery_health_weak">Թույլ</string>
++    <string name="battery_health_overheat">Գերտաքացում</string>
++    <string name="battery_health_dead">Անսարք</string>
++    <string name="battery_health_over_voltage">Գերլարում</string>
++    <string name="battery_health_failure">Խափանում</string>
++    <string name="battery_health_cold">Սառը</string>
++</resources>
+diff --git a/res/values-in/battery_info_strings.xml b/res/values-in/battery_info_strings.xml
+new file mode 100644
+index 0000000..841bc15
+--- /dev/null
++++ b/res/values-in/battery_info_strings.xml
+@@ -0,0 +1,13 @@
++<?xml version="1.0" encoding="utf-8"?>
++<resources>
++    <string name="battery_health_title">Kondisi baterai</string>
++    <string name="battery_temperature_title">Suhu baterai</string>
++    <string name="battery_health_good">Baik</string>
++    <string name="battery_health_normal">Normal</string>
++    <string name="battery_health_weak">Lemah</string>
++    <string name="battery_health_overheat">Terlalu panas</string>
++    <string name="battery_health_dead">Rusak</string>
++    <string name="battery_health_over_voltage">Tegangan berlebih</string>
++    <string name="battery_health_failure">Kegagalan</string>
++    <string name="battery_health_cold">Dingin</string>
++</resources>
+diff --git a/res/values-is/battery_info_strings.xml b/res/values-is/battery_info_strings.xml
+new file mode 100644
+index 0000000..961ff67
+--- /dev/null
++++ b/res/values-is/battery_info_strings.xml
+@@ -0,0 +1,13 @@
++<?xml version="1.0" encoding="utf-8"?>
++<resources>
++    <string name="battery_health_title">Ástand rafhlöðu</string>
++    <string name="battery_temperature_title">Hitastig rafhlöðu</string>
++    <string name="battery_health_good">Gott</string>
++    <string name="battery_health_normal">Eðlilegt</string>
++    <string name="battery_health_weak">Veikt</string>
++    <string name="battery_health_overheat">Ofhitnun</string>
++    <string name="battery_health_dead">Ónýtt</string>
++    <string name="battery_health_over_voltage">Yfirspenna</string>
++    <string name="battery_health_failure">Bilun</string>
++    <string name="battery_health_cold">Kalt</string>
++</resources>
+diff --git a/res/values-it/battery_info_strings.xml b/res/values-it/battery_info_strings.xml
+new file mode 100644
+index 0000000..62d5f54
+--- /dev/null
++++ b/res/values-it/battery_info_strings.xml
+@@ -0,0 +1,13 @@
++<?xml version="1.0" encoding="utf-8"?>
++<resources>
++    <string name="battery_health_title">Stato della batteria</string>
++    <string name="battery_temperature_title">Temperatura della batteria</string>
++    <string name="battery_health_good">Buono</string>
++    <string name="battery_health_normal">Normale</string>
++    <string name="battery_health_weak">Debole</string>
++    <string name="battery_health_overheat">Surriscaldamento</string>
++    <string name="battery_health_dead">Inutilizzabile</string>
++    <string name="battery_health_over_voltage">Sovratensione</string>
++    <string name="battery_health_failure">Guasto</string>
++    <string name="battery_health_cold">Freddo</string>
++</resources>
+diff --git a/res/values-iw/battery_info_strings.xml b/res/values-iw/battery_info_strings.xml
+new file mode 100644
+index 0000000..df5d68a
+--- /dev/null
++++ b/res/values-iw/battery_info_strings.xml
+@@ -0,0 +1,13 @@
++<?xml version="1.0" encoding="utf-8"?>
++<resources>
++    <string name="battery_health_title">תקינות הסוללה</string>
++    <string name="battery_temperature_title">טמפרטורת הסוללה</string>
++    <string name="battery_health_good">טובה</string>
++    <string name="battery_health_normal">רגילה</string>
++    <string name="battery_health_weak">חלשה</string>
++    <string name="battery_health_overheat">התחממות יתר</string>
++    <string name="battery_health_dead">לא תקינה</string>
++    <string name="battery_health_over_voltage">מתח יתר</string>
++    <string name="battery_health_failure">כשל</string>
++    <string name="battery_health_cold">קרה</string>
++</resources>
+diff --git a/res/values-ja/battery_info_strings.xml b/res/values-ja/battery_info_strings.xml
+new file mode 100644
+index 0000000..921e282
+--- /dev/null
++++ b/res/values-ja/battery_info_strings.xml
+@@ -0,0 +1,13 @@
++<?xml version="1.0" encoding="utf-8"?>
++<resources>
++    <string name="battery_health_title">バッテリーの状態</string>
++    <string name="battery_temperature_title">バッテリーの温度</string>
++    <string name="battery_health_good">良好</string>
++    <string name="battery_health_normal">標準</string>
++    <string name="battery_health_weak">劣化</string>
++    <string name="battery_health_overheat">過熱</string>
++    <string name="battery_health_dead">故障</string>
++    <string name="battery_health_over_voltage">過電圧</string>
++    <string name="battery_health_failure">エラー</string>
++    <string name="battery_health_cold">低温</string>
++</resources>
+diff --git a/res/values-ka/battery_info_strings.xml b/res/values-ka/battery_info_strings.xml
+new file mode 100644
+index 0000000..ce5a9a3
+--- /dev/null
++++ b/res/values-ka/battery_info_strings.xml
+@@ -0,0 +1,13 @@
++<?xml version="1.0" encoding="utf-8"?>
++<resources>
++    <string name="battery_health_title">ბატარეის მდგომარეობა</string>
++    <string name="battery_temperature_title">ბატარეის ტემპერატურა</string>
++    <string name="battery_health_good">კარგი</string>
++    <string name="battery_health_normal">ნორმალური</string>
++    <string name="battery_health_weak">სუსტი</string>
++    <string name="battery_health_overheat">გადახურება</string>
++    <string name="battery_health_dead">მწყობრიდან გამოსული</string>
++    <string name="battery_health_over_voltage">ზედმეტი ძაბვა</string>
++    <string name="battery_health_failure">გაუმართაობა</string>
++    <string name="battery_health_cold">ცივი</string>
++</resources>
+diff --git a/res/values-kk/battery_info_strings.xml b/res/values-kk/battery_info_strings.xml
+new file mode 100644
+index 0000000..39e86ac
+--- /dev/null
++++ b/res/values-kk/battery_info_strings.xml
+@@ -0,0 +1,13 @@
++<?xml version="1.0" encoding="utf-8"?>
++<resources>
++    <string name="battery_health_title">Батарея күйі</string>
++    <string name="battery_temperature_title">Батарея температурасы</string>
++    <string name="battery_health_good">Жақсы</string>
++    <string name="battery_health_normal">Қалыпты</string>
++    <string name="battery_health_weak">Әлсіз</string>
++    <string name="battery_health_overheat">Қатты қызу</string>
++    <string name="battery_health_dead">Істен шыққан</string>
++    <string name="battery_health_over_voltage">Шамадан тыс кернеу</string>
++    <string name="battery_health_failure">Ақау</string>
++    <string name="battery_health_cold">Суық</string>
++</resources>
+diff --git a/res/values-km/battery_info_strings.xml b/res/values-km/battery_info_strings.xml
+new file mode 100644
+index 0000000..b1bfba7
+--- /dev/null
++++ b/res/values-km/battery_info_strings.xml
+@@ -0,0 +1,13 @@
++<?xml version="1.0" encoding="utf-8"?>
++<resources>
++    <string name="battery_health_title">សុខភាព​ថ្ម</string>
++    <string name="battery_temperature_title">សីតុណ្ហភាព​ថ្ម</string>
++    <string name="battery_health_good">ល្អ</string>
++    <string name="battery_health_normal">ធម្មតា</string>
++    <string name="battery_health_weak">ខ្សោយ</string>
++    <string name="battery_health_overheat">ក្ដៅ​ខ្លាំង</string>
++    <string name="battery_health_dead">ខូច</string>
++    <string name="battery_health_over_voltage">វ៉ុល​លើស</string>
++    <string name="battery_health_failure">បរាជ័យ</string>
++    <string name="battery_health_cold">ត្រជាក់</string>
++</resources>
+diff --git a/res/values-kn/battery_info_strings.xml b/res/values-kn/battery_info_strings.xml
+new file mode 100644
+index 0000000..537b4ba
+--- /dev/null
++++ b/res/values-kn/battery_info_strings.xml
+@@ -0,0 +1,13 @@
++<?xml version="1.0" encoding="utf-8"?>
++<resources>
++    <string name="battery_health_title">ಬ್ಯಾಟರಿ ಆರೋಗ್ಯ</string>
++    <string name="battery_temperature_title">ಬ್ಯಾಟರಿ ತಾಪಮಾನ</string>
++    <string name="battery_health_good">ಉತ್ತಮ</string>
++    <string name="battery_health_normal">ಸಾಮಾನ್ಯ</string>
++    <string name="battery_health_weak">ದುರ್ಬಲ</string>
++    <string name="battery_health_overheat">ಅತಿಯಾದ ಬಿಸಿ</string>
++    <string name="battery_health_dead">ನಿಷ್ಕ್ರಿಯ</string>
++    <string name="battery_health_over_voltage">ಅಧಿಕ ವೋಲ್ಟೇಜ್</string>
++    <string name="battery_health_failure">ವೈಫಲ್ಯ</string>
++    <string name="battery_health_cold">ತಣ್ಣಗಿದೆ</string>
++</resources>
+diff --git a/res/values-ko/battery_info_strings.xml b/res/values-ko/battery_info_strings.xml
+new file mode 100644
+index 0000000..e20d459
+--- /dev/null
++++ b/res/values-ko/battery_info_strings.xml
+@@ -0,0 +1,13 @@
++<?xml version="1.0" encoding="utf-8"?>
++<resources>
++    <string name="battery_health_title">배터리 상태</string>
++    <string name="battery_temperature_title">배터리 온도</string>
++    <string name="battery_health_good">좋음</string>
++    <string name="battery_health_normal">보통</string>
++    <string name="battery_health_weak">약함</string>
++    <string name="battery_health_overheat">과열</string>
++    <string name="battery_health_dead">고장</string>
++    <string name="battery_health_over_voltage">과전압</string>
++    <string name="battery_health_failure">오류</string>
++    <string name="battery_health_cold">저온</string>
++</resources>
+diff --git a/res/values-ky/battery_info_strings.xml b/res/values-ky/battery_info_strings.xml
+new file mode 100644
+index 0000000..7409132
+--- /dev/null
++++ b/res/values-ky/battery_info_strings.xml
+@@ -0,0 +1,13 @@
++<?xml version="1.0" encoding="utf-8"?>
++<resources>
++    <string name="battery_health_title">Батареянын абалы</string>
++    <string name="battery_temperature_title">Батареянын температурасы</string>
++    <string name="battery_health_good">Жакшы</string>
++    <string name="battery_health_normal">Кадимки</string>
++    <string name="battery_health_weak">Начар</string>
++    <string name="battery_health_overheat">Ашыкча ысып кетүү</string>
++    <string name="battery_health_dead">Иштебей калган</string>
++    <string name="battery_health_over_voltage">Ашыкча чыңалуу</string>
++    <string name="battery_health_failure">Бузулуу</string>
++    <string name="battery_health_cold">Муздак</string>
++</resources>
+diff --git a/res/values-lo/battery_info_strings.xml b/res/values-lo/battery_info_strings.xml
+new file mode 100644
+index 0000000..e217ab0
+--- /dev/null
++++ b/res/values-lo/battery_info_strings.xml
+@@ -0,0 +1,13 @@
++<?xml version="1.0" encoding="utf-8"?>
++<resources>
++    <string name="battery_health_title">ສຸຂະພາບແບັດເຕີຣີ</string>
++    <string name="battery_temperature_title">ອຸນຫະພູມແບັດເຕີຣີ</string>
++    <string name="battery_health_good">ດີ</string>
++    <string name="battery_health_normal">ປົກກະຕິ</string>
++    <string name="battery_health_weak">ອ່ອນ</string>
++    <string name="battery_health_overheat">ຮ້ອນເກີນໄປ</string>
++    <string name="battery_health_dead">ເສຍ</string>
++    <string name="battery_health_over_voltage">ແຮງດັນເກີນ</string>
++    <string name="battery_health_failure">ຂັດຂ້ອງ</string>
++    <string name="battery_health_cold">ເຢັນ</string>
++</resources>
+diff --git a/res/values-lt/battery_info_strings.xml b/res/values-lt/battery_info_strings.xml
+new file mode 100644
+index 0000000..c9a6503
+--- /dev/null
++++ b/res/values-lt/battery_info_strings.xml
+@@ -0,0 +1,13 @@
++<?xml version="1.0" encoding="utf-8"?>
++<resources>
++    <string name="battery_health_title">Akumuliatoriaus būklė</string>
++    <string name="battery_temperature_title">Akumuliatoriaus temperatūra</string>
++    <string name="battery_health_good">Gera</string>
++    <string name="battery_health_normal">Įprasta</string>
++    <string name="battery_health_weak">Silpna</string>
++    <string name="battery_health_overheat">Perkaitimas</string>
++    <string name="battery_health_dead">Neveikia</string>
++    <string name="battery_health_over_voltage">Viršįtampis</string>
++    <string name="battery_health_failure">Gedimas</string>
++    <string name="battery_health_cold">Šalta</string>
++</resources>
+diff --git a/res/values-lv/battery_info_strings.xml b/res/values-lv/battery_info_strings.xml
+new file mode 100644
+index 0000000..7b501d9
+--- /dev/null
++++ b/res/values-lv/battery_info_strings.xml
+@@ -0,0 +1,13 @@
++<?xml version="1.0" encoding="utf-8"?>
++<resources>
++    <string name="battery_health_title">Akumulatora stāvoklis</string>
++    <string name="battery_temperature_title">Akumulatora temperatūra</string>
++    <string name="battery_health_good">Labs</string>
++    <string name="battery_health_normal">Normāls</string>
++    <string name="battery_health_weak">Vājš</string>
++    <string name="battery_health_overheat">Pārkaršana</string>
++    <string name="battery_health_dead">Bojāts</string>
++    <string name="battery_health_over_voltage">Pārspriegums</string>
++    <string name="battery_health_failure">Kļūme</string>
++    <string name="battery_health_cold">Auksts</string>
++</resources>
+diff --git a/res/values-mk/battery_info_strings.xml b/res/values-mk/battery_info_strings.xml
+new file mode 100644
+index 0000000..0c5f92d
+--- /dev/null
++++ b/res/values-mk/battery_info_strings.xml
+@@ -0,0 +1,13 @@
++<?xml version="1.0" encoding="utf-8"?>
++<resources>
++    <string name="battery_health_title">Состојба на батеријата</string>
++    <string name="battery_temperature_title">Температура на батеријата</string>
++    <string name="battery_health_good">Добра</string>
++    <string name="battery_health_normal">Нормална</string>
++    <string name="battery_health_weak">Слаба</string>
++    <string name="battery_health_overheat">Прегревање</string>
++    <string name="battery_health_dead">Неисправна</string>
++    <string name="battery_health_over_voltage">Пренапон</string>
++    <string name="battery_health_failure">Дефект</string>
++    <string name="battery_health_cold">Студена</string>
++</resources>
+diff --git a/res/values-ml/battery_info_strings.xml b/res/values-ml/battery_info_strings.xml
+new file mode 100644
+index 0000000..cc4cbaf
+--- /dev/null
++++ b/res/values-ml/battery_info_strings.xml
+@@ -0,0 +1,13 @@
++<?xml version="1.0" encoding="utf-8"?>
++<resources>
++    <string name="battery_health_title">ബാറ്ററി നില</string>
++    <string name="battery_temperature_title">ബാറ്ററി താപനില</string>
++    <string name="battery_health_good">നല്ലത്</string>
++    <string name="battery_health_normal">സാധാരണം</string>
++    <string name="battery_health_weak">ദുർബലം</string>
++    <string name="battery_health_overheat">അമിതമായി ചൂടാകുന്നു</string>
++    <string name="battery_health_dead">പ്രവർത്തനരഹിതം</string>
++    <string name="battery_health_over_voltage">അമിത വോൾട്ടേജ്</string>
++    <string name="battery_health_failure">തകരാർ</string>
++    <string name="battery_health_cold">തണുപ്പ്</string>
++</resources>
+diff --git a/res/values-mn/battery_info_strings.xml b/res/values-mn/battery_info_strings.xml
+new file mode 100644
+index 0000000..eafb4f0
+--- /dev/null
++++ b/res/values-mn/battery_info_strings.xml
+@@ -0,0 +1,13 @@
++<?xml version="1.0" encoding="utf-8"?>
++<resources>
++    <string name="battery_health_title">Батарейны төлөв</string>
++    <string name="battery_temperature_title">Батарейны температур</string>
++    <string name="battery_health_good">Сайн</string>
++    <string name="battery_health_normal">Хэвийн</string>
++    <string name="battery_health_weak">Сул</string>
++    <string name="battery_health_overheat">Хэт халалт</string>
++    <string name="battery_health_dead">Ажиллахгүй</string>
++    <string name="battery_health_over_voltage">Хэт хүчдэл</string>
++    <string name="battery_health_failure">Алдаа</string>
++    <string name="battery_health_cold">Хүйтэн</string>
++</resources>
+diff --git a/res/values-mr/battery_info_strings.xml b/res/values-mr/battery_info_strings.xml
+new file mode 100644
+index 0000000..ce9568e
+--- /dev/null
++++ b/res/values-mr/battery_info_strings.xml
+@@ -0,0 +1,13 @@
++<?xml version="1.0" encoding="utf-8"?>
++<resources>
++    <string name="battery_health_title">बॅटरीची स्थिती</string>
++    <string name="battery_temperature_title">बॅटरीचे तापमान</string>
++    <string name="battery_health_good">चांगली</string>
++    <string name="battery_health_normal">सामान्य</string>
++    <string name="battery_health_weak">कमकुवत</string>
++    <string name="battery_health_overheat">जास्त गरम</string>
++    <string name="battery_health_dead">निकामी</string>
++    <string name="battery_health_over_voltage">जास्त व्होल्टेज</string>
++    <string name="battery_health_failure">बिघाड</string>
++    <string name="battery_health_cold">थंड</string>
++</resources>
+diff --git a/res/values-ms/battery_info_strings.xml b/res/values-ms/battery_info_strings.xml
+new file mode 100644
+index 0000000..e033057
+--- /dev/null
++++ b/res/values-ms/battery_info_strings.xml
+@@ -0,0 +1,13 @@
++<?xml version="1.0" encoding="utf-8"?>
++<resources>
++    <string name="battery_health_title">Kesihatan bateri</string>
++    <string name="battery_temperature_title">Suhu bateri</string>
++    <string name="battery_health_good">Baik</string>
++    <string name="battery_health_normal">Biasa</string>
++    <string name="battery_health_weak">Lemah</string>
++    <string name="battery_health_overheat">Terlampau panas</string>
++    <string name="battery_health_dead">Rosak</string>
++    <string name="battery_health_over_voltage">Voltan berlebihan</string>
++    <string name="battery_health_failure">Kegagalan</string>
++    <string name="battery_health_cold">Sejuk</string>
++</resources>
+diff --git a/res/values-my/battery_info_strings.xml b/res/values-my/battery_info_strings.xml
+new file mode 100644
+index 0000000..a7289fe
+--- /dev/null
++++ b/res/values-my/battery_info_strings.xml
+@@ -0,0 +1,13 @@
++<?xml version="1.0" encoding="utf-8"?>
++<resources>
++    <string name="battery_health_title">ဘက်ထရီ အခြေအနေ</string>
++    <string name="battery_temperature_title">ဘက်ထရီ အပူချိန်</string>
++    <string name="battery_health_good">ကောင်း</string>
++    <string name="battery_health_normal">ပုံမှန်</string>
++    <string name="battery_health_weak">အားနည်း</string>
++    <string name="battery_health_overheat">အပူလွန်</string>
++    <string name="battery_health_dead">ပျက်</string>
++    <string name="battery_health_over_voltage">ဗို့အားလွန်</string>
++    <string name="battery_health_failure">ချို့ယွင်း</string>
++    <string name="battery_health_cold">အေး</string>
++</resources>
+diff --git a/res/values-nb/battery_info_strings.xml b/res/values-nb/battery_info_strings.xml
+new file mode 100644
+index 0000000..0c09070
+--- /dev/null
++++ b/res/values-nb/battery_info_strings.xml
+@@ -0,0 +1,13 @@
++<?xml version="1.0" encoding="utf-8"?>
++<resources>
++    <string name="battery_health_title">Batteritilstand</string>
++    <string name="battery_temperature_title">Batteritemperatur</string>
++    <string name="battery_health_good">God</string>
++    <string name="battery_health_normal">Normal</string>
++    <string name="battery_health_weak">Svak</string>
++    <string name="battery_health_overheat">Overoppheting</string>
++    <string name="battery_health_dead">Defekt</string>
++    <string name="battery_health_over_voltage">Overspenning</string>
++    <string name="battery_health_failure">Feil</string>
++    <string name="battery_health_cold">Kald</string>
++</resources>
+diff --git a/res/values-ne/battery_info_strings.xml b/res/values-ne/battery_info_strings.xml
+new file mode 100644
+index 0000000..915e7a2
+--- /dev/null
++++ b/res/values-ne/battery_info_strings.xml
+@@ -0,0 +1,13 @@
++<?xml version="1.0" encoding="utf-8"?>
++<resources>
++    <string name="battery_health_title">ब्याट्रीको अवस्था</string>
++    <string name="battery_temperature_title">ब्याट्रीको तापक्रम</string>
++    <string name="battery_health_good">राम्रो</string>
++    <string name="battery_health_normal">सामान्य</string>
++    <string name="battery_health_weak">कमजोर</string>
++    <string name="battery_health_overheat">अत्यधिक तातो</string>
++    <string name="battery_health_dead">बिग्रिएको</string>
++    <string name="battery_health_over_voltage">अत्यधिक भोल्टेज</string>
++    <string name="battery_health_failure">त्रुटि</string>
++    <string name="battery_health_cold">चिसो</string>
++</resources>
+diff --git a/res/values-nl/battery_info_strings.xml b/res/values-nl/battery_info_strings.xml
+new file mode 100644
+index 0000000..49a8c95
+--- /dev/null
++++ b/res/values-nl/battery_info_strings.xml
+@@ -0,0 +1,13 @@
++<?xml version="1.0" encoding="utf-8"?>
++<resources>
++    <string name="battery_health_title">Batterijconditie</string>
++    <string name="battery_temperature_title">Batterijtemperatuur</string>
++    <string name="battery_health_good">Goed</string>
++    <string name="battery_health_normal">Normaal</string>
++    <string name="battery_health_weak">Zwak</string>
++    <string name="battery_health_overheat">Oververhitting</string>
++    <string name="battery_health_dead">Defect</string>
++    <string name="battery_health_over_voltage">Overspanning</string>
++    <string name="battery_health_failure">Storing</string>
++    <string name="battery_health_cold">Koud</string>
++</resources>
+diff --git a/res/values-or/battery_info_strings.xml b/res/values-or/battery_info_strings.xml
+new file mode 100644
+index 0000000..680f467
+--- /dev/null
++++ b/res/values-or/battery_info_strings.xml
+@@ -0,0 +1,13 @@
++<?xml version="1.0" encoding="utf-8"?>
++<resources>
++    <string name="battery_health_title">ବ୍ୟାଟେରୀ ସ୍ୱାସ୍ଥ୍ୟ</string>
++    <string name="battery_temperature_title">ବ୍ୟାଟେରୀ ତାପମାତ୍ରା</string>
++    <string name="battery_health_good">ଭଲ</string>
++    <string name="battery_health_normal">ସାମାନ୍ୟ</string>
++    <string name="battery_health_weak">ଦୁର୍ବଳ</string>
++    <string name="battery_health_overheat">ଅତ୍ୟଧିକ ଗରମ</string>
++    <string name="battery_health_dead">ଖରାପ</string>
++    <string name="battery_health_over_voltage">ଅତ୍ୟଧିକ ଭୋଲଟେଜ</string>
++    <string name="battery_health_failure">ବିଫଳତା</string>
++    <string name="battery_health_cold">ଥଣ୍ଡା</string>
++</resources>
+diff --git a/res/values-pa/battery_info_strings.xml b/res/values-pa/battery_info_strings.xml
+new file mode 100644
+index 0000000..2d76c88
+--- /dev/null
++++ b/res/values-pa/battery_info_strings.xml
+@@ -0,0 +1,13 @@
++<?xml version="1.0" encoding="utf-8"?>
++<resources>
++    <string name="battery_health_title">ਬੈਟਰੀ ਦੀ ਸਥਿਤੀ</string>
++    <string name="battery_temperature_title">ਬੈਟਰੀ ਦਾ ਤਾਪਮਾਨ</string>
++    <string name="battery_health_good">ਵਧੀਆ</string>
++    <string name="battery_health_normal">ਸਧਾਰਨ</string>
++    <string name="battery_health_weak">ਕਮਜ਼ੋਰ</string>
++    <string name="battery_health_overheat">ਜ਼ਿਆਦਾ ਗਰਮ</string>
++    <string name="battery_health_dead">ਖਰਾਬ</string>
++    <string name="battery_health_over_voltage">ਜ਼ਿਆਦਾ ਵੋਲਟੇਜ</string>
++    <string name="battery_health_failure">ਅਸਫਲਤਾ</string>
++    <string name="battery_health_cold">ਠੰਡੀ</string>
++</resources>
+diff --git a/res/values-pl/battery_info_strings.xml b/res/values-pl/battery_info_strings.xml
+new file mode 100644
+index 0000000..df75a51
+--- /dev/null
++++ b/res/values-pl/battery_info_strings.xml
+@@ -0,0 +1,13 @@
++<?xml version="1.0" encoding="utf-8"?>
++<resources>
++    <string name="battery_health_title">Stan baterii</string>
++    <string name="battery_temperature_title">Temperatura baterii</string>
++    <string name="battery_health_good">Dobry</string>
++    <string name="battery_health_normal">Normalny</string>
++    <string name="battery_health_weak">Słaby</string>
++    <string name="battery_health_overheat">Przegrzanie</string>
++    <string name="battery_health_dead">Uszkodzony</string>
++    <string name="battery_health_over_voltage">Przepięcie</string>
++    <string name="battery_health_failure">Awaria</string>
++    <string name="battery_health_cold">Zimny</string>
++</resources>
+diff --git a/res/values-pt-rBR/battery_info_strings.xml b/res/values-pt-rBR/battery_info_strings.xml
+new file mode 100644
+index 0000000..4c87dfa
+--- /dev/null
++++ b/res/values-pt-rBR/battery_info_strings.xml
+@@ -0,0 +1,13 @@
++<?xml version="1.0" encoding="utf-8"?>
++<resources>
++    <string name="battery_health_title">Integridade da bateria</string>
++    <string name="battery_temperature_title">Temperatura da bateria</string>
++    <string name="battery_health_good">Boa</string>
++    <string name="battery_health_normal">Normal</string>
++    <string name="battery_health_weak">Fraca</string>
++    <string name="battery_health_overheat">Superaquecimento</string>
++    <string name="battery_health_dead">Com defeito</string>
++    <string name="battery_health_over_voltage">Sobretensão</string>
++    <string name="battery_health_failure">Falha</string>
++    <string name="battery_health_cold">Fria</string>
++</resources>
+diff --git a/res/values-pt-rPT/battery_info_strings.xml b/res/values-pt-rPT/battery_info_strings.xml
+new file mode 100644
+index 0000000..9d1a76b
+--- /dev/null
++++ b/res/values-pt-rPT/battery_info_strings.xml
+@@ -0,0 +1,13 @@
++<?xml version="1.0" encoding="utf-8"?>
++<resources>
++    <string name="battery_health_title">Estado da bateria</string>
++    <string name="battery_temperature_title">Temperatura da bateria</string>
++    <string name="battery_health_good">Bom</string>
++    <string name="battery_health_normal">Normal</string>
++    <string name="battery_health_weak">Fraco</string>
++    <string name="battery_health_overheat">Sobreaquecimento</string>
++    <string name="battery_health_dead">Inutilizável</string>
++    <string name="battery_health_over_voltage">Sobretensão</string>
++    <string name="battery_health_failure">Falha</string>
++    <string name="battery_health_cold">Frio</string>
++</resources>
+diff --git a/res/values-pt/battery_info_strings.xml b/res/values-pt/battery_info_strings.xml
+new file mode 100644
+index 0000000..4c87dfa
+--- /dev/null
++++ b/res/values-pt/battery_info_strings.xml
+@@ -0,0 +1,13 @@
++<?xml version="1.0" encoding="utf-8"?>
++<resources>
++    <string name="battery_health_title">Integridade da bateria</string>
++    <string name="battery_temperature_title">Temperatura da bateria</string>
++    <string name="battery_health_good">Boa</string>
++    <string name="battery_health_normal">Normal</string>
++    <string name="battery_health_weak">Fraca</string>
++    <string name="battery_health_overheat">Superaquecimento</string>
++    <string name="battery_health_dead">Com defeito</string>
++    <string name="battery_health_over_voltage">Sobretensão</string>
++    <string name="battery_health_failure">Falha</string>
++    <string name="battery_health_cold">Fria</string>
++</resources>
+diff --git a/res/values-ro/battery_info_strings.xml b/res/values-ro/battery_info_strings.xml
+new file mode 100644
+index 0000000..fe633a5
+--- /dev/null
++++ b/res/values-ro/battery_info_strings.xml
+@@ -0,0 +1,13 @@
++<?xml version="1.0" encoding="utf-8"?>
++<resources>
++    <string name="battery_health_title">Starea bateriei</string>
++    <string name="battery_temperature_title">Temperatura bateriei</string>
++    <string name="battery_health_good">Bună</string>
++    <string name="battery_health_normal">Normală</string>
++    <string name="battery_health_weak">Slabă</string>
++    <string name="battery_health_overheat">Supraîncălzire</string>
++    <string name="battery_health_dead">Defectă</string>
++    <string name="battery_health_over_voltage">Supratensiune</string>
++    <string name="battery_health_failure">Eroare</string>
++    <string name="battery_health_cold">Rece</string>
++</resources>
+diff --git a/res/values-ru/battery_info_strings.xml b/res/values-ru/battery_info_strings.xml
+new file mode 100644
+index 0000000..2bd4da8
+--- /dev/null
++++ b/res/values-ru/battery_info_strings.xml
+@@ -0,0 +1,13 @@
++<?xml version="1.0" encoding="utf-8"?>
++<resources>
++    <string name="battery_health_title">Состояние батареи</string>
++    <string name="battery_temperature_title">Температура батареи</string>
++    <string name="battery_health_good">Хорошее</string>
++    <string name="battery_health_normal">Нормальное</string>
++    <string name="battery_health_weak">Слабое</string>
++    <string name="battery_health_overheat">Перегрев</string>
++    <string name="battery_health_dead">Неисправное</string>
++    <string name="battery_health_over_voltage">Перенапряжение</string>
++    <string name="battery_health_failure">Сбой</string>
++    <string name="battery_health_cold">Переохлаждение</string>
++</resources>
+diff --git a/res/values-si/battery_info_strings.xml b/res/values-si/battery_info_strings.xml
+new file mode 100644
+index 0000000..7de68be
+--- /dev/null
++++ b/res/values-si/battery_info_strings.xml
+@@ -0,0 +1,13 @@
++<?xml version="1.0" encoding="utf-8"?>
++<resources>
++    <string name="battery_health_title">බැටරි සෞඛ්‍යය</string>
++    <string name="battery_temperature_title">බැටරි උෂ්ණත්වය</string>
++    <string name="battery_health_good">හොඳයි</string>
++    <string name="battery_health_normal">සාමාන්‍යයි</string>
++    <string name="battery_health_weak">දුර්වලයි</string>
++    <string name="battery_health_overheat">අධික ලෙස රත් වීම</string>
++    <string name="battery_health_dead">අක්‍රියයි</string>
++    <string name="battery_health_over_voltage">අධි වෝල්ටීයතාව</string>
++    <string name="battery_health_failure">අසාර්ථකයි</string>
++    <string name="battery_health_cold">සීතලයි</string>
++</resources>
+diff --git a/res/values-sk/battery_info_strings.xml b/res/values-sk/battery_info_strings.xml
+new file mode 100644
+index 0000000..fadf66b
+--- /dev/null
++++ b/res/values-sk/battery_info_strings.xml
+@@ -0,0 +1,13 @@
++<?xml version="1.0" encoding="utf-8"?>
++<resources>
++    <string name="battery_health_title">Stav batérie</string>
++    <string name="battery_temperature_title">Teplota batérie</string>
++    <string name="battery_health_good">Dobrý</string>
++    <string name="battery_health_normal">Normálny</string>
++    <string name="battery_health_weak">Slabý</string>
++    <string name="battery_health_overheat">Prehriatie</string>
++    <string name="battery_health_dead">Nefunkčný</string>
++    <string name="battery_health_over_voltage">Prepätie</string>
++    <string name="battery_health_failure">Porucha</string>
++    <string name="battery_health_cold">Studený</string>
++</resources>
+diff --git a/res/values-sl/battery_info_strings.xml b/res/values-sl/battery_info_strings.xml
+new file mode 100644
+index 0000000..f9430ff
+--- /dev/null
++++ b/res/values-sl/battery_info_strings.xml
+@@ -0,0 +1,13 @@
++<?xml version="1.0" encoding="utf-8"?>
++<resources>
++    <string name="battery_health_title">Stanje baterije</string>
++    <string name="battery_temperature_title">Temperatura baterije</string>
++    <string name="battery_health_good">Dobro</string>
++    <string name="battery_health_normal">Običajno</string>
++    <string name="battery_health_weak">Šibko</string>
++    <string name="battery_health_overheat">Pregrevanje</string>
++    <string name="battery_health_dead">Okvarjeno</string>
++    <string name="battery_health_over_voltage">Prenapetost</string>
++    <string name="battery_health_failure">Napaka</string>
++    <string name="battery_health_cold">Hladno</string>
++</resources>
+diff --git a/res/values-sq/battery_info_strings.xml b/res/values-sq/battery_info_strings.xml
+new file mode 100644
+index 0000000..6bff7d5
+--- /dev/null
++++ b/res/values-sq/battery_info_strings.xml
+@@ -0,0 +1,13 @@
++<?xml version="1.0" encoding="utf-8"?>
++<resources>
++    <string name="battery_health_title">Gjendja e baterisë</string>
++    <string name="battery_temperature_title">Temperatura e baterisë</string>
++    <string name="battery_health_good">E mirë</string>
++    <string name="battery_health_normal">Normale</string>
++    <string name="battery_health_weak">E dobët</string>
++    <string name="battery_health_overheat">Mbinxehje</string>
++    <string name="battery_health_dead">E prishur</string>
++    <string name="battery_health_over_voltage">Mbitension</string>
++    <string name="battery_health_failure">Defekt</string>
++    <string name="battery_health_cold">E ftohtë</string>
++</resources>
+diff --git a/res/values-sr/battery_info_strings.xml b/res/values-sr/battery_info_strings.xml
+new file mode 100644
+index 0000000..453af60
+--- /dev/null
++++ b/res/values-sr/battery_info_strings.xml
+@@ -0,0 +1,13 @@
++<?xml version="1.0" encoding="utf-8"?>
++<resources>
++    <string name="battery_health_title">Стање батерије</string>
++    <string name="battery_temperature_title">Температура батерије</string>
++    <string name="battery_health_good">Добро</string>
++    <string name="battery_health_normal">Нормално</string>
++    <string name="battery_health_weak">Слабо</string>
++    <string name="battery_health_overheat">Прегревање</string>
++    <string name="battery_health_dead">Неисправно</string>
++    <string name="battery_health_over_voltage">Превисок напон</string>
++    <string name="battery_health_failure">Грешка</string>
++    <string name="battery_health_cold">Хладно</string>
++</resources>
+diff --git a/res/values-sv/battery_info_strings.xml b/res/values-sv/battery_info_strings.xml
+new file mode 100644
+index 0000000..64b6942
+--- /dev/null
++++ b/res/values-sv/battery_info_strings.xml
+@@ -0,0 +1,13 @@
++<?xml version="1.0" encoding="utf-8"?>
++<resources>
++    <string name="battery_health_title">Batteriets skick</string>
++    <string name="battery_temperature_title">Batteritemperatur</string>
++    <string name="battery_health_good">Bra</string>
++    <string name="battery_health_normal">Normalt</string>
++    <string name="battery_health_weak">Svagt</string>
++    <string name="battery_health_overheat">Överhettning</string>
++    <string name="battery_health_dead">Defekt</string>
++    <string name="battery_health_over_voltage">Överspänning</string>
++    <string name="battery_health_failure">Fel</string>
++    <string name="battery_health_cold">Kallt</string>
++</resources>
+diff --git a/res/values-sw/battery_info_strings.xml b/res/values-sw/battery_info_strings.xml
+new file mode 100644
+index 0000000..db54957
+--- /dev/null
++++ b/res/values-sw/battery_info_strings.xml
+@@ -0,0 +1,13 @@
++<?xml version="1.0" encoding="utf-8"?>
++<resources>
++    <string name="battery_health_title">Hali ya betri</string>
++    <string name="battery_temperature_title">Halijoto ya betri</string>
++    <string name="battery_health_good">Nzuri</string>
++    <string name="battery_health_normal">Kawaida</string>
++    <string name="battery_health_weak">Dhaifu</string>
++    <string name="battery_health_overheat">Joto kupita kiasi</string>
++    <string name="battery_health_dead">Imeharibika</string>
++    <string name="battery_health_over_voltage">Volteji ya juu kupita kiasi</string>
++    <string name="battery_health_failure">Hitilafu</string>
++    <string name="battery_health_cold">Baridi</string>
++</resources>
+diff --git a/res/values-ta/battery_info_strings.xml b/res/values-ta/battery_info_strings.xml
+new file mode 100644
+index 0000000..1154c8c
+--- /dev/null
++++ b/res/values-ta/battery_info_strings.xml
+@@ -0,0 +1,13 @@
++<?xml version="1.0" encoding="utf-8"?>
++<resources>
++    <string name="battery_health_title">பேட்டரி நிலை</string>
++    <string name="battery_temperature_title">பேட்டரி வெப்பநிலை</string>
++    <string name="battery_health_good">நன்று</string>
++    <string name="battery_health_normal">இயல்பு</string>
++    <string name="battery_health_weak">பலவீனம்</string>
++    <string name="battery_health_overheat">அதிக வெப்பம்</string>
++    <string name="battery_health_dead">செயலிழந்தது</string>
++    <string name="battery_health_over_voltage">அதிக மின்னழுத்தம்</string>
++    <string name="battery_health_failure">தோல்வி</string>
++    <string name="battery_health_cold">குளிர்</string>
++</resources>
+diff --git a/res/values-te/battery_info_strings.xml b/res/values-te/battery_info_strings.xml
+new file mode 100644
+index 0000000..31e0658
+--- /dev/null
++++ b/res/values-te/battery_info_strings.xml
+@@ -0,0 +1,13 @@
++<?xml version="1.0" encoding="utf-8"?>
++<resources>
++    <string name="battery_health_title">బ్యాటరీ స్థితి</string>
++    <string name="battery_temperature_title">బ్యాటరీ ఉష్ణోగ్రత</string>
++    <string name="battery_health_good">బాగుంది</string>
++    <string name="battery_health_normal">సాధారణం</string>
++    <string name="battery_health_weak">బలహీనం</string>
++    <string name="battery_health_overheat">అధిక వేడి</string>
++    <string name="battery_health_dead">పనిచేయడం లేదు</string>
++    <string name="battery_health_over_voltage">అధిక వోల్టేజ్</string>
++    <string name="battery_health_failure">వైఫల్యం</string>
++    <string name="battery_health_cold">చల్లగా ఉంది</string>
++</resources>
+diff --git a/res/values-th/battery_info_strings.xml b/res/values-th/battery_info_strings.xml
+new file mode 100644
+index 0000000..a1a874d
+--- /dev/null
++++ b/res/values-th/battery_info_strings.xml
+@@ -0,0 +1,13 @@
++<?xml version="1.0" encoding="utf-8"?>
++<resources>
++    <string name="battery_health_title">สภาพแบตเตอรี่</string>
++    <string name="battery_temperature_title">อุณหภูมิแบตเตอรี่</string>
++    <string name="battery_health_good">ดี</string>
++    <string name="battery_health_normal">ปกติ</string>
++    <string name="battery_health_weak">อ่อน</string>
++    <string name="battery_health_overheat">ร้อนเกินไป</string>
++    <string name="battery_health_dead">เสีย</string>
++    <string name="battery_health_over_voltage">แรงดันไฟเกิน</string>
++    <string name="battery_health_failure">ขัดข้อง</string>
++    <string name="battery_health_cold">เย็น</string>
++</resources>
+diff --git a/res/values-tl/battery_info_strings.xml b/res/values-tl/battery_info_strings.xml
+new file mode 100644
+index 0000000..b1dcb79
+--- /dev/null
++++ b/res/values-tl/battery_info_strings.xml
+@@ -0,0 +1,13 @@
++<?xml version="1.0" encoding="utf-8"?>
++<resources>
++    <string name="battery_health_title">Kalusugan ng baterya</string>
++    <string name="battery_temperature_title">Temperatura ng baterya</string>
++    <string name="battery_health_good">Mabuti</string>
++    <string name="battery_health_normal">Normal</string>
++    <string name="battery_health_weak">Mahina</string>
++    <string name="battery_health_overheat">Sobrang init</string>
++    <string name="battery_health_dead">Sira</string>
++    <string name="battery_health_over_voltage">Sobrang boltahe</string>
++    <string name="battery_health_failure">Pagkabigo</string>
++    <string name="battery_health_cold">Malamig</string>
++</resources>
+diff --git a/res/values-tr/battery_info_strings.xml b/res/values-tr/battery_info_strings.xml
+new file mode 100644
+index 0000000..1f7053b
+--- /dev/null
++++ b/res/values-tr/battery_info_strings.xml
+@@ -0,0 +1,13 @@
++<?xml version="1.0" encoding="utf-8"?>
++<resources>
++    <string name="battery_health_title">Pil sağlığı</string>
++    <string name="battery_temperature_title">Pil sıcaklığı</string>
++    <string name="battery_health_good">İyi</string>
++    <string name="battery_health_normal">Normal</string>
++    <string name="battery_health_weak">Zayıf</string>
++    <string name="battery_health_overheat">Aşırı ısınma</string>
++    <string name="battery_health_dead">Bozuk</string>
++    <string name="battery_health_over_voltage">Aşırı gerilim</string>
++    <string name="battery_health_failure">Arıza</string>
++    <string name="battery_health_cold">Soğuk</string>
++</resources>
+diff --git a/res/values-uk/battery_info_strings.xml b/res/values-uk/battery_info_strings.xml
+new file mode 100644
+index 0000000..011858d
+--- /dev/null
++++ b/res/values-uk/battery_info_strings.xml
+@@ -0,0 +1,13 @@
++<?xml version="1.0" encoding="utf-8"?>
++<resources>
++    <string name="battery_health_title">Стан акумулятора</string>
++    <string name="battery_temperature_title">Температура акумулятора</string>
++    <string name="battery_health_good">Добрий</string>
++    <string name="battery_health_normal">Нормальний</string>
++    <string name="battery_health_weak">Слабкий</string>
++    <string name="battery_health_overheat">Перегрів</string>
++    <string name="battery_health_dead">Несправний</string>
++    <string name="battery_health_over_voltage">Перенапруга</string>
++    <string name="battery_health_failure">Збій</string>
++    <string name="battery_health_cold">Переохолодження</string>
++</resources>
+diff --git a/res/values-ur/battery_info_strings.xml b/res/values-ur/battery_info_strings.xml
+new file mode 100644
+index 0000000..ef3460d
+--- /dev/null
++++ b/res/values-ur/battery_info_strings.xml
+@@ -0,0 +1,13 @@
++<?xml version="1.0" encoding="utf-8"?>
++<resources>
++    <string name="battery_health_title">بیٹری کی صحت</string>
++    <string name="battery_temperature_title">بیٹری کا درجہ حرارت</string>
++    <string name="battery_health_good">اچھی</string>
++    <string name="battery_health_normal">نارمل</string>
++    <string name="battery_health_weak">کمزور</string>
++    <string name="battery_health_overheat">ضرورت سے زیادہ گرم</string>
++    <string name="battery_health_dead">خراب</string>
++    <string name="battery_health_over_voltage">ضرورت سے زیادہ وولٹیج</string>
++    <string name="battery_health_failure">ناکامی</string>
++    <string name="battery_health_cold">ٹھنڈی</string>
++</resources>
+diff --git a/res/values-uz/battery_info_strings.xml b/res/values-uz/battery_info_strings.xml
+new file mode 100644
+index 0000000..6ae5dbc
+--- /dev/null
++++ b/res/values-uz/battery_info_strings.xml
+@@ -0,0 +1,13 @@
++<?xml version="1.0" encoding="utf-8"?>
++<resources>
++    <string name="battery_health_title">Batareya holati</string>
++    <string name="battery_temperature_title">Batareya harorati</string>
++    <string name="battery_health_good">Yaxshi</string>
++    <string name="battery_health_normal">Normal</string>
++    <string name="battery_health_weak">Kuchsiz</string>
++    <string name="battery_health_overheat">Qizib ketish</string>
++    <string name="battery_health_dead">Ishdan chiqqan</string>
++    <string name="battery_health_over_voltage">Ortiqcha kuchlanish</string>
++    <string name="battery_health_failure">Nosozlik</string>
++    <string name="battery_health_cold">Sovuq</string>
++</resources>
+diff --git a/res/values-vi/battery_info_strings.xml b/res/values-vi/battery_info_strings.xml
+new file mode 100644
+index 0000000..e63df28
+--- /dev/null
++++ b/res/values-vi/battery_info_strings.xml
+@@ -0,0 +1,13 @@
++<?xml version="1.0" encoding="utf-8"?>
++<resources>
++    <string name="battery_health_title">Tình trạng pin</string>
++    <string name="battery_temperature_title">Nhiệt độ pin</string>
++    <string name="battery_health_good">Tốt</string>
++    <string name="battery_health_normal">Bình thường</string>
++    <string name="battery_health_weak">Yếu</string>
++    <string name="battery_health_overheat">Quá nóng</string>
++    <string name="battery_health_dead">Hỏng</string>
++    <string name="battery_health_over_voltage">Quá áp</string>
++    <string name="battery_health_failure">Lỗi</string>
++    <string name="battery_health_cold">Lạnh</string>
++</resources>
+diff --git a/res/values-zh-rCN/battery_info_strings.xml b/res/values-zh-rCN/battery_info_strings.xml
+new file mode 100644
+index 0000000..ff2ae7b
+--- /dev/null
++++ b/res/values-zh-rCN/battery_info_strings.xml
+@@ -0,0 +1,13 @@
++<?xml version="1.0" encoding="utf-8"?>
++<resources>
++    <string name="battery_health_title">电池健康状况</string>
++    <string name="battery_temperature_title">电池温度</string>
++    <string name="battery_health_good">良好</string>
++    <string name="battery_health_normal">正常</string>
++    <string name="battery_health_weak">较弱</string>
++    <string name="battery_health_overheat">过热</string>
++    <string name="battery_health_dead">失效</string>
++    <string name="battery_health_over_voltage">过压</string>
++    <string name="battery_health_failure">故障</string>
++    <string name="battery_health_cold">过冷</string>
++</resources>
+diff --git a/res/values-zh-rHK/battery_info_strings.xml b/res/values-zh-rHK/battery_info_strings.xml
+new file mode 100644
+index 0000000..89bc446
+--- /dev/null
++++ b/res/values-zh-rHK/battery_info_strings.xml
+@@ -0,0 +1,13 @@
++<?xml version="1.0" encoding="utf-8"?>
++<resources>
++    <string name="battery_health_title">電池健康狀況</string>
++    <string name="battery_temperature_title">電池溫度</string>
++    <string name="battery_health_good">良好</string>
++    <string name="battery_health_normal">正常</string>
++    <string name="battery_health_weak">較弱</string>
++    <string name="battery_health_overheat">過熱</string>
++    <string name="battery_health_dead">失效</string>
++    <string name="battery_health_over_voltage">過壓</string>
++    <string name="battery_health_failure">故障</string>
++    <string name="battery_health_cold">過冷</string>
++</resources>
+diff --git a/res/values-zh-rTW/battery_info_strings.xml b/res/values-zh-rTW/battery_info_strings.xml
+new file mode 100644
+index 0000000..49dbe6f
+--- /dev/null
++++ b/res/values-zh-rTW/battery_info_strings.xml
+@@ -0,0 +1,13 @@
++<?xml version="1.0" encoding="utf-8"?>
++<resources>
++    <string name="battery_health_title">電池健康狀態</string>
++    <string name="battery_temperature_title">電池溫度</string>
++    <string name="battery_health_good">良好</string>
++    <string name="battery_health_normal">正常</string>
++    <string name="battery_health_weak">較弱</string>
++    <string name="battery_health_overheat">過熱</string>
++    <string name="battery_health_dead">失效</string>
++    <string name="battery_health_over_voltage">過壓</string>
++    <string name="battery_health_failure">故障</string>
++    <string name="battery_health_cold">過冷</string>
++</resources>
+diff --git a/res/values-zu/battery_info_strings.xml b/res/values-zu/battery_info_strings.xml
+new file mode 100644
+index 0000000..88b362c
+--- /dev/null
++++ b/res/values-zu/battery_info_strings.xml
+@@ -0,0 +1,13 @@
++<?xml version="1.0" encoding="utf-8"?>
++<resources>
++    <string name="battery_health_title">Impilo yebhethri</string>
++    <string name="battery_temperature_title">Izinga lokushisa lebhethri</string>
++    <string name="battery_health_good">Kuhle</string>
++    <string name="battery_health_normal">Okujwayelekile</string>
++    <string name="battery_health_weak">Kubuthakathaka</string>
++    <string name="battery_health_overheat">Ukushisa ngokweqile</string>
++    <string name="battery_health_dead">Lonakele</string>
++    <string name="battery_health_over_voltage">I-voltage eyeqile</string>
++    <string name="battery_health_failure">Ukwehluleka</string>
++    <string name="battery_health_cold">Kuyabanda</string>
++</resources>
+diff --git a/res/values/battery_info_strings.xml b/res/values/battery_info_strings.xml
+new file mode 100644
+index 0000000..35e2081
+--- /dev/null
++++ b/res/values/battery_info_strings.xml
+@@ -0,0 +1,14 @@
++<?xml version="1.0" encoding="utf-8"?>
++<resources>
++    <string name="battery_health_title">Battery health</string>
++    <string name="battery_temperature_title">Battery temperature</string>
++    <string name="battery_temperature_summary" translatable="false">%.1f °C</string>
++    <string name="battery_health_good">Good</string>
++    <string name="battery_health_normal">Normal</string>
++    <string name="battery_health_weak">Weak</string>
++    <string name="battery_health_overheat">Overheating</string>
++    <string name="battery_health_dead">Dead</string>
++    <string name="battery_health_over_voltage">Over voltage</string>
++    <string name="battery_health_failure">Failure</string>
++    <string name="battery_health_cold">Cold</string>
++</resources>
+diff --git a/res/xml/battery_info.xml b/res/xml/battery_info.xml
+index e967eb7..6c9e032 100644
+--- a/res/xml/battery_info.xml
++++ b/res/xml/battery_info.xml
+@@ -43,6 +43,20 @@
+         settings:controller="com.android.settings.deviceinfo.batteryinfo.BatteryCycleCountPreferenceController"
+         settings:enableCopying="true"/>
+ 
++    <Preference
++        android:key="battery_info_health"
++        android:title="@string/battery_health_title"
++        android:summary="@string/summary_placeholder"
++        settings:controller="com.android.settings.deviceinfo.batteryinfo.BatteryHealthPreferenceController"
++        settings:enableCopying="true"/>
++
++    <Preference
++        android:key="battery_info_temperature"
++        android:title="@string/battery_temperature_title"
++        android:summary="@string/summary_placeholder"
++        settings:controller="com.android.settings.deviceinfo.batteryinfo.BatteryTemperaturePreferenceController"
++        settings:enableCopying="true"/>
++
+     <com.android.settingslib.widget.FooterPreference
+         android:key="battery_info_footer"
+         android:title="@string/battery_cycle_count_footer"
+diff --git a/src/com/android/settings/deviceinfo/batteryinfo/BatteryHealthPreferenceController.java b/src/com/android/settings/deviceinfo/batteryinfo/BatteryHealthPreferenceController.java
+new file mode 100644
+index 0000000..611ff25
+--- /dev/null
++++ b/src/com/android/settings/deviceinfo/batteryinfo/BatteryHealthPreferenceController.java
+@@ -0,0 +1,82 @@
++/*
++ * Copyright (C) 2026 Langsdorff
++ *
++ * Licensed under the Apache License, Version 2.0 (the "License");
++ * you may not use this file except in compliance with the License.
++ * You may obtain a copy of the License at
++ *
++ *      http://www.apache.org/licenses/LICENSE-2.0
++ *
++ * Unless required by applicable law or agreed to in writing, software
++ * distributed under the License is distributed on an "AS IS" BASIS,
++ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
++ * See the License for the specific language governing permissions and
++ * limitations under the License.
++ */
++
++package com.android.settings.deviceinfo.batteryinfo;
++
++import android.content.Context;
++import android.content.Intent;
++import android.os.BatteryManager;
++
++import com.android.settings.R;
++import com.android.settings.core.BasePreferenceController;
++import com.android.settingslib.fuelgauge.BatteryUtils;
++
++/**
++ * A controller that manages the information about battery health.
++ */
++public class BatteryHealthPreferenceController extends BasePreferenceController {
++
++    // wear verdict that the framework reads from the samsung battery driver
++    private static final String EXTRA_WEAR_HEALTH = "samsung_battery_wear_health";
++    private static final int WEAR_HEALTH_GOOD = 1;
++    private static final int WEAR_HEALTH_NORMAL = 2;
++    private static final int WEAR_HEALTH_AGED = 3;
++    private static final int WEAR_HEALTH_BAD = 15;
++
++    public BatteryHealthPreferenceController(Context context, String preferenceKey) {
++        super(context, preferenceKey);
++    }
++
++    @Override
++    public int getAvailabilityStatus() {
++        return AVAILABLE;
++    }
++
++    @Override
++    public CharSequence getSummary() {
++        final Intent batteryIntent = BatteryUtils.getBatteryIntent(mContext);
++        final int health = batteryIntent.getIntExtra(BatteryManager.EXTRA_HEALTH,
++                BatteryManager.BATTERY_HEALTH_UNKNOWN);
++
++        switch (health) {
++            case BatteryManager.BATTERY_HEALTH_OVERHEAT:
++                return mContext.getText(R.string.battery_health_overheat);
++            case BatteryManager.BATTERY_HEALTH_DEAD:
++                return mContext.getText(R.string.battery_health_dead);
++            case BatteryManager.BATTERY_HEALTH_OVER_VOLTAGE:
++                return mContext.getText(R.string.battery_health_over_voltage);
++            case BatteryManager.BATTERY_HEALTH_UNSPECIFIED_FAILURE:
++                return mContext.getText(R.string.battery_health_failure);
++            case BatteryManager.BATTERY_HEALTH_COLD:
++                return mContext.getText(R.string.battery_health_cold);
++        }
++
++        // the wear verdict only applies while nothing more urgent is reported
++        switch (batteryIntent.getIntExtra(EXTRA_WEAR_HEALTH, 0)) {
++            case WEAR_HEALTH_GOOD:
++                return mContext.getText(R.string.battery_health_good);
++            case WEAR_HEALTH_NORMAL:
++                return mContext.getText(R.string.battery_health_normal);
++            case WEAR_HEALTH_AGED:
++            case WEAR_HEALTH_BAD:
++                return mContext.getText(R.string.battery_health_weak);
++        }
++
++        return health == BatteryManager.BATTERY_HEALTH_GOOD
++                ? mContext.getText(R.string.battery_health_good)
++                : mContext.getText(R.string.battery_cycle_count_not_available);
++    }
++}
+diff --git a/src/com/android/settings/deviceinfo/batteryinfo/BatteryTemperaturePreferenceController.java b/src/com/android/settings/deviceinfo/batteryinfo/BatteryTemperaturePreferenceController.java
+new file mode 100644
+index 0000000..976c3d5
+--- /dev/null
++++ b/src/com/android/settings/deviceinfo/batteryinfo/BatteryTemperaturePreferenceController.java
+@@ -0,0 +1,51 @@
++/*
++ * Copyright (C) 2026 Langsdorff
++ *
++ * Licensed under the Apache License, Version 2.0 (the "License");
++ * you may not use this file except in compliance with the License.
++ * You may obtain a copy of the License at
++ *
++ *      http://www.apache.org/licenses/LICENSE-2.0
++ *
++ * Unless required by applicable law or agreed to in writing, software
++ * distributed under the License is distributed on an "AS IS" BASIS,
++ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
++ * See the License for the specific language governing permissions and
++ * limitations under the License.
++ */
++
++package com.android.settings.deviceinfo.batteryinfo;
++
++import android.content.Context;
++import android.content.Intent;
++import android.os.BatteryManager;
++
++import com.android.settings.R;
++import com.android.settings.core.BasePreferenceController;
++import com.android.settingslib.fuelgauge.BatteryUtils;
++
++/**
++ * A controller that manages the information about battery temperature.
++ */
++public class BatteryTemperaturePreferenceController extends BasePreferenceController {
++
++    public BatteryTemperaturePreferenceController(Context context, String preferenceKey) {
++        super(context, preferenceKey);
++    }
++
++    @Override
++    public int getAvailabilityStatus() {
++        return AVAILABLE;
++    }
++
++    @Override
++    public CharSequence getSummary() {
++        final Intent batteryIntent = BatteryUtils.getBatteryIntent(mContext);
++        final int temperature = batteryIntent.getIntExtra(BatteryManager.EXTRA_TEMPERATURE,
++                Integer.MIN_VALUE);
++
++        return temperature == Integer.MIN_VALUE
++                ? mContext.getText(R.string.battery_cycle_count_not_available)
++                : mContext.getString(R.string.battery_temperature_summary, temperature / 10f);
++    }
++}
+-- 
+2.56.0
+

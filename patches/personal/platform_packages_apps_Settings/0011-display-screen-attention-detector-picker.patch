@@ -1,7 +1,7 @@
 From fff473b7f77d377f170d6e2639f7e601af936fec Mon Sep 17 00:00:00 2001
 From: Langsdorff <131063968+clangsdorff@users.noreply.github.com>
 Date: Fri, 23 Oct 2026 17:42:56 +0300
-Subject: [PATCH 11/13] display: let the user pick the screen attention face
+Subject: [PATCH 11/14] display: let the user pick the screen attention face
  detector
 
 ---

@@ -1,7 +1,7 @@
 From a3b479c7b9d50b37834b8da9bf657223f045d421 Mon Sep 17 00:00:00 2001
 From: Langsdorff <131063968+clangsdorff@users.noreply.github.com>
 Date: Tue, 27 Oct 2026 19:55:31 +0300
-Subject: [PATCH 12/13] fingerprint: don't crash when the second factor pin
+Subject: [PATCH 12/14] fingerprint: don't crash when the second factor pin
  controller was never built
 
 createPreferenceControllers returns null when no fingerprint hardware is
