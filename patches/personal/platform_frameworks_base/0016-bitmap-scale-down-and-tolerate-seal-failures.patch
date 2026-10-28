@@ -1,4 +1,4 @@
-From 36c92b15c34500d8a4f3f768205bc31dda614ea5 Mon Sep 17 00:00:00 2001
+From 78053463d1f980c93e267d55fec1bf1f5832b36c Mon Sep 17 00:00:00 2001
 From: "Christopher A. Williamson" <contact@chrisaw.io>
 Date: Fri, 25 Sep 2026 18:22:21 +0100
 Subject: [PATCH 16/37] Bitmap: scale down bitmaps and tolerate seal failures
@@ -11,9 +11,6 @@ kernels do not know:
 - Notification large bitmap icons exceed the binder transaction buffer
   on kernel 4.9 devices, causing silent delivery failure; reuse the
   existing isLowRam scaling paths for kernels below 4.14 (Icon.java).
-- Bitmaps over 256px parceled by media apps crash writeToParcel with
-  'Could not copy bitmap to parcel blob'; scale them down to fit the
-  legacy binder budget, caching the kernel check (Bitmap.java).
 - Kernels below 5.1 return EINVAL for F_SEAL_FUTURE_WRITE; retry the
   seal without it -- write protection stays best-effort there
   (hwui Bitmap.cpp).
@@ -23,66 +20,16 @@ Kernels at or above the respective versions are unaffected.
 Fixes: #67, #73
 
 Combines the former 'Notification: scale down large bitmap icons on
-legacy kernels', 'Bitmap: scale down bitmaps in writeToParcel on legacy
-kernels' and 'Bitmap: tolerate F_SEAL_FUTURE_WRITE EINVAL on legacy
-kernels' patches.
+legacy kernels' and 'Bitmap: tolerate F_SEAL_FUTURE_WRITE EINVAL on
+legacy kernels' patches. The former writeToParcel scaling is dropped:
+the seal retry fixes the parcel blob failure on its own, and scaling
+every parcelled bitmap to 256px blurred PDF pages and Lens/Circle to
+Search previews (#92).
 ---
- graphics/java/android/graphics/Bitmap.java    | 33 ++++++++++++++++++-
- .../java/android/graphics/drawable/Icon.java  | 26 +++++++++++++++
- libs/hwui/jni/Bitmap.cpp                      | 31 ++++++++++-------
- 3 files changed, 78 insertions(+), 12 deletions(-)
+ .../java/android/graphics/drawable/Icon.java  | 26 ++++++++++++++++
+ libs/hwui/jni/Bitmap.cpp                      | 31 ++++++++++++-------
+ 2 files changed, 46 insertions(+), 11 deletions(-)
 
-diff --git a/graphics/java/android/graphics/Bitmap.java b/graphics/java/android/graphics/Bitmap.java
-index 76fd979e5..f5a0bd15d 100644
---- a/graphics/java/android/graphics/Bitmap.java
-+++ b/graphics/java/android/graphics/Bitmap.java
-@@ -2640,7 +2640,19 @@ public final class Bitmap implements Parcelable {
-     public void writeToParcel(@NonNull Parcel p, int flags) {
-         checkRecycled("Can't parcel a recycled bitmap");
-         noteHardwareBitmapSlowCall();
--        if (!nativeWriteToParcel(mNativePtr, mDensity, p)) {
-+        // On legacy kernels (< 4.14) the binder transaction buffer is limited to ~1MB.
-+        // Large bitmaps (album art, thumbnails) exceed this and cause a native crash.
-+        // Scale down bitmaps over 256px to keep the parcel under the binder limit.
-+        if (isLegacyKernel() && (getWidth() > 256 || getHeight() > 256)) {
-+            float scale = 256f / Math.max(getWidth(), getHeight());
-+            Bitmap scaled = Bitmap.createScaledBitmap(this,
-+                    (int) (getWidth() * scale), (int) (getHeight() * scale), true);
-+            scaled.noteHardwareBitmapSlowCall();
-+            if (!nativeWriteToParcel(scaled.mNativePtr, scaled.mDensity, p)) {
-+                throw new RuntimeException("native writeToParcel failed");
-+            }
-+            scaled.recycle();
-+        } else if (!nativeWriteToParcel(mNativePtr, mDensity, p)) {
-             throw new RuntimeException("native writeToParcel failed");
-         }
-         if (hasGainmap()) {
-@@ -2651,6 +2663,25 @@ public final class Bitmap implements Parcelable {
-         }
-     }
-
-+    private static volatile Boolean sIsLegacyKernel;
-+
-+    private static boolean isLegacyKernel() {
-+        if (sIsLegacyKernel != null) return sIsLegacyKernel;
-+        String kv = System.getProperty("os.version");
-+        if (kv == null || kv.isEmpty()) return sIsLegacyKernel = false;
-+        try {
-+            int firstDot = kv.indexOf('.');
-+            if (firstDot < 0) return sIsLegacyKernel = false;
-+            int major = Integer.parseInt(kv.substring(0, firstDot));
-+            int secondDot = kv.indexOf('.', firstDot + 1);
-+            String minorStr = (secondDot < 0) ? kv.substring(firstDot + 1) : kv.substring(firstDot + 1, secondDot);
-+            int minor = Integer.parseInt(minorStr);
-+            return sIsLegacyKernel = (major < 4 || (major == 4 && minor < 14));
-+        } catch (NumberFormatException e) {
-+            return sIsLegacyKernel = false;
-+        }
-+    }
-+
-     /**
-      * Returns a new bitmap that captures the alpha values of the original.
-      * This may be drawn with Canvas.drawBitmap(), where the color(s) will be
 diff --git a/graphics/java/android/graphics/drawable/Icon.java b/graphics/java/android/graphics/drawable/Icon.java
 index 037806cb7..6fd36636b 100644
 --- a/graphics/java/android/graphics/drawable/Icon.java
