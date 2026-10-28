@@ -1,7 +1,7 @@
 From 6f969691030aedb2851684be596bf6fb1d466994 Mon Sep 17 00:00:00 2001
 From: "Christopher A. Williamson" <contact@chrisaw.io>
 Date: Mon, 12 Oct 2026 13:52:58 +0100
-Subject: [PATCH 15/20] disable and always honour the off default for extended VA space
+Subject: [PATCH 15/21] disable and always honour the off default for extended VA space
 
 the GSI uses the Scudo allocator: hardened_malloc is not compiled into
 bionic, so the extended virtual address space that exists to support it

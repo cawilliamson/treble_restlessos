@@ -1,7 +1,7 @@
 From 564c6f6f04d9dfad426cb5686f8acbf396365852 Mon Sep 17 00:00:00 2001
 From: "Christopher A. Williamson" <contact@chrisaw.io>
 Date: Mon, 12 Oct 2026 19:58:05 +0100
-Subject: [PATCH 16/20] layoutinflater: degrade gracefully when included layout params are unusable
+Subject: [PATCH 16/21] layoutinflater: degrade gracefully when included layout params are unusable
 
 parseInclude falls back to the included layout's own attributes when the
 include tag carries no usable layout_ attributes, but treats a failure

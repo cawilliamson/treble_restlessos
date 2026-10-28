@@ -1,7 +1,7 @@
 From 77f8472eb7a92314b41a5a0bf864de16279955a0 Mon Sep 17 00:00:00 2001
 From: Chara <bionichuman07@gmail.com>
 Date: Fri, 23 Oct 2026 15:44:38 -0700
-Subject: [PATCH 19/20] SystemUI: don't re-announce known public volumes
+Subject: [PATCH 19/21] SystemUI: don't re-announce known public volumes
 
 Use persisted VolumeRecord creation times instead of shutdown preferences and a boot timeout. Only records predating this boot suppress healthy mount notifications; new cards, read-only mounts and error states keep stock behavior.
 

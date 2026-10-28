@@ -1,7 +1,7 @@
 From 7a5db1da4bc3d7b696856976b6ebd56c06a7e0d1 Mon Sep 17 00:00:00 2001
 From: "Christopher A. Williamson" <contact@chrisaw.io>
 Date: Mon, 12 Oct 2026 14:00:17 +0100
-Subject: [PATCH 2/20] disable secure app spawning and honour the global default
+Subject: [PATCH 2/21] disable secure app spawning and honour the global default
 
 exec-based app spawning re-execs app_process into a fresh image, losing
 the modified zygote environment that root integrations (zygisk) depend

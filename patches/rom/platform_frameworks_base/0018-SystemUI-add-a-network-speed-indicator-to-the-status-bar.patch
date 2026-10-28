@@ -1,7 +1,7 @@
 From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: Yash Dayani <52958495+YashDayani@users.noreply.github.com>
 Date: Wed, 21 Oct 2026 20:30:00 +0530
-Subject: [PATCH 18/20] SystemUI: add a network speed indicator to the status bar
+Subject: [PATCH 18/21] SystemUI: add a network speed indicator to the status bar
 
 Shows the current download and upload speed as a small two line
 indicator in the status bar, for the networks that have working

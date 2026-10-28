@@ -1,7 +1,7 @@
 From f05d0e1bb772dc92820173f0cd2b5a775dc0c974 Mon Sep 17 00:00:00 2001
 From: Langsdorff <131063968+clangsdorff@users.noreply.github.com>
 Date: Tue, 27 Oct 2026 21:25:41 +0300
-Subject: [PATCH 20/20] OverlayConfig: only honour vendor overlays for
+Subject: [PATCH 20/21] OverlayConfig: only honour vendor overlays for
  vendor-facing targets
 
 ---

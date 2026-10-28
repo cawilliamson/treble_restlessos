@@ -1,7 +1,7 @@
 From 47a8d38edf7cbac0a4018abe6dbb3c0d906a0e4d Mon Sep 17 00:00:00 2001
 From: Langsdorff <131063968+clangsdorff@users.noreply.github.com>
 Date: Sun, 18 Oct 2026 10:57:01 +0300
-Subject: [PATCH 17/20] pms: let microg-signed packages bypass the gmscompat installer checks
+Subject: [PATCH 17/21] pms: let microg-signed packages bypass the gmscompat installer checks
 
 ---
  .../core/java/com/android/server/pm/ComputerEngine.java    | 6 +++++-

@@ -1,7 +1,7 @@
 From 85b064ac53dae3a7b1439fa2f758e01b9dad398f Mon Sep 17 00:00:00 2001
 From: "Christopher A. Williamson" <contact@chrisaw.io>
 Date: Sun, 21 Jun 2026 22:50:41 +0100
-Subject: [PATCH 6/20] Rebrand system_server label
+Subject: [PATCH 6/21] Rebrand system_server label
 
 Change the system_server notification label from GrapheneOS to RestlessOS.
 ---

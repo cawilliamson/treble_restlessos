@@ -1,7 +1,7 @@
 From a5645ca7f07b7041acbc31739bdf9fd12b3013aa Mon Sep 17 00:00:00 2001
 From: "Christopher A. Williamson" <contact@chrisaw.io>
 Date: Sat, 10 Oct 2026 14:17:14 +0100
-Subject: [PATCH 13/20] pms: spoof absent packages as installed for the grapheneos store
+Subject: [PATCH 13/21] pms: spoof absent packages as installed for the grapheneos store
 
 the store drops a package from its repo view when a self-referential
 static dependency (pkg >= version per the store metadata) is

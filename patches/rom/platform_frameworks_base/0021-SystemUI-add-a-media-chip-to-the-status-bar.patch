@@ -1,0 +1,814 @@
+From 9ef9e0517a0014c569f2230bc4a7f4eac3ae04ae Mon Sep 17 00:00:00 2001
+From: Langsdorff <131063968+clangsdorff@users.noreply.github.com>
+Date: Wed, 28 Oct 2026 23:02:29 +0300
+Subject: [PATCH 21/21] SystemUI: add a media chip to the status bar
+
+show the active media session as an ongoing activity chip, after the
+call, screen record and notification chips. the chip uses the app's
+small icon, or a music note when that icon is not monochrome, and the
+song title cut at the width of a chip timer. a paused session turns
+the chip tonal with a pause icon. tapping it opens a compact popup with
+artwork, title, a seek bar and previous / play-pause / next.
+---
+ .../src/api/model/OngoingActivityChipModel.kt |   9 +-
+ .../res/drawable/ic_media_chip_paused.xml     |  25 ++
+ .../chips/media/ui/compose/MediaChipPopup.kt  | 304 ++++++++++++++++++
+ .../media/ui/view/MediaChipDialogDelegate.kt  |  76 +++++
+ .../media/ui/viewmodel/MediaChipViewModel.kt  | 147 +++++++++
+ .../statusbar/chips/ui/compose/ChipContent.kt |  88 ++++-
+ .../OngoingActivityChipsViewModel.kt          |   8 +-
+ .../interactor/MediaControlChipInteractor.kt  |  10 +
+ 8 files changed, 649 insertions(+), 18 deletions(-)
+ create mode 100644 packages/SystemUI/res/drawable/ic_media_chip_paused.xml
+ create mode 100644 packages/SystemUI/src/com/android/systemui/statusbar/chips/media/ui/compose/MediaChipPopup.kt
+ create mode 100644 packages/SystemUI/src/com/android/systemui/statusbar/chips/media/ui/view/MediaChipDialogDelegate.kt
+ create mode 100644 packages/SystemUI/src/com/android/systemui/statusbar/chips/media/ui/viewmodel/MediaChipViewModel.kt
+
+diff --git a/packages/SystemUI/pods/statusbar/chips/ui/src/api/model/OngoingActivityChipModel.kt b/packages/SystemUI/pods/statusbar/chips/ui/src/api/model/OngoingActivityChipModel.kt
+index c7544b28e..178bdf36e 100644
+--- a/packages/SystemUI/pods/statusbar/chips/ui/src/api/model/OngoingActivityChipModel.kt
++++ b/packages/SystemUI/pods/statusbar/chips/ui/src/api/model/OngoingActivityChipModel.kt
+@@ -187,8 +187,13 @@ sealed class OngoingActivityChipModel {
+             override val logName = "Countdown($secondsUntilStarted)"
+         }
+ 
+-        /** This chip shows the specified [text] in the chip. */
+-        data class Text(val text: String) : Content() {
++        /**
++         * This chip shows the specified [text] in the chip.
++         *
++         * @property clipAtTimerWidth true if text wider than a [Timer] should be cut at that width
++         *   and faded out, and false if it should be hidden instead.
++         */
++        data class Text(val text: String, val clipAtTimerWidth: Boolean = false) : Content() {
+             override val logName = "Text($text)"
+         }
+ 
+diff --git a/packages/SystemUI/res/drawable/ic_media_chip_paused.xml b/packages/SystemUI/res/drawable/ic_media_chip_paused.xml
+new file mode 100644
+index 000000000..431f9b51e
+--- /dev/null
++++ b/packages/SystemUI/res/drawable/ic_media_chip_paused.xml
+@@ -0,0 +1,25 @@
++<?xml version="1.0" encoding="utf-8"?>
++<!--
++  ~ Copyright (C) 2026 Langsdorff
++  ~
++  ~ Licensed under the Apache License, Version 2.0 (the "License");
++  ~ you may not use this file except in compliance with the License.
++  ~ You may obtain a copy of the License at
++  ~
++  ~      http://www.apache.org/licenses/LICENSE-2.0
++  ~
++  ~ Unless required by applicable law or agreed to in writing, software
++  ~ distributed under the License is distributed on an "AS IS" BASIS,
++  ~ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
++  ~ See the License for the specific language governing permissions and
++  ~ limitations under the License.
++  -->
++<vector xmlns:android="http://schemas.android.com/apk/res/android"
++        android:width="24dp"
++        android:height="24dp"
++        android:viewportWidth="24"
++        android:viewportHeight="24">
++    <path
++        android:fillColor="#FF000000"
++        android:pathData="M8,5L8,5A2,2 0,0 1,10 7L10,17A2,2 0,0 1,8 19L8,19A2,2 0,0 1,6 17L6,7A2,2 0,0 1,8 5zM16,5L16,5A2,2 0,0 1,18 7L18,17A2,2 0,0 1,16 19L16,19A2,2 0,0 1,14 17L14,7A2,2 0,0 1,16 5z"/>
++</vector>
+diff --git a/packages/SystemUI/src/com/android/systemui/statusbar/chips/media/ui/compose/MediaChipPopup.kt b/packages/SystemUI/src/com/android/systemui/statusbar/chips/media/ui/compose/MediaChipPopup.kt
+new file mode 100644
+index 000000000..79f10bfc1
+--- /dev/null
++++ b/packages/SystemUI/src/com/android/systemui/statusbar/chips/media/ui/compose/MediaChipPopup.kt
+@@ -0,0 +1,304 @@
++/*
++ * Copyright (C) 2026 Langsdorff
++ *
++ * Licensed under the Apache License, Version 2.0 (the "License");
++ * you may not use this file except in compliance with the License.
++ * You may obtain a copy of the License at
++ *
++ *      http://www.apache.org/licenses/LICENSE-2.0
++ *
++ * Unless required by applicable law or agreed to in writing, software
++ * distributed under the License is distributed on an "AS IS" BASIS,
++ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
++ * See the License for the specific language governing permissions and
++ * limitations under the License.
++ */
++
++package com.android.systemui.statusbar.chips.media.ui.compose
++
++import android.app.PendingIntent
++import android.graphics.drawable.Drawable
++import android.media.MediaMetadata
++import android.media.session.MediaController
++import android.media.session.PlaybackState
++import android.os.SystemClock
++import android.text.format.DateUtils
++import androidx.compose.foundation.Image
++import androidx.compose.foundation.background
++import androidx.compose.foundation.clickable
++import androidx.compose.foundation.layout.Arrangement
++import androidx.compose.foundation.layout.Box
++import androidx.compose.foundation.layout.Column
++import androidx.compose.foundation.layout.Row
++import androidx.compose.foundation.layout.fillMaxSize
++import androidx.compose.foundation.layout.fillMaxWidth
++import androidx.compose.foundation.layout.padding
++import androidx.compose.foundation.layout.size
++import androidx.compose.foundation.layout.widthIn
++import androidx.compose.foundation.shape.RoundedCornerShape
++import androidx.compose.material3.Icon
++import androidx.compose.material3.IconButton
++import androidx.compose.material3.MaterialTheme
++import androidx.compose.material3.Slider
++import androidx.compose.material3.Surface
++import androidx.compose.material3.Text
++import androidx.compose.runtime.Composable
++import androidx.compose.runtime.LaunchedEffect
++import androidx.compose.runtime.getValue
++import androidx.compose.runtime.mutableStateOf
++import androidx.compose.runtime.produceState
++import androidx.compose.runtime.remember
++import androidx.compose.runtime.setValue
++import androidx.compose.ui.Alignment
++import androidx.compose.ui.Modifier
++import androidx.compose.ui.draw.clip
++import androidx.compose.ui.layout.ContentScale
++import androidx.compose.ui.platform.LocalContext
++import androidx.compose.ui.res.painterResource
++import androidx.compose.ui.res.stringResource
++import androidx.compose.ui.semantics.semantics
++import androidx.compose.ui.semantics.stateDescription
++import androidx.compose.ui.text.style.TextOverflow
++import androidx.compose.ui.unit.dp
++import androidx.lifecycle.compose.collectAsStateWithLifecycle
++import com.android.compose.ui.graphics.painter.rememberDrawablePainter
++import com.android.systemui.media.controls.shared.model.MediaAction
++import com.android.systemui.media.controls.shared.model.MediaData
++import com.android.systemui.res.R
++import kotlinx.coroutines.CoroutineDispatcher
++import kotlinx.coroutines.delay
++import kotlinx.coroutines.flow.StateFlow
++import kotlinx.coroutines.withContext
++
++/** Compact media controls: artwork, title, seek bar and previous / play-pause / next buttons. */
++@Composable
++fun MediaChipPopup(
++    mediaData: StateFlow<MediaData?>,
++    bgDispatcher: CoroutineDispatcher,
++    onOpenApp: (PendingIntent) -> Unit,
++    onDismiss: () -> Unit,
++    modifier: Modifier = Modifier,
++) {
++    val data by mediaData.collectAsStateWithLifecycle()
++    val current = data
++    if (current == null) {
++        LaunchedEffect(Unit) { onDismiss() }
++        return
++    }
++
++    Column(
++        verticalArrangement = Arrangement.spacedBy(8.dp),
++        modifier = modifier.fillMaxWidth().padding(start = 20.dp, top = 20.dp, end = 20.dp),
++    ) {
++        Header(current, bgDispatcher, onOpenApp)
++        SeekBar(current, bgDispatcher)
++        Controls(current)
++    }
++}
++
++@Composable
++private fun Header(
++    data: MediaData,
++    bgDispatcher: CoroutineDispatcher,
++    onOpenApp: (PendingIntent) -> Unit,
++) {
++    val context = LocalContext.current
++    val artwork by
++        produceState<Drawable?>(initialValue = null, data.artwork) {
++            value = withContext(bgDispatcher) { data.artwork?.loadDrawable(context) }
++        }
++    val clickIntent = data.clickIntent
++
++    Row(
++        verticalAlignment = Alignment.CenterVertically,
++        horizontalArrangement = Arrangement.spacedBy(16.dp),
++        modifier =
++            Modifier.fillMaxWidth()
++                .clip(RoundedCornerShape(16.dp))
++                .then(
++                    if (clickIntent != null) {
++                        Modifier.clickable { onOpenApp(clickIntent) }
++                    } else {
++                        Modifier
++                    }
++                ),
++    ) {
++        Box(
++            contentAlignment = Alignment.Center,
++            modifier =
++                Modifier.size(64.dp)
++                    .clip(RoundedCornerShape(16.dp))
++                    .background(MaterialTheme.colorScheme.surfaceContainerHighest),
++        ) {
++            val art = artwork
++            if (art != null) {
++                Image(
++                    painter = rememberDrawablePainter(art),
++                    contentDescription = null,
++                    contentScale = ContentScale.Crop,
++                    modifier = Modifier.fillMaxSize(),
++                )
++            } else {
++                Icon(
++                    painter = painterResource(R.drawable.ic_music_note),
++                    contentDescription = null,
++                    tint = MaterialTheme.colorScheme.onSurfaceVariant,
++                    modifier = Modifier.size(28.dp),
++                )
++            }
++        }
++        Column(modifier = Modifier.weight(1f)) {
++            data.app?.let {
++                Text(
++                    text = it,
++                    style = MaterialTheme.typography.labelMedium,
++                    color = MaterialTheme.colorScheme.onSurfaceVariant,
++                    maxLines = 1,
++                    overflow = TextOverflow.Ellipsis,
++                )
++            }
++            Text(
++                text = data.song?.toString().orEmpty(),
++                style = MaterialTheme.typography.titleMedium,
++                color = MaterialTheme.colorScheme.onSurface,
++                maxLines = 1,
++                overflow = TextOverflow.Ellipsis,
++            )
++            data.artist?.let {
++                Text(
++                    text = it.toString(),
++                    style = MaterialTheme.typography.bodyMedium,
++                    color = MaterialTheme.colorScheme.onSurfaceVariant,
++                    maxLines = 1,
++                    overflow = TextOverflow.Ellipsis,
++                )
++            }
++        }
++    }
++}
++
++private data class PlaybackPosition(val positionMs: Long, val durationMs: Long, val canSeek: Boolean)
++
++@Composable
++private fun SeekBar(data: MediaData, bgDispatcher: CoroutineDispatcher) {
++    val context = LocalContext.current
++    val controller = remember(data.token) { data.token?.let { MediaController(context, it) } }
++    var position by remember(controller) { mutableStateOf<PlaybackPosition?>(null) }
++    var dragFraction by remember { mutableStateOf<Float?>(null) }
++
++    LaunchedEffect(controller) {
++        if (controller == null) return@LaunchedEffect
++        while (true) {
++            position = withContext(bgDispatcher) { controller.currentPosition() }
++            delay(POSITION_POLL_INTERVAL_MS)
++        }
++    }
++
++    val current = position ?: return
++    val fraction = dragFraction ?: (current.positionMs.toFloat() / current.durationMs)
++    val elapsedText = formatTime((fraction * current.durationMs).toLong())
++    val totalText = formatTime(current.durationMs)
++    val description =
++        stringResource(R.string.controls_media_seekbar_description, elapsedText, totalText)
++
++    Row(
++        verticalAlignment = Alignment.CenterVertically,
++        horizontalArrangement = Arrangement.spacedBy(12.dp),
++    ) {
++        TimeText(elapsedText)
++        Slider(
++            value = fraction.coerceIn(0f, 1f),
++            onValueChange = { dragFraction = it },
++            onValueChangeFinished = {
++                dragFraction?.let {
++                    val target = (it * current.durationMs).toLong()
++                    controller?.transportControls?.seekTo(target)
++                    position = current.copy(positionMs = target)
++                }
++                dragFraction = null
++            },
++            enabled = current.canSeek,
++            modifier = Modifier.weight(1f).semantics { stateDescription = description },
++        )
++        TimeText(totalText)
++    }
++}
++
++@Composable
++private fun TimeText(text: String) {
++    Text(
++        text = text,
++        style = MaterialTheme.typography.labelMedium,
++        color = MaterialTheme.colorScheme.onSurfaceVariant,
++        modifier = Modifier.widthIn(min = 36.dp),
++    )
++}
++
++@Composable
++private fun Controls(data: MediaData) {
++    val actions = data.semanticActions ?: return
++    Row(
++        verticalAlignment = Alignment.CenterVertically,
++        horizontalArrangement = Arrangement.spacedBy(24.dp, Alignment.CenterHorizontally),
++        modifier = Modifier.fillMaxWidth().padding(bottom = 12.dp),
++    ) {
++        actions.prevOrCustom?.let { ActionButton(it) }
++        actions.playOrPause?.let { action ->
++            Surface(
++                onClick = { action.action?.run() },
++                enabled = action.action != null,
++                shape = RoundedCornerShape(16.dp),
++                color = MaterialTheme.colorScheme.primary,
++                contentColor = MaterialTheme.colorScheme.onPrimary,
++                modifier = Modifier.size(width = 64.dp, height = 48.dp),
++            ) {
++                Box(contentAlignment = Alignment.Center) { ActionIcon(action) }
++            }
++        }
++        actions.nextOrCustom?.let { ActionButton(it) }
++    }
++}
++
++@Composable
++private fun ActionButton(action: MediaAction) {
++    IconButton(
++        onClick = { action.action?.run() },
++        enabled = action.action != null,
++        modifier = Modifier.size(48.dp),
++    ) {
++        ActionIcon(action)
++    }
++}
++
++@Composable
++private fun ActionIcon(action: MediaAction) {
++    val icon = action.icon ?: return
++    // The media card draws the same drawable, so use a separate copy to keep its callback intact.
++    val copy = remember(icon) { icon.constantState?.newDrawable()?.mutate() ?: icon }
++    Icon(
++        painter = rememberDrawablePainter(copy),
++        contentDescription = action.contentDescription?.toString(),
++        modifier = Modifier.size(24.dp),
++    )
++}
++
++private fun MediaController.currentPosition(): PlaybackPosition? {
++    val state = playbackState ?: return null
++    val duration = metadata?.getLong(MediaMetadata.METADATA_KEY_DURATION) ?: 0L
++    if (duration <= 0L) return null
++    var position = state.position
++    if (state.state == PlaybackState.STATE_PLAYING && state.lastPositionUpdateTime > 0L) {
++        position +=
++            (state.playbackSpeed * (SystemClock.elapsedRealtime() - state.lastPositionUpdateTime))
++                .toLong()
++    }
++    return PlaybackPosition(
++        positionMs = position.coerceIn(0L, duration),
++        durationMs = duration,
++        canSeek = (state.actions and PlaybackState.ACTION_SEEK_TO) != 0L,
++    )
++}
++
++private fun formatTime(millis: Long): String = DateUtils.formatElapsedTime(millis / 1000)
++
++private const val POSITION_POLL_INTERVAL_MS = 1000L
+diff --git a/packages/SystemUI/src/com/android/systemui/statusbar/chips/media/ui/view/MediaChipDialogDelegate.kt b/packages/SystemUI/src/com/android/systemui/statusbar/chips/media/ui/view/MediaChipDialogDelegate.kt
+new file mode 100644
+index 000000000..9d97eb1b5
+--- /dev/null
++++ b/packages/SystemUI/src/com/android/systemui/statusbar/chips/media/ui/view/MediaChipDialogDelegate.kt
+@@ -0,0 +1,76 @@
++/*
++ * Copyright (C) 2026 Langsdorff
++ *
++ * Licensed under the Apache License, Version 2.0 (the "License");
++ * you may not use this file except in compliance with the License.
++ * You may obtain a copy of the License at
++ *
++ *      http://www.apache.org/licenses/LICENSE-2.0
++ *
++ * Unless required by applicable law or agreed to in writing, software
++ * distributed under the License is distributed on an "AS IS" BASIS,
++ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
++ * See the License for the specific language governing permissions and
++ * limitations under the License.
++ */
++
++package com.android.systemui.statusbar.chips.media.ui.view
++
++import android.content.Context
++import android.os.Bundle
++import android.view.Gravity
++import android.view.WindowInsets
++import com.android.systemui.dagger.qualifiers.Background
++import com.android.systemui.plugins.ActivityStarter
++import com.android.systemui.statusbar.chips.media.ui.compose.MediaChipPopup
++import com.android.systemui.statusbar.phone.SystemUIDialog
++import com.android.systemui.statusbar.phone.SystemUIDialogFactory
++import com.android.systemui.statusbar.phone.create
++import com.android.systemui.statusbar.quickactions.media.domain.interactor.MediaControlChipInteractor
++import dagger.assisted.Assisted
++import dagger.assisted.AssistedFactory
++import dagger.assisted.AssistedInject
++import kotlinx.coroutines.CoroutineDispatcher
++
++/** A compact media controls popup shown under the status bar when the media chip is tapped. */
++class MediaChipDialogDelegate
++@AssistedInject
++constructor(
++    @Assisted private val context: Context,
++    private val sysuiDialogFactory: SystemUIDialogFactory,
++    private val mediaControlChipInteractor: MediaControlChipInteractor,
++    private val activityStarter: ActivityStarter,
++    @Background private val bgDispatcher: CoroutineDispatcher,
++) : SystemUIDialog.Delegate {
++
++    override fun createDialog(): SystemUIDialog {
++        val dialog =
++            sysuiDialogFactory.create(context = context, dialogDelegate = this) { dialog ->
++                MediaChipPopup(
++                    mediaData = mediaControlChipInteractor.activeMediaDataLegacy,
++                    bgDispatcher = bgDispatcher,
++                    onOpenApp = { intent ->
++                        dialog.dismiss()
++                        activityStarter.postStartActivityDismissingKeyguard(intent)
++                    },
++                    onDismiss = { dialog.dismiss() },
++                )
++            }
++        dialog.setCanceledOnTouchOutside(true)
++        return dialog
++    }
++
++    override fun onCreate(dialog: SystemUIDialog, savedInstanceState: Bundle?) {
++        // SystemUIDialog stops fitting the status bar, which would put the popup over the chip.
++        dialog.window?.apply {
++            attributes.fitInsetsTypes = attributes.fitInsetsTypes or WindowInsets.Type.statusBars()
++            attributes.receiveInsetsIgnoringZOrder = true
++            setGravity(Gravity.TOP or Gravity.CENTER_HORIZONTAL)
++        }
++    }
++
++    @AssistedFactory
++    interface Factory {
++        fun create(context: Context): MediaChipDialogDelegate
++    }
++}
+diff --git a/packages/SystemUI/src/com/android/systemui/statusbar/chips/media/ui/viewmodel/MediaChipViewModel.kt b/packages/SystemUI/src/com/android/systemui/statusbar/chips/media/ui/viewmodel/MediaChipViewModel.kt
+new file mode 100644
+index 000000000..40940578f
+--- /dev/null
++++ b/packages/SystemUI/src/com/android/systemui/statusbar/chips/media/ui/viewmodel/MediaChipViewModel.kt
+@@ -0,0 +1,147 @@
++/*
++ * Copyright (C) 2026 Langsdorff
++ *
++ * Licensed under the Apache License, Version 2.0 (the "License");
++ * you may not use this file except in compliance with the License.
++ * You may obtain a copy of the License at
++ *
++ *      http://www.apache.org/licenses/LICENSE-2.0
++ *
++ * Unless required by applicable law or agreed to in writing, software
++ * distributed under the License is distributed on an "AS IS" BASIS,
++ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
++ * See the License for the specific language governing permissions and
++ * limitations under the License.
++ */
++
++package com.android.systemui.statusbar.chips.media.ui.viewmodel
++
++import android.content.Context
++import androidx.compose.ui.graphics.RectangleShape
++import com.android.internal.jank.Cuj
++import com.android.internal.util.ContrastColorUtil
++import com.android.systemui.animation.DialogCuj
++import com.android.systemui.animation.DialogTransitionAnimator
++import com.android.systemui.common.shared.model.ContentDescription
++import com.android.systemui.common.shared.model.Icon
++import com.android.systemui.dagger.SysUISingleton
++import com.android.systemui.dagger.qualifiers.Application
++import com.android.systemui.dagger.qualifiers.Main
++import com.android.systemui.log.LogBuffer
++import com.android.systemui.media.controls.shared.model.MediaData
++import com.android.systemui.res.R
++import com.android.systemui.statusbar.chips.StatusBarChipLogTags.pad
++import com.android.systemui.statusbar.chips.StatusBarChipsLog
++import com.android.systemui.statusbar.chips.media.ui.view.MediaChipDialogDelegate
++import com.android.systemui.statusbar.chips.ui.model.ColorsModel
++import com.android.systemui.statusbar.chips.ui.model.OngoingActivityChipModel
++import com.android.systemui.statusbar.chips.ui.viewmodel.OngoingActivityChipViewModel
++import com.android.systemui.statusbar.chips.ui.viewmodel.OngoingActivityChipViewModel.Companion.createDialogLaunchOnClickCallback
++import com.android.systemui.statusbar.chips.uievents.StatusBarChipsUiEventLogger
++import com.android.systemui.statusbar.quickactions.media.domain.interactor.MediaControlChipInteractor
++import javax.inject.Inject
++import kotlinx.coroutines.CoroutineScope
++import kotlinx.coroutines.flow.SharingStarted
++import kotlinx.coroutines.flow.StateFlow
++import kotlinx.coroutines.flow.distinctUntilChanged
++import kotlinx.coroutines.flow.map
++import kotlinx.coroutines.flow.stateIn
++
++/** View model for the media chip shown in the status bar while a media session is active. */
++@SysUISingleton
++class MediaChipViewModel
++@Inject
++constructor(
++    @Main private val context: Context,
++    @Application private val scope: CoroutineScope,
++    mediaControlChipInteractor: MediaControlChipInteractor,
++    private val dialogDelegateFactory: MediaChipDialogDelegate.Factory,
++    private val dialogTransitionAnimator: DialogTransitionAnimator,
++    @StatusBarChipsLog private val logger: LogBuffer,
++    private val uiEventLogger: StatusBarChipsUiEventLogger,
++) : OngoingActivityChipViewModel {
++    private val instanceId = uiEventLogger.createNewInstanceId()
++
++    private data class MediaChipState(
++        val packageName: String,
++        val appName: String?,
++        val appIcon: android.graphics.drawable.Icon?,
++        val song: String?,
++        val isPaused: Boolean,
++    )
++
++    override val chip: StateFlow<OngoingActivityChipModel> =
++        mediaControlChipInteractor.activeMediaDataLegacy
++            .map { it?.toChipState() }
++            .distinctUntilChanged()
++            .map { it?.toChipModel() ?: OngoingActivityChipModel.Inactive() }
++            // See b/347726238 for [SharingStarted.Lazily] reasoning.
++            .stateIn(scope, SharingStarted.Lazily, OngoingActivityChipModel.Inactive())
++
++    private fun MediaData.toChipState() =
++        MediaChipState(
++            packageName = packageName,
++            appName = app,
++            appIcon = appIcon,
++            song = song?.toString(),
++            isPaused = isPlaying == false,
++        )
++
++    private fun MediaChipState.toChipModel(): OngoingActivityChipModel.Active {
++        val contentDescription = appName?.let { ContentDescription.Loaded(it) }
++        // Full color app icons don't read well once tinted, so fall back to a plain music note.
++        val drawable =
++            appIcon?.loadDrawable(context)?.takeIf {
++                ContrastColorUtil.getInstance(context).isGrayscaleIcon(it)
++            }
++        val icon =
++            if (drawable != null) {
++                Icon.Loaded(drawable, contentDescription)
++            } else {
++                Icon.Resource(R.drawable.ic_music_note, contentDescription)
++            }
++        return OngoingActivityChipModel.Active(
++            key = KEY,
++            managingPackageName = packageName,
++            icon = OngoingActivityChipModel.ChipIcon.SingleColorIcon(icon),
++            content =
++                if (isPaused || song.isNullOrBlank()) {
++                    OngoingActivityChipModel.Content.IconOnly
++                } else {
++                    OngoingActivityChipModel.Content.Text(song, clipAtTimerWidth = true)
++                },
++            colors = if (isPaused) ColorsModel.SystemThemed else ColorsModel.AccentThemed,
++            decorativeIcon =
++                if (isPaused) {
++                    OngoingActivityChipModel.DecorativeIcon(
++                        icon = Icon.Resource(R.drawable.ic_media_chip_paused, null),
++                        backgroundShape = RectangleShape,
++                        colors = ColorsModel.SystemThemed,
++                    )
++                } else {
++                    null
++                },
++            clickBehavior =
++                OngoingActivityChipModel.ClickBehavior.ExpandAction(
++                    createDialogLaunchOnClickCallback(
++                        dialogDelegateCreator = { context -> dialogDelegateFactory.create(context) },
++                        dialogTransitionAnimator = dialogTransitionAnimator,
++                        DIALOG_CUJ,
++                        key = KEY,
++                        instanceId = instanceId,
++                        uiEventLogger = uiEventLogger,
++                        logger = logger,
++                        tag = TAG,
++                    )
++                ),
++            instanceId = instanceId,
++        )
++    }
++
++    companion object {
++        const val KEY = "Media"
++        private val DIALOG_CUJ =
++            DialogCuj(Cuj.CUJ_STATUS_BAR_LAUNCH_DIALOG_FROM_CHIP, tag = "Media")
++        private val TAG = "MediaChipVM".pad()
++    }
++}
+diff --git a/packages/SystemUI/src/com/android/systemui/statusbar/chips/ui/compose/ChipContent.kt b/packages/SystemUI/src/com/android/systemui/statusbar/chips/ui/compose/ChipContent.kt
+index 0fceef41b..cc02aabd9 100644
+--- a/packages/SystemUI/src/com/android/systemui/statusbar/chips/ui/compose/ChipContent.kt
++++ b/packages/SystemUI/src/com/android/systemui/statusbar/chips/ui/compose/ChipContent.kt
+@@ -23,7 +23,12 @@ import androidx.compose.material3.MaterialTheme
+ import androidx.compose.material3.Text
+ import androidx.compose.runtime.Composable
+ import androidx.compose.ui.Modifier
++import androidx.compose.ui.draw.drawWithContent
++import androidx.compose.ui.graphics.BlendMode
++import androidx.compose.ui.graphics.Brush
+ import androidx.compose.ui.graphics.Color
++import androidx.compose.ui.graphics.CompositingStrategy
++import androidx.compose.ui.graphics.graphicsLayer
+ import androidx.compose.ui.platform.LocalConfiguration
+ import androidx.compose.ui.platform.LocalContext
+ import androidx.compose.ui.platform.LocalDensity
+@@ -117,21 +122,71 @@ fun ChipContent(
+         is OngoingActivityChipModel.Content.Text -> {
+             val text = viewModel.text
+             if (text.isNotBlank()) {
+-                Text(
+-                    text = text,
+-                    color = textColor,
+-                    style = textStyle,
+-                    softWrap = false,
+-                    modifier =
+-                        modifier.hideTextIfDoesNotFit(
+-                            text = text,
+-                            textStyle = textStyle,
+-                            textMeasurer = textMeasurer,
+-                            maxTextWidth = maxTextWidth,
+-                            startPadding = startPadding,
+-                            endPadding = endPadding,
+-                        ),
+-                )
++                if (viewModel.clipAtTimerWidth) {
++                    val timerWidthPx =
++                        textMeasurer
++                            .measure(TIMER_WIDTH_SAMPLE, textStyle, softWrap = false)
++                            .size
++                            .width
++                    val hasOverflow =
++                        textMeasurer.measure(text, textStyle, softWrap = false).size.width >
++                            timerWidthPx
++                    val fadeLength =
++                        dimensionResource(id = R.dimen.ongoing_activity_chip_text_fading_edge_length)
++                    Text(
++                        text = text,
++                        color = textColor,
++                        style = textStyle,
++                        softWrap = false,
++                        modifier =
++                            modifier
++                                .hideTextIfDoesNotFit(
++                                    text = TIMER_WIDTH_SAMPLE,
++                                    textStyle = textStyle,
++                                    textMeasurer = textMeasurer,
++                                    maxTextWidth = with(density) { timerWidthPx.toDp() },
++                                    startPadding = startPadding,
++                                    endPadding = endPadding,
++                                )
++                                .graphicsLayer {
++                                    if (hasOverflow) {
++                                        compositingStrategy = CompositingStrategy.Offscreen
++                                    }
++                                }
++                                .drawWithContent {
++                                    drawContent()
++                                    if (hasOverflow) {
++                                        drawRect(
++                                            brush =
++                                                Brush.horizontalGradient(
++                                                    colors = listOf(Color.Black, Color.Transparent),
++                                                    startX =
++                                                        (size.width - fadeLength.toPx())
++                                                            .coerceAtLeast(0f),
++                                                    endX = size.width,
++                                                ),
++                                            blendMode = BlendMode.DstIn,
++                                        )
++                                    }
++                                },
++                    )
++                } else {
++                    Text(
++                        text = text,
++                        color = textColor,
++                        style = textStyle,
++                        softWrap = false,
++                        modifier =
++                            modifier.hideTextIfDoesNotFit(
++                                text = text,
++                                textStyle = textStyle,
++                                textMeasurer = textMeasurer,
++                                maxTextWidth = maxTextWidth,
++                                startPadding = startPadding,
++                                endPadding = endPadding,
++                            ),
++                    )
++                }
+             }
+         }
+ 
+@@ -224,3 +279,6 @@ fun ChipContent(
+         }
+     }
+ }
++
++/** Text with the width of a running chip timer, used to cap clipped text at the same width. */
++private const val TIMER_WIDTH_SAMPLE = "00:00"
+diff --git a/packages/SystemUI/src/com/android/systemui/statusbar/chips/ui/viewmodel/OngoingActivityChipsViewModel.kt b/packages/SystemUI/src/com/android/systemui/statusbar/chips/ui/viewmodel/OngoingActivityChipsViewModel.kt
+index fa11ffd80..82f5223f6 100644
+--- a/packages/SystemUI/src/com/android/systemui/statusbar/chips/ui/viewmodel/OngoingActivityChipsViewModel.kt
++++ b/packages/SystemUI/src/com/android/systemui/statusbar/chips/ui/viewmodel/OngoingActivityChipsViewModel.kt
+@@ -28,6 +28,7 @@ import com.android.systemui.statusbar.chips.StatusBarChipToHunAnimation
+ import com.android.systemui.statusbar.chips.StatusBarChipsLog
+ import com.android.systemui.statusbar.chips.call.ui.viewmodel.CallChipViewModel
+ import com.android.systemui.statusbar.chips.casttootherdevice.ui.viewmodel.CastToOtherDeviceChipViewModel
++import com.android.systemui.statusbar.chips.media.ui.viewmodel.MediaChipViewModel
+ import com.android.systemui.statusbar.chips.notification.ui.viewmodel.NotifChipsViewModel
+ import com.android.systemui.statusbar.chips.screenrecord.ui.viewmodel.ScreenRecordChipViewModel
+ import com.android.systemui.statusbar.chips.sharetoapp.ui.viewmodel.ShareToAppChipViewModel
+@@ -62,6 +63,7 @@ constructor(
+     castToOtherDeviceChipViewModel: CastToOtherDeviceChipViewModel,
+     callChipViewModel: CallChipViewModel,
+     notifChipsViewModel: NotifChipsViewModel,
++    mediaChipViewModel: MediaChipViewModel,
+     @DisplayAware displayStateInteractor: DisplayStateInteractor,
+     private val screenCaptureRecordFeaturesInteractor: ScreenCaptureRecordFeaturesInteractor,
+     private val chipsRefiners: Set<@JvmSuppressWildcards OngoingActivityChipsRefiner>,
+@@ -104,6 +106,7 @@ constructor(
+         val castToOtherDevice: OngoingActivityChipModel = OngoingActivityChipModel.Inactive(),
+         val call: OngoingActivityChipModel = OngoingActivityChipModel.Inactive(),
+         val notifs: List<OngoingActivityChipModel.Active> = emptyList(),
++        val media: OngoingActivityChipModel = OngoingActivityChipModel.Inactive(),
+     )
+ 
+     /** Bundles all the incoming chips into one object to easily pass to various flows. */
+@@ -147,6 +150,7 @@ constructor(
+                     )
+                 }
+             }
++            .combine(mediaChipViewModel.chip) { bundle, media -> bundle.copy(media = media) }
+             // Some of the chips could have timers in them and we don't want the start time for
+             // those timers to get reset for any reason. So, as soon as any subscriber has requested
+             // the chip information, we maintain it forever by using [SharingStarted.Lazily].
+@@ -327,7 +331,9 @@ constructor(
+         val inactiveChips = mutableListOf<OngoingActivityChipModel.Inactive>()
+ 
+         val sortedChips =
+-            with(bundle) { listOf(screenRecord, shareToApp, castToOtherDevice, call) + notifs }
++            with(bundle) {
++                listOf(screenRecord, shareToApp, castToOtherDevice, call) + notifs + media
++            }
+ 
+         var shownSlotsRemaining = MAX_VISIBLE_CHIPS
+         for (chip in sortedChips) {
+diff --git a/packages/SystemUI/src/com/android/systemui/statusbar/quickactions/media/domain/interactor/MediaControlChipInteractor.kt b/packages/SystemUI/src/com/android/systemui/statusbar/quickactions/media/domain/interactor/MediaControlChipInteractor.kt
+index 1f6d9549f..0e234fc75 100644
+--- a/packages/SystemUI/src/com/android/systemui/statusbar/quickactions/media/domain/interactor/MediaControlChipInteractor.kt
++++ b/packages/SystemUI/src/com/android/systemui/statusbar/quickactions/media/domain/interactor/MediaControlChipInteractor.kt
+@@ -31,6 +31,7 @@ import kotlinx.coroutines.flow.Flow
+ import kotlinx.coroutines.flow.MutableStateFlow
+ import kotlinx.coroutines.flow.SharingStarted
+ import kotlinx.coroutines.flow.StateFlow
++import kotlinx.coroutines.flow.asStateFlow
+ import kotlinx.coroutines.flow.combine
+ import kotlinx.coroutines.flow.stateIn
+ 
+@@ -63,9 +64,18 @@ constructor(
+      */
+     private val mediaControlChipModelLegacy = MutableStateFlow<MediaControlChipModel?>(null)
+ 
++    private val _activeMediaDataLegacy = MutableStateFlow<MediaData?>(null)
++
++    /**
++     * The first active [MediaData] in the carousel, or null if there is none. Only updated when
++     * [MediaControlsInComposeFlag] is disabled.
++     */
++    val activeMediaDataLegacy: StateFlow<MediaData?> = _activeMediaDataLegacy.asStateFlow()
++
+     fun updateMediaControlChipModelLegacy(mediaData: MediaData?) {
+         if (!MediaControlsInComposeFlag.isEnabled) {
+             mediaControlChipModelLegacy.value = mediaData?.toMediaControlChipModel()
++            _activeMediaDataLegacy.value = mediaData
+         }
+     }
+ 
+-- 
+2.56.0
+

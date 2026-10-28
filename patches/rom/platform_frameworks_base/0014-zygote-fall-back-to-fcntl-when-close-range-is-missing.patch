@@ -1,7 +1,7 @@
 From b03baef4087e4aecece6d618067de4279bf5f958 Mon Sep 17 00:00:00 2001
 From: "Christopher A. Williamson" <contact@chrisaw.io>
 Date: Sat, 10 Oct 2026 10:57:23 +0100
-Subject: [PATCH 14/20] zygote: fall back to fcntl when close_range is missing
+Subject: [PATCH 14/21] zygote: fall back to fcntl when close_range is missing
 
 exec spawned children hardened the exec path against nothing: a
 close_range failure (ENOSYS on pre-5.9 vendor kernels, EINVAL for the
