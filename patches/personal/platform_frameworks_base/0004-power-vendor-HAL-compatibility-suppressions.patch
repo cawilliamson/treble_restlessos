@@ -1,7 +1,7 @@
 From 5c52757be9780728b57a164380259ccc903bd383 Mon Sep 17 00:00:00 2001
 From: "Christopher A. Williamson" <contact@chrisaw.io>
 Date: Fri, 10 Apr 2026 00:40:21 +0100
-Subject: [PATCH 4/37] power: vendor HAL compatibility suppressions
+Subject: [PATCH 4/39] power: vendor HAL compatibility suppressions
 
 replace the per-mode EXPENSIVE_RENDERING property check with a generic
 mechanism.  two-layer suppression:

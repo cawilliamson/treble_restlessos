@@ -1,7 +1,7 @@
 From 07959a02549c5c35b400ebe4803f527715fa39fa Mon Sep 17 00:00:00 2001
 From: Langsdorff <131063968+clangsdorff@users.noreply.github.com>
 Date: Sat, 17 Oct 2026 15:05:25 +0300
-Subject: [PATCH 29/37] keyguard: run the lock-time gc off the systemui main
+Subject: [PATCH 29/39] keyguard: run the lock-time gc off the systemui main
  thread and the keyguard binder call
 
 ---

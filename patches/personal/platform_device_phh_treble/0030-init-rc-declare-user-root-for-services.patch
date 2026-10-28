@@ -1,7 +1,7 @@
 From d0c11ce99cc128530aeb128cb5deeed948d85340 Mon Sep 17 00:00:00 2001
 From: "Christopher A. Williamson" <contact@chrisaw.io>
 Date: Tue, 22 Sep 2026 16:58:48 +0100
-Subject: [PATCH 30/49] init rc files: declare user root for services
+Subject: [PATCH 30/50] init rc files: declare user root for services
  defaulting to root
 
 host_init_verifier on newer Android treats a service without an

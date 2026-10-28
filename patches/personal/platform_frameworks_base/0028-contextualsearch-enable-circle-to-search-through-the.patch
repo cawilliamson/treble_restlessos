@@ -1,7 +1,7 @@
 From 488a370bf5993e0724773bcd2b3efa815251ff9d Mon Sep 17 00:00:00 2001
 From: Langsdorff <131063968+clangsdorff@users.noreply.github.com>
 Date: Sun, 18 Oct 2026 02:38:59 +0300
-Subject: [PATCH 28/37] contextualsearch: enable circle to search through the
+Subject: [PATCH 28/39] contextualsearch: enable circle to search through the
  google app
 
 ---

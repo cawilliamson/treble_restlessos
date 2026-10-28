@@ -1,7 +1,7 @@
 From ad6fac14a1becfdd9427f918a99e1d5d4427730b Mon Sep 17 00:00:00 2001
 From: "Christopher A. Williamson" <contact@chrisaw.io>
 Date: Fri, 3 Apr 2026 20:22:11 +0100
-Subject: [PATCH 20/49] disable no_vsyncs_on_screen_off for GSI display
+Subject: [PATCH 20/50] disable no_vsyncs_on_screen_off for GSI display
  compatibility
 
 on GSI builds, vendor HWCs (notably MTK) may not properly initialise

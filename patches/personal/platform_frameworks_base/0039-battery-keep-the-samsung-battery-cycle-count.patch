@@ -1,0 +1,237 @@
+From 71ce8b5dbbcb948b6a017022c06a374bf2f584f2 Mon Sep 17 00:00:00 2001
+From: Langsdorff <131063968+clangsdorff@users.noreply.github.com>
+Date: Wed, 28 Oct 2026 20:00:59 +0300
+Subject: [PATCH 39/39] battery: keep the samsung battery cycle count
+
+samsung battery drivers do not count cycles themselves. on stock the
+framework adds the level drops up in /efs/FactoryApp/batt_discharge_level
+and writes level / 100 to battery_cycle. the gsi never does, so the
+driver keeps -1, the age based float voltage steps and the battery
+health check never run, and battery information shows 0 cycles.
+
+do the same on samsung vendors: keep adding level drops to the efs file,
+write the cycle count to the driver and report it as the battery cycle
+count. also pass the wear verdict from batt_misc_event in the battery
+changed intent.
+---
+ .../com/android/server/BatteryService.java    |  22 +++
+ .../android/server/SamsungBatteryCycle.java   | 136 ++++++++++++++++++
+ 2 files changed, 158 insertions(+)
+ create mode 100644 services/core/java/com/android/server/SamsungBatteryCycle.java
+
+diff --git a/services/core/java/com/android/server/BatteryService.java b/services/core/java/com/android/server/BatteryService.java
+index e0b36ab69..6177f45f8 100644
+--- a/services/core/java/com/android/server/BatteryService.java
++++ b/services/core/java/com/android/server/BatteryService.java
+@@ -33,9 +33,11 @@ import android.app.ActivityManager;
+ import android.app.ActivityManagerInternal;
+ import android.app.AppOpsManager;
+ import android.app.BroadcastOptions;
++import android.content.BroadcastReceiver;
+ import android.content.ContentResolver;
+ import android.content.Context;
+ import android.content.Intent;
++import android.content.IntentFilter;
+ import android.content.pm.PackageManager;
+ import android.content.pm.PackageManagerInternal;
+ import android.content.pm.ResolveInfo;
+@@ -164,6 +166,7 @@ public final class BatteryService extends SystemService {
+     private HealthInfo mHealthInfo;
+     private final HealthInfo mLastHealthInfo = new HealthInfo();
+     private boolean mBatteryLevelCritical;
++    private final SamsungBatteryCycle mSamsungBatteryCycle;
+ 
+     /**
+      * {@link HealthInfo#batteryStatus} value when {@link Intent#ACTION_BATTERY_CHANGED}
+@@ -451,6 +454,7 @@ public final class BatteryService extends SystemService {
+         mLed = new Led(context, getLocalService(LightsManager.class));
+         mBatteryStats = BatteryStatsService.getService();
+         mActivityManagerInternal = LocalServices.getService(ActivityManagerInternal.class);
++        mSamsungBatteryCycle = SamsungBatteryCycle.create();
+ 
+         mCriticalBatteryLevel = mContext.getResources().getInteger(
+                 com.android.internal.R.integer.config_criticalBatteryWarningLevel);
+@@ -518,6 +522,16 @@ public final class BatteryService extends SystemService {
+                         false, obs, UserHandle.USER_ALL);
+                 updateBatteryWarningLevelLocked();
+             }
++            if (mSamsungBatteryCycle != null) {
++                mContext.registerReceiver(new BroadcastReceiver() {
++                    @Override
++                    public void onReceive(Context context, Intent intent) {
++                        synchronized (mLock) {
++                            mSamsungBatteryCycle.flush();
++                        }
++                    }
++                }, new IntentFilter(Intent.ACTION_SHUTDOWN), null, mHandler);
++            }
+         }
+     }
+ 
+@@ -713,6 +727,10 @@ public final class BatteryService extends SystemService {
+         Trace.traceCounter(Trace.TRACE_TAG_POWER, "BatteryStatus", info.batteryStatus);
+ 
+         synchronized (mLock) {
++            if (mSamsungBatteryCycle != null) {
++                mSamsungBatteryCycle.onBatteryLevel(info.batteryLevel);
++                info.batteryCycleCount = mSamsungBatteryCycle.getCycleCount();
++            }
+             if (!mUpdatesStopped) {
+                 mHealthInfo = info;
+                 // Process the new values.
+@@ -1037,6 +1055,10 @@ public final class BatteryService extends SystemService {
+                 mHealthInfo.maxChargingVoltageMicrovolts);
+         intent.putExtra(BatteryManager.EXTRA_CHARGE_COUNTER, mHealthInfo.batteryChargeCounterUah);
+         intent.putExtra(BatteryManager.EXTRA_CYCLE_COUNT, mHealthInfo.batteryCycleCount);
++        if (mSamsungBatteryCycle != null) {
++            intent.putExtra(SamsungBatteryCycle.EXTRA_WEAR_HEALTH,
++                    mSamsungBatteryCycle.getWearHealth());
++        }
+         intent.putExtra(BatteryManager.EXTRA_CHARGING_STATUS, mHealthInfo.chargingState);
+         intent.putExtra(BatteryManager.EXTRA_CAPACITY_LEVEL, mHealthInfo.batteryCapacityLevel);
+         if (DEBUG) {
+diff --git a/services/core/java/com/android/server/SamsungBatteryCycle.java b/services/core/java/com/android/server/SamsungBatteryCycle.java
+new file mode 100644
+index 000000000..37dc047fb
+--- /dev/null
++++ b/services/core/java/com/android/server/SamsungBatteryCycle.java
+@@ -0,0 +1,136 @@
++/*
++ * Copyright (C) 2026 Langsdorff
++ *
++ * Licensed under the Apache License, Version 2.0 (the "License");
++ * you may not use this file except in compliance with the License.
++ * You may obtain a copy of the License at
++ *
++ *      http://www.apache.org/licenses/LICENSE-2.0
++ *
++ * Unless required by applicable law or agreed to in writing, software
++ * distributed under the License is distributed on an "AS IS" BASIS,
++ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
++ * See the License for the specific language governing permissions and
++ * limitations under the License.
++ */
++
++package com.android.server;
++
++import android.os.FileUtils;
++import android.os.SystemProperties;
++import android.util.Slog;
++
++import java.io.File;
++import java.io.FileWriter;
++import java.io.IOException;
++
++/**
++ * Keeps the samsung battery cycle counter that the stock framework maintains.
++ *
++ * The kernel only holds what userspace writes to battery_cycle and stays at -1 otherwise,
++ * which also disables its battery aging steps. The counter lives in efs as the sum of
++ * discharged percentage points, 100 points per cycle.
++ */
++final class SamsungBatteryCycle {
++    private static final String TAG = "SamsungBatteryCycle";
++
++    private static final String EFS_DISCHARGE_LEVEL = "/efs/FactoryApp/batt_discharge_level";
++    private static final String SYSFS_BATTERY_CYCLE = "/sys/class/power_supply/battery/battery_cycle";
++    private static final String SYSFS_MISC_EVENT = "/sys/class/power_supply/battery/batt_misc_event";
++
++    /** Battery changed extra with the kernel wear verdict: 1 good, 2 normal, 3 aged, 15 bad. */
++    static final String EXTRA_WEAR_HEALTH = "samsung_battery_wear_health";
++
++    private static final int MISC_EVENT_HEALTH_MASK = 0x000F0000;
++    private static final int MISC_EVENT_HEALTH_SHIFT = 16;
++
++    // stock flushes to efs every 10 points and on shutdown
++    private static final int FLUSH_THRESHOLD = 10;
++    // stock adds 1000000 to mark its life extender mode, anything above is not a real count
++    private static final long MAX_DISCHARGE_LEVEL = 1000000;
++
++    private long mDischargeLevel;
++    private int mPendingLevel;
++    private int mLastBatteryLevel = -1;
++    private int mWearHealth;
++
++    private SamsungBatteryCycle(long dischargeLevel) {
++        mDischargeLevel = dischargeLevel;
++    }
++
++    static SamsungBatteryCycle create() {
++        if (!"samsung".equalsIgnoreCase(SystemProperties.get("ro.product.vendor.manufacturer"))
++                || !new File(EFS_DISCHARGE_LEVEL).exists()
++                || !new File(SYSFS_BATTERY_CYCLE).exists()) {
++            return null;
++        }
++        final long level;
++        try {
++            level = Long.parseLong(FileUtils.readTextFile(
++                    new File(EFS_DISCHARGE_LEVEL), 32, null).trim());
++        } catch (IOException | NumberFormatException e) {
++            Slog.w(TAG, "Cannot read " + EFS_DISCHARGE_LEVEL, e);
++            return null;
++        }
++        if (level < 0 || level >= MAX_DISCHARGE_LEVEL) {
++            Slog.w(TAG, "Ignoring discharge level " + level);
++            return null;
++        }
++        final SamsungBatteryCycle cycle = new SamsungBatteryCycle(level);
++        cycle.writeCycle();
++        return cycle;
++    }
++
++    int getCycleCount() {
++        return (int) (mDischargeLevel / 100);
++    }
++
++    int getWearHealth() {
++        return mWearHealth;
++    }
++
++    void onBatteryLevel(int level) {
++        final int last = mLastBatteryLevel;
++        mLastBatteryLevel = level;
++        if (last < 0 || level >= last) {
++            return;
++        }
++        mPendingLevel += last - level;
++        if (mPendingLevel >= FLUSH_THRESHOLD) {
++            flush();
++        }
++    }
++
++    void flush() {
++        if (mPendingLevel == 0) {
++            return;
++        }
++        final int before = getCycleCount();
++        mDischargeLevel += mPendingLevel;
++        mPendingLevel = 0;
++        write(EFS_DISCHARGE_LEVEL, Long.toString(mDischargeLevel));
++        if (getCycleCount() != before) {
++            writeCycle();
++        }
++    }
++
++    private void writeCycle() {
++        write(SYSFS_BATTERY_CYCLE, Long.toString(mDischargeLevel / 100));
++        // the kernel reevaluates the wear verdict synchronously on the cycle write
++        try {
++            final int event = Integer.parseInt(FileUtils.readTextFile(
++                    new File(SYSFS_MISC_EVENT), 32, null).trim());
++            mWearHealth = (event & MISC_EVENT_HEALTH_MASK) >> MISC_EVENT_HEALTH_SHIFT;
++        } catch (IOException | NumberFormatException e) {
++            Slog.w(TAG, "Cannot read " + SYSFS_MISC_EVENT, e);
++        }
++    }
++
++    private static void write(String path, String value) {
++        try (FileWriter writer = new FileWriter(path)) {
++            writer.write(value);
++        } catch (IOException e) {
++            Slog.w(TAG, "Cannot write " + path, e);
++        }
++    }
++}
+-- 
+2.56.0
+

@@ -1,7 +1,7 @@
 From db9d2c8eeed290124c34e20e8769c5d97297c0e6 Mon Sep 17 00:00:00 2001
 From: "Christopher A. Williamson" <contact@chrisaw.io>
 Date: Sat, 28 Mar 2026 20:28:58 +0000
-Subject: [PATCH 7/49] allow health HAL to access vendor-defined sysfs_battery
+Subject: [PATCH 7/50] allow health HAL to access vendor-defined sysfs_battery
  nodes
 
 some vendors label all power_supply sysfs nodes (battery, charger,

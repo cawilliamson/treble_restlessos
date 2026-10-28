@@ -1,7 +1,7 @@
 From 19a109d989c1c5c2d5fb838f80094e44c49c2c6c Mon Sep 17 00:00:00 2001
 From: Langsdorff <131063968+clangsdorff@users.noreply.github.com>
 Date: Wed, 7 Oct 2026 23:59:11 +0300
-Subject: [PATCH 27/37] pm: trust the langsdorff signature like the phh one
+Subject: [PATCH 27/39] pm: trust the langsdorff signature like the phh one
 
 ---
  .../com/android/server/pm/PackageManagerServiceUtils.java     | 4 +++-

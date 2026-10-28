@@ -1,7 +1,7 @@
 From e9c20dfbfbb8e3613c427d271bade312fa8ad1a1 Mon Sep 17 00:00:00 2001
 From: "Christopher A. Williamson" <contact@chrisaw.io>
 Date: Mon, 20 Apr 2026 17:24:44 +0100
-Subject: [PATCH 21/49] Disable FUSE BPF on devices whose kernels lack fuse-bpf
+Subject: [PATCH 21/50] Disable FUSE BPF on devices whose kernels lack fuse-bpf
  support
 
 Android 16 enables FUSE BPF by default, which requires kernel

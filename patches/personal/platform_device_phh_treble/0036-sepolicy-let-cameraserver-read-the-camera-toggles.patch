@@ -1,7 +1,7 @@
 From f94e7695d914f237738eb004b438536334a3c9b1 Mon Sep 17 00:00:00 2001
 From: Langsdorff <131063968+clangsdorff@users.noreply.github.com>
 Date: Sun, 4 Oct 2026 23:14:31 +0300
-Subject: [PATCH 36/49] sepolicy: let cameraserver read the camera toggles
+Subject: [PATCH 36/50] sepolicy: let cameraserver read the camera toggles
 
 label the samsung remosaic, samsung 60fps video and grapheneos camera
 60fps toggles as phh_samsung_camera_prop, let the treble app set them

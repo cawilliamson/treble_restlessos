@@ -1,7 +1,7 @@
 From ab495d432ef0651f85cd518c6e4981cd64956781 Mon Sep 17 00:00:00 2001
 From: Langsdorff <131063968+clangsdorff@users.noreply.github.com>
 Date: Wed, 21 Oct 2026 18:56:39 +0300
-Subject: [PATCH 30/37] settings: add a secure setting to let tethering use vpn
+Subject: [PATCH 30/39] settings: add a secure setting to let tethering use vpn
  upstreams
 
 ---

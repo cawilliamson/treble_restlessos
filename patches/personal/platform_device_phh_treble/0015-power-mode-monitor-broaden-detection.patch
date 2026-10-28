@@ -1,7 +1,7 @@
 From ba04d753ee9483147dbacabfffa3f892cdb0ad24 Mon Sep 17 00:00:00 2001
 From: "Christopher A. Williamson" <contact@chrisaw.io>
 Date: Sun, 14 Jun 2026 02:10:03 +0100
-Subject: [PATCH 15/49] power-mode-monitor: broaden detection and improve
+Subject: [PATCH 15/50] power-mode-monitor: broaden detection and improve
  reliability
 
 Rewrite the power-mode monitor so it works across more vendors:
