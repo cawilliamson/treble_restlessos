@@ -1,7 +1,7 @@
 From 73fb89d35535a9d8e3a9a7c7913d6da8a722ff1c Mon Sep 17 00:00:00 2001
 From: "Christopher A. Williamson" <contact@chrisaw.io>
 Date: Mon, 12 Oct 2026 22:24:19 +0100
-Subject: [PATCH 12/16] treble_app: reapply the aod toggle on boot
+Subject: [PATCH 12/17] treble_app: reapply the aod toggle on boot
 
 The force-aod toggle only wrote its state when changed in the ui, so a
 lost or wiped persistent property store left the aod overlay skipped at

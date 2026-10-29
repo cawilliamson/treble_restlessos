@@ -1,7 +1,7 @@
 From e83d219ccc7c0d04289f9bfbdbae682a7b0ca084 Mon Sep 17 00:00:00 2001
 From: "Christopher A. Williamson" <contact@chrisaw.io>
 Date: Tue, 10 Mar 2026 00:00:00 +0000
-Subject: [PATCH 13/50] Disable restricted networking mode on BPF-less devices
+Subject: [PATCH 13/51] Disable restricted networking mode on BPF-less devices
 
 Android 14+ enables restricted_networking_mode by default, which uses
 BPF firewall chains to block network access for apps without the

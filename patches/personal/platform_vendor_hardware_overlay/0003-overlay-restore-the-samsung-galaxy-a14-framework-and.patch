@@ -1,7 +1,7 @@
 From ac9c7f0db1a18fc848b5e4f8785b7a644efa1c49 Mon Sep 17 00:00:00 2001
 From: Langsdorff <131063968+clangsdorff@users.noreply.github.com>
 Date: Tue, 20 Oct 2026 22:02:08 +0300
-Subject: [PATCH 3/3] overlay: restore the samsung galaxy a14 framework and
+Subject: [PATCH 3/4] overlay: restore the samsung galaxy a14 framework and
  systemui overlays
 
 ---

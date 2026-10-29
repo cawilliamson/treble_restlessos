@@ -1,7 +1,7 @@
 From 0b3fbe129afb8d7066250cbdb973b6e171f4e3d9 Mon Sep 17 00:00:00 2001
 From: Langsdorff <131063968+clangsdorff@users.noreply.github.com>
 Date: Wed, 28 Oct 2026 20:35:49 +0300
-Subject: [PATCH 50/50] vndk: hand the samsung battery cycle and type nodes to
+Subject: [PATCH 50/51] vndk: hand the samsung battery cycle and type nodes to
  system
 
 stock init.rc gives battery_cycle and batt_type to system, the gsi

@@ -1,7 +1,7 @@
 From fc40ebabfabecad771570ff1a1ef4eaf887d722c Mon Sep 17 00:00:00 2001
 From: "Christopher A. Williamson" <contact@chrisaw.io>
 Date: Sun, 21 Jun 2026 21:48:15 +0100
-Subject: [PATCH 26/50] gate fake hw-keyboard skip on xiaomi pad6 (pipa)
+Subject: [PATCH 26/51] gate fake hw-keyboard skip on xiaomi pad6 (pipa)
 
 xiaomi pad6 (pipa) ships vendor.xiaomi.hardware.keyboardnanoapp, a CHRE
 nanoapp driven by a hall sensor, that registers two alphabetic

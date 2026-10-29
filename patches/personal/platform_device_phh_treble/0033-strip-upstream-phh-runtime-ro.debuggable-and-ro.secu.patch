@@ -1,7 +1,7 @@
 From d6bc5080e177d8da9528a1aa870bd8a2b364990f Mon Sep 17 00:00:00 2001
 From: "Christopher A. Williamson" <contact@chrisaw.io>
 Date: Tue, 7 Apr 2026 22:28:53 +0100
-Subject: [PATCH 33/50] strip upstream phh runtime ro.debuggable and ro.secure
+Subject: [PATCH 33/51] strip upstream phh runtime ro.debuggable and ro.secure
  spoofing
 
 upstream phh rw-system.sh resetprops ro.debuggable=0 and ro.secure=1

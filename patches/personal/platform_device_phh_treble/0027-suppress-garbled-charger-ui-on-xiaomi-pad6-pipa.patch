@@ -1,7 +1,7 @@
 From ae2fe67e5b7cd5598dcdd502578343e34c711056 Mon Sep 17 00:00:00 2001
 From: "Christopher A. Williamson" <contact@chrisaw.io>
 Date: Sun, 21 Jun 2026 22:25:34 +0100
-Subject: [PATCH 27/50] suppress garbled charger ui on xiaomi pad6 (pipa)
+Subject: [PATCH 27/51] suppress garbled charger ui on xiaomi pad6 (pipa)
 
 on the xiaomi pad6 (pipa) the aosp healthd offline charger renders a garbled
 screen. the charger service is /system/bin/charger (class charger, see
