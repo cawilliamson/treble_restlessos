@@ -1,7 +1,7 @@
 From 94bce2bf81bc57153273c56d94c710041e3caa16 Mon Sep 17 00:00:00 2001
 From: Langsdorff <131063968+clangsdorff@users.noreply.github.com>
 Date: Wed, 28 Oct 2026 14:25:56 +0300
-Subject: [PATCH 38/41] SystemUI: move the keyguard indication text off the
+Subject: [PATCH 38/42] SystemUI: move the keyguard indication text off the
  udfps icon when they overlap
 
 ---

@@ -1,7 +1,7 @@
 From fd49ca17a265a0dc358e896224186577e559a3a7 Mon Sep 17 00:00:00 2001
 From: Langsdorff <131063968+clangsdorff@users.noreply.github.com>
 Date: Thu, 29 Oct 2026 20:21:24 +0300
-Subject: [PATCH 41/41] settingslib: draw app icons themed when the launcher does
+Subject: [PATCH 41/42] settingslib: draw app icons themed when the launcher does
 
 the minimal icon style only reaches launcher3, the settings app list
 and app info keep showing full colour icons.

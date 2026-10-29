@@ -1,7 +1,7 @@
 From 0737c259615c01b1144e88a649e833bc3ba0c51e Mon Sep 17 00:00:00 2001
 From: Langsdorff <131063968+clangsdorff@users.noreply.github.com>
 Date: Tue, 27 Oct 2026 19:55:53 +0300
-Subject: [PATCH 37/41] fingerprint: handle hidl hal death on the sensor
+Subject: [PATCH 37/42] fingerprint: handle hidl hal death on the sensor
  handler
 
 serviceDied runs on a hwbinder thread and resets the scheduler while the

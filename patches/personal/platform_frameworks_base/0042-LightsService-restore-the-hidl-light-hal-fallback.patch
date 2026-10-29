@@ -1,0 +1,329 @@
+From 35395507204d43a232ccd3398176bb2c9a3e3f86 Mon Sep 17 00:00:00 2001
+From: Langsdorff <131063968+clangsdorff@users.noreply.github.com>
+Date: Thu, 29 Oct 2026 21:16:55 +0300
+Subject: [PATCH 42/42] LightsService: restore the hidl light hal fallback
+
+android 17 dropped the hidl light@2.0 path from LightsService and only
+talks to the aidl ILights hal. vendors older than android 11 only ship
+light@2.0, so no lights get populated and the backlight never changes.
+bring back the android 16 hidl fallback and its jni, registered lazily
+like the other restored hidl services.
+---
+ .../android/server/lights/LightsService.java  |  22 ++-
+ .../server/utils/LazyJniRegistrar.java        |   3 +
+ services/core/jni/Android.bp                  |   2 +
+ ...om_android_server_lights_LightsService.cpp | 170 ++++++++++++++++++
+ ..._android_server_utils_LazyJniRegistrar.cpp |   6 +
+ 5 files changed, 201 insertions(+), 2 deletions(-)
+ create mode 100644 services/core/jni/com_android_server_lights_LightsService.cpp
+
+diff --git a/services/core/java/com/android/server/lights/LightsService.java b/services/core/java/com/android/server/lights/LightsService.java
+index 378e5e54b..f4f4f08ba 100644
+--- a/services/core/java/com/android/server/lights/LightsService.java
++++ b/services/core/java/com/android/server/lights/LightsService.java
+@@ -53,6 +53,7 @@ import com.android.internal.util.DumpUtils;
+ import com.android.internal.util.Preconditions;
+ import com.android.server.SystemService;
+ import com.android.server.lights.feature.flags.Flags;
++import com.android.server.utils.LazyJniRegistrar;
+ 
+ import java.io.File;
+ import java.io.FileDescriptor;
+@@ -73,6 +74,10 @@ public class LightsService extends SystemService {
+     static final String TAG = "LightsService";
+     static final boolean DEBUG = false;
+ 
++    static {
++        LazyJniRegistrar.registerLightsService();
++    }
++
+     // Priority for the system override session, higher than typical app priorities.
+     static final int DEFAULT_SYSTEM_SESSION_PRIORITY = 1_000;
+ 
+@@ -850,7 +855,7 @@ public class LightsService extends SystemService {
+                     lightState.brightnessMode = (byte) brightnessMode;
+                     mVintfLights.get().setLightState(mHwLight.id, lightState);
+                 } else {
+-                    Slog.e(TAG, "Failed issuing setLightState, no ILights HAL service available");
++                    setLight_native(mHwLight.id, color, mode, onMS, offMS, brightnessMode);
+                 }
+             } catch (RemoteException | UnsupportedOperationException ex) {
+                 Slog.e(TAG, "Failed issuing setLightState", ex);
+@@ -989,7 +994,7 @@ public class LightsService extends SystemService {
+         if (mVintfLights != null) {
+             populateAvailableLightsFromHal(context);
+         } else {
+-            Slog.e(TAG, "Failed to populate available lights, no ILights HAL service available");
++            populateAvailableLightsFromHidl(context);
+         }
+ 
+         for (int i = mLightsById.size() - 1; i >= 0; i--) {
+@@ -1013,6 +1018,16 @@ public class LightsService extends SystemService {
+         }
+     }
+ 
++    private void populateAvailableLightsFromHidl(Context context) {
++        for (int i = 0; i < LightsManager.LIGHT_ID_COUNT; i++) {
++            HwLight hwLight = new HwLight();
++            hwLight.id = (byte) i;
++            hwLight.ordinal = 1;
++            hwLight.type = (byte) i;
++            mLightsById.put(hwLight.id, new LightImpl(context, hwLight));
++        }
++    }
++
+     @Override
+     public void onStart() {
+         publishLocalService(LightsManager.class, mService);
+@@ -1074,4 +1089,7 @@ public class LightsService extends SystemService {
+             mInstance = null;
+         }
+     }
++
++    static native void setLight_native(int light, int color, int mode,
++            int onMS, int offMS, int brightnessMode);
+ }
+diff --git a/services/core/java/com/android/server/utils/LazyJniRegistrar.java b/services/core/java/com/android/server/utils/LazyJniRegistrar.java
+index 7ad99bcaf..4017d80df 100644
+--- a/services/core/java/com/android/server/utils/LazyJniRegistrar.java
++++ b/services/core/java/com/android/server/utils/LazyJniRegistrar.java
+@@ -45,6 +45,9 @@ public final class LazyJniRegistrar {
+     /** Registers native methods for GameManagerService. */
+     public static native void registerGameManagerService();
+ 
++    /** Registers native methods for LightsService. */
++    public static native void registerLightsService();
++
+     /** Registers native methods for UinputBridge. */
+     public static native void registerTvUinputBridge();
+ 
+diff --git a/services/core/jni/Android.bp b/services/core/jni/Android.bp
+index d0ceecfbf..9d5b3996b 100644
+--- a/services/core/jni/Android.bp
++++ b/services/core/jni/Android.bp
+@@ -184,6 +184,7 @@ cc_defaults {
+         "android.hardware.graphics.common@1.2",
+         "android.hardware.input.processor-V1-ndk",
+         "android.hardware.ir@1.0",
++        "android.hardware.light@2.0",
+         "android.hardware.memtrack-V1-ndk",
+         "android.hardware.power.stats@1.0",
+         "android.hardware.power.stats-V1-ndk",
+@@ -270,6 +271,7 @@ filegroup {
+         "com_android_server_ConsumerIrService.cpp",
+         "com_android_server_app_GameManagerService.cpp",
+         "com_android_server_connectivity_Vpn.cpp",
++        "com_android_server_lights_LightsService.cpp",
+         "com_android_server_tv_TvUinputBridge.cpp",
+         "com_android_server_utils_LazyJniRegistrar.cpp",
+     ],
+diff --git a/services/core/jni/com_android_server_lights_LightsService.cpp b/services/core/jni/com_android_server_lights_LightsService.cpp
+new file mode 100644
+index 000000000..26f6d7428
+--- /dev/null
++++ b/services/core/jni/com_android_server_lights_LightsService.cpp
+@@ -0,0 +1,170 @@
++/*
++ * Copyright (C) 2009 The Android Open Source Project
++ *
++ * Licensed under the Apache License, Version 2.0 (the "License");
++ * you may not use this file except in compliance with the License.
++ * You may obtain a copy of the License at
++ *
++ *      http://www.apache.org/licenses/LICENSE-2.0
++ *
++ * Unless required by applicable law or agreed to in writing, software
++ * distributed under the License is distributed on an "AS IS" BASIS,
++ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
++ * See the License for the specific language governing permissions and
++ * limitations under the License.
++ */
++
++#define LOG_TAG "LightsService"
++
++#include "jni.h"
++#include <nativehelper/JNIHelp.h>
++#include "android_runtime/AndroidRuntime.h"
++
++#include <android/hardware/light/2.0/ILight.h>
++#include <android/hardware/light/2.0/types.h>
++#include <android-base/chrono_utils.h>
++#include <utils/misc.h>
++#include <utils/Log.h>
++#include <map>
++#include <stdio.h>
++
++namespace android {
++
++using Brightness = ::android::hardware::light::V2_0::Brightness;
++using Flash      = ::android::hardware::light::V2_0::Flash;
++using ILight     = ::android::hardware::light::V2_0::ILight;
++using LightState = ::android::hardware::light::V2_0::LightState;
++using Status     = ::android::hardware::light::V2_0::Status;
++using Type       = ::android::hardware::light::V2_0::Type;
++template<typename T>
++using Return     = ::android::hardware::Return<T>;
++
++static bool sLightSupported = true;
++
++static bool validate(jint light, jint flash, jint brightness) {
++    bool valid = true;
++
++    if (light < 0 || light >= static_cast<jint>(Type::COUNT)) {
++        ALOGE("Invalid light parameter %d.", light);
++        valid = false;
++    }
++
++    if (flash != static_cast<jint>(Flash::NONE) &&
++        flash != static_cast<jint>(Flash::TIMED) &&
++        flash != static_cast<jint>(Flash::HARDWARE)) {
++        ALOGE("Invalid flash parameter %d.", flash);
++        valid = false;
++    }
++
++    if (brightness != static_cast<jint>(Brightness::USER) &&
++        brightness != static_cast<jint>(Brightness::SENSOR) &&
++        brightness != static_cast<jint>(Brightness::LOW_PERSISTENCE)) {
++        ALOGE("Invalid brightness parameter %d.", brightness);
++        valid = false;
++    }
++
++    if (brightness == static_cast<jint>(Brightness::LOW_PERSISTENCE) &&
++        light != static_cast<jint>(Type::BACKLIGHT)) {
++        ALOGE("Cannot set low-persistence mode for non-backlight device.");
++        valid = false;
++    }
++
++    return valid;
++}
++
++static LightState constructState(
++        jint colorARGB,
++        jint flashMode,
++        jint onMS,
++        jint offMS,
++        jint brightnessMode){
++    Flash flash = static_cast<Flash>(flashMode);
++    Brightness brightness = static_cast<Brightness>(brightnessMode);
++
++    LightState state{};
++
++    if (brightness == Brightness::LOW_PERSISTENCE) {
++        state.flashMode = Flash::NONE;
++    } else {
++        // Only set non-brightness settings when not in low-persistence mode
++        state.flashMode = flash;
++        state.flashOnMs = onMS;
++        state.flashOffMs = offMS;
++    }
++
++    state.color = colorARGB;
++    state.brightnessMode = brightness;
++
++    return state;
++}
++
++static void processReturn(
++        const Return<Status> &ret,
++        Type type,
++        const LightState &state) {
++    if (!ret.isOk()) {
++        ALOGE("Failed to issue set light command.");
++        return;
++    }
++
++    switch (static_cast<Status>(ret)) {
++        case Status::SUCCESS:
++            break;
++        case Status::LIGHT_NOT_SUPPORTED:
++            ALOGE("Light requested not available on this device. %d", type);
++            break;
++        case Status::BRIGHTNESS_NOT_SUPPORTED:
++            ALOGE("Brightness parameter not supported on this device: %d",
++                state.brightnessMode);
++            break;
++        case Status::UNKNOWN:
++        default:
++            ALOGE("Unknown error setting light.");
++    }
++}
++
++static void setLight_native(
++        JNIEnv* /* env */,
++        jobject /* clazz */,
++        jint light,
++        jint colorARGB,
++        jint flashMode,
++        jint onMS,
++        jint offMS,
++        jint brightnessMode) {
++
++    if (!sLightSupported) {
++        return;
++    }
++
++    if (!validate(light, flashMode, brightnessMode)) {
++        return;
++    }
++
++    Type type = static_cast<Type>(light);
++    LightState state = constructState(
++        colorARGB, flashMode, onMS, offMS, brightnessMode);
++
++    {
++        android::base::Timer t;
++        sp<ILight> hal = ILight::getService();
++        if (hal == nullptr) {
++            sLightSupported = false;
++            return;
++        }
++        Return<Status> ret = hal->setLight(type, state);
++        processReturn(ret, type, state);
++        if (t.duration() > 50ms) ALOGD("Excessive delay setting light");
++    }
++}
++
++static const JNINativeMethod method_table[] = {
++    { "setLight_native", "(IIIIII)V", (void*)setLight_native },
++};
++
++int register_android_server_LightsService(JNIEnv *env) {
++    return jniRegisterNativeMethods(env, "com/android/server/lights/LightsService",
++            method_table, NELEM(method_table));
++}
++
++};
+diff --git a/services/core/jni/com_android_server_utils_LazyJniRegistrar.cpp b/services/core/jni/com_android_server_utils_LazyJniRegistrar.cpp
+index c9c6e00f6..73378717f 100644
+--- a/services/core/jni/com_android_server_utils_LazyJniRegistrar.cpp
++++ b/services/core/jni/com_android_server_utils_LazyJniRegistrar.cpp
+@@ -24,6 +24,7 @@ namespace android {
+ int register_android_server_ConsumerIrService(JNIEnv* env);
+ int register_android_server_app_GameManagerService(JNIEnv* env);
+ int register_android_server_connectivity_Vpn(JNIEnv* env);
++int register_android_server_LightsService(JNIEnv* env);
+ int register_android_server_tv_TvUinputBridge(JNIEnv* env);
+ 
+ namespace {
+@@ -40,6 +41,10 @@ void registerGameManagerService(JNIEnv* env, jclass) {
+     register_android_server_app_GameManagerService(env);
+ }
+ 
++void registerLightsService(JNIEnv* env, jclass) {
++    register_android_server_LightsService(env);
++}
++
+ void registerTvUinputBridge(JNIEnv* env, jclass) {
+     register_android_server_tv_TvUinputBridge(env);
+ }
+@@ -51,6 +56,7 @@ void registerVpn(JNIEnv* env, jclass) {
+ static const JNINativeMethod sJniRegistrarMethods[] = {
+         {"registerConsumerIrService", "()V", (void*)registerConsumerIrService},
+         {"registerGameManagerService", "()V", (void*)registerGameManagerService},
++        {"registerLightsService", "()V", (void*)registerLightsService},
+         {"registerTvUinputBridge", "()V", (void*)registerTvUinputBridge},
+         {"registerVpn", "()V", (void*)registerVpn},
+ };
+-- 
+2.56.0
+

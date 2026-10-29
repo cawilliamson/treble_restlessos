@@ -1,7 +1,7 @@
 From 71ce8b5dbbcb948b6a017022c06a374bf2f584f2 Mon Sep 17 00:00:00 2001
 From: Langsdorff <131063968+clangsdorff@users.noreply.github.com>
 Date: Wed, 28 Oct 2026 20:00:59 +0300
-Subject: [PATCH 39/41] battery: keep the samsung battery cycle count
+Subject: [PATCH 39/42] battery: keep the samsung battery cycle count
 
 samsung battery drivers do not count cycles themselves. on stock the
 framework adds the level drops up in /efs/FactoryApp/batt_discharge_level

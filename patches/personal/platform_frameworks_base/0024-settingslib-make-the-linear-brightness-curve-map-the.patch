@@ -1,7 +1,7 @@
 From 3ab477eda7f1a93e9cb223fc962ad3e1f65178d1 Mon Sep 17 00:00:00 2001
 From: Langsdorff <131063968+clangsdorff@users.noreply.github.com>
 Date: Fri, 2 Oct 2026 21:17:01 +0300
-Subject: [PATCH 24/41] settingslib: make the linear brightness curve map the
+Subject: [PATCH 24/42] settingslib: make the linear brightness curve map the
  slider position both ways
 
 ---
