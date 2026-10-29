@@ -1,0 +1,135 @@
+From d15b39c12900891065c00b22a68f2d74eb64f2ec Mon Sep 17 00:00:00 2001
+From: Langsdorff <131063968+clangsdorff@users.noreply.github.com>
+Date: Thu, 29 Oct 2026 16:41:13 +0300
+Subject: [PATCH 4/4] overlay: add overlays for the aosp ims stack
+
+imsstack needs volte and wfc marked available, the voip audio mode so
+the samsung audio hal does not start a modem voice call over the
+imsmedia audio, and location-free service state like the phone process.
+gate the framework overlay on persist.sys.phh.ims.aosp so it only
+applies once the user enables imsstack, and add a telephony overlay
+pointing the mmtel package at it for the treble app to select.
+---
+ IMSSTACK/Android.mk                      |  8 ++++++++
+ IMSSTACK/AndroidManifest.xml             | 10 ++++++++++
+ IMSSTACK/res/values/config.xml           | 11 +++++++++++
+ Telephony/IMSSTACK/Android.mk            |  8 ++++++++
+ Telephony/IMSSTACK/AndroidManifest.xml   |  8 ++++++++
+ Telephony/IMSSTACK/res/values/config.xml |  4 ++++
+ overlay.mk                               |  2 ++
+ 7 files changed, 51 insertions(+)
+ create mode 100644 IMSSTACK/Android.mk
+ create mode 100644 IMSSTACK/AndroidManifest.xml
+ create mode 100644 IMSSTACK/res/values/config.xml
+ create mode 100644 Telephony/IMSSTACK/Android.mk
+ create mode 100644 Telephony/IMSSTACK/AndroidManifest.xml
+ create mode 100644 Telephony/IMSSTACK/res/values/config.xml
+
+diff --git a/IMSSTACK/Android.mk b/IMSSTACK/Android.mk
+new file mode 100644
+index 0000000..d12c86f
+--- /dev/null
++++ b/IMSSTACK/Android.mk
+@@ -0,0 +1,8 @@
++LOCAL_PATH := $(call my-dir)
++include $(CLEAR_VARS)
++LOCAL_MODULE_TAGS := optional
++LOCAL_PACKAGE_NAME := imsstack-overlay
++LOCAL_MODULE_PATH := $(TARGET_OUT_PRODUCT)/overlay
++LOCAL_IS_RUNTIME_RESOURCE_OVERLAY := true
++LOCAL_PRIVATE_PLATFORM_APIS := true
++include $(BUILD_PACKAGE)
+diff --git a/IMSSTACK/AndroidManifest.xml b/IMSSTACK/AndroidManifest.xml
+new file mode 100644
+index 0000000..63bd848
+--- /dev/null
++++ b/IMSSTACK/AndroidManifest.xml
+@@ -0,0 +1,10 @@
++<manifest xmlns:android="http://schemas.android.com/apk/res/android"
++        package="com.android.overlay.imsstack"
++        android:versionCode="1"
++        android:versionName="1.0">
++        <overlay android:targetPackage="android"
++                android:requiredSystemPropertyName="persist.sys.phh.ims.aosp"
++                android:requiredSystemPropertyValue="true"
++		android:priority="51"
++		android:isStatic="true" />
++</manifest>
+diff --git a/IMSSTACK/res/values/config.xml b/IMSSTACK/res/values/config.xml
+new file mode 100644
+index 0000000..0bdff08
+--- /dev/null
++++ b/IMSSTACK/res/values/config.xml
+@@ -0,0 +1,11 @@
++<?xml version="1.0" encoding="utf-8"?>
++<resources>
++	<bool name="config_device_volte_available">true</bool>
++	<bool name="config_device_wfc_ims_available">true</bool>
++	<!-- ImsMedia carries the call audio on the AP, keep the audio HAL out of its modem voice path -->
++	<bool name="config_use_voip_mode_for_ims">true</bool>
++	<string-array name="config_serviceStateLocationAllowedPackages">
++		<item>com.android.imsstack</item>
++		<item>com.android.phone</item>
++	</string-array>
++</resources>
+diff --git a/Telephony/IMSSTACK/Android.mk b/Telephony/IMSSTACK/Android.mk
+new file mode 100644
+index 0000000..98d7175
+--- /dev/null
++++ b/Telephony/IMSSTACK/Android.mk
+@@ -0,0 +1,8 @@
++LOCAL_PATH := $(call my-dir)
++include $(CLEAR_VARS)
++LOCAL_MODULE_TAGS := optional
++LOCAL_PACKAGE_NAME := imsstack-overlay-telephony
++LOCAL_MODULE_PATH := $(TARGET_OUT_PRODUCT)/overlay
++LOCAL_IS_RUNTIME_RESOURCE_OVERLAY := true
++LOCAL_PRIVATE_PLATFORM_APIS := true
++include $(BUILD_PACKAGE)
+diff --git a/Telephony/IMSSTACK/AndroidManifest.xml b/Telephony/IMSSTACK/AndroidManifest.xml
+new file mode 100644
+index 0000000..c60817d
+--- /dev/null
++++ b/Telephony/IMSSTACK/AndroidManifest.xml
+@@ -0,0 +1,8 @@
++<manifest xmlns:android="http://schemas.android.com/apk/res/android"
++        package="com.android.overlay.imsstack_telephony"
++        android:versionCode="1"
++        android:versionName="1.0">
++        <overlay android:targetPackage="com.android.phone"
++		android:priority="80"
++		/>
++</manifest>
+diff --git a/Telephony/IMSSTACK/res/values/config.xml b/Telephony/IMSSTACK/res/values/config.xml
+new file mode 100644
+index 0000000..bba153b
+--- /dev/null
++++ b/Telephony/IMSSTACK/res/values/config.xml
+@@ -0,0 +1,4 @@
++<?xml version="1.0" encoding="utf-8"?>
++<resources>
++	<string name="config_ims_mmtel_package">com.android.imsstack</string>
++</resources>
+diff --git a/overlay.mk b/overlay.mk
+index 7058c43..b10ce93 100644
+--- a/overlay.mk
++++ b/overlay.mk
+@@ -23,6 +23,7 @@ PRODUCT_PACKAGES += \
+ 	treble-overlay-bq-jeice \
+ 	treble-overlay-caf-ims \
+ 	langsdorff-overlay-ims \
++	imsstack-overlay \
+ 	treble-overlay-devinputjack \
+ 	treble-overlay-doogee-vmax \
+ 	treble-overlay-duoqin-qin2pro \
+@@ -345,6 +346,7 @@ PRODUCT_PACKAGES += \
+ 	treble-overlay-telephony-caf-ims \
+ 	treble-overlay-telephony-floss-ims \
+ 	langsdorff-overlay-telephony-ims \
++	imsstack-overlay-telephony \
+ 	treble-overlay-telephony-hw-ims \
+ 	treble-overlay-telephony-mtk-ims \
+ 	treble-overlay-telephony-slsi-ims \
+-- 
+2.56.0
+
