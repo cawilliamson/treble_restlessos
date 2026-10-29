@@ -1,7 +1,7 @@
 From 34d1fda9d163f72eccfc401344e056fe8845bdce Mon Sep 17 00:00:00 2001
 From: "Christopher A. Williamson" <contact@chrisaw.io>
 Date: Wed, 30 Sep 2026 23:51:11 +0300
-Subject: [PATCH 12/39] display: drive samsung sysinput aidl hal and fall back
+Subject: [PATCH 12/41] display: drive samsung sysinput aidl hal and fall back
  to sysfs touch poke
 
 drive the samsung sysinput AIDL HAL around display power changes to

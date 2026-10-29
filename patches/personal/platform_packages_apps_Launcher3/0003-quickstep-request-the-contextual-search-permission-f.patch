@@ -1,7 +1,7 @@
 From 8cebfc21250a8224d3921c0b8468eafe07ae3121 Mon Sep 17 00:00:00 2001
 From: Langsdorff <131063968+clangsdorff@users.noreply.github.com>
 Date: Sat, 24 Oct 2026 17:08:26 +0300
-Subject: [PATCH 3/3] quickstep: request the contextual search permission for
+Subject: [PATCH 3/4] quickstep: request the contextual search permission for
  circle to search
 
 ---

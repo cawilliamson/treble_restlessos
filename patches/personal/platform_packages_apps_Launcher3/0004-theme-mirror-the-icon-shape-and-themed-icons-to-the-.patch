@@ -1,0 +1,122 @@
+From 733924927cc92b3a25cf3b9e5ff09b3a627d7994 Mon Sep 17 00:00:00 2001
+From: Langsdorff <131063968+clangsdorff@users.noreply.github.com>
+Date: Thu, 29 Oct 2026 20:22:56 +0300
+Subject: [PATCH 4/4] theme: mirror the icon shape and themed icons to the system
+
+the shape and the minimal icon style picked in wallpaper & style only
+live in the launcher prefs, so settings and other apps keep drawing
+full colour circle icons.
+
+write the matching adaptive_icon_shape overlay into the theme
+customization setting so systemui enables it, and the themed state
+into the themed_app_icons secure setting that settingslib reads.
+---
+ .../launcher3/graphics/ThemeManager.kt        | 51 +++++++++++++++++++
+ 1 file changed, 51 insertions(+)
+
+diff --git a/src/com/android/launcher3/graphics/ThemeManager.kt b/src/com/android/launcher3/graphics/ThemeManager.kt
+index 5ed1a63..d90aeec 100644
+--- a/src/com/android/launcher3/graphics/ThemeManager.kt
++++ b/src/com/android/launcher3/graphics/ThemeManager.kt
+@@ -18,6 +18,8 @@ package com.android.launcher3.graphics
+ 
+ import android.content.Context
+ import android.content.res.Resources
++import android.provider.Settings
++import android.util.Log
+ import androidx.annotation.AnyThread
+ import com.android.launcher3.LauncherPrefChangeListener
+ import com.android.launcher3.LauncherPrefs
+@@ -41,6 +43,7 @@ import com.android.launcher3.shapes.IconShapeModel.Companion.DEFAULT_ICON_RADIUS
+ import com.android.launcher3.shapes.ShapesProvider
+ import com.android.launcher3.util.DaggerSingletonObject
+ import com.android.launcher3.util.DaggerSingletonTracker
++import com.android.launcher3.util.Executors.UI_HELPER_EXECUTOR
+ import com.android.launcher3.util.ListenableRef
+ import com.android.launcher3.util.LooperExecutor
+ import com.android.launcher3.util.MutableListenableRef
+@@ -48,6 +51,7 @@ import com.android.launcher3.util.SafeCloseable
+ import java.util.concurrent.CopyOnWriteArrayList
+ import javax.inject.Inject
+ import javax.inject.Named
++import org.json.JSONObject
+ 
+ /** Centralized class for managing Launcher icon theming */
+ @LauncherAppSingleton
+@@ -109,6 +113,7 @@ constructor(
+             prefs.removeListener(prefListener, PREF_ICON_SHAPE)
+             iconState.closeController()
+         }
++        syncSystemIconState()
+     }
+ 
+     private fun verifyIconState() {
+@@ -118,6 +123,7 @@ constructor(
+         val hasThemedChanged =
+             newState.themeCode != oldState.themeCode || newState.isCircle != oldState.isCircle
+         iconState = newState
++        syncSystemIconState()
+         if (hasThemedChanged) {
+             // trigger listeners only for theme change, not shape change
+             listeners.forEach { it.onThemeChanged() }
+@@ -127,6 +133,43 @@ constructor(
+         }
+     }
+ 
++    /**
++     * Mirrors the launcher icon shape and themed icon style to the rest of the system: the shape
++     * through the matching framework adaptive_icon_shape overlay, the style through a secure
++     * setting read by SettingsLib.
++     */
++    private fun syncSystemIconState() {
++        val shapeKey =
++            ShapesProvider.iconShapes
++                .firstOrNull { it.key == prefs.get(PREF_ICON_SHAPE) }
++                ?.key
++                ?.takeIf { it != ShapesProvider.CIRCLE_KEY }
++        val themed = if (iconState.themeCode == MONO_THEME_VALUE.toString()) 1 else 0
++        UI_HELPER_EXECUTOR.execute {
++            val cr = context.contentResolver
++            try {
++                if (Settings.Secure.getInt(cr, THEMED_APP_ICONS_SETTING, 0) != themed) {
++                    Settings.Secure.putInt(cr, THEMED_APP_ICONS_SETTING, themed)
++                }
++                val json =
++                    Settings.Secure.getString(cr, THEME_CUSTOMIZATION_OVERLAY_PACKAGES)?.let {
++                        runCatching { JSONObject(it) }.getOrNull()
++                    } ?: JSONObject()
++                val overlay = shapeKey?.let { SHAPE_OVERLAY_PREFIX + it.replace("_", "") }
++                if (json.optString(OVERLAY_CATEGORY_SHAPE).ifEmpty { null } == overlay) {
++                    return@execute
++                }
++                when (overlay) {
++                    null -> json.remove(OVERLAY_CATEGORY_SHAPE)
++                    else -> json.put(OVERLAY_CATEGORY_SHAPE, overlay)
++                }
++                Settings.Secure.putString(cr, THEME_CUSTOMIZATION_OVERLAY_PACKAGES, json.toString())
++            } catch (e: SecurityException) {
++                Log.w(TAG, "Unable to sync the icon state to the system", e)
++            }
++        }
++    }
++
+     @AnyThread fun addChangeListener(listener: ThemeChangeListener) = listeners.add(listener)
+ 
+     @AnyThread fun removeChangeListener(listener: ThemeChangeListener) = listeners.remove(listener)
+@@ -244,5 +287,13 @@ constructor(
+             generateIconShape(size, getPath(size.toFloat()))
+ 
+         const val ICON_FACTORY_DAGGER_KEY = "ICON_FACTORIES"
++
++        private const val TAG = "ThemeManager"
++        private const val THEMED_APP_ICONS_SETTING = "themed_app_icons"
++        // @SystemApi Settings.Secure.THEME_CUSTOMIZATION_OVERLAY_PACKAGES, not in the public sdk
++        private const val THEME_CUSTOMIZATION_OVERLAY_PACKAGES =
++            "theme_customization_overlay_packages"
++        private const val OVERLAY_CATEGORY_SHAPE = "android.theme.customization.adaptive_icon_shape"
++        private const val SHAPE_OVERLAY_PREFIX = "com.android.theme.icon."
+     }
+ }
+-- 
+2.56.0
+

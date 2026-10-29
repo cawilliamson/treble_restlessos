@@ -1,0 +1,108 @@
+From fd49ca17a265a0dc358e896224186577e559a3a7 Mon Sep 17 00:00:00 2001
+From: Langsdorff <131063968+clangsdorff@users.noreply.github.com>
+Date: Thu, 29 Oct 2026 20:21:24 +0300
+Subject: [PATCH 41/41] settingslib: draw app icons themed when the launcher does
+
+the minimal icon style only reaches launcher3, the settings app list
+and app info keep showing full colour icons.
+
+read the themed_app_icons secure setting the launcher writes and build
+the icon through the iconloader mono controller with FLAG_THEMED, the
+same way the launcher draws it. the spa app list loads icons through
+IconDrawableFactory, so route it through the same path when themed.
+---
+ .../spaprivileged/model/app/AppRepository.kt  |  7 ++++-
+ .../src/com/android/settingslib/Utils.java    | 31 ++++++++++++++++---
+ 2 files changed, 33 insertions(+), 5 deletions(-)
+
+diff --git a/packages/SettingsLib/SpaPrivileged/src/com/android/settingslib/spaprivileged/model/app/AppRepository.kt b/packages/SettingsLib/SpaPrivileged/src/com/android/settingslib/spaprivileged/model/app/AppRepository.kt
+index cea3d13e2..663c00c90 100644
+--- a/packages/SettingsLib/SpaPrivileged/src/com/android/settingslib/spaprivileged/model/app/AppRepository.kt
++++ b/packages/SettingsLib/SpaPrivileged/src/com/android/settingslib/spaprivileged/model/app/AppRepository.kt
+@@ -24,6 +24,7 @@ import androidx.compose.runtime.Composable
+ import androidx.compose.runtime.State
+ import androidx.compose.runtime.produceState
+ import androidx.compose.ui.platform.LocalContext
++import com.android.settingslib.Utils
+ import com.android.settingslib.spa.framework.compose.rememberContext
+ import com.android.settingslib.spaprivileged.R
+ import com.android.settingslib.spaprivileged.framework.common.userManager
+@@ -74,7 +75,11 @@ internal class AppRepositoryImpl(private val context: Context) : AppRepository {
+     override fun produceIcon(app: ApplicationInfo) =
+         produceState<Drawable?>(initialValue = null, app) {
+             withContext(Dispatchers.IO) {
+-                value = iconDrawableFactory.getBadgedIcon(app)
++                value = if (Utils.useThemedAppIcons(context)) {
++                    Utils.getBadgedIcon(context, app)
++                } else {
++                    iconDrawableFactory.getBadgedIcon(app)
++                }
+             }
+         }
+ 
+diff --git a/packages/SettingsLib/src/com/android/settingslib/Utils.java b/packages/SettingsLib/src/com/android/settingslib/Utils.java
+index 65ab1b3d3..ca5395985 100644
+--- a/packages/SettingsLib/src/com/android/settingslib/Utils.java
++++ b/packages/SettingsLib/src/com/android/settingslib/Utils.java
+@@ -64,8 +64,12 @@ import androidx.core.graphics.drawable.RoundedBitmapDrawableFactory;
+ 
+ import com.android.internal.annotations.VisibleForTesting;
+ import com.android.internal.util.UserIcons;
++import com.android.launcher3.icons.BaseIconFactory;
+ import com.android.launcher3.icons.BaseIconFactory.IconOptions;
++import com.android.launcher3.icons.BitmapInfo;
+ import com.android.launcher3.icons.IconFactory;
++import com.android.launcher3.icons.mono.MonoIconThemeController;
++import com.android.launcher3.icons.mono.ThemedIconDelegate;
+ import com.android.launcher3.util.UserIconInfo;
+ import com.android.settingslib.drawable.UserIconDrawable;
+ import com.android.settingslib.fuelgauge.BatteryStatus;
+@@ -88,6 +92,11 @@ public class Utils {
+ 
+     private static final String PACKAGE_MIME_TYPE = "application/vnd.android.package-archive";
+ 
++    // written by launcher3 ThemeManager when the minimal (monochrome) icon style is picked
++    private static final String THEMED_APP_ICONS = "themed_app_icons";
++    private static final MonoIconThemeController MONO_THEME_CONTROLLER =
++            new MonoIconThemeController(true, ThemedIconDelegate::getColors);
++
+     private static Signature[] sSystemSignature;
+     private static String sPermissionControllerPackageName;
+     private static String sServicesSystemSharedLibPackageName;
+@@ -749,15 +758,29 @@ public class Utils {
+         return new UserIconInfo(user, userType);
+     }
+ 
++    /** Whether app icons should be drawn themed, following the launcher icon style. */
++    public static boolean useThemedAppIcons(@NonNull Context context) {
++        return Settings.Secure.getInt(context.getContentResolver(), THEMED_APP_ICONS, 0) == 1;
++    }
++
+     /** Get the corresponding adaptive icon drawable. */
+     @NonNull
+     public static Drawable getBadgedIcon(@NonNull Context context, @NonNull Drawable icon,
+             @NonNull UserHandle user) {
++        final IconOptions options = new IconOptions().setUser(fetchUserIconInfo(context, user));
++        if (useThemedAppIcons(context)) {
++            final Resources res = context.getResources();
++            try (BaseIconFactory iconFactory = new BaseIconFactory(context,
++                    res.getConfiguration().densityDpi,
++                    res.getDimensionPixelSize(
++                            com.android.launcher3.icons.R.dimen.default_icon_bitmap_size),
++                    false, MONO_THEME_CONTROLLER)) {
++                return iconFactory.createBadgedIconBitmap(icon, options)
++                        .newIcon(context, BitmapInfo.FLAG_THEMED);
++            }
++        }
+         try (IconFactory iconFactory = IconFactory.obtain(context)) {
+-            return iconFactory
+-                    .createBadgedIconBitmap(
+-                            icon, new IconOptions().setUser(fetchUserIconInfo(context, user)))
+-                    .newIcon(context);
++            return iconFactory.createBadgedIconBitmap(icon, options).newIcon(context);
+         }
+     }
+ 
+-- 
+2.56.0
+

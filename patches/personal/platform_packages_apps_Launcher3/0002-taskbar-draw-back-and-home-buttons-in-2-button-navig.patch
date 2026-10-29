@@ -1,7 +1,7 @@
 From 0ce17de9226cb0849410b7153e866183f6f09305 Mon Sep 17 00:00:00 2001
 From: Langsdorff <131063968+clangsdorff@users.noreply.github.com>
 Date: Fri, 23 Oct 2026 23:06:18 +0300
-Subject: [PATCH 2/3] taskbar: draw back and home buttons in 2-button
+Subject: [PATCH 2/4] taskbar: draw back and home buttons in 2-button
  navigation
 
 ---
