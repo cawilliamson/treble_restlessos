@@ -1,0 +1,110 @@
+From 5de722b782b5706cfe3bcc0ee56e136efb18afa7 Mon Sep 17 00:00:00 2001
+From: Langsdorff <131063968+clangsdorff@users.noreply.github.com>
+Date: Thu, 29 Oct 2026 22:06:23 +0300
+Subject: [PATCH] gmscompat: keep play store install prompts visible
+
+the pending user action channel is low importance, so the install
+confirmation lands in the silent section and is easy to miss. when
+the play store process dies while a prompt is pending, the intents
+are dropped and the notification is cancelled, so the update stalls
+with nothing on screen.
+
+move the prompt to a new high importance channel, since an existing
+channel's importance can't be raised, and replace the notification
+with one that sends the user back to play store when its process
+goes away.
+---
+ res/values/strings.xml                        |  2 ++
+ src/app/grapheneos/gmscompat/BinderGms2Gca.kt | 19 ++++++++++++++++++-
+ src/app/grapheneos/gmscompat/Notifications.kt | 11 ++++++++---
+ 3 files changed, 28 insertions(+), 4 deletions(-)
+
+diff --git a/res/values/strings.xml b/res/values/strings.xml
+index 29adbe3..833c257 100644
+--- a/res/values/strings.xml
++++ b/res/values/strings.xml
+@@ -56,6 +56,8 @@ To receive them quicker, set “Battery usage” to “Unrestricted” in Play s
+     <string name="pending_play_store_update_notif_title">Play Store needs to update %1$s</string>
+     <string name="pending_play_store_update_notif_text">It\'s recommended to allow this. Tap to proceed.</string>
+     <string name="play_store_pending_user_action_notif">Action required in Play Store</string>
++    <string name="play_store_pending_user_action_interrupted_title">Play Store install was interrupted</string>
++    <string name="play_store_pending_user_action_interrupted_text">Tap to open Play Store and continue.</string>
+     <string name="missing_permission">Missing permission</string>
+     <string name="missing_optional_permission">Missing optional permission</string>
+     <string name="missing_app">Missing app</string>
+diff --git a/src/app/grapheneos/gmscompat/BinderGms2Gca.kt b/src/app/grapheneos/gmscompat/BinderGms2Gca.kt
+index be60a9c..12f2474 100644
+--- a/src/app/grapheneos/gmscompat/BinderGms2Gca.kt
++++ b/src/app/grapheneos/gmscompat/BinderGms2Gca.kt
+@@ -112,7 +112,7 @@ object BinderGms2Gca : IGms2Gca.Stub() {
+                             // pending PackageInstaller sessions are cleared on Play Store startup,
+                             // which invalidates pending user actions intents
+                             playStorePendingUserActionIntents.clear()
+-                            Notifications.cancel(Notifications.ID_PLAY_STORE_PENDING_USER_ACTION)
++                            showPlayStoreInterruptedNotification()
+                         }
+                     }
+                 }
+@@ -169,6 +169,23 @@ object BinderGms2Gca : IGms2Gca.Stub() {
+         ctx.mainThreadHandler.postDelayed(showNotification, 2000)
+     }
+ 
++    // the pending install is gone along with the Play Store process, point the user back to
++    // Play Store instead of silently dropping the prompt
++    private fun showPlayStoreInterruptedNotification() {
++        val launchIntent = ctx.packageManager.getLaunchIntentForPackage(PACKAGE_PLAY_STORE)
++        val contentIntent = PendingIntent.getActivity(ctx, 0, launchIntent, PendingIntent.FLAG_IMMUTABLE)
++
++        Notifications.builder(Notifications.CH_PLAY_STORE_PENDING_USER_ACTION).run {
++            setSmallIcon(R.drawable.ic_pending_action)
++            setContentTitle(ctx.getText(R.string.play_store_pending_user_action_interrupted_title))
++            setContentText(ctx.getText(R.string.play_store_pending_user_action_interrupted_text))
++            setContentIntent(contentIntent)
++            setAutoCancel(true)
++            setOnlyAlertOnce(true)
++            show(Notifications.ID_PLAY_STORE_PENDING_USER_ACTION)
++        }
++    }
++
+     override fun maybeGetPlayStorePendingUserActionIntent(): Intent? {
+         synchronized(playStorePendingUserActionIntents) {
+             if (playStorePendingUserActionIntents.size == 1) {
+diff --git a/src/app/grapheneos/gmscompat/Notifications.kt b/src/app/grapheneos/gmscompat/Notifications.kt
+index 88f3fc4..99490c0 100644
+--- a/src/app/grapheneos/gmscompat/Notifications.kt
++++ b/src/app/grapheneos/gmscompat/Notifications.kt
+@@ -22,7 +22,9 @@ import java.util.concurrent.atomic.AtomicInteger
+ 
+ object Notifications {
+     const val CH_PERSISTENT_FG_SERVICE = "persistent_fg_service"
+-    const val CH_PLAY_STORE_PENDING_USER_ACTION = "play_store_pending_user_action"
++    // importance of an existing channel can't be raised, a new id is needed for it
++    const val CH_PLAY_STORE_PENDING_USER_ACTION = "play_store_pending_user_action_v2"
++    private const val CH_PLAY_STORE_PENDING_USER_ACTION_OLD = "play_store_pending_user_action"
+     const val CH_MISSING_PERMISSION = "missing_permission"
+     const val CH_MISSING_OPTIONAL_PERMISSION = "missing_optional_permission"
+     const val CH_MISSING_APP = "missing_app"
+@@ -54,7 +56,7 @@ object Notifications {
+     fun createNotificationChannels() {
+         val list = listOf(
+             ch(CH_PERSISTENT_FG_SERVICE, R.string.persistent_fg_service_notif).apply { isBlockable = true },
+-            ch(CH_PLAY_STORE_PENDING_USER_ACTION, R.string.play_store_pending_user_action_notif),
++            ch(CH_PLAY_STORE_PENDING_USER_ACTION, R.string.play_store_pending_user_action_notif, IMPORTANCE_HIGH),
+             ch(CH_MISSING_PERMISSION, R.string.missing_permission, IMPORTANCE_HIGH),
+             ch(CH_MISSING_OPTIONAL_PERMISSION, R.string.missing_optional_permission),
+             ch(CH_MISSING_APP, R.string.missing_app, IMPORTANCE_HIGH),
+@@ -65,7 +67,10 @@ object Notifications {
+             ch(CH_SIGN_IN_WITH_GOOGLE, R.string.sign_in_with_google_notif_ch, IMPORTANCE_HIGH).apply { isBlockable = true },
+         )
+ 
+-        App.notificationManager().createNotificationChannels(list)
++        App.notificationManager().run {
++            createNotificationChannels(list)
++            deleteNotificationChannel(CH_PLAY_STORE_PENDING_USER_ACTION_OLD)
++        }
+     }
+ 
+     private fun ch(id: String, title: Int, importance: Int = NotificationManager.IMPORTANCE_LOW,
+-- 
+2.56.0
+
