@@ -1,0 +1,144 @@
+From c3b7bd7f84053949cf27129e9992ac3a06a62564 Mon Sep 17 00:00:00 2001
+From: Langsdorff <131063968+clangsdorff@users.noreply.github.com>
+Date: Thu, 29 Oct 2026 16:24:50 +0300
+Subject: [PATCH 17/17] treble_app: add a toggle for the aosp ims stack
+
+imsstack ships disabled in the system image. add a switch to the ims
+settings that enables or resets the package, then reselects the ims
+overlay. an enabled imsstack wins over any installed ims apk, sets
+persist.sys.phh.ims.aosp and clears the floss prop so only one ap side
+stack is wired up. the switch reads the package state, not a stored
+preference, so it cannot drift from what is actually enabled.
+---
+ app/src/main/java/me/phh/treble/app/Ims.kt    | 18 ++++++++++-----
+ .../java/me/phh/treble/app/ImsSettings.kt     | 22 +++++++++++++++++++
+ app/src/main/res/xml/pref_ims.xml             |  6 +++++
+ 3 files changed, 40 insertions(+), 6 deletions(-)
+
+diff --git a/app/src/main/java/me/phh/treble/app/Ims.kt b/app/src/main/java/me/phh/treble/app/Ims.kt
+index 575c5f8..8fbcd62 100644
+--- a/app/src/main/java/me/phh/treble/app/Ims.kt
++++ b/app/src/main/java/me/phh/treble/app/Ims.kt
+@@ -3,6 +3,7 @@ package me.phh.treble.app
+ import android.annotation.SuppressLint
+ import android.content.Context
+ import android.content.SharedPreferences
++import android.content.pm.PackageManager
+ import android.hardware.display.DisplayManager
+ import android.net.ConnectivityManager
+ import android.net.Network
+@@ -86,6 +87,12 @@ object Ims: EntryStartup {
+     val gotHW = mAllSlots
+             .find { i -> mHidlService.get("vendor.huawei.hardware.radio@1.0::IRadio", i) != null } != null
+ 
++    fun isImsStackEnabled(pm: PackageManager) = try {
++        pm.getApplicationEnabledSetting(ImsSettings.imsStackPackage) == PackageManager.COMPONENT_ENABLED_STATE_ENABLED
++    } catch (e: IllegalArgumentException) {
++        false
++    }
++
+     override fun startup(ctxt: Context) {
+         if (!ImsSettings.enabled()) return
+ 
+@@ -105,10 +112,12 @@ object Ims: EntryStartup {
+         val installed = Tools.getInstalledPackages(ctxt.packageManager).map { it.packageName }
+         val gotLangsdorffFloss = "com.langsdorff.flossims" in installed
+         val gotFloss = gotLangsdorffFloss || "me.phh.ims" in installed
++        val gotImsStack = isImsStackEnabled(ctxt.packageManager)
+ 
+         val allOverlays = listOf("me.phh.treble.overlay.mtkims_telephony", "me.phh.treble.overlay.cafims_telephony", "me.phh.treble.overlay.hwims_telephony",
+-                "me.phh.treble.overlay.flossims_telephony", "com.langsdorff.overlay.ims_telephony")
++                "me.phh.treble.overlay.flossims_telephony", "com.langsdorff.overlay.ims_telephony", "com.android.overlay.imsstack_telephony")
+         val selectOverlay = when {
++            gotImsStack -> "com.android.overlay.imsstack_telephony"
+             gotLangsdorffFloss -> "com.langsdorff.overlay.ims_telephony"
+             gotFloss -> "me.phh.treble.overlay.flossims_telephony"
+             gotMtkP || gotMtkQ || gotMtkR || gotMtkS || gotMtkAidl -> "me.phh.treble.overlay.mtkims_telephony"
+@@ -118,11 +127,8 @@ object Ims: EntryStartup {
+             gotHW -> "me.phh.treble.overlay.hwims_telephony"
+             else -> null
+         }
+-        if (gotFloss) {
+-            Misc.safeSetprop("persist.sys.phh.ims.floss", "true")
+-        } else {
+-            Misc.safeSetprop("persist.sys.phh.ims.floss", "false")
+-        }
++        Misc.safeSetprop("persist.sys.phh.ims.aosp", if (gotImsStack) "true" else "false")
++        Misc.safeSetprop("persist.sys.phh.ims.floss", if (gotFloss && !gotImsStack) "true" else "false")
+         if(selectOverlay != null) {
+             allOverlays
+                     .filter { it != selectOverlay }
+diff --git a/app/src/main/java/me/phh/treble/app/ImsSettings.kt b/app/src/main/java/me/phh/treble/app/ImsSettings.kt
+index 65cbecc..dbb1f21 100644
+--- a/app/src/main/java/me/phh/treble/app/ImsSettings.kt
++++ b/app/src/main/java/me/phh/treble/app/ImsSettings.kt
+@@ -4,6 +4,7 @@ import android.app.AlertDialog
+ import android.app.Application
+ import android.app.PendingIntent
+ import android.content.*
++import android.content.pm.PackageManager
+ import android.content.pm.PackageInstaller
+ import android.hardware.display.DisplayManager
+ import android.net.Uri
+@@ -19,6 +20,7 @@ import android.widget.Toast
+ import androidx.core.content.FileProvider
+ import androidx.preference.ListPreference
+ import androidx.preference.Preference
++import androidx.preference.SwitchPreferenceCompat
+ import java.io.ByteArrayInputStream
+ import java.io.File
+ import java.io.IOException
+@@ -30,6 +32,8 @@ object ImsSettings : Settings {
+     val createApn = "key_ims_create_apn"
+     val forceEnableSettings = "key_ims_force_enable_setting"
+     val installImsApk = "key_ims_install_apn"
++    val useImsStack = "key_ims_use_imsstack"
++    val imsStackPackage = "com.android.imsstack"
+     val flossLangsdorffUrl = "https://github.com/clangsdorff/ims/releases/latest/download/FlossIms.apk"
+ 
+     override fun enabled() = true
+@@ -90,6 +94,24 @@ class ImsSettingsFragment : SettingsFragment() {
+             return@setOnPreferenceClickListener true
+         }
+ 
++        // the package ships disabled, so its enabled state is the source of truth, not the preference
++        val useImsStack = findPreference<SwitchPreferenceCompat>(ImsSettings.useImsStack)
++        useImsStack!!.isChecked = Ims.isImsStackEnabled(requireActivity().packageManager)
++        useImsStack.setOnPreferenceChangeListener { _, newValue ->
++            val ctxt = requireActivity().applicationContext
++            val state = if (newValue as Boolean) PackageManager.COMPONENT_ENABLED_STATE_ENABLED
++                    else PackageManager.COMPONENT_ENABLED_STATE_DEFAULT
++            try {
++                ctxt.packageManager.setApplicationEnabledSetting(ImsSettings.imsStackPackage, state, 0)
++            } catch (e: IllegalArgumentException) {
++                Toast.makeText(ctxt, "AOSP IMS stack is not part of this build", Toast.LENGTH_LONG).show()
++                return@setOnPreferenceChangeListener false
++            }
++            Ims.selectImsOverlay(ctxt)
++            Toast.makeText(ctxt, "Reboot to apply the IMS change", Toast.LENGTH_LONG).show()
++            true
++        }
++
+         val installIms = findPreference<Preference>(ImsSettings.installImsApk)
+ 
+         Log.d("PHH", "MTK P radio = ${Ims.gotMtkP}")
+diff --git a/app/src/main/res/xml/pref_ims.xml b/app/src/main/res/xml/pref_ims.xml
+index 20e2bd7..c3534e8 100644
+--- a/app/src/main/res/xml/pref_ims.xml
++++ b/app/src/main/res/xml/pref_ims.xml
+@@ -3,6 +3,12 @@
+ 	xmlns:android="http://schemas.android.com/apk/res/android">
+     <Preference android:title="Create IMS APN"
+         android:key="key_ims_create_apn" />
++    <SwitchPreferenceCompat
++        android:defaultValue="false"
++        android:persistent="false"
++        android:key="key_ims_use_imsstack"
++        android:title="Use the AOSP IMS stack"
++        android:summary="Experimental. Runs VoLTE on the AP like FlossIMS, takes priority over any installed IMS APK" />
+     <Preference android:title="Download and install IMS APK"
+         android:key="key_ims_install_apn" />
+     <SwitchPreferenceCompat
+-- 
+2.56.0
+
