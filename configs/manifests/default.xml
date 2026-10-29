@@ -23,6 +23,9 @@
   <!-- lineage: apn database -->
   <project path="vendor/apn" name="android_vendor_apn" remote="lineage" revision="main" clone-depth="1" />
 
+  <!-- lineage: imsmedia -->
+  <project path="packages/modules/ImsMedia" name="android_packages_modules_ImsMedia" remote="lineage" revision="lineage-24.0" clone-depth="1" />
+
   <!-- cawilliamson: device_phh_treble -->
   <project path="device/phh/treble" name="android_device_phh_treble" remote="cawilliamson" revision="android-17.0" clone-depth="1" />
 

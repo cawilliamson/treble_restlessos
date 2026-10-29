@@ -51,6 +51,9 @@
   <!-- mainline modules: excluded from gsi builds -->
   <remove-project name="platform_packages_modules_Virtualization" />
 
+  <!-- imsmedia: replaced by the lineage fork -->
+  <remove-project name="platform/packages/modules/ImsMedia" />
+
   <!-- grapheneos apps: excluded from gsi builds -->
   <remove-project name="platform_packages_apps_LogViewer" />
   <remove-project name="platform_packages_apps_SetupWizard2" />
