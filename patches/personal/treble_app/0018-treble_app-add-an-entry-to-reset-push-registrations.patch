@@ -1,0 +1,94 @@
+From a9d37bc1c8d1e762186b7037ea746dd4be23138e Mon Sep 17 00:00:00 2001
+From: Langsdorff <131063968+clangsdorff@users.noreply.github.com>
+Date: Sat, 31 Oct 2026 02:38:23 +0300
+Subject: [PATCH 18/18] treble_app: add an entry to reset push registrations
+
+apps that registered for push with google play services keep that token
+after switching to microg, or the other way around, and stop getting
+notifications until their data is cleared.
+
+add a misc entry that sets persist.sys.reset_push after a
+confirmation, the prop handler drops the cached tokens and stops the
+apps so they register again once opened. the handler sets the prop to 2
+when it is done, show a toast then and clear it.
+---
+ .../java/me/phh/treble/app/MiscSettings.kt    | 33 +++++++++++++++++++
+ app/src/main/res/xml/pref_misc.xml            |  4 +++
+ 2 files changed, 37 insertions(+)
+
+diff --git a/app/src/main/java/me/phh/treble/app/MiscSettings.kt b/app/src/main/java/me/phh/treble/app/MiscSettings.kt
+index fb10b68..8456c7b 100644
+--- a/app/src/main/java/me/phh/treble/app/MiscSettings.kt
++++ b/app/src/main/java/me/phh/treble/app/MiscSettings.kt
+@@ -4,7 +4,11 @@ import android.app.AlertDialog
+ import android.app.Application
+ import android.hardware.display.DisplayManager
+ import android.os.Bundle
++import android.os.Handler
++import android.os.Looper
++import android.os.SystemProperties
+ import android.util.Log
++import android.widget.Toast
+ import androidx.preference.ListPreference
+ import androidx.preference.Preference
+ 
+@@ -41,6 +45,7 @@ object MiscSettings : Settings {
+     val disableDisplayDozeSuspend = "key_misc_disable_display_doze_suspend"
+     val dt2w = "key_misc_dt2w"
+     val restartSystemUI = "key_misc_restart_systemui"
++    val resetPush = "key_misc_reset_push"
+     val fodColor = "key_misc_fod_color"
+     val mtkTouchHintIsRotate = "key_misc_mediatek_touch_hint_rotate"
+     val mtkGedKpi = "key_misc_mediatek_ged_kpi"
+@@ -147,5 +152,33 @@ class MiscSettingsFragment : SettingsFragment() {
+             }
+             return@setOnPreferenceClickListener true
+         }
++
++        val resetPushPref = findPreference<Preference>(MiscSettings.resetPush)
++        resetPushPref!!.setOnPreferenceClickListener {
++            val builder = AlertDialog.Builder(this.getActivity())
++            builder.setTitle(resetPushPref.title)
++            builder.setMessage(getString(R.string.continue_question))
++            builder.setPositiveButton(android.R.string.yes) { _, _ ->
++                SystemProperties.set("persist.sys.reset_push", "1")
++
++                // the prop handler sets 2 once every app is reset
++                val context = requireContext().applicationContext
++                Thread {
++                    for (i in 0 until 120) {
++                        Thread.sleep(500)
++                        if (SystemProperties.get("persist.sys.reset_push") != "2") continue
++
++                        SystemProperties.set("persist.sys.reset_push", "0")
++                        Handler(Looper.getMainLooper()).post {
++                            Toast.makeText(context, "Done, open your apps once to get notifications again", Toast.LENGTH_LONG).show()
++                        }
++                        break
++                    }
++                }.start()
++            }
++            builder.setNegativeButton(android.R.string.no) { _, _ -> }
++            builder.show()
++            return@setOnPreferenceClickListener true
++        }
+     }
+ }
+diff --git a/app/src/main/res/xml/pref_misc.xml b/app/src/main/res/xml/pref_misc.xml
+index da4b79a..a9e4455 100644
+--- a/app/src/main/res/xml/pref_misc.xml
++++ b/app/src/main/res/xml/pref_misc.xml
+@@ -102,6 +102,10 @@
+             android:key="key_misc_restart_systemui"
+             android:title="Restart SystemUI"
+             android:summary="Recommended after switching display resolution\nRequires root" />
++        <Preference
++            android:key="key_misc_reset_push"
++            android:title="Re-register apps for notifications"
++            android:summary="Use after switching between Google Play services and microG\nApps are stopped and need to be opened once" />
+         <SwitchPreferenceCompat
+             android:defaultValue="false"
+             android:key="key_misc_no_hwcomposer"
+-- 
+2.56.0
+
