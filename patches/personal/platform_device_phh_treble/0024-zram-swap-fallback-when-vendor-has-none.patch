@@ -1,7 +1,7 @@
 From d1453ef6ece8dd1d0b764fa00c5bfcaefaf44d32 Mon Sep 17 00:00:00 2001
 From: "Christopher A. Williamson" <contact@chrisaw.io>
 Date: Sun, 21 Jun 2026 20:56:27 +0100
-Subject: [PATCH 24/52] set up zram swap as a fallback when the vendor hasn't
+Subject: [PATCH 24/53] set up zram swap as a fallback when the vendor hasn't
 
 the GSI itself does not configure zram -- AOSP's init.rc only chowns
 /sys/block/zram0/{idle,writeback}, expecting the vendor partition to

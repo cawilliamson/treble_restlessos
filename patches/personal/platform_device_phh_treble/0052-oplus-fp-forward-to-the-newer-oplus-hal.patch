@@ -1,7 +1,7 @@
 From d489a5556d1c193b310106989ca65001e60c54e5 Mon Sep 17 00:00:00 2001
 From: Langsdorff <131063968+clangsdorff@users.noreply.github.com>
 Date: Fri, 30 Oct 2026 17:47:02 +0300
-Subject: [PATCH 52/52] oplus-fp: forward to the newer oplus hal through the
+Subject: [PATCH 52/53] oplus-fp: forward to the newer oplus hal through the
  aosp interface
 
 newer oplus vendors ship a fingerprint hal under the old

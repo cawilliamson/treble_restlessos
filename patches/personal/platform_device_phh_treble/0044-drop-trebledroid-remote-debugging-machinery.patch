@@ -1,7 +1,7 @@
 From b0e4576da3c8c170009bb5e5ee84ec88356011b2 Mon Sep 17 00:00:00 2001
 From: "Christopher A. Williamson" <contact@chrisaw.io>
 Date: Thu, 22 Oct 2026 22:13:35 +0100
-Subject: [PATCH 44/52] drop trebledroid remote debugging machinery
+Subject: [PATCH 44/53] drop trebledroid remote debugging machinery
 
 remove the phh-remotectl dropbear reverse tunnel, its init rc and the
 static dbclient binary. nothing on the system sets

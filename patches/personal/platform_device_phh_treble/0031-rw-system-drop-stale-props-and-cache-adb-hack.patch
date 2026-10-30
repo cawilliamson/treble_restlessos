@@ -1,7 +1,7 @@
 From 7a23fd7e3a70c916ea4c2efcbdcef9b1fea2a0f4 Mon Sep 17 00:00:00 2001
 From: "Christopher A. Williamson" <contact@chrisaw.io>
 Date: Fri, 25 Sep 2026 18:26:11 +0100
-Subject: [PATCH 31/52] rw-system: remove stale property overrides and the
+Subject: [PATCH 31/53] rw-system: remove stale property overrides and the
  /cache/phh-adb USB gadget hack
 
 remove ro.adb.secure=0 (adb authentication is now controlled per-boot

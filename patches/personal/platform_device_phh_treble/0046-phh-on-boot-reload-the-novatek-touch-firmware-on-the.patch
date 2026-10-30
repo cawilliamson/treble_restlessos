@@ -1,7 +1,7 @@
 From 27cca95b3c7cf1efb9675fb4efaa1dd1acc6cf01 Mon Sep 17 00:00:00 2001
 From: Langsdorff <131063968+clangsdorff@users.noreply.github.com>
 Date: Fri, 23 Oct 2026 16:20:37 +0300
-Subject: [PATCH 46/52] phh-on-boot: reload the novatek touch firmware on the
+Subject: [PATCH 46/53] phh-on-boot: reload the novatek touch firmware on the
  redmi pad after boot
 
 ---

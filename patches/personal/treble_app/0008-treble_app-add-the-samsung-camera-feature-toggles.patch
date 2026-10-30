@@ -1,7 +1,7 @@
 From a7783ee4872840d2e264ebb2f7b0b4dd21c23873 Mon Sep 17 00:00:00 2001
 From: Langsdorff <131063968+clangsdorff@users.noreply.github.com>
 Date: Sun, 4 Oct 2026 23:14:32 +0300
-Subject: [PATCH 8/17] treble_app: add the samsung camera feature toggles
+Subject: [PATCH 8/18] treble_app: add the samsung camera feature toggles
 
 add a toggle for persist.sys.phh.samsung.remosaic to expose the samsung
 tetra sensor full resolution capture sizes to camera apps.

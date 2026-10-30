@@ -1,7 +1,7 @@
 From 8187ad7e9efa8b1c96ba4ae78be3113aa7b23012 Mon Sep 17 00:00:00 2001
 From: "Christopher A. Williamson" <contact@chrisaw.io>
 Date: Fri, 23 Oct 2026 20:44:39 +0100
-Subject: [PATCH 14/17] treble_app: modernise settings ui, material 3 theming
+Subject: [PATCH 14/18] treble_app: modernise settings ui, material 3 theming
  and switch styling
 
 modernise settings UI by migrating to MainSettingsFragment, removing

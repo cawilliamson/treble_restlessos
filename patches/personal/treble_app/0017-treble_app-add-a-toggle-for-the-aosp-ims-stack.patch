@@ -1,7 +1,7 @@
 From c3b7bd7f84053949cf27129e9992ac3a06a62564 Mon Sep 17 00:00:00 2001
 From: Langsdorff <131063968+clangsdorff@users.noreply.github.com>
 Date: Thu, 29 Oct 2026 16:24:50 +0300
-Subject: [PATCH 17/17] treble_app: add a toggle for the aosp ims stack
+Subject: [PATCH 17/18] treble_app: add a toggle for the aosp ims stack
 
 imsstack ships disabled in the system image. add a switch to the ims
 settings that enables or resets the package, then reselects the ims

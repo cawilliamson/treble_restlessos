@@ -1,7 +1,7 @@
 From 8282dd60238a5f769a4702ede35a05196c5ef475 Mon Sep 17 00:00:00 2001
 From: "Christopher A. Williamson" <contact@chrisaw.io>
 Date: Sat, 20 Jun 2026 11:31:51 +0100
-Subject: [PATCH 22/52] rw-system: relabel camera flash dir so the camera HAL
+Subject: [PATCH 22/53] rw-system: relabel camera flash dir so the camera HAL
  can reach the torch
 
 some samsung-family vendors label /sys/class/camera/flash as sysfs_camera

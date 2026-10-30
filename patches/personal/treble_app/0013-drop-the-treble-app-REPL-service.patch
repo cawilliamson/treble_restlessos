@@ -1,7 +1,7 @@
 From 01789ba628d463a6ca1bd15ef5f77d50a2f6c8f0 Mon Sep 17 00:00:00 2001
 From: "Christopher A. Williamson" <contact@chrisaw.io>
 Date: Thu, 22 Oct 2026 22:14:18 +0100
-Subject: [PATCH 13/17] drop the treble app REPL service
+Subject: [PATCH 13/18] drop the treble app REPL service
 
 the unauthenticated reflection REPL bound to localhost:8800 served no
 purpose in restlessos and widened the system attack surface; any holder

@@ -1,7 +1,7 @@
 From 86e2bb153295dc0a5bb8837a08f8385f8b9089c4 Mon Sep 17 00:00:00 2001
 From: "Christopher A. Williamson" <contact@chrisaw.io>
 Date: Fri, 23 Oct 2026 19:40:12 +0100
-Subject: [PATCH 15/17] derive versionCode at build time for sideload updates
+Subject: [PATCH 15/18] derive versionCode at build time for sideload updates
 
 ---
  app/build.gradle | 8 +++++++-

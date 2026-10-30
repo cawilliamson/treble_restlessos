@@ -1,7 +1,7 @@
 From 7c3c84a3465eaa31dee4b86f142001c861cccff9 Mon Sep 17 00:00:00 2001
 From: Langsdorff <131063968+clangsdorff@users.noreply.github.com>
 Date: Sat, 24 Oct 2026 17:20:53 +0300
-Subject: [PATCH 47/52] rw-system: scan the oppo nvdata partition with strings
+Subject: [PATCH 47/53] rw-system: scan the oppo nvdata partition with strings
 
 ---
  rw-system.sh | 3 ++-

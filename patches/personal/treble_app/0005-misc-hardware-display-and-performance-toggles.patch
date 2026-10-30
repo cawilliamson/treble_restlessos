@@ -1,7 +1,7 @@
 From beba9533904ee982edafdf5b92d3c5fc898f55b3 Mon Sep 17 00:00:00 2001
 From: ChonDoit <thphantomblog@gmail.com>
 Date: Sun, 21 Jun 2026 21:24:22 +0100
-Subject: [PATCH 5/17] treble_app: add the misc hardware, display and
+Subject: [PATCH 5/18] treble_app: add the misc hardware, display and
  performance toggles
 
 add device-specific hardware and display toggles to the treble app

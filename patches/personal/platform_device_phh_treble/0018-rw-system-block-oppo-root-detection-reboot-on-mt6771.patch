@@ -1,7 +1,7 @@
 From e51fef55a2dbc43b7d6bec845768d8215f785d31 Mon Sep 17 00:00:00 2001
 From: "Christopher A. Williamson" <contact@chrisaw.io>
 Date: Fri, 25 Sep 2026 18:25:53 +0100
-Subject: [PATCH 18/52] rw-system: block OPPO/Realme root detection reboot and
+Subject: [PATCH 18/53] rw-system: block OPPO/Realme root detection reboot and
  disable touch firmware update on MT6771
 
 OPPO and Realme devices with MediaTek vendor kernels include an

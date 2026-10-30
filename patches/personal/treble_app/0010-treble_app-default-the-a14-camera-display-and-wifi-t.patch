@@ -1,7 +1,7 @@
 From 4cde0975a402b66707120dd1dca846dc139207f6 Mon Sep 17 00:00:00 2001
 From: Langsdorff <131063968+clangsdorff@users.noreply.github.com>
 Date: Wed, 7 Oct 2026 20:36:16 +0300
-Subject: [PATCH 10/17] treble_app: default the a14 camera, display and wifi
+Subject: [PATCH 10/18] treble_app: default the a14 camera, display and wifi
  toggles on first boot
 
 ---
