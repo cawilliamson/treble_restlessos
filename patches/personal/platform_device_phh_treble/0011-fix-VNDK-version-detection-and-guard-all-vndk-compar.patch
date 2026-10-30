@@ -1,7 +1,7 @@
 From 7276f3d63ebdd0324667441d194f051daef67d21 Mon Sep 17 00:00:00 2001
 From: "Christopher A. Williamson" <contact@chrisaw.io>
 Date: Sat, 26 Sep 2026 12:15:44 +0100
-Subject: [PATCH 11/51] fix VNDK version detection and guard all vndk
+Subject: [PATCH 11/52] fix VNDK version detection and guard all vndk
  comparisons
 
 vndk-detect falls back to ro.vndk.version / ro.vendor.build.version.sdk

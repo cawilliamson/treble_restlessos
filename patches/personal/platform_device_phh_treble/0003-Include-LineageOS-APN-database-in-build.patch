@@ -1,7 +1,7 @@
 From 3cb645c72a8d29db6c0778e4391980b0a6996445 Mon Sep 17 00:00:00 2001
 From: "Christopher A. Williamson" <contact@chrisaw.io>
 Date: Tue, 17 Feb 2026 16:19:21 +0000
-Subject: [PATCH 3/51] Include LineageOS APN database in build
+Subject: [PATCH 3/52] Include LineageOS APN database in build
 
 Use the LineageOS APN database (vendor/apn) which is assembled
 at build time from per-country XML files. This replaces the AOSP

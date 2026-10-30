@@ -1,7 +1,7 @@
 From adfe36eb8d628e185c1d3cd661462a8ed53fcfaf Mon Sep 17 00:00:00 2001
 From: Langsdorff <131063968+clangsdorff@users.noreply.github.com>
 Date: Tue, 27 Oct 2026 19:55:33 +0300
-Subject: [PATCH 49/51] sepolicy: let the silead fingerprint hal create its
+Subject: [PATCH 49/52] sepolicy: let the silead fingerprint hal create its
  config dir
 
 the transsion silead fingerprint hal creates a config dir under its data

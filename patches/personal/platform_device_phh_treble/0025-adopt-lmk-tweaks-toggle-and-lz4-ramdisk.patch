@@ -1,7 +1,7 @@
 From 70ce12b01f82460403a1f91497e9df0e901d22a2 Mon Sep 17 00:00:00 2001
 From: Doze-off <viniciussadxxx@gmail.com>
 Date: Sun, 21 Jun 2026 21:29:59 +0100
-Subject: [PATCH 25/51] adopt lmk_tweaks toggle and LZ4 boot ramdisk from
+Subject: [PATCH 25/52] adopt lmk_tweaks toggle and LZ4 boot ramdisk from
  Doze-off
 
 two small tweaks adopted from Doze-off's device_phh_treble fork, combined

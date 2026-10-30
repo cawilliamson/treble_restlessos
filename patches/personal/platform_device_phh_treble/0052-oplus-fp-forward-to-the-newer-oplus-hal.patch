@@ -1,0 +1,136 @@
+From d489a5556d1c193b310106989ca65001e60c54e5 Mon Sep 17 00:00:00 2001
+From: Langsdorff <131063968+clangsdorff@users.noreply.github.com>
+Date: Fri, 30 Oct 2026 17:47:02 +0300
+Subject: [PATCH 52/52] oplus-fp: forward to the newer oplus hal through the
+ aosp interface
+
+newer oplus vendors ship a fingerprint hal under the old
+vendor.oplus.hardware.biometrics.fingerprint@2.1 name, but it now
+extends the aosp 2.3 interface. the compat service still talks the old
+layout, so setNotify comes back BAD_TYPE and reading the failed Return
+aborts the service.
+
+cast the vendor service to the aosp interface at start and forward
+calls to it when that works, keeping the old translation otherwise.
+failed vendor calls return a default instead of aborting.
+---
+ hal/oplus-fp/BiometricsFingerprint.cpp | 27 +++++++++++++++++++++++++-
+ hal/oplus-fp/BiometricsFingerprint.h   |  2 ++
+ 2 files changed, 28 insertions(+), 1 deletion(-)
+
+diff --git a/hal/oplus-fp/BiometricsFingerprint.cpp b/hal/oplus-fp/BiometricsFingerprint.cpp
+index 9f4a18a..b98f802 100644
+--- a/hal/oplus-fp/BiometricsFingerprint.cpp
++++ b/hal/oplus-fp/BiometricsFingerprint.cpp
+@@ -39,8 +39,13 @@ BiometricsFingerprint::BiometricsFingerprint() {
+         sleep(10);
+     }
+     if(mOplusBiometricsFingerprint == nullptr) exit(0);
++
++    sp<::android::hidl::base::V1_0::IBase> base = mOplusBiometricsFingerprint;
++    mAospBiometricsFingerprint = IBiometricsFingerprint::castFrom(base);
++    if(mAospBiometricsFingerprint != nullptr) ALOGE("vendor HAL implements the AOSP interface, forwarding");
+ }
+
++
+ static bool receivedCancel;
+ static bool receivedEnumerate;
+ static uint64_t myDeviceId;
+@@ -156,8 +161,10 @@ private:
+ Return<uint64_t> BiometricsFingerprint::setNotify(
+         const sp<IBiometricsFingerprintClientCallback>& clientCallback) {
+     ALOGE("setNotify");
++    if(mAospBiometricsFingerprint != nullptr)
++        return mAospBiometricsFingerprint->setNotify(clientCallback).withDefault(0);
+     mOplusClientCallback = new OplusClientCallback(clientCallback);
+-    return mOplusBiometricsFingerprint->setNotify(mOplusClientCallback);
++    return mOplusBiometricsFingerprint->setNotify(mOplusClientCallback).withDefault(0);
+ }
+
+ Return<RequestStatus> BiometricsFingerprint::OplusToAOSPRequestStatus(vendor::oplus::hardware::biometrics::fingerprint::V2_1::RequestStatus req) {
+@@ -182,26 +189,36 @@ Return<RequestStatus> BiometricsFingerprint::OplusToAOSPRequestStatus(vendor::op
+
+ Return<uint64_t> BiometricsFingerprint::preEnroll()  {
+     ALOGE("preEnroll");
++    if(mAospBiometricsFingerprint != nullptr)
++        return mAospBiometricsFingerprint->preEnroll().withDefault(0);
+     return mOplusBiometricsFingerprint->preEnroll();
+ }
+
+ Return<RequestStatus> BiometricsFingerprint::enroll(const hidl_array<uint8_t, 69>& hat,
+     uint32_t gid, uint32_t timeoutSec)  {
+     ALOGE("enroll");
++    if(mAospBiometricsFingerprint != nullptr)
++        return mAospBiometricsFingerprint->enroll(hat, gid, timeoutSec).withDefault(RequestStatus::SYS_UNKNOWN);
+     return OplusToAOSPRequestStatus(mOplusBiometricsFingerprint->enroll(hat, gid, timeoutSec));
+ }
+
+ Return<RequestStatus> BiometricsFingerprint::postEnroll()  {
+     ALOGE("postEnroll");
++    if(mAospBiometricsFingerprint != nullptr)
++        return mAospBiometricsFingerprint->postEnroll().withDefault(RequestStatus::SYS_UNKNOWN);
+     return OplusToAOSPRequestStatus(mOplusBiometricsFingerprint->postEnroll());
+ }
+
+ Return<uint64_t> BiometricsFingerprint::getAuthenticatorId()  {
+     ALOGE("getAuthId");
++    if(mAospBiometricsFingerprint != nullptr)
++        return mAospBiometricsFingerprint->getAuthenticatorId().withDefault(0);
+     return mOplusBiometricsFingerprint->getAuthenticatorId();
+ }
+
+ Return<RequestStatus> BiometricsFingerprint::cancel()  {
++    if(mAospBiometricsFingerprint != nullptr)
++        return mAospBiometricsFingerprint->cancel().withDefault(RequestStatus::SYS_UNKNOWN);
+     receivedCancel = false;
+     RequestStatus ret = OplusToAOSPRequestStatus(mOplusBiometricsFingerprint->cancel());
+     ALOGE("CANCELING");
+@@ -216,6 +233,8 @@ Return<RequestStatus> BiometricsFingerprint::cancel()  {
+ }
+
+ Return<RequestStatus> BiometricsFingerprint::enumerate()  {
++    if(mAospBiometricsFingerprint != nullptr)
++        return mAospBiometricsFingerprint->enumerate().withDefault(RequestStatus::SYS_UNKNOWN);
+     receivedEnumerate = false;
+     RequestStatus ret = OplusToAOSPRequestStatus(mOplusBiometricsFingerprint->enumerate());
+     ALOGE("ENUMERATING");
+@@ -245,17 +264,23 @@ Return<RequestStatus> BiometricsFingerprint::enumerate()  {
+
+ Return<RequestStatus> BiometricsFingerprint::remove(uint32_t gid, uint32_t fid)  {
+     ALOGE("remove");
++    if(mAospBiometricsFingerprint != nullptr)
++        return mAospBiometricsFingerprint->remove(gid, fid).withDefault(RequestStatus::SYS_UNKNOWN);
+     return OplusToAOSPRequestStatus(mOplusBiometricsFingerprint->remove(gid, fid));
+ }
+
+ Return<RequestStatus> BiometricsFingerprint::setActiveGroup(uint32_t gid,
+     const hidl_string& storePath)  {
+     ALOGE("setActiveGroup");
++    if(mAospBiometricsFingerprint != nullptr)
++        return mAospBiometricsFingerprint->setActiveGroup(gid, storePath).withDefault(RequestStatus::SYS_UNKNOWN);
+     return OplusToAOSPRequestStatus(mOplusBiometricsFingerprint->setActiveGroup(gid, storePath));
+ }
+
+ Return<RequestStatus> BiometricsFingerprint::authenticate(uint64_t operationId, uint32_t gid)  {
+     ALOGE("auth");
++    if(mAospBiometricsFingerprint != nullptr)
++        return mAospBiometricsFingerprint->authenticate(operationId, gid).withDefault(RequestStatus::SYS_UNKNOWN);
+     return OplusToAOSPRequestStatus(mOplusBiometricsFingerprint->authenticate(operationId, gid));
+ }
+
+diff --git a/hal/oplus-fp/BiometricsFingerprint.h b/hal/oplus-fp/BiometricsFingerprint.h
+index 487192a..83f80f0 100644
+--- a/hal/oplus-fp/BiometricsFingerprint.h
++++ b/hal/oplus-fp/BiometricsFingerprint.h
+@@ -64,6 +64,8 @@ public:
+
+ private:
+     sp<vendor::oplus::hardware::biometrics::fingerprint::V2_1::IBiometricsFingerprint> mOplusBiometricsFingerprint;
++    // newer oplus HAL reuses the vendor name but extends the AOSP interface
++    sp<IBiometricsFingerprint> mAospBiometricsFingerprint;
+     sp<OplusClientCallback> mOplusClientCallback;
+     static Return<RequestStatus> OplusToAOSPRequestStatus(vendor::oplus::hardware::biometrics::fingerprint::V2_1::RequestStatus req);
+ };
+-- 
+2.56.0
+

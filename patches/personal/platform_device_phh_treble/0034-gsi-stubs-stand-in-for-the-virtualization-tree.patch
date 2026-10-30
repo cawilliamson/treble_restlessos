@@ -1,7 +1,7 @@
 From 7d514e993695f82e456c759f0a3ec47b4ea05f39 Mon Sep 17 00:00:00 2001
 From: "Christopher A. Williamson" <contact@chrisaw.io>
 Date: Mon, 28 Sep 2026 22:37:59 +0100
-Subject: [PATCH 34/51] gsi stubs: stand in for the virtualization tree
+Subject: [PATCH 34/52] gsi stubs: stand in for the virtualization tree
 
 the virtualization sources are excluded from the gsi manifest sync, but
 modules elsewhere in the tree (system/core init microdroid variant,

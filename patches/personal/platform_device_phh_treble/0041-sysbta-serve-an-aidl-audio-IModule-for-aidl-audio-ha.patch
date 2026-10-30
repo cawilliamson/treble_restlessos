@@ -1,7 +1,7 @@
 From 9458e2aa4475912f4b0fa5f6c1402a8e0fb101ca Mon Sep 17 00:00:00 2001
 From: Langsdorff <131063968+clangsdorff@users.noreply.github.com>
 Date: Sun, 18 Oct 2026 11:51:10 +0300
-Subject: [PATCH 41/51] sysbta: serve an aidl audio IModule for aidl audio hals
+Subject: [PATCH 41/52] sysbta: serve an aidl audio IModule for aidl audio hals
 
 ---
  bluetooth/audio/hal/Android.bp                | 19 ++++

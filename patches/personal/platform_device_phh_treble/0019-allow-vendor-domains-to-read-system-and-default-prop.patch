@@ -1,7 +1,7 @@
 From 094e15083c0c4ce7f42365bed2d816bb1b056489 Mon Sep 17 00:00:00 2001
 From: "Christopher A. Williamson" <contact@chrisaw.io>
 Date: Fri, 3 Apr 2026 17:30:18 +0100
-Subject: [PATCH 19/51] allow vendor domains to read system and default
+Subject: [PATCH 19/52] allow vendor domains to read system and default
  properties
 
 vendor blobs on GSI builds routinely read system_prop and default_prop

@@ -1,7 +1,7 @@
 From 7f94a030ce02c0a5b9d019c2d539a0ce0e2de4dc Mon Sep 17 00:00:00 2001
 From: "Christopher A. Williamson" <contact@chrisaw.io>
 Date: Fri, 27 Mar 2026 11:50:04 +0000
-Subject: [PATCH 17/51] guard no_present_or_validate behind vndk presence check
+Subject: [PATCH 17/52] guard no_present_or_validate behind vndk presence check
 
 add [ -n "$vndk" ] guard to prevent shell errors when vndk-detect
 fails to set persist.sys.vndk.

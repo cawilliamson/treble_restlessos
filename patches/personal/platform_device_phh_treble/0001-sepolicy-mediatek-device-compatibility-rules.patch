@@ -1,7 +1,7 @@
 From 18b4c35e24c6bd74c487b78d9f2922fdc40656e5 Mon Sep 17 00:00:00 2001
 From: Jonathon Fitch <lightman1@virginmedia.com>
 Date: Sun, 18 Oct 2026 18:05:10 +0300
-Subject: [PATCH 1/51] sepolicy: mediatek device compatibility rules
+Subject: [PATCH 1/52] sepolicy: mediatek device compatibility rules
 
 several mediatek vendor daemons need rules the gsi policy does not
 provide:
