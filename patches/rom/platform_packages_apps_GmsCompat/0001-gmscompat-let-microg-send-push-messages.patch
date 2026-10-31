@@ -1,0 +1,29 @@
+From 1081f5e602b99aa4ca1488792b89771f678dfb23 Mon Sep 17 00:00:00 2001
+From: Langsdorff <131063968+clangsdorff@users.noreply.github.com>
+Date: Sun, 1 Nov 2026 02:27:46 +0300
+Subject: [PATCH] gmscompat: let microg send push messages
+
+c2dm.permission.SEND is declared here as internal|knownSigner and
+only google's gmscore signers are trusted for it. microg declares the
+same permission itself, but the system definition wins, so microg is
+never granted it and every push broadcast it sends is dropped at
+enqueue by the firebase receivers that require it. trust the microg
+release signer as well.
+---
+ res/values/arrays.xml | 1 +
+ 1 file changed, 1 insertion(+)
+
+diff --git a/res/values/arrays.xml b/res/values/arrays.xml
+index dc176e9..dd34ded 100644
+--- a/res/values/arrays.xml
++++ b/res/values/arrays.xml
+@@ -3,5 +3,6 @@
+   <array name="gmscore_known_signers">
+     <item>7ce83c1b71f3d572fed04c8d40c5cb10ff75e6d87d9df6fbd53f0468c2905053</item>
+     <item>5f2391277b1dbd489000467e4c2fa6af802430080457dce2f618992e9dfb5402</item>
++    <item>9bd06727e62796c0130eb6dab39b73157451582cbd138e86c468acc395d14165</item>
+   </array>
+ </resources>
+-- 
+2.56.0
+
