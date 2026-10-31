@@ -1,0 +1,43 @@
+From 495bf6cb866204ab4fb85124b85f5273df077171 Mon Sep 17 00:00:00 2001
+From: Langsdorff <131063968+clangsdorff@users.noreply.github.com>
+Date: Sat, 31 Oct 2026 18:50:40 +0300
+Subject: [PATCH 2/2] vold: tag v0 wrapped storage keys for qti ice
+
+qti keymaster 4.0 only allows the raw export of a storage key when it
+was generated with the vendor KM_TAG_FBE_ICE tag. vendors with
+wrappedkey_v0 in their fstab expect it, so without the tag
+convertStorageKeyToEphemeral fails with UNSUPPORTED_KEY_FORMAT, the
+metadata encryption device is never set up and the device falls back
+to recovery with init_user0_failed.
+
+add the tag when generating v0 wrapped storage keys, and retry without
+it if the backend rejects the key so other implementations keep the
+previous behaviour.
+---
+ KeyUtil.cpp | 10 +++++++++-
+ 1 file changed, 9 insertions(+), 1 deletion(-)
+
+diff --git a/KeyUtil.cpp b/KeyUtil.cpp
+index 3d8cc6f..0b6a66b 100644
+--- a/KeyUtil.cpp
++++ b/KeyUtil.cpp
+@@ -69,7 +69,15 @@ static bool generateV0WrappedStorageKey(KeyBuffer* key) {
+     std::string key_temp;
+     auto paramBuilder = km::AuthorizationSetBuilder().AesEncryptionKey(AES_KEY_BYTES * 8);
+     paramBuilder.Authorization(km::TAG_STORAGE_KEY);
+-    if (!keystore.generateKey(paramBuilder, &key_temp)) return false;
++    // qti keymaster refuses the raw export of storage keys generated without KM_TAG_FBE_ICE
++    constexpr int32_t KM_TAG_FBE_ICE = static_cast<int32_t>(7u << 28) | 16201;
++    km::AuthorizationSet iceParams = paramBuilder;
++    iceParams.push_back(km::KeyParameter{
++            .tag = static_cast<km::Tag>(KM_TAG_FBE_ICE),
++            .value = km::KeyParameterValue::make<km::KeyParameterValue::boolValue>(true)});
++    if (!keystore.generateKey(iceParams, &key_temp) &&
++        !keystore.generateKey(paramBuilder, &key_temp))
++        return false;
+     *key = KeyBuffer(key_temp.size());
+     memcpy(reinterpret_cast<void*>(key->data()), key_temp.c_str(), key->size());
+     return true;
+-- 
+2.56.0
+
