@@ -1,0 +1,31 @@
+From b0bf1934de5004764f62722830bd7bc7a87cc909 Mon Sep 17 00:00:00 2001
+From: Langsdorff <131063968+clangsdorff@users.noreply.github.com>
+Date: Mon, 2 Nov 2026 01:56:57 +0300
+Subject: [PATCH 55/55] rw-system: keep vendor audio dir for the qti aidl audio
+ hal
+
+the qti aidl audio hal reads audio_module_config_primary.xml from
+/vendor/etc/audio. lean vendors like lineage ship only that file and
+the sku effects configs there, so the small-dir check hides it, the
+hal falls back to defaults and crashes in populateConnectedProfiles,
+and boot never completes. skip the empty mount when that file exists.
+---
+ rw-system.sh | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/rw-system.sh b/rw-system.sh
+index c49fae0..5a1673b 100644
+--- a/rw-system.sh
++++ b/rw-system.sh
+@@ -710,7 +710,7 @@ if getprop ro.vendor.build.fingerprint | grep -qE '^xiaomi/wayne/wayne.*'; then
+     setprop audio.camerasound.force true
+ fi
+ 
+-if [ $(find /vendor/etc/audio -type f |wc -l) -le 3 ];then
++if [ $(find /vendor/etc/audio -type f |wc -l) -le 3 ] && [ ! -f /vendor/etc/audio/audio_module_config_primary.xml ];then
+ 	mount -o bind /mnt/phh/empty_dir /vendor/etc/audio || true
+ fi
+ 
+-- 
+2.56.0
+
