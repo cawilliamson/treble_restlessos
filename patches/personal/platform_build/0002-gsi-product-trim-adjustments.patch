@@ -1,4 +1,4 @@
-From 1454b1650cf527888674d80723f7a756303f8298 Mon Sep 17 00:00:00 2001
+From eeed1c4a858801fc6551f4919dad31845f6df525 Mon Sep 17 00:00:00 2001
 From: "Christopher A. Williamson" <contact@chrisaw.io>
 Date: Mon, 28 Sep 2026 08:40:32 +0100
 Subject: [PATCH 2/3] gsi: product trim adjustments
@@ -14,15 +14,15 @@ derives jar deps from PRODUCT_APEX_BOOT_JARS; without removing the
 declaration, soong fails to find framework-virtualization in the
 com.android.virt apex once its bootclasspath fragment is gone.
 ---
- target/product/base_system.mk        |  1 -
+ target/product/base_system.mk        |  9 ++++-
  target/product/default_art_config.mk |  1 -
- target/product/gsi/Android.bp        | 56 +++++++++++++++++++++++++++-
+ target/product/gsi/Android.bp        | 60 ++++++++++++++++++++++++++++
  target/product/handheld_product.mk   |  5 ---
  target/product/handheld_system.mk    |  1 -
- 5 files changed, 55 insertions(+), 9 deletions(-)
+ 5 files changed, 68 insertions(+), 8 deletions(-)
 
 diff --git a/target/product/base_system.mk b/target/product/base_system.mk
-index 0c4d1e4..d3cdb89 100644
+index 0c4d1e4..b924bce 100644
 --- a/target/product/base_system.mk
 +++ b/target/product/base_system.mk
 @@ -86,7 +86,6 @@ PRODUCT_PACKAGES += \
@@ -33,6 +33,21 @@ index 0c4d1e4..d3cdb89 100644
      com.android.wifi \
      ContactsProvider \
      content \
+@@ -121,6 +120,14 @@ PRODUCT_PACKAGES += \
+     group_system \
+     gsid \
+     gsi_tool \
++    gsi_lib_vndk-28_symlink \
++    gsi_lib_vndk-sp-28_symlink \
++    gsi_lib64_vndk-28_symlink \
++    gsi_lib64_vndk-sp-28_symlink \
++    gsi_lib_vndk-29_symlink \
++    gsi_lib_vndk-sp-29_symlink \
++    gsi_lib64_vndk-29_symlink \
++    gsi_lib64_vndk-sp-29_symlink \
+     heapprofd \
+     heapprofd_client \
+     hidservice \
 diff --git a/target/product/default_art_config.mk b/target/product/default_art_config.mk
 index 7689dd0..4df5c26 100644
 --- a/target/product/default_art_config.mk
@@ -46,78 +61,82 @@ index 7689dd0..4df5c26 100644
 
  # When we release ondeviceintelligence in NeuralNetworks module
 diff --git a/target/product/gsi/Android.bp b/target/product/gsi/Android.bp
-index 1dea323..0ebd40b 100644
+index 1dea323..8d5399f 100644
 --- a/target/product/gsi/Android.bp
 +++ b/target/product/gsi/Android.bp
-@@ -74,6 +74,60 @@ gsi_symlinks = [
+@@ -74,6 +74,56 @@ gsi_symlinks = [
      },
  ]
 
-+// compat symlinks for legacy vendor partitions: pre-q vendor ld.config.txt files
-+// hardcode /system/${LIB}/vndk-${VER} and vndk-sp-${VER} search paths. point them
-+// into the matching vndk apex so those paths keep resolving on old devices.
-+vndk_compat_symlinks = [
-+    {
-+        target: "/apex/com.android.vndk.v28/lib",
-+        name: "lib/vndk-28",
-+    },
-+    {
-+        target: "/apex/com.android.vndk.v28/lib64",
-+        name: "lib64/vndk-28",
-+    },
-+    {
-+        target: "/apex/com.android.vndk.v28/lib",
-+        name: "lib/vndk-sp-28",
-+    },
-+    {
-+        target: "/apex/com.android.vndk.v28/lib64",
-+        name: "lib64/vndk-sp-28",
-+    },
-+    {
-+        target: "/apex/com.android.vndk.v29/lib",
-+        name: "lib/vndk-29",
-+    },
-+    {
-+        target: "/apex/com.android.vndk.v29/lib64",
-+        name: "lib64/vndk-29",
-+    },
-+    {
-+        target: "/apex/com.android.vndk.v29/lib",
-+        name: "lib/vndk-sp-29",
-+    },
-+    {
-+        target: "/apex/com.android.vndk.v29/lib64",
-+        name: "lib64/vndk-sp-29",
-+    },
-+    {
-+        target: "/apex/com.android.vndk.v30/lib",
-+        name: "lib/vndk-30",
-+    },
-+    {
-+        target: "/apex/com.android.vndk.v30/lib64",
-+        name: "lib64/vndk-30",
-+    },
-+    {
-+        target: "/apex/com.android.vndk.v30/lib",
-+        name: "lib/vndk-sp-30",
-+    },
-+    {
-+        target: "/apex/com.android.vndk.v30/lib64",
-+        name: "lib64/vndk-sp-30",
-+    },
-+]
++// soong stopped installing these with the vndk apexes in android 17, but
++// prebuilt vndk 28/29 libs and pre-r vendors still use these paths.
++install_symlink {
++    name: "gsi_lib_vndk-28_symlink",
++    installed_location: "lib/vndk-28",
++    symlink_target: "/apex/com.android.vndk.v28/lib",
++}
++
++install_symlink {
++    name: "gsi_lib_vndk-sp-28_symlink",
++    installed_location: "lib/vndk-sp-28",
++    symlink_target: "/apex/com.android.vndk.v28/lib",
++}
++
++install_symlink {
++    name: "gsi_lib64_vndk-28_symlink",
++    installed_location: "lib64/vndk-28",
++    symlink_target: "/apex/com.android.vndk.v28/lib64",
++}
++
++install_symlink {
++    name: "gsi_lib64_vndk-sp-28_symlink",
++    installed_location: "lib64/vndk-sp-28",
++    symlink_target: "/apex/com.android.vndk.v28/lib64",
++}
++
++install_symlink {
++    name: "gsi_lib_vndk-29_symlink",
++    installed_location: "lib/vndk-29",
++    symlink_target: "/apex/com.android.vndk.v29/lib",
++}
++
++install_symlink {
++    name: "gsi_lib_vndk-sp-29_symlink",
++    installed_location: "lib/vndk-sp-29",
++    symlink_target: "/apex/com.android.vndk.v29/lib",
++}
++
++install_symlink {
++    name: "gsi_lib64_vndk-29_symlink",
++    installed_location: "lib64/vndk-29",
++    symlink_target: "/apex/com.android.vndk.v29/lib64",
++}
++
++install_symlink {
++    name: "gsi_lib64_vndk-sp-29_symlink",
++    installed_location: "lib64/vndk-sp-29",
++    symlink_target: "/apex/com.android.vndk.v29/lib64",
++}
 +
  android_filesystem_defaults {
      name: "android_gsi_defaults",
      defaults: [
-@@ -81,7 +135,7 @@ android_filesystem_defaults {
-         "system_ext_image_defaults",
-         "product_image_defaults",
-     ],
--    symlinks: gsi_symlinks,
-+    symlinks: gsi_symlinks + vndk_compat_symlinks,
+@@ -84,6 +134,16 @@ android_filesystem_defaults {
+     symlinks: gsi_symlinks,
      dirs: ["cache"],
      deps: [
++        // vndk 28/29 compat symlinks
++        "gsi_lib_vndk-28_symlink",
++        "gsi_lib_vndk-sp-28_symlink",
++        "gsi_lib64_vndk-28_symlink",
++        "gsi_lib64_vndk-sp-28_symlink",
++        "gsi_lib_vndk-29_symlink",
++        "gsi_lib_vndk-sp-29_symlink",
++        "gsi_lib64_vndk-29_symlink",
++        "gsi_lib64_vndk-sp-29_symlink",
++
+         ///////////////////////////////////////////
+         // gsi_system_ext
          ///////////////////////////////////////////
 diff --git a/target/product/handheld_product.mk b/target/product/handheld_product.mk
 index b276cf9..7a93d49 100644

@@ -1,4 +1,4 @@
-From 00968297be06270ef0e50c8d5b4e802e280fb941 Mon Sep 17 00:00:00 2001
+From e439379b285b47281ef2219ac29d182714f61e1c Mon Sep 17 00:00:00 2001
 From: "Christopher A. Williamson" <contact@chrisaw.io>
 Date: Tue, 29 Sep 2026 13:36:01 +0100
 Subject: [PATCH 3/3] build: drop the virtualization deps from the gsi product
@@ -44,10 +44,10 @@ index 6ca7c46..90b13b2 100644
                  "servicemanager",
              ],
 diff --git a/target/product/gsi/Android.bp b/target/product/gsi/Android.bp
-index 0ebd40b..4f0a09a 100644
+index 8d5399f..46479bd 100644
 --- a/target/product/gsi/Android.bp
 +++ b/target/product/gsi/Android.bp
-@@ -195,14 +195,6 @@ android_filesystem_defaults {
+@@ -201,14 +201,6 @@ android_filesystem_defaults {
          "android.hidl.allocator@1.0-service",
      ],
      multilib: {
