@@ -1,0 +1,34 @@
+From 93a05aceb0e24ac58a6ffa4de7da26482a0381ff Mon Sep 17 00:00:00 2001
+From: Langsdorff <131063968+clangsdorff@users.noreply.github.com>
+Date: Mon, 2 Nov 2026 01:54:02 +0300
+Subject: [PATCH 54/54] rw-system: restart fingerprint auth on wake for the
+ sony fpc hal
+
+the stock sony fpc hal on pie vendors stops arming the sensor when the
+device suspends while keyguard is already waiting for a finger, so
+fingerprint stays dead until the pin is entered. turn on the keyguard
+restart on wake for sony vendors that ship this hal.
+---
+ rw-system.sh | 6 ++++++
+ 1 file changed, 6 insertions(+)
+
+diff --git a/rw-system.sh b/rw-system.sh
+index 4a814d6..c49fae0 100644
+--- a/rw-system.sh
++++ b/rw-system.sh
+@@ -967,6 +967,12 @@ if getprop ro.hardware.keystore | grep -iq sprd && [ -n "$vndk" ] && [ "$vndk" -
+     setprop persist.sys.phh.disable_sensor_direct_report true
+ fi
+ 
++# Sony fpc hal stops arming the sensor after a suspend mid-session
++if getprop ro.vendor.build.fingerprint | grep -iq -E -e '^Sony/' &&
++    [ -f /vendor/etc/init/fpc_fingerprint@2.1_HIDL-service.rc ]; then
++    setprop persist.sys.phh.fingerprint.restart_on_wake true
++fi
++
+ # Fix manual network selection with old modem
+ # https://github.com/LineageOS/android_hardware_ril/commit/e3d006fa722c02fc26acdfcaa43a3f3a1378eba9
+ if getprop ro.vendor.build.fingerprint | grep -iq \
+-- 
+2.56.0
+
