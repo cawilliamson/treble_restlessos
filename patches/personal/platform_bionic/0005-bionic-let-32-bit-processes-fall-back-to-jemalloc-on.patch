@@ -94,7 +94,7 @@ index 3732354..b35de4c 100644
 +// old 32-bit vendor blobs were written against jemalloc and some overrun their
 +// buffers, which scudo's guard pages turn into crashes
 +static bool is_jemalloc_requested() {
-+  char exe_path[PATH_MAX];
++  char exe_path[256];  // PATH_MAX would blow libc's 2048 byte frame limit
 +  ssize_t len = readlink("/proc/self/exe", exe_path, sizeof(exe_path) - 1);
 +  if (len <= 0) {
 +    return false;
