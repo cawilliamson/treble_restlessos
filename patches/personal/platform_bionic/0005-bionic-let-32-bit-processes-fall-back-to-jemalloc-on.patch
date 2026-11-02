@@ -1,0 +1,160 @@
+From 28f3dd320d52e960241bb1458d9d68cf658d5a27 Mon Sep 17 00:00:00 2001
+From: Langsdorff <131063968+clangsdorff@users.noreply.github.com>
+Date: Mon, 2 Nov 2026 16:30:03 +0300
+Subject: [PATCH 5/5] bionic: let 32-bit processes fall back to jemalloc on
+ request
+
+pie era 32-bit vendor blobs were tuned against jemalloc and some of them
+write past their heap buffers. jemalloc's size classes hide that, scudo
+places large chunks before a guard page, so the sony camera provider on
+the xperia xz1 segfaults in its focus stats plugin on every stream.
+link jemalloc next to scudo in the 32-bit libc and switch the dispatch
+table to it at malloc init when
+persist.sys.phh.malloc32.jemalloc.<binary name> is true. other
+processes keep using scudo.
+---
+ libc/Android.bp                       |  2 +-
+ libc/bionic/malloc_common.cpp         | 74 +++++++++++++++++++++++++++
+ libc/bionic/malloc_common.h           |  7 +++
+ libc/bionic/malloc_common_dynamic.cpp |  2 +-
+ 4 files changed, 83 insertions(+), 2 deletions(-)
+
+diff --git a/libc/Android.bp b/libc/Android.bp
+index 3b0db1d..167171c 100644
+--- a/libc/Android.bp
++++ b/libc/Android.bp
+@@ -195,7 +195,7 @@ cc_defaults {
+ 
+     multilib: {
+         lib32: {
+-            exclude_static_libs: [
++            whole_static_libs: [
+                 "libjemalloc5",
+                 "libc_jemalloc_wrapper",
+             ],
+diff --git a/libc/bionic/malloc_common.cpp b/libc/bionic/malloc_common.cpp
+index 3732354..b35de4c 100644
+--- a/libc/bionic/malloc_common.cpp
++++ b/libc/bionic/malloc_common.cpp
+@@ -52,6 +52,16 @@
+ #include "malloc_limit.h"
+ #include "malloc_tagged_pointers.h"
+ 
++#if defined(BOTH_SCUDO_AND_JEMALLOC)
++#include <limits.h>
++#include <string.h>
++#include <sys/system_properties.h>
++#include <unistd.h>
++
++#include "jemalloc.h"
++#include "sysprop_helpers.h"
++#endif
++
+ // =============================================================================
+ // Global variables instantations.
+ // =============================================================================
+@@ -508,6 +518,70 @@ void InitNativeAllocatorDispatch(libc_globals* globals) {
+   native_allocator_dispatch = table;
+ }
+ 
++const MallocDispatch* NativeAllocatorDispatch() {
++  return native_allocator_dispatch;
++}
++#elif defined(BOTH_SCUDO_AND_JEMALLOC)
++
++#define JeMalloc(function)  je_ ## function
++
++static constexpr MallocDispatch __jemalloc_malloc_dispatch __attribute__((unused)) = {
++    JeMalloc(calloc),
++    JeMalloc(free),
++    JeMalloc(mallinfo),
++    JeMalloc(malloc),
++    JeMalloc(malloc_usable_size),
++    JeMalloc(memalign),
++    JeMalloc(posix_memalign),
++  #if defined(HAVE_DEPRECATED_MALLOC_FUNCS)
++    JeMalloc(pvalloc),
++  #endif
++    JeMalloc(realloc),
++    JeMalloc(reallocarray),
++  #if defined(HAVE_DEPRECATED_MALLOC_FUNCS)
++    JeMalloc(valloc),
++  #endif
++    JeMalloc(malloc_iterate),
++    JeMalloc(malloc_disable),
++    JeMalloc(malloc_enable),
++    JeMalloc(mallopt),
++    JeMalloc(aligned_alloc),
++    JeMalloc(malloc_info),
++};
++
++static const MallocDispatch* native_allocator_dispatch = &__libc_malloc_default_dispatch;
++
++#if !defined(LIBC_STATIC)
++// old 32-bit vendor blobs were written against jemalloc and some overrun their
++// buffers, which scudo's guard pages turn into crashes
++static bool is_jemalloc_requested() {
++  char exe_path[PATH_MAX];
++  ssize_t len = readlink("/proc/self/exe", exe_path, sizeof(exe_path) - 1);
++  if (len <= 0) {
++    return false;
++  }
++  exe_path[len] = '\0';
++  const char* name = strrchr(exe_path, '/');
++  name = name != nullptr ? name + 1 : exe_path;
++
++  char prop_name[256];
++  async_safe_format_buffer(prop_name, sizeof(prop_name), "persist.sys.phh.malloc32.jemalloc.%s",
++                           name);
++  char value[PROP_VALUE_MAX];
++  return get_property_value(prop_name, value, sizeof(value)) && strcmp(value, "true") == 0;
++}
++
++void InitNativeAllocatorDispatch(libc_globals* globals) {
++  if (!is_jemalloc_requested()) {
++    return;
++  }
++  async_safe_format_log(ANDROID_LOG_INFO, "malloc_common", "using jemalloc instead of scudo");
++  globals->current_dispatch_table = &__jemalloc_malloc_dispatch;
++  globals->default_dispatch_table = &__jemalloc_malloc_dispatch;
++  native_allocator_dispatch = &__jemalloc_malloc_dispatch;
++}
++#endif
++
+ const MallocDispatch* NativeAllocatorDispatch() {
+   return native_allocator_dispatch;
+ }
+diff --git a/libc/bionic/malloc_common.h b/libc/bionic/malloc_common.h
+index 9604296..daf54ba 100644
+--- a/libc/bionic/malloc_common.h
++++ b/libc/bionic/malloc_common.h
+@@ -58,6 +58,13 @@ __END_DECLS
+ #include "scudo.h"
+ #define Malloc(function)  scudo_ ## function
+ 
++#if !defined(__LP64__)
++#define BOTH_SCUDO_AND_JEMALLOC
++#if !defined(LIBC_STATIC)
++void InitNativeAllocatorDispatch(libc_globals* globals);
++#endif
++#endif
++
+ #endif
+ 
+ const MallocDispatch* NativeAllocatorDispatch();
+diff --git a/libc/bionic/malloc_common_dynamic.cpp b/libc/bionic/malloc_common_dynamic.cpp
+index c7d4e47..dbdfd25 100644
+--- a/libc/bionic/malloc_common_dynamic.cpp
++++ b/libc/bionic/malloc_common_dynamic.cpp
+@@ -381,7 +381,7 @@ extern "C" size_t __scudo_get_stack_depot_size();
+ 
+ // Initializes memory allocation framework once per process.
+ void MallocInitImpl(libc_globals* globals) {
+-#if defined(BOTH_H_MALLOC_AND_SCUDO)
++#if defined(BOTH_H_MALLOC_AND_SCUDO) || defined(BOTH_SCUDO_AND_JEMALLOC)
+   InitNativeAllocatorDispatch(globals);
+ #endif
+ 
+-- 
+2.56.0
+

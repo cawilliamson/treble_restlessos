@@ -1,0 +1,33 @@
+From 0f840acb155727a57676bb667e95ef043c9b92be Mon Sep 17 00:00:00 2001
+From: Langsdorff <131063968+clangsdorff@users.noreply.github.com>
+Date: Mon, 2 Nov 2026 16:30:34 +0300
+Subject: [PATCH 56/56] rw-system: keep the sony camera provider on jemalloc
+
+the 32-bit sony camera provider on pie vendors writes past its focus
+stats buffer and crashes under scudo as soon as a stream starts. ask
+bionic to run that binary on jemalloc, as the stock pie libc did, for
+sony vendors that ship it.
+---
+ rw-system.sh | 6 ++++++
+ 1 file changed, 6 insertions(+)
+
+diff --git a/rw-system.sh b/rw-system.sh
+index 5a1673b..293379e 100644
+--- a/rw-system.sh
++++ b/rw-system.sh
+@@ -973,6 +973,12 @@ if getprop ro.vendor.build.fingerprint | grep -iq -E -e '^Sony/' &&
+     setprop persist.sys.phh.fingerprint.restart_on_wake true
+ fi
+ 
++# Sony camera provider overruns its focus stats buffer, keep it on jemalloc like stock pie
++if getprop ro.vendor.build.fingerprint | grep -iq -E -e '^Sony/' &&
++    [ -f /vendor/bin/hw/vendor.somc.hardware.camera.provider@1.0-service ]; then
++    setprop persist.sys.phh.malloc32.jemalloc.vendor.somc.hardware.camera.provider@1.0-service true
++fi
++
+ # Fix manual network selection with old modem
+ # https://github.com/LineageOS/android_hardware_ril/commit/e3d006fa722c02fc26acdfcaa43a3f3a1378eba9
+ if getprop ro.vendor.build.fingerprint | grep -iq \
+-- 
+2.56.0
+
