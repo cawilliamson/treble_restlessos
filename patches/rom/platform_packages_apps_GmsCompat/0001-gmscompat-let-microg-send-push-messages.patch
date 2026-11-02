@@ -1,7 +1,7 @@
 From 1081f5e602b99aa4ca1488792b89771f678dfb23 Mon Sep 17 00:00:00 2001
 From: Langsdorff <131063968+clangsdorff@users.noreply.github.com>
 Date: Sun, 1 Nov 2026 02:27:46 +0300
-Subject: [PATCH] gmscompat: let microg send push messages
+Subject: [PATCH 1/1] gmscompat: let microg send push messages
 
 c2dm.permission.SEND is declared here as internal|knownSigner and
 only google's gmscore signers are trusted for it. microg declares the

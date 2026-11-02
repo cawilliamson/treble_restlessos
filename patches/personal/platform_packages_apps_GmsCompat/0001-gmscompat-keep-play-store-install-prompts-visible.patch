@@ -1,7 +1,7 @@
 From 5de722b782b5706cfe3bcc0ee56e136efb18afa7 Mon Sep 17 00:00:00 2001
 From: Langsdorff <131063968+clangsdorff@users.noreply.github.com>
 Date: Thu, 29 Oct 2026 22:06:23 +0300
-Subject: [PATCH] gmscompat: keep play store install prompts visible
+Subject: [PATCH 1/1] gmscompat: keep play store install prompts visible
 
 the pending user action channel is low importance, so the install
 confirmation lands in the silent section and is easy to miss. when

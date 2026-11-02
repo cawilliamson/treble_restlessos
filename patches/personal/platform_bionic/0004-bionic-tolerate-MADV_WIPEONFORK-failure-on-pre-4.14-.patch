@@ -1,7 +1,7 @@
 From 36674bca0c963766138f4769fd38597be665ba97 Mon Sep 17 00:00:00 2001
 From: "Christopher A. Williamson" <contact@chrisaw.io>
 Date: Tue, 7 Apr 2026 14:33:52 +0000
-Subject: [PATCH 4/4] bionic: tolerate MADV_WIPEONFORK failure on pre-4.14 kernels
+Subject: [PATCH 4/5] bionic: tolerate MADV_WIPEONFORK failure on pre-4.14 kernels
 
 MADV_WIPEONFORK was introduced in linux 4.14. on older vendor kernels
 (e.g. 4.9.x on samsung exynos devices) the madvise call returns EINVAL,
