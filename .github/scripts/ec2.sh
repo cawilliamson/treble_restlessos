@@ -173,7 +173,8 @@ provision() {
 }
 
 # --------------------------------------------------------------------------
-# select_az: pick the AZ with the best spot placement score for the large
+# select_az: pick the AZ with the best spot placement score (highest of
+# several samples) for the large
 # instance type, restricted to AZs that actually offer every instance type
 # used this run, and print the corresponding subnet id.
 # --------------------------------------------------------------------------
@@ -194,19 +195,41 @@ select_az() {
     exit 1
   }
 
-  local scores
-  scores=$(aws ec2 get-spot-placement-scores \
-    --instance-types "$inst_type" \
-    --target-capacity 1 \
-    --single-availability-zone \
-    --region "$REGION" \
-    --region-names "$REGION" \
-    --output json) || {
+  # spot placement scores fluctuate between calls, so sample them several
+  # times (SPS_SAMPLES requests, SPS_INTERVAL seconds apart) and keep, per AZ,
+  # the highest score seen. ties are broken by the sum over all samples.
+  local samples="${SPS_SAMPLES:-3}" interval="${SPS_INTERVAL:-5}"
+  local all_scores="[]" sample i
+  for ((i = 1; i <= samples; i++)); do
+    if sample=$(aws ec2 get-spot-placement-scores \
+      --instance-types "$inst_type" \
+      --target-capacity 1 \
+      --single-availability-zone \
+      --region "$REGION" \
+      --region-names "$REGION" \
+      --output json); then
+      echo "spot placement scores (sample ${i}/${samples}):" >&2
+      echo "$sample" | jq -r '.SpotPlacementScores[] | "  \(.AvailabilityZoneId): \(.Score)"' >&2
+      all_scores=$(jq -c --argjson s "$sample" '. + $s.SpotPlacementScores' <<<"$all_scores")
+    else
+      echo "WARNING: failed to fetch spot placement scores (sample ${i}/${samples})" >&2
+    fi
+    if [ "$i" -lt "$samples" ]; then sleep "$interval"; fi
+  done
+
+  [ "$all_scores" = "[]" ] && {
     echo "ERROR: failed to fetch spot placement scores" >&2
     exit 1
   }
 
-  echo "$scores" | jq -r '.SpotPlacementScores[] | "\(.AvailabilityZoneId): \(.Score)"' >&2
+  local scores
+  scores=$(jq -c '{SpotPlacementScores: (group_by(.AvailabilityZoneId)
+    | map({AvailabilityZoneId: .[0].AvailabilityZoneId,
+           Score: (map(.Score) | max),
+           Total: (map(.Score) | add)}))}' <<<"$all_scores")
+
+  echo "aggregated spot placement scores (max / sum):" >&2
+  echo "$scores" | jq -r '.SpotPlacementScores[] | "  \(.AvailabilityZoneId): \(.Score) / \(.Total)"' >&2
 
   # hard availability: an AZ can only host the run if it sells every instance
   # type used (large for build, small for sync/sign). spot placement scores
@@ -236,7 +259,7 @@ select_az() {
 
   local best
   best=$(echo "$scores" | jq -c --argjson ids "$eligible" \
-    '.SpotPlacementScores | map(select(.AvailabilityZoneId | IN($ids[]))) | max_by(.Score)')
+    '.SpotPlacementScores | map(select(.AvailabilityZoneId | IN($ids[]))) | max_by([.Score, .Total])')
   local best_az_id score
   best_az_id=$(echo "$best" | jq -r '.AvailabilityZoneId')
   score=$(echo "$best" | jq -r '.Score')
