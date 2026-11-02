@@ -1,4 +1,4 @@
-From c3b7bd7f84053949cf27129e9992ac3a06a62564 Mon Sep 17 00:00:00 2001
+From e224e2823dd85ea4e03f4ed57e0ffe2c6bd72a40 Mon Sep 17 00:00:00 2001
 From: Langsdorff <131063968+clangsdorff@users.noreply.github.com>
 Date: Thu, 29 Oct 2026 16:24:50 +0300
 Subject: [PATCH 17/18] treble_app: add a toggle for the aosp ims stack
@@ -12,8 +12,8 @@ preference, so it cannot drift from what is actually enabled.
 ---
  app/src/main/java/me/phh/treble/app/Ims.kt    | 18 ++++++++++-----
  .../java/me/phh/treble/app/ImsSettings.kt     | 22 +++++++++++++++++++
- app/src/main/res/xml/pref_ims.xml             |  6 +++++
- 3 files changed, 40 insertions(+), 6 deletions(-)
+ app/src/main/res/xml/pref_ims.xml             |  7 ++++++
+ 3 files changed, 41 insertions(+), 6 deletions(-)
 
 diff --git a/app/src/main/java/me/phh/treble/app/Ims.kt b/app/src/main/java/me/phh/treble/app/Ims.kt
 index 575c5f8..8fbcd62 100644
@@ -123,10 +123,10 @@ index 65cbecc..dbb1f21 100644
  
          Log.d("PHH", "MTK P radio = ${Ims.gotMtkP}")
 diff --git a/app/src/main/res/xml/pref_ims.xml b/app/src/main/res/xml/pref_ims.xml
-index 20e2bd7..c3534e8 100644
+index 20e2bd7..8145eb3 100644
 --- a/app/src/main/res/xml/pref_ims.xml
 +++ b/app/src/main/res/xml/pref_ims.xml
-@@ -3,6 +3,12 @@
+@@ -3,6 +3,13 @@
  	xmlns:android="http://schemas.android.com/apk/res/android">
      <Preference android:title="Create IMS APN"
          android:key="key_ims_create_apn" />
@@ -135,7 +135,8 @@ index 20e2bd7..c3534e8 100644
 +        android:persistent="false"
 +        android:key="key_ims_use_imsstack"
 +        android:title="Use the AOSP IMS stack"
-+        android:summary="Experimental. Runs VoLTE on the AP like FlossIMS, takes priority over any installed IMS APK" />
++        android:summaryOff="Experimental. Runs VoLTE on the AP like FlossIMS, takes priority over any installed IMS APK"
++        android:summaryOn="Active. If VoLTE stays off after a reboot, set it to Forced available in Settings &gt; Network &amp; internet &gt; SIMs &gt; Carrier settings overrides" />
      <Preference android:title="Download and install IMS APK"
          android:key="key_ims_install_apn" />
      <SwitchPreferenceCompat
