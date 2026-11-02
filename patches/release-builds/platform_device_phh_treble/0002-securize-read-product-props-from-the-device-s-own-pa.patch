@@ -1,23 +1,39 @@
-From e606fc29d9f6ca1b0837a7e88edb79850eb17685 Mon Sep 17 00:00:00 2001
+From 5f021b959edc103d4f3aa953264d72773c8849be Mon Sep 17 00:00:00 2001
 From: Langsdorff <131063968+clangsdorff@users.noreply.github.com>
 Date: Sun, 18 Oct 2026 11:27:13 +0300
-Subject: [PATCH 2/2] securize: resolve product props in init's source order
+Subject: [PATCH 2/2] securize: read product props from the device's own
+ partitions
 
+/product can be the gsi's own product, so its props cant be told apart
+from the device's with getprop, and microtrust tees reject tas when
+ro.product.device is the gsi's. mount the device's product partition
+read-only and take the values from its build.prop, falling back to odm
+and vendor when there is none. ro.build.product is the device name, not
+the model.
 ---
- rw-system.sh | 88 ++++++++++++++++++++++++----------------------------
- 1 file changed, 41 insertions(+), 47 deletions(-)
+ rw-system.sh | 111 +++++++++++++++++++++++++++++----------------------
+ 1 file changed, 64 insertions(+), 47 deletions(-)
 
 diff --git a/rw-system.sh b/rw-system.sh
-index 28b44cd..28c189e 100644
+index 36ce1d6..a130fb9 100644
 --- a/rw-system.sh
 +++ b/rw-system.sh
-@@ -793,6 +793,26 @@ copyprop() {
+@@ -805,6 +805,35 @@ copyprop() {
      fi
  }
  
-+# same lookup order as init's ro.product.property_source_order
++# the device's own product partition first, then odm and vendor
 +device_prop() {
-+    for partition in $device_prop_partitions; do
++    if [ "$product_build_prop" ]; then
++        for key in ro.product.product."$1" ro.product."$1"; do
++            value="$(grep "^$key=" "$product_build_prop" | head -n 1 | cut -d = -f 2-)"
++            if [ "$value" ]; then
++                echo "$value"
++                return
++            fi
++        done
++    fi
++    for partition in ro.product.odm ro.product.vendor ro.vendor.product; do
 +        value="$(getprop "$partition.$1")"
 +        if [ "$value" ]; then
 +            echo "$value"
@@ -38,7 +54,7 @@ index 28b44cd..28c189e 100644
  # OPPO/Realme devices with MTK vendor kernels include an oppo_root_check
  # kernel module or init service that detects an unlocked bootloader and forces
  # a reboot to recovery.  set the boot-state properties to "locked" so any
-@@ -875,53 +895,27 @@ if [ ! -f /metadata/securize_disable ]; then
+@@ -887,53 +916,41 @@ if [ ! -f /metadata/securize_disable ]; then
      copyprop ro.build.fingerprint ro.vendor.build.fingerprint
      copyprop ro.system_ext.build.fingerprint ro.vendor.build.fingerprint
      copyprop ro.product.build.fingerprint ro.vendor.build.fingerprint
@@ -90,23 +106,37 @@ index 28b44cd..28c189e 100644
 -    copyprop ro.product.product.manufacturer ro.product.vendor.manufacturer
 -    copyprop ro.product.system_ext.manufacturer ro.product.vendor.manufacturer
 +
-+    # a deleted or GSI-provided product carries the system build date
-+    device_prop_partitions="ro.product.odm ro.product.vendor ro.vendor.product"
-+    if [ "$(getprop ro.product.build.date.utc)" != "$(getprop ro.system.build.date.utc)" ]; then
-+        device_prop_partitions="ro.product.product $device_prop_partitions"
-+    fi
++    # /product can be the GSI's own, read the device's product partition directly
++    product_build_prop=
++    slot="$(getprop ro.boot.slot_suffix)"
++    for dev in /dev/block/mapper/product"$slot" /dev/block/mapper/product \
++            /dev/block/by-name/product"$slot" /dev/block/by-name/product; do
++        [ -b "$dev" ] || continue
++        mkdir -p /mnt/phh/product_part
++        if mount -o ro "$dev" /mnt/phh/product_part; then
++            for f in /mnt/phh/product_part/etc/build.prop /mnt/phh/product_part/build.prop; do
++                if [ -f "$f" ]; then
++                    cp "$f" /mnt/phh/product_build.prop
++                    product_build_prop=/mnt/phh/product_build.prop
++                    break
++                fi
++            done
++            umount /mnt/phh/product_part
++        fi
++        rmdir /mnt/phh/product_part
++        break
++    done
 +
 +    copy_device_prop device \
 +        ro.product.device ro.product.system.device ro.product.system_ext.device ro.product.product.device \
-+        ro.build.device
++        ro.build.device ro.build.product
 +    copy_device_prop name \
 +        ro.product.name ro.product.system.name ro.product.system_ext.name ro.product.product.name
 +    copy_device_prop brand \
 +        ro.product.brand ro.product.system.brand ro.product.system_ext.brand ro.product.product.brand \
 +        ro.system.product.brand
 +    copy_device_prop model \
-+        ro.product.model ro.product.system.model ro.product.system_ext.model ro.product.product.model \
-+        ro.build.product
++        ro.product.model ro.product.system.model ro.product.system_ext.model ro.product.product.model
 +    copy_device_prop manufacturer \
 +        ro.product.manufacturer ro.product.system.manufacturer ro.product.system_ext.manufacturer ro.product.product.manufacturer \
 +        ro.system.product.manufacturer
@@ -114,5 +144,5 @@ index 28b44cd..28c189e 100644
      # Hide system/xbin/su
      mount /mnt/phh/empty_dir /system/xbin
 -- 
-2.50.1 (Apple Git-155)
+2.56.0
 
