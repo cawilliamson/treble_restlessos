@@ -197,7 +197,7 @@ select_az() {
 
   # spot placement scores fluctuate between calls, so sample them several
   # times (SPS_SAMPLES requests, SPS_INTERVAL seconds apart) and keep, per AZ,
-  # the highest score seen. ties are broken by the sum over all samples.
+  # the highest score seen.
   local samples="${SPS_SAMPLES:-3}" interval="${SPS_INTERVAL:-5}"
   local all_scores="[]" sample i
   for ((i = 1; i <= samples; i++)); do
@@ -257,9 +257,14 @@ select_az() {
     exit 1
   }
 
+  local depri="${SPS_DEPRIORITISED_AZ:-${REGION}d}"
   local best
   best=$(echo "$scores" | jq -c --argjson ids "$eligible" \
-    '.SpotPlacementScores | map(select(.AvailabilityZoneId | IN($ids[]))) | max_by([.Score, .Total])')
+    --argjson map "$az_map" --arg depri "$depri" '
+    .SpotPlacementScores
+    | map(select(.AvailabilityZoneId | IN($ids[])))
+    | map(. as $s | . + {name: ($map[] | select(.id == $s.AvailabilityZoneId) | .name)})
+    | max_by([.Score, (if .name == $depri then 0 else 1 end), .Total])')
   local best_az_id score
   best_az_id=$(echo "$best" | jq -r '.AvailabilityZoneId')
   score=$(echo "$best" | jq -r '.Score')
