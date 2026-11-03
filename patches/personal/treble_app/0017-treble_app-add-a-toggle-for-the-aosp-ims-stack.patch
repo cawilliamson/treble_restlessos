@@ -1,4 +1,4 @@
-From e224e2823dd85ea4e03f4ed57e0ffe2c6bd72a40 Mon Sep 17 00:00:00 2001
+From a28591c3cb14fdca5b76cc658f0eca55213a9af0 Mon Sep 17 00:00:00 2001
 From: Langsdorff <131063968+clangsdorff@users.noreply.github.com>
 Date: Thu, 29 Oct 2026 16:24:50 +0300
 Subject: [PATCH 17/18] treble_app: add a toggle for the aosp ims stack
@@ -9,25 +9,40 @@ overlay. an enabled imsstack wins over any installed ims apk, sets
 persist.sys.phh.ims.aosp and clears the floss prop so only one ap side
 stack is wired up. the switch reads the package state, not a stored
 preference, so it cannot drift from what is actually enabled.
+
+the default grants only rerun when the build fingerprint changes, and
+gsis keep the vendor one, so an imsstack enabled on an existing install
+never gets its runtime permissions. without location it crash loops on
+the cell info listener. grant its requested runtime permissions while
+it is enabled.
 ---
- app/src/main/java/me/phh/treble/app/Ims.kt    | 18 ++++++++++-----
- .../java/me/phh/treble/app/ImsSettings.kt     | 22 +++++++++++++++++++
- app/src/main/res/xml/pref_ims.xml             |  7 ++++++
- 3 files changed, 41 insertions(+), 6 deletions(-)
+ app/src/main/java/me/phh/treble/app/Ims.kt    | 44 ++++++++++++++++---
+ .../java/me/phh/treble/app/ImsSettings.kt     | 22 ++++++++++
+ app/src/main/res/xml/pref_ims.xml             |  7 +++
+ 3 files changed, 67 insertions(+), 6 deletions(-)
 
 diff --git a/app/src/main/java/me/phh/treble/app/Ims.kt b/app/src/main/java/me/phh/treble/app/Ims.kt
-index 575c5f8..8fbcd62 100644
+index 575c5f8..4420c2f 100644
 --- a/app/src/main/java/me/phh/treble/app/Ims.kt
 +++ b/app/src/main/java/me/phh/treble/app/Ims.kt
-@@ -3,6 +3,7 @@ package me.phh.treble.app
+@@ -3,6 +3,8 @@ package me.phh.treble.app
  import android.annotation.SuppressLint
  import android.content.Context
  import android.content.SharedPreferences
 +import android.content.pm.PackageManager
++import android.content.pm.PermissionInfo
  import android.hardware.display.DisplayManager
  import android.net.ConnectivityManager
  import android.net.Network
-@@ -86,6 +87,12 @@ object Ims: EntryStartup {
+@@ -11,6 +13,7 @@ import android.net.NetworkRequest
+ import android.os.Parcel
+ import android.os.ServiceManager
+ import android.os.SystemProperties
++import android.os.UserHandle
+ import androidx.preference.PreferenceManager
+ import android.provider.Settings
+ import android.util.Log
+@@ -86,6 +89,35 @@ object Ims: EntryStartup {
      val gotHW = mAllSlots
              .find { i -> mHidlService.get("vendor.huawei.hardware.radio@1.0::IRadio", i) != null } != null
  
@@ -37,10 +52,33 @@ index 575c5f8..8fbcd62 100644
 +        false
 +    }
 +
++    // gsis keep the vendor fingerprint, so the default grants never rerun for an imsstack enabled after first boot
++    fun grantImsStackPermissions(pm: PackageManager) {
++        val pkg = try {
++            pm.getPackageInfo(ImsSettings.imsStackPackage, PackageManager.GET_PERMISSIONS)
++        } catch (e: PackageManager.NameNotFoundException) {
++            return
++        }
++        for (permission in pkg.requestedPermissions ?: return) {
++            val info = try {
++                pm.getPermissionInfo(permission, 0)
++            } catch (e: PackageManager.NameNotFoundException) {
++                continue
++            }
++            if (info.protection != PermissionInfo.PROTECTION_DANGEROUS) continue
++            if (pm.checkPermission(permission, pkg.packageName) == PackageManager.PERMISSION_GRANTED) continue
++            try {
++                pm.grantRuntimePermission(pkg.packageName, permission, UserHandle.SYSTEM)
++            } catch (e: Exception) {
++                Log.w("PHH", "Failed granting $permission to ${pkg.packageName}", e)
++            }
++        }
++    }
++
      override fun startup(ctxt: Context) {
          if (!ImsSettings.enabled()) return
  
-@@ -105,10 +112,12 @@ object Ims: EntryStartup {
+@@ -105,10 +137,12 @@ object Ims: EntryStartup {
          val installed = Tools.getInstalledPackages(ctxt.packageManager).map { it.packageName }
          val gotLangsdorffFloss = "com.langsdorff.flossims" in installed
          val gotFloss = gotLangsdorffFloss || "me.phh.ims" in installed
@@ -54,7 +92,7 @@ index 575c5f8..8fbcd62 100644
              gotLangsdorffFloss -> "com.langsdorff.overlay.ims_telephony"
              gotFloss -> "me.phh.treble.overlay.flossims_telephony"
              gotMtkP || gotMtkQ || gotMtkR || gotMtkS || gotMtkAidl -> "me.phh.treble.overlay.mtkims_telephony"
-@@ -118,11 +127,8 @@ object Ims: EntryStartup {
+@@ -118,11 +152,9 @@ object Ims: EntryStartup {
              gotHW -> "me.phh.treble.overlay.hwims_telephony"
              else -> null
          }
@@ -63,6 +101,7 @@ index 575c5f8..8fbcd62 100644
 -        } else {
 -            Misc.safeSetprop("persist.sys.phh.ims.floss", "false")
 -        }
++        if (gotImsStack) grantImsStackPermissions(ctxt.packageManager)
 +        Misc.safeSetprop("persist.sys.phh.ims.aosp", if (gotImsStack) "true" else "false")
 +        Misc.safeSetprop("persist.sys.phh.ims.floss", if (gotFloss && !gotImsStack) "true" else "false")
          if(selectOverlay != null) {

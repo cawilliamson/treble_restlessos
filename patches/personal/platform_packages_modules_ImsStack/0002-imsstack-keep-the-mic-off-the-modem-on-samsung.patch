@@ -1,0 +1,126 @@
+From a02600c6ab1ccdad0557bfed6362591df3f3a90e Mon Sep 17 00:00:00 2001
+From: Langsdorff <131063968+clangsdorff@users.noreply.github.com>
+Date: Tue, 3 Nov 2026 19:29:40 +0300
+Subject: [PATCH 2/2] imsstack: keep the mic off the modem on samsung
+
+the samsung exynos audio hal starts a modem voice call when telecom
+sets MODE_IN_CALL at dial and keeps the mic routed to the modem after
+telecom moves to MODE_IN_COMMUNICATION, so the far end hears nothing.
+the stock samsung telecom tells the hal through g_call_state that a
+call runs on the ap. do the same when the audio session is set up:
+clear the modem call, and mark a wifi call so the hal picks its vowifi
+path. add MODIFY_AUDIO_SETTINGS for the parameter calls.
+---
+ java/AndroidManifest.xml                      |  1 +
+ .../media/audio/AudioSessionHandler.java      | 44 +++++++++++++++++++
+ 2 files changed, 45 insertions(+)
+
+diff --git a/java/AndroidManifest.xml b/java/AndroidManifest.xml
+index 847b543..cd5c6c4 100644
+--- a/java/AndroidManifest.xml
++++ b/java/AndroidManifest.xml
+@@ -40,6 +40,7 @@
+     <uses-permission android:name="android.permission.LOCAL_MAC_ADDRESS"/>
+     <uses-permission android:name="android.permission.LOCATION_BYPASS"/>
+     <uses-permission android:name="android.permission.MANAGE_USERS"/>
++    <uses-permission android:name="android.permission.MODIFY_AUDIO_SETTINGS"/>
+     <uses-permission android:name="android.permission.MODIFY_PHONE_STATE"/>
+     <uses-permission android:name="android.permission.POST_NOTIFICATIONS"/>
+     <uses-permission android:name="android.permission.READ_ACTIVE_EMERGENCY_SESSION"/>
+diff --git a/java/src/com/android/imsstack/enabler/media/audio/AudioSessionHandler.java b/java/src/com/android/imsstack/enabler/media/audio/AudioSessionHandler.java
+index 95a036b..a155a63 100644
+--- a/java/src/com/android/imsstack/enabler/media/audio/AudioSessionHandler.java
++++ b/java/src/com/android/imsstack/enabler/media/audio/AudioSessionHandler.java
+@@ -18,10 +18,13 @@ package com.android.imsstack.enabler.media;
+ 
+ import android.annotation.NonNull;
+ import android.annotation.Nullable;
++import android.media.AudioManager;
++import android.os.Build;
+ import android.os.Handler;
+ import android.os.Looper;
+ import android.os.Message;
+ import android.os.Parcel;
++import android.telephony.AccessNetworkConstants.AccessNetworkType;
+ import android.telephony.CallQuality;
+ import android.telephony.ims.MediaThreshold;
+ import android.telephony.ims.RtpHeaderExtension;
+@@ -94,6 +97,11 @@ public class AudioSessionHandler extends MediaState {
+ 
+     static final int AUDIO_TYPE = 1;
+ 
++    // g_call_state values of the stock samsung telecom (SamsungCallAudioParam)
++    private static final int SAMSUNG_CALL_STATUS_CP_CALL_OFF = 0x1;
++    private static final int SAMSUNG_CALL_STATUS_WIFI_CALL_ON = 0x100020;
++    private static final int SAMSUNG_CALL_STATUS_WIFI_CALL_OFF = 0x1000010;
++
+     private final AudioSessionCallbackProxy mAudioSessionCallback;
+     private ImsAudioSession mAudioSession;
+     private int mAudioSessionId;
+@@ -112,6 +120,8 @@ public class AudioSessionHandler extends MediaState {
+     private int mCodecType;
+     private boolean mAnbrEnabled;
+     private DtmfToneGenerator mDtmfToneGenerator;
++    private boolean mSamsungApCall;
++    private boolean mSamsungWifiCall;
+ 
+     public AudioSessionHandler(IBaseContext context,
+             @NonNull MediaManagerHelper mediaManager, IMtcMediaInterface mtcMediaInterface) {
+@@ -833,6 +843,7 @@ public class AudioSessionHandler extends MediaState {
+     private void handleAudioModifySession(AudioConfig audioConfig) {
+         if (mAudioSession != null) {
+             mCodecType = audioConfig.getCodecType();
++            setSamsungApCallState(audioConfig.getAccessNetwork() == AccessNetworkType.IWLAN);
+             mAudioSession.modifySession(audioConfig);
+             mMediaConfig.updateRtpConfig(audioConfig);
+         } else {
+@@ -840,6 +851,38 @@ public class AudioSessionHandler extends MediaState {
+         }
+     }
+ 
++    // the samsung hal takes MODE_IN_CALL for a modem voice call and keeps the mic on the modem
++    // until g_call_state says otherwise
++    private void setSamsungApCallState(boolean wifi) {
++        if (!"samsung".equalsIgnoreCase(Build.MANUFACTURER)) return;
++        if (mSamsungApCall && wifi == mSamsungWifiCall) return;
++        if (!mSamsungApCall) {
++            setSamsungCallStatus(SAMSUNG_CALL_STATUS_CP_CALL_OFF);
++        }
++        if (wifi) {
++            setSamsungCallStatus(SAMSUNG_CALL_STATUS_WIFI_CALL_ON);
++        } else if (mSamsungWifiCall) {
++            setSamsungCallStatus(SAMSUNG_CALL_STATUS_WIFI_CALL_OFF);
++        }
++        mSamsungApCall = true;
++        mSamsungWifiCall = wifi;
++    }
++
++    private void clearSamsungApCallState() {
++        if (mSamsungWifiCall) {
++            setSamsungCallStatus(SAMSUNG_CALL_STATUS_WIFI_CALL_OFF);
++        }
++        mSamsungApCall = false;
++        mSamsungWifiCall = false;
++    }
++
++    private void setSamsungCallStatus(int status) {
++        AudioManager audioManager = mContext.getContext().getSystemService(AudioManager.class);
++        if (audioManager != null) {
++            audioManager.setParameters("g_call_state=" + status);
++        }
++    }
++
+     private void handleAudioQos(String remoteIpAddress, int remotePortNumber) {
+         if (isOpening() || isLive()) {
+             synchronized (mRtpSocketList) {
+@@ -1025,6 +1068,7 @@ public class AudioSessionHandler extends MediaState {
+ 
+     private void handleSessionClosed() {
+         setMediaState(MEDIA_STATE_IDLE);
++        clearSamsungApCallState();
+         closeSockets();
+         mAudioSession = null;
+         mAudioSessionId = 0;
+-- 
+2.56.0
+
