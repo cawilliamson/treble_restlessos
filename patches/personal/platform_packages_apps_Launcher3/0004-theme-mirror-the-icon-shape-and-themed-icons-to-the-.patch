@@ -1,19 +1,38 @@
-From 733924927cc92b3a25cf3b9e5ff09b3a627d7994 Mon Sep 17 00:00:00 2001
+From 165b5d06459e2cd84c661906c1d5b1779d9d5917 Mon Sep 17 00:00:00 2001
 From: Langsdorff <131063968+clangsdorff@users.noreply.github.com>
 Date: Thu, 29 Oct 2026 20:22:56 +0300
-Subject: [PATCH 4/4] theme: mirror the icon shape and themed icons to the system
+Subject: [PATCH 4/4] theme: mirror the icon shape and themed icons to the
+ system
 
 the shape and the minimal icon style picked in wallpaper & style only
 live in the launcher prefs, so settings and other apps keep drawing
-full colour circle icons.
+full colour circle icons. the launcher itself only themes the
+workspace, folders and the taskbar, the app drawer stays full colour.
 
 write the matching adaptive_icon_shape overlay into the theme
 customization setting so systemui enables it, and the themed state
 into the themed_app_icons secure setting that settingslib reads.
+theme the app drawer, prediction row and search results too.
 ---
+ src/com/android/launcher3/BubbleTextView.java |  4 +-
  .../launcher3/graphics/ThemeManager.kt        | 51 +++++++++++++++++++
- 1 file changed, 51 insertions(+)
+ 2 files changed, 54 insertions(+), 1 deletion(-)
 
+diff --git a/src/com/android/launcher3/BubbleTextView.java b/src/com/android/launcher3/BubbleTextView.java
+index b544a23..30b9ba3 100644
+--- a/src/com/android/launcher3/BubbleTextView.java
++++ b/src/com/android/launcher3/BubbleTextView.java
+@@ -687,7 +687,9 @@ public class BubbleTextView extends TextView implements ItemInfoUpdateReceiver,
+ 
+     protected boolean shouldUseTheme() {
+         return mDisplay == DISPLAY_WORKSPACE || mDisplay == DISPLAY_FOLDER
+-                || mDisplay == DISPLAY_TASKBAR;
++                || mDisplay == DISPLAY_TASKBAR || mDisplay == DISPLAY_ALL_APPS
++                || mDisplay == DISPLAY_PREDICTION_ROW
++                || mDisplay == DISPLAY_SEARCH_RESULT_APP_ROW;
+     }
+ 
+     /**
 diff --git a/src/com/android/launcher3/graphics/ThemeManager.kt b/src/com/android/launcher3/graphics/ThemeManager.kt
 index 5ed1a63..d90aeec 100644
 --- a/src/com/android/launcher3/graphics/ThemeManager.kt
