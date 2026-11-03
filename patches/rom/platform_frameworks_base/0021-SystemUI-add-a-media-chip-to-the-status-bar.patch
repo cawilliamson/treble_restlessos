@@ -1,4 +1,4 @@
-From 5869075af85186721196b6e8c52f8feddc96fb22 Mon Sep 17 00:00:00 2001
+From c9c659e671368c2bd2b92fdd24ade3b6e44f06e8 Mon Sep 17 00:00:00 2001
 From: Langsdorff <131063968+clangsdorff@users.noreply.github.com>
 Date: Wed, 28 Oct 2026 23:02:29 +0300
 Subject: [PATCH 21/21] SystemUI: add a media chip to the status bar
@@ -6,9 +6,11 @@ Subject: [PATCH 21/21] SystemUI: add a media chip to the status bar
 show the active media session as an ongoing activity chip, after the
 call, screen record and notification chips. the chip uses the app's
 small icon, or a music note when that icon is not monochrome, and the
-song title cut at the width of a chip timer. a paused session turns
-the chip tonal with a pause icon. tapping it opens a compact popup with
-artwork, title, a seek bar and previous / play-pause / next.
+song title in a smaller system font, cut at the width of a chip timer.
+a paused session turns the chip tonal with a pause icon. tapping it
+opens a compact popup with artwork, title, a seek bar and previous /
+play-pause / next. the popup does not expand from the chip, since that
+hides the chip while it is open.
 
 the media carousel picks the session, but the title, artwork, play
 state and buttons are read from the session callbacks. the carousel
@@ -21,16 +23,18 @@ their top and bottom edges, so cap the chip height to keep a small gap.
 ---
  .../src/api/model/OngoingActivityChipModel.kt |   9 +-
  .../res/drawable/ic_media_chip_paused.xml     |  25 ++
- .../domain/interactor/MediaChipInteractor.kt  | 175 ++++++++++
- .../chips/media/ui/compose/MediaChipPopup.kt  | 326 ++++++++++++++++++
+ .../res/drawable/ic_media_chip_play.xml       |  25 ++
+ .../domain/interactor/MediaChipInteractor.kt  | 175 +++++++++
+ .../chips/media/ui/compose/MediaChipPopup.kt  | 356 ++++++++++++++++++
  .../media/ui/view/MediaChipDialogDelegate.kt  |  76 ++++
- .../media/ui/viewmodel/MediaChipViewModel.kt  | 153 ++++++++
- .../statusbar/chips/ui/compose/ChipContent.kt |  88 ++++-
+ .../media/ui/viewmodel/MediaChipViewModel.kt  | 145 +++++++
+ .../statusbar/chips/ui/compose/ChipContent.kt | 113 +++++-
  .../chips/ui/compose/OngoingActivityChip.kt   |  22 ++
  .../OngoingActivityChipsViewModel.kt          |   8 +-
  .../interactor/MediaControlChipInteractor.kt  |  10 +
- 10 files changed, 874 insertions(+), 18 deletions(-)
+ 11 files changed, 946 insertions(+), 18 deletions(-)
  create mode 100644 packages/SystemUI/res/drawable/ic_media_chip_paused.xml
+ create mode 100644 packages/SystemUI/res/drawable/ic_media_chip_play.xml
  create mode 100644 packages/SystemUI/src/com/android/systemui/statusbar/chips/media/domain/interactor/MediaChipInteractor.kt
  create mode 100644 packages/SystemUI/src/com/android/systemui/statusbar/chips/media/ui/compose/MediaChipPopup.kt
  create mode 100644 packages/SystemUI/src/com/android/systemui/statusbar/chips/media/ui/view/MediaChipDialogDelegate.kt
@@ -86,6 +90,37 @@ index 000000000..431f9b51e
 +    <path
 +        android:fillColor="#FF000000"
 +        android:pathData="M8,5L8,5A2,2 0,0 1,10 7L10,17A2,2 0,0 1,8 19L8,19A2,2 0,0 1,6 17L6,7A2,2 0,0 1,8 5zM16,5L16,5A2,2 0,0 1,18 7L18,17A2,2 0,0 1,16 19L16,19A2,2 0,0 1,14 17L14,7A2,2 0,0 1,16 5z"/>
++</vector>
+diff --git a/packages/SystemUI/res/drawable/ic_media_chip_play.xml b/packages/SystemUI/res/drawable/ic_media_chip_play.xml
+new file mode 100644
+index 000000000..5baa790b7
+--- /dev/null
++++ b/packages/SystemUI/res/drawable/ic_media_chip_play.xml
+@@ -0,0 +1,25 @@
++<?xml version="1.0" encoding="utf-8"?>
++<!--
++  ~ Copyright (C) 2026 Langsdorff
++  ~
++  ~ Licensed under the Apache License, Version 2.0 (the "License");
++  ~ you may not use this file except in compliance with the License.
++  ~ You may obtain a copy of the License at
++  ~
++  ~      http://www.apache.org/licenses/LICENSE-2.0
++  ~
++  ~ Unless required by applicable law or agreed to in writing, software
++  ~ distributed under the License is distributed on an "AS IS" BASIS,
++  ~ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
++  ~ See the License for the specific language governing permissions and
++  ~ limitations under the License.
++  -->
++<vector xmlns:android="http://schemas.android.com/apk/res/android"
++        android:width="24dp"
++        android:height="24dp"
++        android:viewportWidth="24"
++        android:viewportHeight="24">
++    <path
++        android:fillColor="#FF000000"
++        android:pathData="M8,6.82L8,17.18C8,17.97 8.87,18.45 9.54,18.02L17.68,12.84C18.3,12.45 18.3,11.55 17.68,11.15L9.54,5.98C8.87,5.55 8,6.03 8,6.82z"/>
 +</vector>
 diff --git a/packages/SystemUI/src/com/android/systemui/statusbar/chips/media/domain/interactor/MediaChipInteractor.kt b/packages/SystemUI/src/com/android/systemui/statusbar/chips/media/domain/interactor/MediaChipInteractor.kt
 new file mode 100644
@@ -270,10 +305,10 @@ index 000000000..07d068983
 +}
 diff --git a/packages/SystemUI/src/com/android/systemui/statusbar/chips/media/ui/compose/MediaChipPopup.kt b/packages/SystemUI/src/com/android/systemui/statusbar/chips/media/ui/compose/MediaChipPopup.kt
 new file mode 100644
-index 000000000..153c3cf09
+index 000000000..9a954051d
 --- /dev/null
 +++ b/packages/SystemUI/src/com/android/systemui/statusbar/chips/media/ui/compose/MediaChipPopup.kt
-@@ -0,0 +1,326 @@
+@@ -0,0 +1,356 @@
 +/*
 + * Copyright (C) 2026 Langsdorff
 + *
@@ -550,19 +585,49 @@ index 000000000..153c3cf09
 +        modifier = Modifier.fillMaxWidth().padding(bottom = 12.dp),
 +    ) {
 +        buttons.prevOrCustom?.let { ActionButton(it) }
-+        buttons.playOrPause?.let { action ->
-+            Surface(
-+                onClick = { action.action?.run() },
-+                enabled = action.action != null,
-+                shape = RoundedCornerShape(16.dp),
-+                color = MaterialTheme.colorScheme.primary,
-+                contentColor = MaterialTheme.colorScheme.onPrimary,
-+                modifier = Modifier.size(width = 64.dp, height = 48.dp),
-+            ) {
-+                Box(contentAlignment = Alignment.Center) { ActionIcon(action) }
-+            }
-+        }
++        PlayPauseButton(media, buttons.playOrPause)
 +        buttons.nextOrCustom?.let { ActionButton(it) }
++    }
++}
++
++/**
++ * The play / pause button. It stays in place with its own icon, since the session's action is
++ * missing for a moment on song changes and shows a progress drawable in the accent color while
++ * buffering, which the button background hides.
++ */
++@Composable
++private fun PlayPauseButton(media: MediaChipSessionModel, fallback: MediaAction?) {
++    val isPlaying = media.isPlaying == true
++    val controls = media.controller?.transportControls
++    val onClick: (() -> Unit)? =
++        if (controls != null) {
++            { if (isPlaying) controls.pause() else controls.play() }
++        } else {
++            fallback?.action?.let { action -> { action.run() } }
++        }
++    Surface(
++        onClick = { onClick?.invoke() },
++        enabled = onClick != null,
++        shape = RoundedCornerShape(16.dp),
++        color = MaterialTheme.colorScheme.primary,
++        contentColor = MaterialTheme.colorScheme.onPrimary,
++        modifier = Modifier.size(width = 64.dp, height = 48.dp),
++    ) {
++        Box(contentAlignment = Alignment.Center) {
++            Icon(
++                painter =
++                    painterResource(
++                        if (isPlaying) R.drawable.ic_media_chip_paused
++                        else R.drawable.ic_media_chip_play
++                    ),
++                contentDescription =
++                    stringResource(
++                        if (isPlaying) R.string.controls_media_button_pause
++                        else R.string.controls_media_button_play
++                    ),
++                modifier = Modifier.size(24.dp),
++            )
++        }
 +    }
 +}
 +
@@ -684,10 +749,10 @@ index 000000000..a39b00439
 +}
 diff --git a/packages/SystemUI/src/com/android/systemui/statusbar/chips/media/ui/viewmodel/MediaChipViewModel.kt b/packages/SystemUI/src/com/android/systemui/statusbar/chips/media/ui/viewmodel/MediaChipViewModel.kt
 new file mode 100644
-index 000000000..048d885e8
+index 000000000..2522094cd
 --- /dev/null
 +++ b/packages/SystemUI/src/com/android/systemui/statusbar/chips/media/ui/viewmodel/MediaChipViewModel.kt
-@@ -0,0 +1,153 @@
+@@ -0,0 +1,145 @@
 +/*
 + * Copyright (C) 2026 Langsdorff
 + *
@@ -708,10 +773,7 @@ index 000000000..048d885e8
 +
 +import android.content.Context
 +import androidx.compose.ui.graphics.RectangleShape
-+import com.android.internal.jank.Cuj
 +import com.android.internal.util.ContrastColorUtil
-+import com.android.systemui.animation.DialogCuj
-+import com.android.systemui.animation.DialogTransitionAnimator
 +import com.android.systemui.common.shared.model.ContentDescription
 +import com.android.systemui.common.shared.model.Icon
 +import com.android.systemui.dagger.SysUISingleton
@@ -719,6 +781,7 @@ index 000000000..048d885e8
 +import com.android.systemui.dagger.qualifiers.Background
 +import com.android.systemui.dagger.qualifiers.Main
 +import com.android.systemui.log.LogBuffer
++import com.android.systemui.log.core.LogLevel
 +import com.android.systemui.res.R
 +import com.android.systemui.statusbar.chips.StatusBarChipLogTags.pad
 +import com.android.systemui.statusbar.chips.StatusBarChipsLog
@@ -728,7 +791,6 @@ index 000000000..048d885e8
 +import com.android.systemui.statusbar.chips.ui.model.ColorsModel
 +import com.android.systemui.statusbar.chips.ui.model.OngoingActivityChipModel
 +import com.android.systemui.statusbar.chips.ui.viewmodel.OngoingActivityChipViewModel
-+import com.android.systemui.statusbar.chips.ui.viewmodel.OngoingActivityChipViewModel.Companion.createDialogLaunchOnClickCallback
 +import com.android.systemui.statusbar.chips.uievents.StatusBarChipsUiEventLogger
 +import javax.inject.Inject
 +import kotlinx.coroutines.CoroutineDispatcher
@@ -750,7 +812,6 @@ index 000000000..048d885e8
 +    @Background private val bgDispatcher: CoroutineDispatcher,
 +    mediaChipInteractor: MediaChipInteractor,
 +    private val dialogDelegateFactory: MediaChipDialogDelegate.Factory,
-+    private val dialogTransitionAnimator: DialogTransitionAnimator,
 +    @StatusBarChipsLog private val logger: LogBuffer,
 +    private val uiEventLogger: StatusBarChipsUiEventLogger,
 +) : OngoingActivityChipViewModel {
@@ -817,37 +878,42 @@ index 000000000..048d885e8
 +                } else {
 +                    null
 +                },
-+            clickBehavior =
-+                OngoingActivityChipModel.ClickBehavior.ExpandAction(
-+                    createDialogLaunchOnClickCallback(
-+                        dialogDelegateCreator = { context -> dialogDelegateFactory.create(context) },
-+                        dialogTransitionAnimator = dialogTransitionAnimator,
-+                        DIALOG_CUJ,
-+                        key = KEY,
-+                        instanceId = instanceId,
-+                        uiEventLogger = uiEventLogger,
-+                        logger = logger,
-+                        tag = TAG,
-+                    )
-+                ),
++            clickBehavior = OngoingActivityChipModel.ClickBehavior.ExpandAction { showDialog() },
 +            instanceId = instanceId,
 +        )
 +    }
 +
++    /**
++     * Shows the popup without expanding it from the chip, which hides the chip while the popup is
++     * open and only shows it again after the popup has shrunk back into it.
++     */
++    private fun showDialog() {
++        logger.log(TAG, LogLevel.INFO, {}, { "Chip clicked" })
++        uiEventLogger.logChipTapToShow(KEY, instanceId)
++        dialogDelegateFactory.create(context).createDialog().show()
++    }
++
 +    companion object {
 +        const val KEY = "Media"
-+        private val DIALOG_CUJ =
-+            DialogCuj(Cuj.CUJ_STATUS_BAR_LAUNCH_DIALOG_FROM_CHIP, tag = "Media")
 +        private val TAG = "MediaChipVM".pad()
 +    }
 +}
 diff --git a/packages/SystemUI/src/com/android/systemui/statusbar/chips/ui/compose/ChipContent.kt b/packages/SystemUI/src/com/android/systemui/statusbar/chips/ui/compose/ChipContent.kt
-index 0fceef41b..cc02aabd9 100644
+index 0fceef41b..57fa7da88 100644
 --- a/packages/SystemUI/src/com/android/systemui/statusbar/chips/ui/compose/ChipContent.kt
 +++ b/packages/SystemUI/src/com/android/systemui/statusbar/chips/ui/compose/ChipContent.kt
-@@ -23,7 +23,12 @@ import androidx.compose.material3.MaterialTheme
+@@ -16,21 +16,31 @@
+ 
+ package com.android.systemui.statusbar.chips.ui.compose
+ 
++import android.graphics.Typeface
+ import androidx.compose.foundation.layout.BoxWithConstraints
+ import androidx.compose.foundation.layout.padding
+ import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
+ import androidx.compose.material3.MaterialTheme
  import androidx.compose.material3.Text
  import androidx.compose.runtime.Composable
++import androidx.compose.runtime.remember
  import androidx.compose.ui.Modifier
 +import androidx.compose.ui.draw.drawWithContent
 +import androidx.compose.ui.graphics.BlendMode
@@ -858,7 +924,17 @@ index 0fceef41b..cc02aabd9 100644
  import androidx.compose.ui.platform.LocalConfiguration
  import androidx.compose.ui.platform.LocalContext
  import androidx.compose.ui.platform.LocalDensity
-@@ -117,21 +122,71 @@ fun ChipContent(
+ import androidx.compose.ui.res.dimensionResource
++import androidx.compose.ui.text.TextStyle
++import androidx.compose.ui.text.font.FontFamily
+ import androidx.compose.ui.text.rememberTextMeasurer
+ import androidx.compose.ui.text.style.TextAlign
+ import androidx.compose.ui.unit.dp
++import androidx.compose.ui.unit.sp
+ import com.android.systemui.res.R
+ import com.android.systemui.statusbar.chips.ui.model.ColorsModel
+ import com.android.systemui.statusbar.chips.ui.model.OngoingActivityChipModel
+@@ -117,21 +127,72 @@ fun ChipContent(
          is OngoingActivityChipModel.Content.Text -> {
              val text = viewModel.text
              if (text.isNotBlank()) {
@@ -878,26 +954,27 @@ index 0fceef41b..cc02aabd9 100644
 -                        ),
 -                )
 +                if (viewModel.clipAtTimerWidth) {
++                    val clippedTextStyle = rememberClippedTextStyle(textStyle)
 +                    val timerWidthPx =
 +                        textMeasurer
-+                            .measure(TIMER_WIDTH_SAMPLE, textStyle, softWrap = false)
++                            .measure(TIMER_WIDTH_SAMPLE, clippedTextStyle, softWrap = false)
 +                            .size
 +                            .width
 +                    val hasOverflow =
-+                        textMeasurer.measure(text, textStyle, softWrap = false).size.width >
++                        textMeasurer.measure(text, clippedTextStyle, softWrap = false).size.width >
 +                            timerWidthPx
 +                    val fadeLength =
 +                        dimensionResource(id = R.dimen.ongoing_activity_chip_text_fading_edge_length)
 +                    Text(
 +                        text = text,
 +                        color = textColor,
-+                        style = textStyle,
++                        style = clippedTextStyle,
 +                        softWrap = false,
 +                        modifier =
 +                            modifier
 +                                .hideTextIfDoesNotFit(
 +                                    text = TIMER_WIDTH_SAMPLE,
-+                                    textStyle = textStyle,
++                                    textStyle = clippedTextStyle,
 +                                    textMeasurer = textMeasurer,
 +                                    maxTextWidth = with(density) { timerWidthPx.toDp() },
 +                                    startPadding = startPadding,
@@ -945,15 +1022,34 @@ index 0fceef41b..cc02aabd9 100644
              }
          }
  
-@@ -224,3 +279,6 @@ fun ChipContent(
+@@ -224,3 +285,25 @@ fun ChipContent(
          }
      }
  }
 +
++/**
++ * A smaller [TextStyle] in the system font for clipped text, which can be any free text such as a
++ * song title and would otherwise look larger than the other status bar items.
++ */
++@Composable
++private fun rememberClippedTextStyle(base: TextStyle): TextStyle {
++    val context = LocalContext.current
++    return remember(base, context) {
++        val family =
++            context.getString(com.android.internal.R.string.config_headlineFontFamilyMedium)
++        base.copy(
++            fontFamily = FontFamily(Typeface.create(family, Typeface.NORMAL)),
++            fontWeight = null,
++            fontSize = 12.sp,
++            lineHeight = 16.sp,
++        )
++    }
++}
++
 +/** Text with the width of a running chip timer, used to cap clipped text at the same width. */
 +private const val TIMER_WIDTH_SAMPLE = "00:00"
 diff --git a/packages/SystemUI/src/com/android/systemui/statusbar/chips/ui/compose/OngoingActivityChip.kt b/packages/SystemUI/src/com/android/systemui/statusbar/chips/ui/compose/OngoingActivityChip.kt
-index c9e9f618e..98d4d823a 100644
+index c9e9f618e..810f051bd 100644
 --- a/packages/SystemUI/src/com/android/systemui/statusbar/chips/ui/compose/OngoingActivityChip.kt
 +++ b/packages/SystemUI/src/com/android/systemui/statusbar/chips/ui/compose/OngoingActivityChip.kt
 @@ -115,6 +115,7 @@ fun OngoingActivityChip(
@@ -995,7 +1091,7 @@ index c9e9f618e..98d4d823a 100644
  }
  
  private const val TAG = "OngoingActivityChip"
-+private val STATUS_BAR_CHIP_EDGE_GAP = 1.5.dp
++private val STATUS_BAR_CHIP_EDGE_GAP = 3.dp
  // Used for end-to-end tests - if changing this, be sure to change the status bar e2e tests also.
  private const val STATUS_BAR_CHIP_CONTENT_ID = "ongoing_activity_chip_content"
  @IdRes private val CUSTOM_ICON_VIEW_ID = R.id.ongoing_activity_chip_custom_icon
