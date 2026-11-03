@@ -1,70 +1,66 @@
-From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From 0413790e7373b151043ee4ca3162bcfddb4000ca Mon Sep 17 00:00:00 2001
 From: Yash Dayani <52958495+YashDayani@users.noreply.github.com>
 Date: Wed, 21 Oct 2026 20:30:00 +0530
 Subject: [PATCH 18/21] SystemUI: add a network speed indicator to the status bar
 
-Shows the current download and upload speed as a small two line
-indicator in the status bar, for the networks that have working
-internet (Wi-Fi and mobile data). It is off by default and is turned on
-from Settings > Network & internet (companion
-platform_packages_apps_Settings patch) or with:
+show the current download and upload speed as a small two line
+indicator in the status bar while wi-fi or mobile data has working
+internet. off by default, turned on from settings > network & internet
+or with `settings put system network_traffic_enabled 1`.
+network_traffic_mode, _units, _refresh_interval, _autohide,
+_autohide_threshold and _hidearrow tune it.
 
-  settings put system network_traffic_enabled 1
+the view comes from the crdroid/evox NetworkTraffic (apache-2.0). it
+reads its settings from Settings.System with a ContentObserver, since
+TunerService here only reads Settings.Secure, and re-reads them on user
+switch. it listens to the network only while attached and enabled.
+DarkIconDispatcher tints it in the status bar, TintedIconManager in the
+qs header and keyguard. PhoneStatusBarPolicy adds the slot once at
+start up.
 
-Further settings: network_traffic_mode (0 up and down, 1 up only,
-2 down only), network_traffic_units (0 bits, 1 bytes),
-network_traffic_refresh_interval (seconds), network_traffic_autohide,
-network_traffic_autohide_threshold (kB/s) and network_traffic_hidearrow.
+the slot only counts as visible while there is a speed to show and the
+view keeps its width while StatusIconContainer hides it, so neighbours
+are never laid out from a stale width. it has no dot state, so the
+container drops it first on overflow instead of letting it take the
+only dot and push out the icons to its left.
 
-The indicator view is taken from the EvoX and crDroid SystemUI
-(NetworkTraffic, Apache-2.0, crDroid Android Project) and wired into
-the status bar icon pipeline of this tree:
+not shown when the compose system icons flags are enabled.
 
-- It reads the network_traffic_* settings of the current user from
-  Settings.System with a ContentObserver (and re-reads them on user
-  switch), because TunerService in this tree only reads Settings.Secure
-  and has no support for the "system:" prefix EvoX uses.
-- It listens to the network only while it is attached and enabled.
-- The status bar tints it through DarkIconDispatcher (registered by
-  DarkIconManager); the quick settings header and the keyguard tint it
-  through setStaticDrawableColor() of TintedIconManager.
-- PhoneStatusBarPolicy adds the slot once at start up and the view
-  shows or hides itself from the settings, so it needs no new
-  constructor dependencies.
-
-- The slot only counts as visible while there is a speed to show, and
-  the view keeps its width when StatusIconContainer hides it, so the
-  container never lays out the neighbouring icons from a stale width.
-
-Known limitation: it is not shown when the Compose system icons flags
-are enabled.
+Co-authored-by: Langsdorff <131063968+clangsdorff@users.noreply.github.com>
 ---
- core/java/android/provider/Settings.java | 49 ++++++++++++++++++++
- core/res/res/values/config.xml | 2 ++
- core/res/res/values/symbols.xml | 1 +
- packages/SettingsProvider/src/android/provider/settings/backup/SystemSettings.java | 7 +++++++
- packages/SettingsProvider/src/android/provider/settings/validators/SystemSettingsValidators.java | 8 ++++++++
- packages/SystemUI/res/drawable/stat_sys_network_traffic.xml | 33 ++++++++++++++++++++
- packages/SystemUI/res/drawable/stat_sys_network_traffic_down.xml | 33 ++++++++++++++++++++
- packages/SystemUI/res/drawable/stat_sys_network_traffic_up.xml | 33 ++++++++++++++++++++
- packages/SystemUI/res/drawable/stat_sys_network_traffic_updown.xml | 33 ++++++++++++++++++++
- packages/SystemUI/res/values/network_traffic_strings.xml | 25 ++++++++++++++++++++
- packages/SystemUI/src/com/android/systemui/statusbar/NetworkTraffic.java | 698 ++++++++++++++++++++
- packages/SystemUI/src/com/android/systemui/statusbar/phone/PhoneStatusBarPolicy.java | 6 ++++++
- packages/SystemUI/src/com/android/systemui/statusbar/phone/StatusBarIconHolder.kt | 20 +++++++++++++++++---
- packages/SystemUI/src/com/android/systemui/statusbar/phone/ui/IconManager.java | 10 ++++++++++
- packages/SystemUI/src/com/android/systemui/statusbar/phone/ui/StatusBarIconController.java | 6 ++++++
- packages/SystemUI/src/com/android/systemui/statusbar/phone/ui/StatusBarIconControllerImpl.java | 10 ++++++++++
- 16 files changed, 971 insertions(+), 3 deletions(-)
+ core/java/android/provider/Settings.java      |  49 ++
+ core/res/res/values/config.xml                |   2 +
+ core/res/res/values/symbols.xml               |   1 +
+ .../settings/backup/SystemSettings.java       |   7 +
+ .../validators/SystemSettingsValidators.java  |   8 +
+ .../res/drawable/stat_sys_network_traffic.xml |  33 +
+ .../stat_sys_network_traffic_down.xml         |  33 +
+ .../drawable/stat_sys_network_traffic_up.xml  |  33 +
+ .../stat_sys_network_traffic_updown.xml       |  33 +
+ .../res/values/network_traffic_strings.xml    |  25 +
+ .../systemui/statusbar/NetworkTraffic.java    | 698 ++++++++++++++++++
+ .../statusbar/phone/PhoneStatusBarPolicy.java |   6 +
+ .../statusbar/phone/StatusBarIconHolder.kt    |  20 +-
+ .../statusbar/phone/StatusIconContainer.java  |  28 +-
+ .../statusbar/phone/ui/IconManager.java       |  10 +
+ .../phone/ui/StatusBarIconController.java     |   6 +
+ .../phone/ui/StatusBarIconControllerImpl.java |  10 +
+ 17 files changed, 995 insertions(+), 7 deletions(-)
+ create mode 100644 packages/SystemUI/res/drawable/stat_sys_network_traffic.xml
+ create mode 100644 packages/SystemUI/res/drawable/stat_sys_network_traffic_down.xml
+ create mode 100644 packages/SystemUI/res/drawable/stat_sys_network_traffic_up.xml
+ create mode 100644 packages/SystemUI/res/drawable/stat_sys_network_traffic_updown.xml
+ create mode 100644 packages/SystemUI/res/values/network_traffic_strings.xml
+ create mode 100644 packages/SystemUI/src/com/android/systemui/statusbar/NetworkTraffic.java
 
 diff --git a/core/java/android/provider/Settings.java b/core/java/android/provider/Settings.java
+index 99595a9..5f6b138 100644
 --- a/core/java/android/provider/Settings.java
 +++ b/core/java/android/provider/Settings.java
-@@ -5602,6 +5602,55 @@
-          */
+@@ -5603,6 +5603,55 @@ public final class Settings {
          @Readable
          public static final String MIN_REFRESH_RATE = "min_refresh_rate";
-+
+ 
 +        /**
 +         * Whether the network speed indicator is shown in the status bar.
 +         * 0 = Disabled, 1 = Enabled
@@ -113,10 +109,12 @@ diff --git a/core/java/android/provider/Settings.java b/core/java/android/provid
 +         * @hide
 +         */
 +        public static final String NETWORK_TRAFFIC_HIDEARROW = "network_traffic_hidearrow";
- 
++
          /**
           * The user selected peak refresh rate in frames per second. If infinite, the user wants
+          * the highest possible refresh rate.
 diff --git a/core/res/res/values/config.xml b/core/res/res/values/config.xml
+index a777542..56db721 100644
 --- a/core/res/res/values/config.xml
 +++ b/core/res/res/values/config.xml
 @@ -58,6 +58,7 @@
@@ -136,6 +134,7 @@ diff --git a/core/res/res/values/config.xml b/core/res/res/values/config.xml
      <!-- Flag indicating whether the surface flinger has limited
           alpha compositing functionality in hardware.  If set, the window
 diff --git a/core/res/res/values/symbols.xml b/core/res/res/values/symbols.xml
+index 5300fe8..ab4bf64 100644
 --- a/core/res/res/values/symbols.xml
 +++ b/core/res/res/values/symbols.xml
 @@ -3445,6 +3445,7 @@
@@ -147,9 +146,10 @@ diff --git a/core/res/res/values/symbols.xml b/core/res/res/values/symbols.xml
    <!-- Locale picker -->
    <java-symbol type="id" name="locale_search_menu" />
 diff --git a/packages/SettingsProvider/src/android/provider/settings/backup/SystemSettings.java b/packages/SettingsProvider/src/android/provider/settings/backup/SystemSettings.java
+index 31a7a96..bb55231 100644
 --- a/packages/SettingsProvider/src/android/provider/settings/backup/SystemSettings.java
 +++ b/packages/SettingsProvider/src/android/provider/settings/backup/SystemSettings.java
-@@ -132,6 +132,13 @@
+@@ -132,6 +132,13 @@ public class SystemSettings {
                  Settings.System.CV_PREFERRED_INTENSITY,
                  Settings.System.PEAK_REFRESH_RATE,
                  Settings.System.MIN_REFRESH_RATE,
@@ -164,9 +164,10 @@ diff --git a/packages/SettingsProvider/src/android/provider/settings/backup/Syst
          ));
          return settings.toArray(new String[0]);
 diff --git a/packages/SettingsProvider/src/android/provider/settings/validators/SystemSettingsValidators.java b/packages/SettingsProvider/src/android/provider/settings/validators/SystemSettingsValidators.java
+index 1032a60..a14f42d 100644
 --- a/packages/SettingsProvider/src/android/provider/settings/validators/SystemSettingsValidators.java
 +++ b/packages/SettingsProvider/src/android/provider/settings/validators/SystemSettingsValidators.java
-@@ -273,6 +273,14 @@
+@@ -273,6 +273,14 @@ public class SystemSettingsValidators {
          VALIDATORS.put(System.SCREEN_FLASH_NOTIFICATION_COLOR, ANY_INTEGER_VALIDATOR);
          VALIDATORS.put(System.PEAK_REFRESH_RATE, NON_NEGATIVE_FLOAT_VALIDATOR);
          VALIDATORS.put(System.MIN_REFRESH_RATE, NON_NEGATIVE_FLOAT_VALIDATOR);
@@ -183,6 +184,7 @@ diff --git a/packages/SettingsProvider/src/android/provider/settings/validators/
          VALIDATORS.put(System.NOTIFICATION_COOLDOWN_VIBRATE_UNLOCKED, BOOLEAN_VALIDATOR);
 diff --git a/packages/SystemUI/res/drawable/stat_sys_network_traffic.xml b/packages/SystemUI/res/drawable/stat_sys_network_traffic.xml
 new file mode 100644
+index 0000000..43d4dc6
 --- /dev/null
 +++ b/packages/SystemUI/res/drawable/stat_sys_network_traffic.xml
 @@ -0,0 +1,33 @@
@@ -221,6 +223,7 @@ new file mode 100644
 +</vector>
 diff --git a/packages/SystemUI/res/drawable/stat_sys_network_traffic_down.xml b/packages/SystemUI/res/drawable/stat_sys_network_traffic_down.xml
 new file mode 100644
+index 0000000..bf7ada0
 --- /dev/null
 +++ b/packages/SystemUI/res/drawable/stat_sys_network_traffic_down.xml
 @@ -0,0 +1,33 @@
@@ -259,6 +262,7 @@ new file mode 100644
 +</vector>
 diff --git a/packages/SystemUI/res/drawable/stat_sys_network_traffic_up.xml b/packages/SystemUI/res/drawable/stat_sys_network_traffic_up.xml
 new file mode 100644
+index 0000000..ad3ed8d
 --- /dev/null
 +++ b/packages/SystemUI/res/drawable/stat_sys_network_traffic_up.xml
 @@ -0,0 +1,33 @@
@@ -297,6 +301,7 @@ new file mode 100644
 +</vector>
 diff --git a/packages/SystemUI/res/drawable/stat_sys_network_traffic_updown.xml b/packages/SystemUI/res/drawable/stat_sys_network_traffic_updown.xml
 new file mode 100644
+index 0000000..3a7f713
 --- /dev/null
 +++ b/packages/SystemUI/res/drawable/stat_sys_network_traffic_updown.xml
 @@ -0,0 +1,33 @@
@@ -335,6 +340,7 @@ new file mode 100644
 +</vector>
 diff --git a/packages/SystemUI/res/values/network_traffic_strings.xml b/packages/SystemUI/res/values/network_traffic_strings.xml
 new file mode 100644
+index 0000000..57e704f
 --- /dev/null
 +++ b/packages/SystemUI/res/values/network_traffic_strings.xml
 @@ -0,0 +1,25 @@
@@ -365,6 +371,7 @@ new file mode 100644
 +</resources>
 diff --git a/packages/SystemUI/src/com/android/systemui/statusbar/NetworkTraffic.java b/packages/SystemUI/src/com/android/systemui/statusbar/NetworkTraffic.java
 new file mode 100644
+index 0000000..d1510be
 --- /dev/null
 +++ b/packages/SystemUI/src/com/android/systemui/statusbar/NetworkTraffic.java
 @@ -0,0 +1,698 @@
@@ -1067,9 +1074,10 @@ new file mode 100644
 +    }
 +}
 diff --git a/packages/SystemUI/src/com/android/systemui/statusbar/phone/PhoneStatusBarPolicy.java b/packages/SystemUI/src/com/android/systemui/statusbar/phone/PhoneStatusBarPolicy.java
+index b44db69..f8ff7dd 100644
 --- a/packages/SystemUI/src/com/android/systemui/statusbar/phone/PhoneStatusBarPolicy.java
 +++ b/packages/SystemUI/src/com/android/systemui/statusbar/phone/PhoneStatusBarPolicy.java
-@@ -124,6 +124,7 @@
+@@ -124,6 +124,7 @@ public class PhoneStatusBarPolicy
      private final String mSlotSensorsOff;
      private final String mSlotScreenRecord;
      private final String mSlotConnectedDisplay;
@@ -1077,7 +1085,7 @@ diff --git a/packages/SystemUI/src/com/android/systemui/statusbar/phone/PhoneSta
      private final int mDisplayId;
      private final SharedPreferences mSharedPreferences;
      private final DateFormatUtil mDateFormatUtil;
-@@ -241,6 +242,8 @@
+@@ -241,6 +242,8 @@ public class PhoneStatusBarPolicy
          mSlotSensorsOff = resources.getString(com.android.internal.R.string.status_bar_sensors_off);
          mSlotScreenRecord = resources.getString(
                  com.android.internal.R.string.status_bar_screen_record);
@@ -1086,20 +1094,21 @@ diff --git a/packages/SystemUI/src/com/android/systemui/statusbar/phone/PhoneSta
  
          mDisplayId = displayId;
          mSharedPreferences = sharedPreferences;
-@@ -340,6 +343,9 @@
-         // screen record
+@@ -341,6 +344,9 @@ public class PhoneStatusBarPolicy
          mIconController.setIcon(mSlotScreenRecord, R.drawable.stat_sys_screen_record, null);
          mIconController.setIconVisibility(mSlotScreenRecord, false);
-+
+ 
 +        // network speed indicator, shows or hides itself based on the network_traffic_* settings
 +        mIconController.setNetworkTraffic(mSlotNetworkTraffic);
- 
++
          mRotationLockController.addCallback(this);
          mBluetooth.addCallback(this);
+         mProvisionedController.addCallback(this);
 diff --git a/packages/SystemUI/src/com/android/systemui/statusbar/phone/StatusBarIconHolder.kt b/packages/SystemUI/src/com/android/systemui/statusbar/phone/StatusBarIconHolder.kt
+index f2fd794..b69d184 100644
 --- a/packages/SystemUI/src/com/android/systemui/statusbar/phone/StatusBarIconHolder.kt
 +++ b/packages/SystemUI/src/com/android/systemui/statusbar/phone/StatusBarIconHolder.kt
-@@ -21,7 +21,7 @@
+@@ -21,7 +21,7 @@ import com.android.systemui.statusbar.pipeline.icons.shared.model.ModernStatusBa
  
  /** Wraps [com.android.internal.statusbar.StatusBarIcon] so we can still have a uniform list */
  open class StatusBarIconHolder private constructor() {
@@ -1108,7 +1117,7 @@ diff --git a/packages/SystemUI/src/com/android/systemui/statusbar/phone/StatusBa
      @Retention(AnnotationRetention.SOURCE)
      internal annotation class IconType
  
-@@ -44,7 +44,8 @@
+@@ -44,7 +44,8 @@ open class StatusBarIconHolder private constructor() {
                  // this is effectively an unused return value.
                  TYPE_BINDABLE,
                  TYPE_MOBILE_NEW,
@@ -1118,7 +1127,7 @@ diff --git a/packages/SystemUI/src/com/android/systemui/statusbar/phone/StatusBa
                  else -> true
              }
          set(visible) {
-@@ -55,7 +56,8 @@
+@@ -55,7 +56,8 @@ open class StatusBarIconHolder private constructor() {
                  TYPE_ICON -> icon!!.visible = visible
                  TYPE_BINDABLE,
                  TYPE_MOBILE_NEW,
@@ -1128,7 +1137,7 @@ diff --git a/packages/SystemUI/src/com/android/systemui/statusbar/phone/StatusBa
              }
          }
  
-@@ -96,12 +98,16 @@
+@@ -96,12 +98,16 @@ open class StatusBarIconHolder private constructor() {
          /** Only applicable to [BindableIconHolder] */
          const val TYPE_BINDABLE = 5
  
@@ -1145,25 +1154,93 @@ diff --git a/packages/SystemUI/src/com/android/systemui/statusbar/phone/StatusBa
                  else -> "UNKNOWN"
              }
          }
-@@ -118,6 +124,14 @@
-         fun forNewWifiIcon(): StatusBarIconHolder {
-             val holder = StatusBarIconHolder()
-             holder.type = TYPE_WIFI_NEW
-+            return holder
-+        }
-+
+@@ -121,6 +127,14 @@ open class StatusBarIconHolder private constructor() {
+             return holder
+         }
+ 
 +        /** Creates a new holder for the network speed indicator. */
 +        @JvmStatic
 +        fun fromNetworkTraffic(): StatusBarIconHolder {
 +            val holder = StatusBarIconHolder()
 +            holder.type = TYPE_NETWORK_TRAFFIC
-             return holder
++            return holder
++        }
++
+         /**
+          * ONLY for use with the new connectivity pipeline, where we only need a subscriptionID to
+          * determine icon ordering and building the correct view model
+diff --git a/packages/SystemUI/src/com/android/systemui/statusbar/phone/StatusIconContainer.java b/packages/SystemUI/src/com/android/systemui/statusbar/phone/StatusIconContainer.java
+index e02051d..e122571 100644
+--- a/packages/SystemUI/src/com/android/systemui/statusbar/phone/StatusIconContainer.java
++++ b/packages/SystemUI/src/com/android/systemui/statusbar/phone/StatusIconContainer.java
+@@ -34,6 +34,7 @@ import android.view.View;
+ 
+ import com.android.keyguard.AlphaOptimizedLinearLayout;
+ import com.android.systemui.res.R;
++import com.android.systemui.statusbar.NetworkTraffic;
+ import com.android.systemui.statusbar.StatusIconDisplayable;
+ import com.android.systemui.statusbar.notification.stack.AnimationFilter;
+ import com.android.systemui.statusbar.notification.stack.AnimationProperties;
+@@ -77,6 +78,8 @@ public class StatusIconContainer extends AlphaOptimizedLinearLayout {
+     private ArrayList<View> mMeasureViews = new ArrayList<>();
+     // Any ignored icon will never be added as a child
+     private Set<String> mIgnoredSlots = new HashSet<>();
++    // NetworkTraffic left out of the current layout to make room for the other icons
++    private View mDroppedView;
+ 
+     private Configuration mConfiguration;
+ 
+@@ -170,6 +173,25 @@ public class StatusIconContainer extends AlphaOptimizedLinearLayout {
+             }
          }
  
++        // NetworkTraffic has no dot state: drop it before any other icon goes to the overflow.
++        mDroppedView = null;
++        int measuredWidth = measureIcons(widthMode, specWidth, heightMeasureSpec);
++        if (mNeedsUnderflow) {
++            for (View view : mMeasureViews) {
++                if (view instanceof NetworkTraffic) {
++                    mDroppedView = view;
++                    break;
++                }
++            }
++            if (mDroppedView != null) {
++                mMeasureViews.remove(mDroppedView);
++                measuredWidth = measureIcons(widthMode, specWidth, heightMeasureSpec);
++            }
++        }
++        setMeasuredDimension(measuredWidth, getMeasuredHeight(heightMeasureSpec, mMeasureViews));
++    }
++
++    private int measureIcons(int widthMode, int specWidth, int heightMeasureSpec) {
+         int visibleCount = mMeasureViews.size();
+         int maxVisible = visibleCount <= MAX_ICONS ? MAX_ICONS : MAX_ICONS - 1;
+         int totalWidth = mPaddingLeft + mPaddingRight;
+@@ -195,9 +217,7 @@ public class StatusIconContainer extends AlphaOptimizedLinearLayout {
+                 totalWidth += getViewTotalMeasuredWidth(child) + spacing;
+             }
+         }
+-        setMeasuredDimension(
+-                getMeasuredWidth(widthMode, specWidth, totalWidth),
+-                getMeasuredHeight(heightMeasureSpec, mMeasureViews));
++        return getMeasuredWidth(widthMode, specWidth, totalWidth);
+     }
+ 
+     private int getMeasuredHeight(int heightMeasureSpec, List<View> measuredChildren) {
+@@ -333,7 +353,7 @@ public class StatusIconContainer extends AlphaOptimizedLinearLayout {
+             StatusIconState childState = getViewStateFromChild(child);
+ 
+             if (!iconView.isIconVisible() || iconView.isIconBlocked()
+-                    || mIgnoredSlots.contains(iconView.getSlot())) {
++                    || mIgnoredSlots.contains(iconView.getSlot()) || child == mDroppedView) {
+                 childState.visibleState = STATE_HIDDEN;
+                 if (DEBUG) Log.d(TAG, "skipping child (" + iconView.getSlot() + ") not visible");
+                 continue;
 diff --git a/packages/SystemUI/src/com/android/systemui/statusbar/phone/ui/IconManager.java b/packages/SystemUI/src/com/android/systemui/statusbar/phone/ui/IconManager.java
+index 3edbbdf..4a2e9f0 100644
 --- a/packages/SystemUI/src/com/android/systemui/statusbar/phone/ui/IconManager.java
 +++ b/packages/SystemUI/src/com/android/systemui/statusbar/phone/ui/IconManager.java
-@@ -19,6 +19,7 @@
+@@ -19,6 +19,7 @@ package com.android.systemui.statusbar.phone.ui;
  import static com.android.systemui.statusbar.phone.StatusBarIconHolder.TYPE_BINDABLE;
  import static com.android.systemui.statusbar.phone.StatusBarIconHolder.TYPE_ICON;
  import static com.android.systemui.statusbar.phone.StatusBarIconHolder.TYPE_MOBILE_NEW;
@@ -1171,7 +1248,7 @@ diff --git a/packages/SystemUI/src/com/android/systemui/statusbar/phone/ui/IconM
  import static com.android.systemui.statusbar.phone.StatusBarIconHolder.TYPE_WIFI_NEW;
  
  import android.annotation.Nullable;
-@@ -37,6 +38,7 @@
+@@ -37,6 +38,7 @@ import com.android.systemui.demomode.DemoModeCommandReceiver;
  
  import com.android.systemui.kairos.KairosNetwork;
  import com.android.systemui.statusbar.BaseStatusBarFrameLayout;
@@ -1179,7 +1256,7 @@ diff --git a/packages/SystemUI/src/com/android/systemui/statusbar/phone/ui/IconM
  import com.android.systemui.statusbar.StatusBarIconView;
  import com.android.systemui.statusbar.StatusIconDisplayable;
  import com.android.systemui.statusbar.connectivity.ui.MobileContextProvider;
-@@ -177,6 +179,7 @@
+@@ -177,6 +179,7 @@ public class IconManager implements DemoModeCommandReceiver {
              case TYPE_ICON -> addIcon(index, slot, blocked, holder.getIcon());
              case TYPE_WIFI_NEW -> addNewWifiIcon(index, slot);
              case TYPE_MOBILE_NEW -> addNewMobileIcon(index, slot, holder.getTag());
@@ -1187,20 +1264,20 @@ diff --git a/packages/SystemUI/src/com/android/systemui/statusbar/phone/ui/IconM
              case TYPE_BINDABLE ->
                  // Safe cast, since only BindableIconHolders can set this tag on themselves
                      addBindableIcon((BindableIconHolder) holder, index);
-@@ -206,6 +209,12 @@
-         if (mIsInDemoMode) {
-             mDemoStatusIcons.addBindableIcon(holder);
-         }
-+        return view;
-+    }
-+
-+    protected StatusIconDisplayable addNetworkTraffic(int index, String slot, boolean blocked) {
-+        NetworkTraffic view = NetworkTraffic.fromContext(mContext, slot, blocked);
-+        mGroup.addView(view, index, onCreateLayoutParams(Shape.WRAP_CONTENT));
+@@ -209,6 +212,12 @@ public class IconManager implements DemoModeCommandReceiver {
          return view;
      }
  
-@@ -330,6 +339,7 @@
++    protected StatusIconDisplayable addNetworkTraffic(int index, String slot, boolean blocked) {
++        NetworkTraffic view = NetworkTraffic.fromContext(mContext, slot, blocked);
++        mGroup.addView(view, index, onCreateLayoutParams(Shape.WRAP_CONTENT));
++        return view;
++    }
++
+     protected StatusIconDisplayable addNewWifiIcon(int index, String slot) {
+         ModernStatusBarWifiView view = onCreateModernStatusBarWifiView(slot);
+         mGroup.addView(view, index, onCreateLayoutParams(Shape.WRAP_CONTENT));
+@@ -330,6 +339,7 @@ public class IconManager implements DemoModeCommandReceiver {
                  return;
              case TYPE_MOBILE_NEW:
              case TYPE_WIFI_NEW:
@@ -1209,25 +1286,27 @@ diff --git a/packages/SystemUI/src/com/android/systemui/statusbar/phone/ui/IconM
                  // Nothing, the new icons update themselves
                  return;
 diff --git a/packages/SystemUI/src/com/android/systemui/statusbar/phone/ui/StatusBarIconController.java b/packages/SystemUI/src/com/android/systemui/statusbar/phone/ui/StatusBarIconController.java
+index bdac87d..4f1f3f7 100644
 --- a/packages/SystemUI/src/com/android/systemui/statusbar/phone/ui/StatusBarIconController.java
 +++ b/packages/SystemUI/src/com/android/systemui/statusbar/phone/ui/StatusBarIconController.java
-@@ -85,6 +85,12 @@
+@@ -84,6 +84,12 @@ public interface StatusBarIconController {
+      */
      void setNewWifiIcon();
  
-     /**
++    /**
 +     * Sets up the network speed indicator in the given slot. No effect if it has already been set
 +     * up (inflated and added to the view hierarchy).
 +     */
 +    default void setNetworkTraffic(String slot) {}
 +
-+    /**
+     /**
       * Notify this class that there is a new set of mobile icons to display, keyed off of this list
       * of subIds. The icons will be added and bound to the mobile data pipeline via
-      * {@link com.android.systemui.statusbar.pipeline.mobile.ui.binder.MobileIconBinder}.
 diff --git a/packages/SystemUI/src/com/android/systemui/statusbar/phone/ui/StatusBarIconControllerImpl.java b/packages/SystemUI/src/com/android/systemui/statusbar/phone/ui/StatusBarIconControllerImpl.java
+index 979ee71..5997df8 100644
 --- a/packages/SystemUI/src/com/android/systemui/statusbar/phone/ui/StatusBarIconControllerImpl.java
 +++ b/packages/SystemUI/src/com/android/systemui/statusbar/phone/ui/StatusBarIconControllerImpl.java
-@@ -312,6 +312,16 @@
+@@ -312,6 +312,16 @@ public class StatusBarIconControllerImpl implements Tunable,
          }
      }
  
@@ -1245,4 +1324,5 @@ diff --git a/packages/SystemUI/src/com/android/systemui/statusbar/phone/ui/Statu
       * Accept a list of MobileIconStates, which all live in the same slot(?!), and then are sorted
       * by subId. Don't worry this definitely makes sense and works.
 -- 
-2.50.1
+2.39.2 (Apple Git-143)
+
