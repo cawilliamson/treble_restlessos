@@ -1,0 +1,42 @@
+From b5fed38a65c3ec14f7e809df75769ec3e25973b2 Mon Sep 17 00:00:00 2001
+From: Langsdorff <131063968+clangsdorff@users.noreply.github.com>
+Date: Wed, 4 Nov 2026 16:45:32 +0300
+Subject: [PATCH 1/1] init: log the boot to /cache on debug builds
+
+when a boot hangs before adb comes up and the device has no working
+pstore (the forced reset clears ram), nothing from the failed boot
+survives, so a black screen leaves no trace of where it stopped.
+
+start logcat at post-fs, before zygote and the hals, and write all
+buffers to /cache/bootlog. /cache is a separate unencrypted partition
+on legacy a-only vendors, so the log can be pulled from recovery
+after a forced reboot.
+---
+ rootdir/init.rc | 11 +++++++++++
+ 1 file changed, 11 insertions(+)
+
+diff --git a/rootdir/init.rc b/rootdir/init.rc
+index 628b0d1..1b29f75 100644
+--- a/rootdir/init.rc
++++ b/rootdir/init.rc
+@@ -1312,6 +1312,17 @@ service console /system/bin/sh
+     setenv HOSTNAME console
+     shutdown critical
+ 
++service bootlog /system/bin/logcat -b all -v threadtime -f /cache/bootlog/logcat.txt -r 4096 -n 7
++    user root
++    group log
++    seclabel u:r:su:s0
++    disabled
++    oneshot
++
++on post-fs
++    mkdir /cache/bootlog 0770 root log
++    start bootlog
++
+ on property:ro.debuggable=1
+     # Give writes to the same group for the trace folder on debug builds,
+     # it's further protected by selinux policy.
+-- 
+2.56.0
+
