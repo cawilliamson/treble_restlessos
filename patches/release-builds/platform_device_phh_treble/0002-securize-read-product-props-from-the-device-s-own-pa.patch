@@ -8,23 +8,35 @@ Subject: [PATCH 2/2] securize: read product props from the device's own
 from the device's with getprop, and microtrust tees reject tas when
 ro.product.device is the gsi's. mount the device's product partition
 read-only and take the values from its build.prop, falling back to odm
-and vendor when there is none. ro.build.product is the device name, not
-the model. teei_daemon starts before this runs and keeps the gsi name,
-so restart it once the props are set.
+and vendor when there is none. xiaomi's shared vendor images carry
+generic product and vendor props, so odm comes first on xiaomi.
+ro.build.product is the device name, not the model. teei_daemon starts
+before this runs and keeps the gsi name, so restart it once the props
+are set.
 ---
- rw-system.sh | 116 ++++++++++++++++++++++++++++++---------------------
- 1 file changed, 69 insertions(+), 47 deletions(-)
+ rw-system.sh | 126 +++++++++++++++++++++++++++++++++------------------
+ 1 file changed, 79 insertions(+), 47 deletions(-)
 
 diff --git a/rw-system.sh b/rw-system.sh
 index d67b40c..9c5ad79 100644
 --- a/rw-system.sh
 +++ b/rw-system.sh
-@@ -805,6 +805,35 @@ copyprop() {
+@@ -805,6 +805,45 @@ copyprop() {
      fi
  }
  
 +# the device's own product partition first, then odm and vendor
 +device_prop() {
++    # xiaomi's shared vendor/product images keep the real device in odm
++    case "$(getprop ro.product.vendor.manufacturer)" in
++        [Xx]iaomi)
++            value="$(getprop ro.product.odm."$1")"
++            if [ "$value" ]; then
++                echo "$value"
++                return
++            fi
++            ;;
++    esac
 +    if [ "$product_build_prop" ]; then
 +        for key in ro.product.product."$1" ro.product."$1"; do
 +            value="$(grep "^$key=" "$product_build_prop" | head -n 1 | cut -d = -f 2-)"
@@ -55,7 +67,7 @@ index d67b40c..9c5ad79 100644
  # OPPO/Realme devices with MTK vendor kernels include an oppo_root_check
  # kernel module or init service that detects an unlocked bootloader and forces
  # a reboot to recovery.  set the boot-state properties to "locked" so any
-@@ -887,53 +916,46 @@ if [ ! -f /metadata/securize_disable ]; then
+@@ -887,53 +926,46 @@ if [ ! -f /metadata/securize_disable ]; then
      copyprop ro.build.fingerprint ro.vendor.build.fingerprint
      copyprop ro.system_ext.build.fingerprint ro.vendor.build.fingerprint
      copyprop ro.product.build.fingerprint ro.vendor.build.fingerprint
