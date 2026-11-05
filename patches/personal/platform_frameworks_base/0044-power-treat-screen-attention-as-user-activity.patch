@@ -1,0 +1,69 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Langsdorff <131063968+clangsdorff@users.noreply.github.com>
+Date: Thu, 5 Nov 2026 16:34:34 +0000
+Subject: [PATCH 44/44] power: treat screen attention as user activity
+
+the attention check only ran 2 seconds before the screen dims and every
+extension counted towards the maximum extension, so the screen still
+went off while the user kept looking at it. start the check 5 seconds
+before the dim, count a face like a touch so the timeout restarts and
+the extension is not capped, and check again 10 seconds after each
+positive result.
+---
+ .../server/power/AttentionDetector.java        | 18 ++++++++++++++++--
+ 1 file changed, 16 insertions(+), 2 deletions(-)
+
+diff --git a/services/core/java/com/android/server/power/AttentionDetector.java b/services/core/java/com/android/server/power/AttentionDetector.java
+index b8011186dbda..5b8929747c49 100644
+--- a/services/core/java/com/android/server/power/AttentionDetector.java
++++ b/services/core/java/com/android/server/power/AttentionDetector.java
+@@ -66,7 +66,10 @@ public class AttentionDetector {
+     static final String KEY_PRE_DIM_CHECK_DURATION_MILLIS = "pre_dim_check_duration_millis";
+ 
+     /** Default value in absence of {@link DeviceConfig} override. */
+-    static final long DEFAULT_PRE_DIM_CHECK_DURATION_MILLIS = 2_000;
++    static final long DEFAULT_PRE_DIM_CHECK_DURATION_MILLIS = 5_000;
++
++    /** How long after a positive check the next one runs. */
++    static final long ATTENTION_RECHECK_MILLIS = 10_000;
+ 
+     @VisibleForTesting
+     protected long mPreDimCheckDurationMillis;
+@@ -129,6 +132,11 @@ public class AttentionDetector {
+      */
+     private long mLastUserActivityTime;
+ 
++    /**
++     * Last time the user was seen looking at the screen.
++     */
++    private long mLastAttentionTime;
++
+     @VisibleForTesting
+     protected AttentionManagerInternal mAttentionManager;
+ 
+@@ -208,7 +216,10 @@ public class AttentionDetector {
+         }
+ 
+         final long now = SystemClock.uptimeMillis();
+-        final long whenToCheck = nextScreenDimming - mPreDimCheckDurationMillis;
++        long whenToCheck = nextScreenDimming - mPreDimCheckDurationMillis;
++        if (mLastAttentionTime != 0 && mLastAttentionTime == mLastUserActivityTime) {
++            whenToCheck = Math.min(whenToCheck, mLastAttentionTime + ATTENTION_RECHECK_MILLIS);
++        }
+         final long whenToStopExtending = mLastUserActivityTime + mMaximumExtensionMillis;
+         if (now < whenToCheck) {
+             if (DEBUG) {
+@@ -260,7 +271,10 @@ public class AttentionDetector {
+     public int onUserActivity(long eventTime, int event) {
+         switch (event) {
+             case PowerManager.USER_ACTIVITY_EVENT_ATTENTION:
++                // a face counts as a touch, so the extension is not capped
+                 mConsecutiveTimeoutExtendedCount.incrementAndGet();
++                mLastUserActivityTime = eventTime;
++                mLastAttentionTime = eventTime;
+                 return 0;
+             case PowerManager.USER_ACTIVITY_EVENT_OTHER:
+             case PowerManager.USER_ACTIVITY_EVENT_BUTTON:
+-- 
+2.43.0
+

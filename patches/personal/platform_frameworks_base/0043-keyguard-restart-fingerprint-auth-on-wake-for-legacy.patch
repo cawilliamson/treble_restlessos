@@ -1,7 +1,7 @@
 From e03826bd0fcc98b3e87ea8f4aab4e4c3eb978018 Mon Sep 17 00:00:00 2001
 From: Langsdorff <131063968+clangsdorff@users.noreply.github.com>
 Date: Mon, 2 Nov 2026 01:52:53 +0300
-Subject: [PATCH 43/43] keyguard: restart fingerprint auth on wake for legacy
+Subject: [PATCH 43/44] keyguard: restart fingerprint auth on wake for legacy
  hals
 
 keyguard starts fingerprint auth while the screen goes off and keeps

@@ -1,7 +1,7 @@
 From 35395507204d43a232ccd3398176bb2c9a3e3f86 Mon Sep 17 00:00:00 2001
 From: Langsdorff <131063968+clangsdorff@users.noreply.github.com>
 Date: Thu, 29 Oct 2026 21:16:55 +0300
-Subject: [PATCH 42/43] LightsService: restore the hidl light hal fallback
+Subject: [PATCH 42/44] LightsService: restore the hidl light hal fallback
 
 android 17 dropped the hidl light@2.0 path from LightsService and only
 talks to the aidl ILights hal. vendors older than android 11 only ship
