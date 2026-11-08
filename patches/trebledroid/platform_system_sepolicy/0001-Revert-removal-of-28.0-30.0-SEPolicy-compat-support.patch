@@ -1,4 +1,4 @@
-From cc8d671cf86fe9add3b8757028d6ea20642b347f Mon Sep 17 00:00:00 2001
+From a0329544edde18b62dbd65af6b966f5050a69219 Mon Sep 17 00:00:00 2001
 From: "Christopher A. Williamson" <contact@chrisaw.io>
 Date: Fri, 25 Sep 2026 18:20:49 +0100
 Subject: [PATCH 1/2] Revert removal of 28.0-30.0 SEPolicy compat support
@@ -1193,16 +1193,16 @@ revert patches).
  .../34.0/private/compat/30.0/30.0.compat.cil  |   14 +
  .../34.0/private/compat/30.0/30.0.ignore.cil  |  156 +
  private/compat/28.0/28.0.cil                  | 1745 +++++++++++
- private/compat/28.0/28.0.compat.cil           |   15 +
+ private/compat/28.0/28.0.compat.cil           |   19 +
  private/compat/28.0/28.0.ignore.cil           |  160 +
  private/compat/29.0/29.0.cil                  | 1987 ++++++++++++
- private/compat/29.0/29.0.compat.cil           |   38 +
+ private/compat/29.0/29.0.compat.cil           |   42 +
  private/compat/29.0/29.0.ignore.cil           |  130 +
  private/compat/30.0/30.0.cil                  | 2284 ++++++++++++++
- private/compat/30.0/30.0.compat.cil           |   39 +
+ private/compat/30.0/30.0.compat.cil           |   43 +
  private/compat/30.0/30.0.ignore.cil           |  159 +
  treble_sepolicy_tests_for_release/Android.bp  |  117 +
- 1191 files changed, 121723 insertions(+), 2 deletions(-)
+ 1191 files changed, 121735 insertions(+), 2 deletions(-)
  create mode 100644 prebuilts/api/202404/private/compat/29.0/29.0.cil
  create mode 100644 prebuilts/api/202404/private/compat/29.0/29.0.compat.cil
  create mode 100644 prebuilts/api/202404/private/compat/29.0/29.0.ignore.cil
@@ -126415,10 +126415,10 @@ index 0000000..d79d2f8
 +(typeattributeset zygote_socket_28_0 (zygote_socket))
 diff --git a/private/compat/28.0/28.0.compat.cil b/private/compat/28.0/28.0.compat.cil
 new file mode 100644
-index 0000000..783950c
+index 0000000..2a2f9c3
 --- /dev/null
 +++ b/private/compat/28.0/28.0.compat.cil
-@@ -0,0 +1,15 @@
+@@ -0,0 +1,19 @@
 +;; complement CIL file for compatibility between ToT policy and 28.0 vendors.
 +;; will be compiled along with other normal policy files, on 28.0 vendors.
 +;;
@@ -126434,6 +126434,10 @@ index 0000000..783950c
 +(allow mlsvendorcompat app_data_file (file (ioctl read write create getattr setattr lock append map unlink rename open watch watch_reads)))
 +(allow mlsvendorcompat privapp_data_file (dir (ioctl read write create getattr setattr lock rename open watch watch_reads add_name remove_name reparent search rmdir)))
 +(allow mlsvendorcompat privapp_data_file (file (ioctl read write create getattr setattr lock append map unlink rename open watch watch_reads)))
++
++;; New system images do not allow open() to work on ashmem for all domains,
++;; so add it for compatibility with older vendor images.
++(allow domain ashmem_libcutils_device (chr_file (open)))
 diff --git a/private/compat/28.0/28.0.ignore.cil b/private/compat/28.0/28.0.ignore.cil
 new file mode 100644
 index 0000000..7213f95
@@ -128595,10 +128599,10 @@ index 0000000..408cf33
 +(typeattributeset zygote_tmpfs_29_0 (zygote_tmpfs))
 diff --git a/private/compat/29.0/29.0.compat.cil b/private/compat/29.0/29.0.compat.cil
 new file mode 100644
-index 0000000..2d37de6
+index 0000000..eb37e43
 --- /dev/null
 +++ b/private/compat/29.0/29.0.compat.cil
-@@ -0,0 +1,38 @@
+@@ -0,0 +1,42 @@
 +;; complement CIL file for compatibility between ToT policy and 29.0 vendors.
 +;; will be compiled along with other normal policy files, on 29.0 vendors.
 +;;
@@ -128637,6 +128641,10 @@ index 0000000..2d37de6
 +
 +(allow vendor_init debugfs_file_type (file (create getattr open read write setattr relabelfrom unlink map)))
 +(allow vendor_init debugfs_fs_type (file (open read setattr map)))
++
++;; New system images do not allow open() to work on ashmem for all domains,
++;; so add it for compatibility with older vendor images.
++(allow domain ashmem_libcutils_device (chr_file (open)))
 diff --git a/private/compat/29.0/29.0.ignore.cil b/private/compat/29.0/29.0.ignore.cil
 new file mode 100644
 index 0000000..e40888d
@@ -131065,10 +131073,10 @@ index 0000000..f95488c
 +(typeattributeset zygote_tmpfs_30_0 (zygote_tmpfs))
 diff --git a/private/compat/30.0/30.0.compat.cil b/private/compat/30.0/30.0.compat.cil
 new file mode 100644
-index 0000000..c9c5f47
+index 0000000..cda8e4a
 --- /dev/null
 +++ b/private/compat/30.0/30.0.compat.cil
-@@ -0,0 +1,39 @@
+@@ -0,0 +1,43 @@
 +;; complement CIL file for compatibility between ToT policy and 30.0 vendors.
 +;; will be compiled along with other normal policy files, on 30.0 vendors.
 +;;
@@ -131108,6 +131116,10 @@ index 0000000..c9c5f47
 +
 +(allow vendor_init debugfs_file_type (file (create getattr open read write setattr relabelfrom unlink map)))
 +(allow vendor_init debugfs_fs_type (file (open read setattr map)))
++
++;; New system images do not allow open() to work on ashmem for all domains,
++;; so add it for compatibility with older vendor images.
++(allow domain ashmem_libcutils_device (chr_file (open)))
 diff --git a/private/compat/30.0/30.0.ignore.cil b/private/compat/30.0/30.0.ignore.cil
 new file mode 100644
 index 0000000..1d3b389
@@ -131402,5 +131414,5 @@ index e7af934..e996da8 100644
      name: "31.0_mapping.combined.cil",
      srcs: [
 -- 
-2.55.0
+2.56.0
 
