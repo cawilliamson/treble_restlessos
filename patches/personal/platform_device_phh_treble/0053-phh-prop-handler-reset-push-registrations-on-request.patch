@@ -1,7 +1,7 @@
 From d82ac26adc0f5aa218909d5ee4d5107ce0445e03 Mon Sep 17 00:00:00 2001
 From: Langsdorff <131063968+clangsdorff@users.noreply.github.com>
 Date: Sat, 31 Oct 2026 02:38:05 +0300
-Subject: [PATCH 53/56] phh-prop-handler: reset push registrations on request
+Subject: [PATCH 53/57] phh-prop-handler: reset push registrations on request
 
 firebase caches the push token in each app's
 com.google.android.gms.appid.xml. the token is bound to the gms install

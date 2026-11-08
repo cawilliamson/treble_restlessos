@@ -1,7 +1,7 @@
 From a9d37bc1c8d1e762186b7037ea746dd4be23138e Mon Sep 17 00:00:00 2001
 From: Langsdorff <131063968+clangsdorff@users.noreply.github.com>
 Date: Sat, 31 Oct 2026 02:38:23 +0300
-Subject: [PATCH 18/18] treble_app: add an entry to reset push registrations
+Subject: [PATCH 18/19] treble_app: add an entry to reset push registrations
 
 apps that registered for push with google play services keep that token
 after switching to microg, or the other way around, and stop getting

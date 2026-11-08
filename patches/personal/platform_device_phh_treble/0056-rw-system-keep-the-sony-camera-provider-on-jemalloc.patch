@@ -1,7 +1,7 @@
 From 0f840acb155727a57676bb667e95ef043c9b92be Mon Sep 17 00:00:00 2001
 From: Langsdorff <131063968+clangsdorff@users.noreply.github.com>
 Date: Mon, 2 Nov 2026 16:30:34 +0300
-Subject: [PATCH 56/56] rw-system: keep the sony camera provider on jemalloc
+Subject: [PATCH 56/57] rw-system: keep the sony camera provider on jemalloc
 
 the 32-bit sony camera provider on pie vendors writes past its focus
 stats buffer and crashes under scudo as soon as a stream starts. ask

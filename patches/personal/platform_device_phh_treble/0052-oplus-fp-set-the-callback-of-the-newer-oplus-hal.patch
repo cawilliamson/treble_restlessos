@@ -1,7 +1,7 @@
 From af636151ce97efb688177f13a2c87869dee542fc Mon Sep 17 00:00:00 2001
 From: Langsdorff <131063968+clangsdorff@users.noreply.github.com>
 Date: Fri, 30 Oct 2026 17:47:02 +0300
-Subject: [PATCH 52/56] oplus-fp: set the callback of the newer oplus hal
+Subject: [PATCH 52/57] oplus-fp: set the callback of the newer oplus hal
 
 newer oplus vendors ship a fingerprint hal under the old
 vendor.oplus.hardware.biometrics.fingerprint@2.1 name that extends the

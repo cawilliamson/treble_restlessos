@@ -1,7 +1,7 @@
 From 93a05aceb0e24ac58a6ffa4de7da26482a0381ff Mon Sep 17 00:00:00 2001
 From: Langsdorff <131063968+clangsdorff@users.noreply.github.com>
 Date: Mon, 2 Nov 2026 01:54:02 +0300
-Subject: [PATCH 54/56] rw-system: restart fingerprint auth on wake for the
+Subject: [PATCH 54/57] rw-system: restart fingerprint auth on wake for the
  sony fpc hal
 
 the stock sony fpc hal on pie vendors stops arming the sensor when the
