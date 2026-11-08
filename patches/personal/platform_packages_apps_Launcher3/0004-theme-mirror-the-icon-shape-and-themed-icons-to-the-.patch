@@ -1,7 +1,7 @@
 From 165b5d06459e2cd84c661906c1d5b1779d9d5917 Mon Sep 17 00:00:00 2001
 From: Langsdorff <131063968+clangsdorff@users.noreply.github.com>
 Date: Thu, 29 Oct 2026 20:22:56 +0300
-Subject: [PATCH 4/4] theme: mirror the icon shape and themed icons to the
+Subject: [PATCH 4/5] theme: mirror the icon shape and themed icons to the
  system
 
 the shape and the minimal icon style picked in wallpaper & style only

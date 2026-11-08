@@ -1,0 +1,90 @@
+From 785a8ce1b71ad68da38c598fa9f3fc744e01f0e2 Mon Sep 17 00:00:00 2001
+From: Langsdorff <131063968+clangsdorff@users.noreply.github.com>
+Date: Sun, 8 Nov 2026 13:21:11 +0300
+Subject: [PATCH 5/5] allapps: match the row gap to the column gap on phones
+
+the drawer cell height is a fixed 104dp in every phone grid, while the
+column width shrinks with the column count. the 5 column grid ends up
+with rows much further apart than its columns.
+
+work out the row height that leaves the same gap under the label as
+between two icons, and use it when it is smaller than the fixed height
+so sparse grids and landscape stay as they are.
+---
+ .../launcher3/deviceprofile/AllAppsProfile.kt | 47 ++++++++++++++++---
+ 1 file changed, 40 insertions(+), 7 deletions(-)
+
+diff --git a/src/com/android/launcher3/deviceprofile/AllAppsProfile.kt b/src/com/android/launcher3/deviceprofile/AllAppsProfile.kt
+index 2200f72..50117f8 100644
+--- a/src/com/android/launcher3/deviceprofile/AllAppsProfile.kt
++++ b/src/com/android/launcher3/deviceprofile/AllAppsProfile.kt
+@@ -235,19 +235,29 @@ data class AllAppsProfile(
+                     allAppsTopPadding = allAppsTopPadding,
+                 )
+ 
++            // We need the double conversion to keep the original behaviour
++            val allAppsIconTextSizePx =
++                (pxFromSp(inv.allAppsIconTextSize[typeIndex], metric).toFloat() * scale)
++                    .toInt()
++                    .toFloat()
++
+             return AllAppsProfile(
+                 borderSpacePx = allAppsBorderSpacePx,
+                 // AllApps cells don't have real space between cells,
+                 // so we add the border space to the cell height
+                 cellHeightPx =
+-                    (pxFromDp(inv.allAppsCellSize.get(typeIndex).y, metric) +
+-                        allAppsBorderSpacePx.y),
++                    fitRowGapToColumnGap(
++                        pxFromDp(inv.allAppsCellSize.get(typeIndex).y, metric) +
++                            allAppsBorderSpacePx.y,
++                        allAppsIconSizePx,
++                        allAppsIconDrawablePaddingPx,
++                        allAppsIconTextSizePx,
++                        numShownAllAppsColumns,
++                        allAppsPadding,
++                        deviceProperties,
++                    ),
+                 iconSizePx = allAppsIconSizePx,
+-                // We need the double conversion to keep the original behaviour
+-                iconTextSizePx =
+-                    (pxFromSp(inv.allAppsIconTextSize[typeIndex], metric).toFloat() * scale)
+-                        .toInt()
+-                        .toFloat(),
++                iconTextSizePx = allAppsIconTextSizePx,
+                 iconDrawablePaddingPx = allAppsIconDrawablePaddingPx,
+                 maxAllAppsTextLineCount = 1,
+                 cellWidthPx = cellWidthPx,
+@@ -268,6 +278,29 @@ data class AllAppsProfile(
+             )
+         }
+ 
++        // The fixed cell height ignores the column count, so dense phone grids end up with rows
++        // much further apart than columns.
++        private fun fitRowGapToColumnGap(
++            cellHeightPx: Int,
++            iconSizePx: Int,
++            iconDrawablePaddingPx: Int,
++            iconTextSizePx: Float,
++            numColumns: Int,
++            padding: Rect,
++            deviceProperties: DeviceProperties,
++        ): Int {
++            if (deviceProperties.isLargeScreen) return cellHeightPx
++            val visibleIconSizePx = getIconVisibleSizePx(iconSizePx)
++            val columnWidthPx =
++                (deviceProperties.availableWidthPx - padding.left - padding.right) / numColumns
++            val contentHeightPx =
++                iconSizePx + iconDrawablePaddingPx + Utilities.calculateTextHeight(iconTextSizePx)
++            val rowHeightPx =
++                contentHeightPx + columnWidthPx - visibleIconSizePx -
++                    (iconSizePx - visibleIconSizePx) / 2
++            return min(cellHeightPx, max(rowHeightPx, contentHeightPx))
++        }
++
+         fun calculateallAppsLeftRightMargin(
+             cellWidthPx: Int,
+             numShownAllAppsColumns: Int,
+-- 
+2.56.0
+
