@@ -1,0 +1,63 @@
+From 8ff65f9b9d5239f0cec44ba117eb7b90572c327c Mon Sep 17 00:00:00 2001
+From: Langsdorff <131063968+clangsdorff@users.noreply.github.com>
+Date: Sun, 8 Nov 2026 13:45:39 +0300
+Subject: [PATCH 45/45] instrumentation: spoof build fields per app
+
+google gates features like circle to search on the device identity,
+so they stay off on gsis. let an app see other build values, read
+from persist.sys.spoof.<last package segment>.<field> when its
+application is created. only java build fields change, sdk_int stays
+real since apps select api code paths from it.
+---
+ core/java/android/app/Instrumentation.java | 28 ++++++++++++++++++++++
+ 1 file changed, 28 insertions(+)
+
+diff --git a/core/java/android/app/Instrumentation.java b/core/java/android/app/Instrumentation.java
+index 44ed49b58..181d5650c 100644
+--- a/core/java/android/app/Instrumentation.java
++++ b/core/java/android/app/Instrumentation.java
+@@ -1346,6 +1346,33 @@ public class Instrumentation {
+                 InputManager.INJECT_INPUT_EVENT_MODE_WAIT_FOR_FINISH);
+     }
+ 
++    private static void maybeSpoofBuild(String packageName) {
++        final String prefix = "persist.sys.spoof."
++                + packageName.substring(packageName.lastIndexOf('.') + 1) + ".";
++        spoofBuildField(Build.class, "MANUFACTURER", prefix + "manufacturer");
++        spoofBuildField(Build.class, "BRAND", prefix + "brand");
++        spoofBuildField(Build.class, "MODEL", prefix + "model");
++        spoofBuildField(Build.class, "DEVICE", prefix + "device");
++        spoofBuildField(Build.class, "PRODUCT", prefix + "product");
++        spoofBuildField(Build.class, "FINGERPRINT", prefix + "fingerprint");
++        // SDK_INT stays real, apps pick api code paths from it
++        spoofBuildField(Build.VERSION.class, "RELEASE", prefix + "release");
++    }
++
++    private static void spoofBuildField(Class<?> clazz, String field, String prop) {
++        final String value = SystemProperties.get(prop);
++        if (value.isEmpty()) {
++            return;
++        }
++        try {
++            final java.lang.reflect.Field f = clazz.getDeclaredField(field);
++            f.setAccessible(true);
++            f.set(null, value);
++        } catch (ReflectiveOperationException e) {
++            Log.w(TAG, "Failed to spoof " + field, e);
++        }
++    }
++
+     /**
+      * Perform instantiation of the process's {@link Application} object.  The
+      * default implementation provides the normal system behavior.
+@@ -1362,6 +1389,7 @@ public class Instrumentation {
+             throws InstantiationException, IllegalAccessException, 
+             ClassNotFoundException {
+         GmsCompat.maybeEnable(context);
++        maybeSpoofBuild(context.getPackageName());
+         className = com.android.internal.app.PairipHooks.maybeReplaceApplicationClassName(
+                 context, cl, className);
+         final Application app;
+-- 
+2.56.0
+
