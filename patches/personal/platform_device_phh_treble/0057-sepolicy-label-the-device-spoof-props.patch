@@ -1,14 +1,14 @@
-From 3eafd06e5a87ff02e65b9bae8fe3fe9d3e3d24e7 Mon Sep 17 00:00:00 2001
+From 5be1bf7af342785989a3fd9334e0ce2b990d80ff Mon Sep 17 00:00:00 2001
 From: Langsdorff <131063968+clangsdorff@users.noreply.github.com>
 Date: Sun, 8 Nov 2026 13:45:52 +0300
-Subject: [PATCH 57/57] sepolicy: label the per app spoof props
+Subject: [PATCH 57/57] sepolicy: label the device spoof props
 
-label persist.sys.spoof. so the treble app can set the per app build
-values and the apps can read them when they start.
+label persist.sys.spoof. so the treble app can set the spoofed device
+values and user apps can read them when they start.
 ---
  sepolicy/property_contexts | 1 +
- sepolicy/spoof.te          | 5 +++++
- 2 files changed, 6 insertions(+)
+ sepolicy/spoof.te          | 4 ++++
+ 2 files changed, 5 insertions(+)
  create mode 100644 sepolicy/spoof.te
 
 diff --git a/sepolicy/property_contexts b/sepolicy/property_contexts
@@ -22,15 +22,14 @@ index 90d9239..c5521d6 100644
 +persist.sys.spoof. u:object_r:phh_spoof_prop:s0
 diff --git a/sepolicy/spoof.te b/sepolicy/spoof.te
 new file mode 100644
-index 0000000..32aeb25
+index 0000000..b1c2969
 --- /dev/null
 +++ b/sepolicy/spoof.te
-@@ -0,0 +1,5 @@
+@@ -0,0 +1,4 @@
 +type phh_spoof_prop, property_type;
 +set_prop(system_app, phh_spoof_prop);
 +set_prop(platform_app, phh_spoof_prop);
 +get_prop(untrusted_app_all, phh_spoof_prop);
-+get_prop(priv_app, phh_spoof_prop);
 -- 
 2.56.0
 

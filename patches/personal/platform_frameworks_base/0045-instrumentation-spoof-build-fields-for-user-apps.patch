@@ -1,28 +1,33 @@
-From 8ff65f9b9d5239f0cec44ba117eb7b90572c327c Mon Sep 17 00:00:00 2001
+From f95fddb94f4e4e561753eb1d176043667a42304b Mon Sep 17 00:00:00 2001
 From: Langsdorff <131063968+clangsdorff@users.noreply.github.com>
 Date: Sun, 8 Nov 2026 13:45:39 +0300
-Subject: [PATCH 45/45] instrumentation: spoof build fields per app
+Subject: [PATCH 45/45] instrumentation: spoof build fields for user apps
 
-google gates features like circle to search on the device identity,
-so they stay off on gsis. let an app see other build values, read
-from persist.sys.spoof.<last package segment>.<field> when its
-application is created. only java build fields change, sdk_int stays
-real since apps select api code paths from it.
+google play and some apps gate on the device identity, so they refuse
+gsis on old vendors. when persist.sys.spoof.enabled is set, show every
+non system app the values from persist.sys.spoof.<field> when its
+application is created. system and vendor apps keep the real values.
+only java build fields change, sdk_int stays real since apps select
+api code paths from it.
 ---
- core/java/android/app/Instrumentation.java | 28 ++++++++++++++++++++++
- 1 file changed, 28 insertions(+)
+ core/java/android/app/Instrumentation.java | 32 ++++++++++++++++++++++
+ 1 file changed, 32 insertions(+)
 
 diff --git a/core/java/android/app/Instrumentation.java b/core/java/android/app/Instrumentation.java
-index 44ed49b58..181d5650c 100644
+index 44ed49b58..a0b0b05d8 100644
 --- a/core/java/android/app/Instrumentation.java
 +++ b/core/java/android/app/Instrumentation.java
-@@ -1346,6 +1346,33 @@ public class Instrumentation {
+@@ -1346,6 +1346,37 @@ public class Instrumentation {
                  InputManager.INJECT_INPUT_EVENT_MODE_WAIT_FOR_FINISH);
      }
  
-+    private static void maybeSpoofBuild(String packageName) {
-+        final String prefix = "persist.sys.spoof."
-+                + packageName.substring(packageName.lastIndexOf('.') + 1) + ".";
++    private static void maybeSpoofBuild(Context context) {
++        if ((context.getApplicationInfo().flags
++                        & android.content.pm.ApplicationInfo.FLAG_SYSTEM) != 0
++                || !SystemProperties.getBoolean("persist.sys.spoof.enabled", false)) {
++            return;
++        }
++        final String prefix = "persist.sys.spoof.";
 +        spoofBuildField(Build.class, "MANUFACTURER", prefix + "manufacturer");
 +        spoofBuildField(Build.class, "BRAND", prefix + "brand");
 +        spoofBuildField(Build.class, "MODEL", prefix + "model");
@@ -50,11 +55,11 @@ index 44ed49b58..181d5650c 100644
      /**
       * Perform instantiation of the process's {@link Application} object.  The
       * default implementation provides the normal system behavior.
-@@ -1362,6 +1389,7 @@ public class Instrumentation {
+@@ -1362,6 +1393,7 @@ public class Instrumentation {
              throws InstantiationException, IllegalAccessException, 
              ClassNotFoundException {
          GmsCompat.maybeEnable(context);
-+        maybeSpoofBuild(context.getPackageName());
++        maybeSpoofBuild(context);
          className = com.android.internal.app.PairipHooks.maybeReplaceApplicationClassName(
                  context, cl, className);
          final Application app;
