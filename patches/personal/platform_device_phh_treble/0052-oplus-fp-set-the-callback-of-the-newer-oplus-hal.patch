@@ -1,0 +1,160 @@
+From af636151ce97efb688177f13a2c87869dee542fc Mon Sep 17 00:00:00 2001
+From: Langsdorff <131063968+clangsdorff@users.noreply.github.com>
+Date: Fri, 30 Oct 2026 17:47:02 +0300
+Subject: [PATCH 52/56] oplus-fp: set the callback of the newer oplus hal
+
+newer oplus vendors ship a fingerprint hal under the old
+vendor.oplus.hardware.biometrics.fingerprint@2.1 name that extends the
+aosp 2.3 interface and registers it itself. the compat service talks
+the old layout, so setNotify came back BAD_TYPE and aborted. it also
+registered over the vendor service with 2.1 only, which hid isUdfps
+from the framework. the vendor hal dereferences the callback from
+setHalCallback on every touch and nothing sets it, so it crashes on
+the first touch down.
+
+when the vendor service serves the aosp interface, stop registering
+and only set a no-op callback, again after every hal restart. the old
+translation stays for other hals, with a failed setNotify no longer
+aborting.
+---
+ hal/oplus-fp/BiometricsFingerprint.cpp | 69 +++++++++++++++++++++++++-
+ hal/oplus-fp/BiometricsFingerprint.h   |  5 ++
+ hal/oplus-fp/service.cpp               |  5 ++
+ 3 files changed, 78 insertions(+), 1 deletion(-)
+
+diff --git a/hal/oplus-fp/BiometricsFingerprint.cpp b/hal/oplus-fp/BiometricsFingerprint.cpp
+index 9f4a18a..5a8aaef 100644
+--- a/hal/oplus-fp/BiometricsFingerprint.cpp
++++ b/hal/oplus-fp/BiometricsFingerprint.cpp
+@@ -24,6 +24,10 @@
+ #include <unistd.h>
+ #include <utils/Log.h>
+ #include <thread>
++#include <condition_variable>
++#include <mutex>
++#include <hidl/HidlBinderSupport.h>
++#include <hwbinder/Binder.h>
+ 
+ namespace android {
+ namespace hardware {
+@@ -39,6 +43,69 @@ BiometricsFingerprint::BiometricsFingerprint() {
+         sleep(10);
+     }
+     if(mOplusBiometricsFingerprint == nullptr) exit(0);
++
++    sp<::android::hidl::base::V1_0::IBase> base = mOplusBiometricsFingerprint;
++    sp<IBiometricsFingerprint> aosp = IBiometricsFingerprint::castFrom(base);
++    mVendorServesAosp = aosp != nullptr;
++}
++
++using OplusFingerprint = vendor::oplus::hardware::biometrics::fingerprint::V2_1::IBiometricsFingerprint;
++
++// transaction code of setHalCallback, it follows the 13 methods of aosp @2.3.
++// vendor_interfaces carries the old layout under the same name, so no proxy exists
++static constexpr uint32_t kOplusSetHalCallback = 14;
++
++// the vendor hal dereferences this callback on every touch without a null check
++class NoopCallback : public BHwBinder {
++protected:
++    status_t onTransact(uint32_t, const Parcel&, Parcel*, uint32_t, TransactCallback) override {
++        return OK;
++    }
++};
++
++class VendorDeath : public hidl_death_recipient {
++public:
++    void serviceDied(uint64_t, const wp<::android::hidl::base::V1_0::IBase>&) override {
++        std::lock_guard<std::mutex> guard(mLock);
++        mDead = true;
++        mCond.notify_one();
++    }
++    void wait() {
++        std::unique_lock<std::mutex> guard(mLock);
++        mCond.wait(guard, [this] { return mDead; });
++        mDead = false;
++    }
++private:
++    std::mutex mLock;
++    std::condition_variable mCond;
++    bool mDead = false;
++};
++
++static bool setVendorCallback(const sp<OplusFingerprint>& hal, const sp<IBinder>& callback) {
++    Parcel data, reply;
++    data.writeInterfaceToken(OplusFingerprint::descriptor);
++    data.writeStrongBinder(callback);
++    if(toBinder<OplusFingerprint>(hal)->transact(kOplusSetHalCallback, data, &reply) != OK) return false;
++    Status status;
++    return readFromParcel(&status, reply) == OK && status.isOk();
++}
++
++bool BiometricsFingerprint::keepVendorCallback() {
++    if(!mVendorServesAosp) return false;
++    ALOGE("vendor HAL implements the AOSP interface, only setting its callback");
++    std::thread([hal = mOplusBiometricsFingerprint]() mutable {
++        sp<IBinder> callback = new NoopCallback();
++        sp<VendorDeath> death = new VendorDeath();
++        for(;;) {
++            if(hal != nullptr) {
++                Return<bool> linked = hal->linkToDeath(death, 0);
++                if(linked.isOk() && linked && setVendorCallback(hal, callback)) death->wait();
++            }
++            sleep(1);
++            hal = OplusFingerprint::tryGetService();
++        }
++    }).detach();
++    return true;
+ }
+ 
+ static bool receivedCancel;
+@@ -157,7 +224,7 @@ Return<uint64_t> BiometricsFingerprint::setNotify(
+         const sp<IBiometricsFingerprintClientCallback>& clientCallback) {
+     ALOGE("setNotify");
+     mOplusClientCallback = new OplusClientCallback(clientCallback);
+-    return mOplusBiometricsFingerprint->setNotify(mOplusClientCallback);
++    return mOplusBiometricsFingerprint->setNotify(mOplusClientCallback).withDefault(0);
+ }
+ 
+ Return<RequestStatus> BiometricsFingerprint::OplusToAOSPRequestStatus(vendor::oplus::hardware::biometrics::fingerprint::V2_1::RequestStatus req) {
+diff --git a/hal/oplus-fp/BiometricsFingerprint.h b/hal/oplus-fp/BiometricsFingerprint.h
+index 487192a..149d4cd 100644
+--- a/hal/oplus-fp/BiometricsFingerprint.h
++++ b/hal/oplus-fp/BiometricsFingerprint.h
+@@ -50,6 +50,10 @@ struct BiometricsFingerprint : public IBiometricsFingerprint {
+ public:
+     BiometricsFingerprint();
+ 
++    // true when the vendor service serves the aosp interface itself and this
++    // process only has to keep the vendor callback set
++    bool keepVendorCallback();
++
+     // Methods from ::android::hardware::biometrics::fingerprint::V2_1::IBiometricsFingerprint follow.
+     Return<uint64_t> setNotify(const sp<IBiometricsFingerprintClientCallback>& clientCallback) override;
+     Return<uint64_t> preEnroll() override;
+@@ -64,6 +68,7 @@ public:
+ 
+ private:
+     sp<vendor::oplus::hardware::biometrics::fingerprint::V2_1::IBiometricsFingerprint> mOplusBiometricsFingerprint;
++    bool mVendorServesAosp = false;
+     sp<OplusClientCallback> mOplusClientCallback;
+     static Return<RequestStatus> OplusToAOSPRequestStatus(vendor::oplus::hardware::biometrics::fingerprint::V2_1::RequestStatus req);
+ };
+diff --git a/hal/oplus-fp/service.cpp b/hal/oplus-fp/service.cpp
+index 4b7623e..6d50851 100644
+--- a/hal/oplus-fp/service.cpp
++++ b/hal/oplus-fp/service.cpp
+@@ -43,6 +43,11 @@ int main() {
+ 
+     configureRpcThreadpool(1, true /*callerWillJoin*/);
+ 
++    if (biometricsFingerprint->keepVendorCallback()) {
++        joinRpcThreadpool();
++        goto shutdown;
++    }
++
+     status = biometricsFingerprint->registerAsService();
+     if (status != OK) {
+         LOG(ERROR) << "Could not register service for Fingerprint HAL Adapter BiometricsFingerprint Iface ("
+-- 
+2.56.0
+
