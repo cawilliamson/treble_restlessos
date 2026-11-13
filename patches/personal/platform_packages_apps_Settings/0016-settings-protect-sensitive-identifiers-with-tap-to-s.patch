@@ -1,0 +1,290 @@
+From 5e95e5d3db50963b5f54d3ab073a1db5e6f7b226 Mon Sep 17 00:00:00 2001
+From: Langsdorff <131063968+clangsdorff@users.noreply.github.com>
+Date: Fri, 13 Nov 2026 20:39:58 +0300
+Subject: [PATCH 16/16] settings: protect sensitive identifiers with tap to
+ show
+
+hide phone number, imei, sim eid, wifi mac, and bluetooth mac behind device_info_protected_single_press in about phone and sim settings until tapped.
+---
+ .../BluetoothAddressPreferenceController.java | 13 +++++++++
+ .../PhoneNumberPreferenceController.java      | 27 ++++++++++++++++---
+ .../WifiMacAddressPreferenceController.java   | 12 +++++++++
+ .../deviceinfo/imei/ImeiPreference.kt         |  7 +++--
+ .../deviceinfo/simstatus/SimEidPreference.kt  |  7 +++--
+ .../MobileNetworkEidPreferenceController.kt   |  7 +++--
+ .../telephony/MobileNetworkImeiPreference.kt  |  6 +++--
+ .../MobileNetworkPhoneNumberPreference.kt     | 15 ++++++++++-
+ 8 files changed, 82 insertions(+), 12 deletions(-)
+
+diff --git a/src/com/android/settings/deviceinfo/BluetoothAddressPreferenceController.java b/src/com/android/settings/deviceinfo/BluetoothAddressPreferenceController.java
+index 431ead5..33fe8e9 100644
+--- a/src/com/android/settings/deviceinfo/BluetoothAddressPreferenceController.java
++++ b/src/com/android/settings/deviceinfo/BluetoothAddressPreferenceController.java
+@@ -18,6 +18,9 @@ package com.android.settings.deviceinfo;
+ 
+ import android.content.Context;
+ 
++import androidx.preference.Preference;
++
++import com.android.settings.R;
+ import com.android.settings.core.PreferenceControllerMixin;
+ import com.android.settingslib.core.lifecycle.Lifecycle;
+ import com.android.settingslib.deviceinfo.AbstractBluetoothAddressPreferenceController;
+@@ -32,4 +35,14 @@ public class BluetoothAddressPreferenceController extends
+     }
+ 
+     // This space intentionally left blank
++
++    @Override
++    protected void setMacSummary(Preference preference, String summary) {
++        preference.setSummary(R.string.device_info_protected_single_press);
++        preference.setSelectable(true);
++        preference.setOnPreferenceClickListener(p -> {
++            super.setMacSummary(preference, summary);
++            return true;
++        });
++    }
+ }
+diff --git a/src/com/android/settings/deviceinfo/PhoneNumberPreferenceController.java b/src/com/android/settings/deviceinfo/PhoneNumberPreferenceController.java
+index 9ed489a..7c342bc 100644
+--- a/src/com/android/settings/deviceinfo/PhoneNumberPreferenceController.java
++++ b/src/com/android/settings/deviceinfo/PhoneNumberPreferenceController.java
+@@ -62,6 +62,27 @@ public class PhoneNumberPreferenceController extends BasePreferenceController {
+         return AVAILABLE;
+     }
+ 
++    @Override
++    public CharSequence getSummary() {
++        return mContext.getString(R.string.device_info_protected_single_press);
++    }
++
++    @Override
++    public boolean handlePreferenceTreeClick(Preference preference) {
++        String prefKey = preference.getKey();
++        if (prefKey.startsWith(KEY_PHONE_NUMBER)) {
++            int simSlotNumber = 0;
++            if (!TextUtils.equals(prefKey, KEY_PHONE_NUMBER)) {
++                // Get multisim slot number from preference key.
++                // Multisim preference key is KEY_PHONE_NUMBER + simSlotNumber
++                simSlotNumber = Integer.parseInt(
++                        prefKey.replaceAll("[^0-9]", ""));
++            }
++            setPhoneNumber(simSlotNumber);
++        }
++        return super.handlePreferenceTreeClick(preference);
++    }
++
+     @Override
+     public void displayPreference(PreferenceScreen screen) {
+         super.displayPreference(screen);
+@@ -91,7 +112,7 @@ public class PhoneNumberPreferenceController extends BasePreferenceController {
+         for (int simSlotNumber = 0; simSlotNumber < mPreferenceList.size(); simSlotNumber++) {
+             final Preference simStatusPreference = mPreferenceList.get(simSlotNumber);
+             simStatusPreference.setTitle(getPreferenceTitle(simSlotNumber));
+-            setPhoneNumber(simSlotNumber);
++            simStatusPreference.setSummary(getSummary());
+         }
+     }
+ 
+@@ -132,7 +153,7 @@ public class PhoneNumberPreferenceController extends BasePreferenceController {
+     }
+ 
+     @VisibleForTesting
+-    protected String getFormattedPhoneNumber(SubscriptionInfo subscriptionInfo) {
++    protected CharSequence getFormattedPhoneNumber(SubscriptionInfo subscriptionInfo) {
+         final String phoneNumber = SubscriptionUtil.getBidiFormattedPhoneNumber(mContext,
+                 subscriptionInfo);
+         return TextUtils.isEmpty(phoneNumber) ? mContext.getString(R.string.device_info_default)
+@@ -141,6 +162,6 @@ public class PhoneNumberPreferenceController extends BasePreferenceController {
+ 
+     @VisibleForTesting
+     protected Preference createNewPreference(Context context) {
+-        return new Preference(context);
++        return new PhoneNumberSummaryPreference(context);
+     }
+ }
+diff --git a/src/com/android/settings/deviceinfo/WifiMacAddressPreferenceController.java b/src/com/android/settings/deviceinfo/WifiMacAddressPreferenceController.java
+index c700596..11f4a64 100644
+--- a/src/com/android/settings/deviceinfo/WifiMacAddressPreferenceController.java
++++ b/src/com/android/settings/deviceinfo/WifiMacAddressPreferenceController.java
+@@ -18,6 +18,8 @@ package com.android.settings.deviceinfo;
+ 
+ import android.content.Context;
+ 
++import androidx.preference.Preference;
++
+ import com.android.settings.R;
+ import com.android.settings.core.PreferenceControllerMixin;
+ import com.android.settingslib.core.lifecycle.Lifecycle;
+@@ -38,4 +40,14 @@ public class WifiMacAddressPreferenceController extends AbstractWifiMacAddressPr
+     }
+ 
+     // This space intentionally left blank
++
++    @Override
++    protected void setMacSummary(Preference preference, String summary) {
++        preference.setSummary(R.string.device_info_protected_single_press);
++        preference.setSelectable(true);
++        preference.setOnPreferenceClickListener(p -> {
++            super.setMacSummary(preference, summary);
++            return true;
++        });
++    }
+ }
+diff --git a/src/com/android/settings/deviceinfo/imei/ImeiPreference.kt b/src/com/android/settings/deviceinfo/imei/ImeiPreference.kt
+index d61e957..cf6271a 100644
+--- a/src/com/android/settings/deviceinfo/imei/ImeiPreference.kt
++++ b/src/com/android/settings/deviceinfo/imei/ImeiPreference.kt
+@@ -82,7 +82,8 @@ class ImeiPreference(
+ 
+     override fun storage(context: Context): KeyValueStore = createSummaryStorage(context, key)
+ 
+-    override fun getSummary(context: Context): CharSequence? = getFormattedSummary()
++    override fun getSummary(context: Context): CharSequence? =
++        context.getString(R.string.device_info_protected_single_press)
+ 
+     override fun bind(preference: Preference, metadata: PreferenceMetadata) {
+         super.bind(preference, metadata)
+@@ -90,9 +91,11 @@ class ImeiPreference(
+     }
+ 
+     override fun onCreate(context: PreferenceLifecycleContext) {
+-        context.requirePreference<Preference>(key).onPreferenceClickListener =
++        val preference = context.requirePreference<Preference>(key)
++        preference.onPreferenceClickListener =
+             Preference.OnPreferenceClickListener {
+                 val slotId = if (index < imeiList.size) imeiList[index].slotId else index
++                preference.summary = getFormattedSummary()
+                 ImeiInfoDialogFragment.show(context.childFragmentManager, slotId, formattedTitle)
+                 return@OnPreferenceClickListener true
+             }
+diff --git a/src/com/android/settings/deviceinfo/simstatus/SimEidPreference.kt b/src/com/android/settings/deviceinfo/simstatus/SimEidPreference.kt
+index 061f46c..9b4d29e 100644
+--- a/src/com/android/settings/deviceinfo/simstatus/SimEidPreference.kt
++++ b/src/com/android/settings/deviceinfo/simstatus/SimEidPreference.kt
+@@ -80,7 +80,7 @@ class SimEidPreference(private val context: Context) :
+     override fun storage(context: Context): KeyValueStore = createSummaryStorage(context, key)
+ 
+     override fun getSummary(context: Context): CharSequence? =
+-        eidMetadata?.let { PhoneNumberUtil.expandByTts(it.eid).toString() }
++        context.getString(R.string.device_info_protected_single_press)
+ 
+     override fun bind(preference: Preference, metadata: PreferenceMetadata) {
+         super.bind(preference, metadata)
+@@ -88,8 +88,11 @@ class SimEidPreference(private val context: Context) :
+     }
+ 
+     override fun onCreate(context: PreferenceLifecycleContext) {
+-        context.requirePreference<Preference>(key).onPreferenceClickListener =
++        val preference = context.requirePreference<Preference>(key)
++        preference.onPreferenceClickListener =
+             Preference.OnPreferenceClickListener {
++                preference.summary =
++                    eidMetadata?.let { PhoneNumberUtil.expandByTts(it.eid).toString() }
+                 SimEidDialogFragment.show(
+                     context.childFragmentManager,
+                     it.title.toString(),
+diff --git a/src/com/android/settings/network/telephony/MobileNetworkEidPreferenceController.kt b/src/com/android/settings/network/telephony/MobileNetworkEidPreferenceController.kt
+index f6b4400..117a896 100644
+--- a/src/com/android/settings/network/telephony/MobileNetworkEidPreferenceController.kt
++++ b/src/com/android/settings/network/telephony/MobileNetworkEidPreferenceController.kt
+@@ -120,12 +120,15 @@ open class MobileNetworkEidPreferenceController(context: Context, key: String) :
+     fun refreshUi() {
+         preference.title = title
+         preference.dialogTitle = title
+-        preference.summary = PhoneNumberUtil.expandByTts(eid)
++        preference.summary = mContext.getString(R.string.device_info_protected_single_press)
+     }
+ 
+     override fun handlePreferenceTreeClick(preference: Preference): Boolean {
+         if (preference.key != preferenceKey) return false
+-        this.preference.setOnShowListener { coroutineScope?.launch { updateDialog() } }
++        this.preference.setOnShowListener {
++            preference.summary = PhoneNumberUtil.expandByTts(eid)
++            coroutineScope?.launch { updateDialog() }
++        }
+         return true
+     }
+ 
+diff --git a/src/com/android/settings/network/telephony/MobileNetworkImeiPreference.kt b/src/com/android/settings/network/telephony/MobileNetworkImeiPreference.kt
+index 1559957..4007c9b 100644
+--- a/src/com/android/settings/network/telephony/MobileNetworkImeiPreference.kt
++++ b/src/com/android/settings/network/telephony/MobileNetworkImeiPreference.kt
+@@ -60,7 +60,8 @@ class MobileNetworkImeiPreference(private val data: MobileNetworkData) :
+ 
+     override fun storage(context: Context): KeyValueStore = createSummaryStorage(context, key)
+ 
+-    override fun getSummary(context: Context): CharSequence? = data.imeiInfoDataFlow.value.summary
++    override fun getSummary(context: Context): CharSequence? =
++        context.getString(R.string.device_info_protected_single_press)
+ 
+     override val availabilityDescription =
+         "The user must be an admin user, and the device must have mobile data or voice capability, and the subscription ID must be valid."
+@@ -82,8 +83,9 @@ class MobileNetworkImeiPreference(private val data: MobileNetworkData) :
+             }
+         }
+         context.requirePreference<Preference>(key).onPreferenceClickListener =
+-            Preference.OnPreferenceClickListener {
++            Preference.OnPreferenceClickListener { p ->
+                 val title = getTitle(context) ?: ""
++                p.summary = data.imeiInfoDataFlow.value.summary
+                 getSlotIndex()
+                     .takeIf { it != INVALID_SIM_SLOT_INDEX }
+                     ?.run {
+diff --git a/src/com/android/settings/network/telephony/MobileNetworkPhoneNumberPreference.kt b/src/com/android/settings/network/telephony/MobileNetworkPhoneNumberPreference.kt
+index 81a1937..15fdc56 100644
+--- a/src/com/android/settings/network/telephony/MobileNetworkPhoneNumberPreference.kt
++++ b/src/com/android/settings/network/telephony/MobileNetworkPhoneNumberPreference.kt
+@@ -19,6 +19,7 @@ package com.android.settings.network.telephony
+ import android.Manifest
+ import android.content.Context
+ import android.util.Log
++import androidx.preference.Preference
+ import com.android.settings.R
+ import com.android.settingslib.datastore.AbstractKeyedDataObservable
+ import com.android.settingslib.datastore.KeyValueStore
+@@ -27,6 +28,8 @@ import com.android.settingslib.metadata.PersistentPreference
+ import com.android.settingslib.metadata.PreferenceAvailabilityProvider
+ import com.android.settingslib.metadata.preferencesapi.preconditions.PreconditionStability
+ import com.android.settingslib.metadata.PreferenceChangeReason
++import com.android.settingslib.metadata.PreferenceLifecycleContext
++import com.android.settingslib.metadata.PreferenceLifecycleProvider
+ import com.android.settingslib.metadata.PreferenceMetadata
+ import com.android.settingslib.metadata.PreferenceSummaryProvider
+ import com.android.settingslib.metadata.ReadWritePermit
+@@ -36,6 +39,7 @@ import kotlinx.coroutines.launch
+ // LINT.IfChange
+ class MobileNetworkPhoneNumberPreference(private val data: MobileNetworkData) :
+     PreferenceMetadata,
++    PreferenceLifecycleProvider,
+     PersistentPreference<CharSequence>,
+     PreferenceAvailabilityProvider,
+     PreferenceSummaryProvider {
+@@ -55,7 +59,8 @@ class MobileNetworkPhoneNumberPreference(private val data: MobileNetworkData) :
+ 
+     override fun isAvailable(context: Context) = data.phoneNumberDataFlow.value.isAvailable
+ 
+-    override fun getSummary(context: Context) = data.phoneNumberDataFlow.value.summary
++    override fun getSummary(context: Context) =
++        context.getString(R.string.device_info_protected_single_press)
+ 
+     override val valueType: Class<CharSequence>
+         get() = CharSequence::class.javaObjectType
+@@ -82,6 +87,14 @@ class MobileNetworkPhoneNumberPreference(private val data: MobileNetworkData) :
+     override val sensitivityLevel
+         get() = SensitivityLevel.NO_SENSITIVITY
+ 
++    override fun onCreate(context: PreferenceLifecycleContext) {
++        context.requirePreference<Preference>(key).onPreferenceClickListener =
++            Preference.OnPreferenceClickListener { p ->
++                p.summary = data.phoneNumberDataFlow.value.summary
++                return@OnPreferenceClickListener true
++            }
++    }
++
+     @Suppress("UNCHECKED_CAST")
+     class PhoneNumberStore(private val data: MobileNetworkData) :
+         AbstractKeyedDataObservable<String>(), KeyValueStore {
+-- 
+2.56.0
+
