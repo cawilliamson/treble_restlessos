@@ -1,0 +1,683 @@
+From 583350d2138c44534531f6101ba2b9390f1bfb4e Mon Sep 17 00:00:00 2001
+From: Langsdorff <131063968+clangsdorff@users.noreply.github.com>
+Date: Fri, 13 Nov 2026 19:49:40 +0300
+Subject: [PATCH 15/15] gestures: add a toggle for advanced restart options
+
+add a switch in power menu gesture settings backed by
+Settings.Secure.ADVANCED_REBOOT, with translations from lineageos.
+---
+ .../advanced_restart_strings.xml              |  5 +++
+ res/values-az/advanced_restart_strings.xml    |  5 +++
+ res/values-bg/advanced_restart_strings.xml    |  5 +++
+ res/values-bn/advanced_restart_strings.xml    |  5 +++
+ res/values-ca/advanced_restart_strings.xml    |  5 +++
+ res/values-ckb/advanced_restart_strings.xml   |  5 +++
+ res/values-cs/advanced_restart_strings.xml    |  5 +++
+ res/values-cy/advanced_restart_strings.xml    |  5 +++
+ res/values-da/advanced_restart_strings.xml    |  5 +++
+ res/values-de/advanced_restart_strings.xml    |  5 +++
+ res/values-el/advanced_restart_strings.xml    |  5 +++
+ .../advanced_restart_strings.xml              |  5 +++
+ .../advanced_restart_strings.xml              |  5 +++
+ .../advanced_restart_strings.xml              |  5 +++
+ .../advanced_restart_strings.xml              |  5 +++
+ res/values-es/advanced_restart_strings.xml    |  5 +++
+ res/values-fa/advanced_restart_strings.xml    |  5 +++
+ res/values-fr/advanced_restart_strings.xml    |  5 +++
+ .../advanced_restart_strings.xml              |  5 +++
+ .../advanced_restart_strings.xml              |  5 +++
+ res/values-hu/advanced_restart_strings.xml    |  5 +++
+ res/values-in/advanced_restart_strings.xml    |  5 +++
+ res/values-is/advanced_restart_strings.xml    |  5 +++
+ res/values-it/advanced_restart_strings.xml    |  5 +++
+ res/values-iw/advanced_restart_strings.xml    |  5 +++
+ res/values-ja/advanced_restart_strings.xml    |  5 +++
+ res/values-ka/advanced_restart_strings.xml    |  5 +++
+ res/values-ko/advanced_restart_strings.xml    |  5 +++
+ res/values-nl/advanced_restart_strings.xml    |  5 +++
+ .../advanced_restart_strings.xml              |  5 +++
+ res/values-pl/advanced_restart_strings.xml    |  5 +++
+ .../advanced_restart_strings.xml              |  5 +++
+ .../advanced_restart_strings.xml              |  5 +++
+ res/values-ro/advanced_restart_strings.xml    |  5 +++
+ res/values-ru/advanced_restart_strings.xml    |  5 +++
+ .../advanced_restart_strings.xml              |  4 +++
+ res/values-sl/advanced_restart_strings.xml    |  5 +++
+ res/values-sq/advanced_restart_strings.xml    |  5 +++
+ res/values-sv/advanced_restart_strings.xml    |  4 +++
+ res/values-ta/advanced_restart_strings.xml    |  4 +++
+ res/values-tr/advanced_restart_strings.xml    |  5 +++
+ res/values-ug/advanced_restart_strings.xml    |  5 +++
+ res/values-uk/advanced_restart_strings.xml    |  5 +++
+ res/values-vi/advanced_restart_strings.xml    |  5 +++
+ .../advanced_restart_strings.xml              |  5 +++
+ .../advanced_restart_strings.xml              |  5 +++
+ res/values/advanced_restart_strings.xml       |  5 +++
+ res/xml/power_menu_settings.xml               |  7 ++++
+ .../AdvancedRestartPreferenceController.kt    | 35 +++++++++++++++++++
+ 49 files changed, 274 insertions(+)
+ create mode 100644 res/values-ast-rES/advanced_restart_strings.xml
+ create mode 100644 res/values-az/advanced_restart_strings.xml
+ create mode 100644 res/values-bg/advanced_restart_strings.xml
+ create mode 100644 res/values-bn/advanced_restart_strings.xml
+ create mode 100644 res/values-ca/advanced_restart_strings.xml
+ create mode 100644 res/values-ckb/advanced_restart_strings.xml
+ create mode 100644 res/values-cs/advanced_restart_strings.xml
+ create mode 100644 res/values-cy/advanced_restart_strings.xml
+ create mode 100644 res/values-da/advanced_restart_strings.xml
+ create mode 100644 res/values-de/advanced_restart_strings.xml
+ create mode 100644 res/values-el/advanced_restart_strings.xml
+ create mode 100644 res/values-en-rAU/advanced_restart_strings.xml
+ create mode 100644 res/values-en-rCA/advanced_restart_strings.xml
+ create mode 100644 res/values-en-rGB/advanced_restart_strings.xml
+ create mode 100644 res/values-en-rIN/advanced_restart_strings.xml
+ create mode 100644 res/values-es/advanced_restart_strings.xml
+ create mode 100644 res/values-fa/advanced_restart_strings.xml
+ create mode 100644 res/values-fr/advanced_restart_strings.xml
+ create mode 100644 res/values-fur-rIT/advanced_restart_strings.xml
+ create mode 100644 res/values-ga-rIE/advanced_restart_strings.xml
+ create mode 100644 res/values-hu/advanced_restart_strings.xml
+ create mode 100644 res/values-in/advanced_restart_strings.xml
+ create mode 100644 res/values-is/advanced_restart_strings.xml
+ create mode 100644 res/values-it/advanced_restart_strings.xml
+ create mode 100644 res/values-iw/advanced_restart_strings.xml
+ create mode 100644 res/values-ja/advanced_restart_strings.xml
+ create mode 100644 res/values-ka/advanced_restart_strings.xml
+ create mode 100644 res/values-ko/advanced_restart_strings.xml
+ create mode 100644 res/values-nl/advanced_restart_strings.xml
+ create mode 100644 res/values-nn-rNO/advanced_restart_strings.xml
+ create mode 100644 res/values-pl/advanced_restart_strings.xml
+ create mode 100644 res/values-pt-rBR/advanced_restart_strings.xml
+ create mode 100644 res/values-pt-rPT/advanced_restart_strings.xml
+ create mode 100644 res/values-ro/advanced_restart_strings.xml
+ create mode 100644 res/values-ru/advanced_restart_strings.xml
+ create mode 100644 res/values-sc-rIT/advanced_restart_strings.xml
+ create mode 100644 res/values-sl/advanced_restart_strings.xml
+ create mode 100644 res/values-sq/advanced_restart_strings.xml
+ create mode 100644 res/values-sv/advanced_restart_strings.xml
+ create mode 100644 res/values-ta/advanced_restart_strings.xml
+ create mode 100644 res/values-tr/advanced_restart_strings.xml
+ create mode 100644 res/values-ug/advanced_restart_strings.xml
+ create mode 100644 res/values-uk/advanced_restart_strings.xml
+ create mode 100644 res/values-vi/advanced_restart_strings.xml
+ create mode 100644 res/values-zh-rCN/advanced_restart_strings.xml
+ create mode 100644 res/values-zh-rTW/advanced_restart_strings.xml
+ create mode 100644 res/values/advanced_restart_strings.xml
+ create mode 100644 src/com/android/settings/gestures/AdvancedRestartPreferenceController.kt
+
+diff --git a/res/values-ast-rES/advanced_restart_strings.xml b/res/values-ast-rES/advanced_restart_strings.xml
+new file mode 100644
+index 0000000..edbda51
+--- /dev/null
++++ b/res/values-ast-rES/advanced_restart_strings.xml
+@@ -0,0 +1,5 @@
++<?xml version="1.0" encoding="utf-8"?>
++<resources>
++    <string name="power_menu_advanced_restart_title">Reaniciu avanzáu</string>
++    <string name="power_menu_advanced_restart_summary">Al desbloquiar, inclúi les opciones pa reaniciar al mou de recuperación o al cargador d\'arrinque nel menú d\'apagáu</string>
++</resources>
+diff --git a/res/values-az/advanced_restart_strings.xml b/res/values-az/advanced_restart_strings.xml
+new file mode 100644
+index 0000000..c326236
+--- /dev/null
++++ b/res/values-az/advanced_restart_strings.xml
+@@ -0,0 +1,5 @@
++<?xml version="1.0" encoding="utf-8"?>
++<resources>
++    <string name="power_menu_advanced_restart_title">Qabaqcıl yenidən başlatma</string>
++    <string name="power_menu_advanced_restart_summary">Kilid açılanda, geri qaytarma və ya bootloader rejimində yenidən başlatmaq üçün güc düyməsinə seçənəklər əlavə edir</string>
++</resources>
+diff --git a/res/values-bg/advanced_restart_strings.xml b/res/values-bg/advanced_restart_strings.xml
+new file mode 100644
+index 0000000..2cab45f
+--- /dev/null
++++ b/res/values-bg/advanced_restart_strings.xml
+@@ -0,0 +1,5 @@
++<?xml version="1.0" encoding="utf-8"?>
++<resources>
++    <string name="power_menu_advanced_restart_title">Rазширено рестартиране</string>
++    <string name="power_menu_advanced_restart_summary">При отключен телефон, включете в опциите на менюто за захранване, възможност да рестартирате в режим на възстановяване или буутлоудър</string>
++</resources>
+diff --git a/res/values-bn/advanced_restart_strings.xml b/res/values-bn/advanced_restart_strings.xml
+new file mode 100644
+index 0000000..ee814c9
+--- /dev/null
++++ b/res/values-bn/advanced_restart_strings.xml
+@@ -0,0 +1,5 @@
++<?xml version="1.0" encoding="utf-8"?>
++<resources>
++    <string name="power_menu_advanced_restart_title">অ্যাডভান্সড রিস্টার্ট</string>
++    <string name="power_menu_advanced_restart_summary">ডিভাইস আনলক করা থাকলে, রিকভারি অথবা বুটলোডারে যাওয়ার অপশন দেখাও</string>
++</resources>
+diff --git a/res/values-ca/advanced_restart_strings.xml b/res/values-ca/advanced_restart_strings.xml
+new file mode 100644
+index 0000000..3c07128
+--- /dev/null
++++ b/res/values-ca/advanced_restart_strings.xml
+@@ -0,0 +1,5 @@
++<?xml version="1.0" encoding="utf-8"?>
++<resources>
++    <string name="power_menu_advanced_restart_title">Reinici avançat</string>
++    <string name="power_menu_advanced_restart_summary">Quan està desbloquejat, inclou opcions en el menú d\'encesa per a reiniciar al recovery o bootloader</string>
++</resources>
+diff --git a/res/values-ckb/advanced_restart_strings.xml b/res/values-ckb/advanced_restart_strings.xml
+new file mode 100644
+index 0000000..7cc238f
+--- /dev/null
++++ b/res/values-ckb/advanced_restart_strings.xml
+@@ -0,0 +1,5 @@
++<?xml version="1.0" encoding="utf-8"?>
++<resources>
++    <string name="power_menu_advanced_restart_title">دووبارە پێکردنەوەی پێشکەوتوو</string>
++    <string name="power_menu_advanced_restart_summary">زیادکردنی بژاردەی پێکردنەوە بۆ دۆخی Recovery یان Bootloader لە پێڕستی پێکردن</string>
++</resources>
+diff --git a/res/values-cs/advanced_restart_strings.xml b/res/values-cs/advanced_restart_strings.xml
+new file mode 100644
+index 0000000..c5d045d
+--- /dev/null
++++ b/res/values-cs/advanced_restart_strings.xml
+@@ -0,0 +1,5 @@
++<?xml version="1.0" encoding="utf-8"?>
++<resources>
++    <string name="power_menu_advanced_restart_title">Rozšířený restart</string>
++    <string name="power_menu_advanced_restart_summary">Pokud je povoleno, v nabídce vypnutí jsou také možnosti restartovat zařízení do recovery nebo bootloaderu</string>
++</resources>
+diff --git a/res/values-cy/advanced_restart_strings.xml b/res/values-cy/advanced_restart_strings.xml
+new file mode 100644
+index 0000000..f3ad43d
+--- /dev/null
++++ b/res/values-cy/advanced_restart_strings.xml
+@@ -0,0 +1,5 @@
++<?xml version="1.0" encoding="utf-8"?>
++<resources>
++    <string name="power_menu_advanced_restart_title">Ailgychwyn arbennig</string>
++    <string name="power_menu_advanced_restart_summary">Pan wedi datgloi, cynnwys opsiynau yn y ddewislen pŵer i ailgychwyn y system neu ailgychwyn i\'r modd adfer</string>
++</resources>
+diff --git a/res/values-da/advanced_restart_strings.xml b/res/values-da/advanced_restart_strings.xml
+new file mode 100644
+index 0000000..a0b8b9e
+--- /dev/null
++++ b/res/values-da/advanced_restart_strings.xml
+@@ -0,0 +1,5 @@
++<?xml version="1.0" encoding="utf-8"?>
++<resources>
++    <string name="power_menu_advanced_restart_title">Avanceret genstart</string>
++    <string name="power_menu_advanced_restart_summary">Når oplåst, vis muligheder i tænd-/slukmenuen for at genstarte til recovery eller bootloader</string>
++</resources>
+diff --git a/res/values-de/advanced_restart_strings.xml b/res/values-de/advanced_restart_strings.xml
+new file mode 100644
+index 0000000..eae9dc0
+--- /dev/null
++++ b/res/values-de/advanced_restart_strings.xml
+@@ -0,0 +1,5 @@
++<?xml version="1.0" encoding="utf-8"?>
++<resources>
++    <string name="power_menu_advanced_restart_title">Erweiterter Neustart</string>
++    <string name="power_menu_advanced_restart_summary">Bei entsperrtem Bildschirm dem Neustartmenü Optionen für Neustart in Recovery oder in Bootloader hinzufügen</string>
++</resources>
+diff --git a/res/values-el/advanced_restart_strings.xml b/res/values-el/advanced_restart_strings.xml
+new file mode 100644
+index 0000000..635b93e
+--- /dev/null
++++ b/res/values-el/advanced_restart_strings.xml
+@@ -0,0 +1,5 @@
++<?xml version="1.0" encoding="utf-8"?>
++<resources>
++    <string name="power_menu_advanced_restart_title">Προηγμένη επανεκκίνηση</string>
++    <string name="power_menu_advanced_restart_summary">Όταν είναι ενεργή, περιλαμβάνονται στο μενού πλήκτρου απενεργοποίησης οι επιλογές επανεκκίνησης σε λειτουργία recovery ή bootloader</string>
++</resources>
+diff --git a/res/values-en-rAU/advanced_restart_strings.xml b/res/values-en-rAU/advanced_restart_strings.xml
+new file mode 100644
+index 0000000..c8f8c7f
+--- /dev/null
++++ b/res/values-en-rAU/advanced_restart_strings.xml
+@@ -0,0 +1,5 @@
++<?xml version="1.0" encoding="utf-8"?>
++<resources>
++    <string name="power_menu_advanced_restart_title">Advanced restart</string>
++    <string name="power_menu_advanced_restart_summary">When unlocked, include options in the power menu for restarting into recovery or bootloader</string>
++</resources>
+diff --git a/res/values-en-rCA/advanced_restart_strings.xml b/res/values-en-rCA/advanced_restart_strings.xml
+new file mode 100644
+index 0000000..c8f8c7f
+--- /dev/null
++++ b/res/values-en-rCA/advanced_restart_strings.xml
+@@ -0,0 +1,5 @@
++<?xml version="1.0" encoding="utf-8"?>
++<resources>
++    <string name="power_menu_advanced_restart_title">Advanced restart</string>
++    <string name="power_menu_advanced_restart_summary">When unlocked, include options in the power menu for restarting into recovery or bootloader</string>
++</resources>
+diff --git a/res/values-en-rGB/advanced_restart_strings.xml b/res/values-en-rGB/advanced_restart_strings.xml
+new file mode 100644
+index 0000000..c8f8c7f
+--- /dev/null
++++ b/res/values-en-rGB/advanced_restart_strings.xml
+@@ -0,0 +1,5 @@
++<?xml version="1.0" encoding="utf-8"?>
++<resources>
++    <string name="power_menu_advanced_restart_title">Advanced restart</string>
++    <string name="power_menu_advanced_restart_summary">When unlocked, include options in the power menu for restarting into recovery or bootloader</string>
++</resources>
+diff --git a/res/values-en-rIN/advanced_restart_strings.xml b/res/values-en-rIN/advanced_restart_strings.xml
+new file mode 100644
+index 0000000..c8f8c7f
+--- /dev/null
++++ b/res/values-en-rIN/advanced_restart_strings.xml
+@@ -0,0 +1,5 @@
++<?xml version="1.0" encoding="utf-8"?>
++<resources>
++    <string name="power_menu_advanced_restart_title">Advanced restart</string>
++    <string name="power_menu_advanced_restart_summary">When unlocked, include options in the power menu for restarting into recovery or bootloader</string>
++</resources>
+diff --git a/res/values-es/advanced_restart_strings.xml b/res/values-es/advanced_restart_strings.xml
+new file mode 100644
+index 0000000..e76719f
+--- /dev/null
++++ b/res/values-es/advanced_restart_strings.xml
+@@ -0,0 +1,5 @@
++<?xml version="1.0" encoding="utf-8"?>
++<resources>
++    <string name="power_menu_advanced_restart_title">Reinicio avanzado</string>
++    <string name="power_menu_advanced_restart_summary">Incluir opciones en el menú de encendido para reiniciar en modo de recuperación o gestor de arranque con dispositivo desbloqueado </string>
++</resources>
+diff --git a/res/values-fa/advanced_restart_strings.xml b/res/values-fa/advanced_restart_strings.xml
+new file mode 100644
+index 0000000..03dfa6f
+--- /dev/null
++++ b/res/values-fa/advanced_restart_strings.xml
+@@ -0,0 +1,5 @@
++<?xml version="1.0" encoding="utf-8"?>
++<resources>
++    <string name="power_menu_advanced_restart_title">شروع مجدد پیشرفته</string>
++    <string name="power_menu_advanced_restart_summary">هنگام باز بودن گوشی، گزینه های بوت لودر و ریکاوری به منوی نیرو اضافه می‌شود</string>
++</resources>
+diff --git a/res/values-fr/advanced_restart_strings.xml b/res/values-fr/advanced_restart_strings.xml
+new file mode 100644
+index 0000000..a0c60da
+--- /dev/null
++++ b/res/values-fr/advanced_restart_strings.xml
+@@ -0,0 +1,5 @@
++<?xml version="1.0" encoding="utf-8"?>
++<resources>
++    <string name="power_menu_advanced_restart_title">Redémarrage avancé</string>
++    <string name="power_menu_advanced_restart_summary">Inclure les options de redémarrage en modes \"récupération\" et \"chargeur de démarrage\" dans le menu marche/arrêt lorsque l\'appareil est déverrouillé</string>
++</resources>
+diff --git a/res/values-fur-rIT/advanced_restart_strings.xml b/res/values-fur-rIT/advanced_restart_strings.xml
+new file mode 100644
+index 0000000..91a2605
+--- /dev/null
++++ b/res/values-fur-rIT/advanced_restart_strings.xml
+@@ -0,0 +1,5 @@
++<?xml version="1.0" encoding="utf-8"?>
++<resources>
++    <string name="power_menu_advanced_restart_title">Tornâ a inviâ avanzât</string>
++    <string name="power_menu_advanced_restart_summary">Se sblocât, tal menù di impiament a vegnin includudis lis opzions par tornâ a inviâ in modalitât recovery o bootloader</string>
++</resources>
+diff --git a/res/values-ga-rIE/advanced_restart_strings.xml b/res/values-ga-rIE/advanced_restart_strings.xml
+new file mode 100644
+index 0000000..b66a3fa
+--- /dev/null
++++ b/res/values-ga-rIE/advanced_restart_strings.xml
+@@ -0,0 +1,5 @@
++<?xml version="1.0" encoding="utf-8"?>
++<resources>
++    <string name="power_menu_advanced_restart_title">Atosú chun cinn</string>
++    <string name="power_menu_advanced_restart_summary">Nuair a dhíghlasáiltear é, cuir roghanna leis an roghchlár cumhachta chun atosú sa mhód téarnaimh nó sa luchtaitheoir tosaithe</string>
++</resources>
+diff --git a/res/values-hu/advanced_restart_strings.xml b/res/values-hu/advanced_restart_strings.xml
+new file mode 100644
+index 0000000..fb5ed83
+--- /dev/null
++++ b/res/values-hu/advanced_restart_strings.xml
+@@ -0,0 +1,5 @@
++<?xml version="1.0" encoding="utf-8"?>
++<resources>
++    <string name="power_menu_advanced_restart_title">Speciális újraindítás</string>
++    <string name="power_menu_advanced_restart_summary">Feloldott kijelzőnél a Recovery és a Bootloader újraindítási mód is jelenjen meg a kikapcsoló menüben</string>
++</resources>
+diff --git a/res/values-in/advanced_restart_strings.xml b/res/values-in/advanced_restart_strings.xml
+new file mode 100644
+index 0000000..c568155
+--- /dev/null
++++ b/res/values-in/advanced_restart_strings.xml
+@@ -0,0 +1,5 @@
++<?xml version="1.0" encoding="utf-8"?>
++<resources>
++    <string name="power_menu_advanced_restart_title">Mulai ulang lanjutan</string>
++    <string name="power_menu_advanced_restart_summary">Ketika tidak terkunci, berisi pilihan pada menu daya untuk mulai ulang ke recovery atau bootloader</string>
++</resources>
+diff --git a/res/values-is/advanced_restart_strings.xml b/res/values-is/advanced_restart_strings.xml
+new file mode 100644
+index 0000000..2d5f082
+--- /dev/null
++++ b/res/values-is/advanced_restart_strings.xml
+@@ -0,0 +1,5 @@
++<?xml version="1.0" encoding="utf-8"?>
++<resources>
++    <string name="power_menu_advanced_restart_title">Ítarlegri endurræsing</string>
++    <string name="power_menu_advanced_restart_summary">Á ólæstum tækjum, hafa með í aflvalmynd valkosti til að endurræsa með ræsivalmynd (bootloader) eða í endurheimtuham</string>
++</resources>
+diff --git a/res/values-it/advanced_restart_strings.xml b/res/values-it/advanced_restart_strings.xml
+new file mode 100644
+index 0000000..180fc90
+--- /dev/null
++++ b/res/values-it/advanced_restart_strings.xml
+@@ -0,0 +1,5 @@
++<?xml version="1.0" encoding="utf-8"?>
++<resources>
++    <string name="power_menu_advanced_restart_title">Riavvio avanzato</string>
++    <string name="power_menu_advanced_restart_summary">Quando il dispositivo è sbloccato, mostra nel menù di accensione le opzioni per il riavvio in recovery o nel bootloader</string>
++</resources>
+diff --git a/res/values-iw/advanced_restart_strings.xml b/res/values-iw/advanced_restart_strings.xml
+new file mode 100644
+index 0000000..16b2bf6
+--- /dev/null
++++ b/res/values-iw/advanced_restart_strings.xml
+@@ -0,0 +1,5 @@
++<?xml version="1.0" encoding="utf-8"?>
++<resources>
++    <string name="power_menu_advanced_restart_title">אתחול מתקדם</string>
++    <string name="power_menu_advanced_restart_summary">כאשר לא נעול, הוספת אפשרויות של הפעלה מחדש למצב התאוששות (Recovery) או מנהל האתחול (Bootloader)</string>
++</resources>
+diff --git a/res/values-ja/advanced_restart_strings.xml b/res/values-ja/advanced_restart_strings.xml
+new file mode 100644
+index 0000000..fe6b8d4
+--- /dev/null
++++ b/res/values-ja/advanced_restart_strings.xml
+@@ -0,0 +1,5 @@
++<?xml version="1.0" encoding="utf-8"?>
++<resources>
++    <string name="power_menu_advanced_restart_title">高度な再起動</string>
++    <string name="power_menu_advanced_restart_summary">ロック解除時に、リカバリーやブートローダーへ再起動するオプションを電源メニューに含めます</string>
++</resources>
+diff --git a/res/values-ka/advanced_restart_strings.xml b/res/values-ka/advanced_restart_strings.xml
+new file mode 100644
+index 0000000..7f0c67c
+--- /dev/null
++++ b/res/values-ka/advanced_restart_strings.xml
+@@ -0,0 +1,5 @@
++<?xml version="1.0" encoding="utf-8"?>
++<resources>
++    <string name="power_menu_advanced_restart_title">გადატვირთვის ასარჩევი</string>
++    <string name="power_menu_advanced_restart_summary">ეკრანი როცა არაა ჩაკეტილი, ჩართვის მენიუში დაემატება აღმდგენ გარსში ან ჩამტვირთავში გადასვლის შესაძლებლობა</string>
++</resources>
+diff --git a/res/values-ko/advanced_restart_strings.xml b/res/values-ko/advanced_restart_strings.xml
+new file mode 100644
+index 0000000..8dc807c
+--- /dev/null
++++ b/res/values-ko/advanced_restart_strings.xml
+@@ -0,0 +1,5 @@
++<?xml version="1.0" encoding="utf-8"?>
++<resources>
++    <string name="power_menu_advanced_restart_title">고급 다시 시작</string>
++    <string name="power_menu_advanced_restart_summary">화면 잠금이 해제되어 있으면 전원 메뉴에 복구 모드 및 부트로더로 다시 시작하는 옵션을 추가합니다.</string>
++</resources>
+diff --git a/res/values-nl/advanced_restart_strings.xml b/res/values-nl/advanced_restart_strings.xml
+new file mode 100644
+index 0000000..7555157
+--- /dev/null
++++ b/res/values-nl/advanced_restart_strings.xml
+@@ -0,0 +1,5 @@
++<?xml version="1.0" encoding="utf-8"?>
++<resources>
++    <string name="power_menu_advanced_restart_title">Geavanceerd herstarten</string>
++    <string name="power_menu_advanced_restart_summary">Indien ontgrendeld, opties tonen in het aan/uit-menu voor herstarten naar recovery of bootloader</string>
++</resources>
+diff --git a/res/values-nn-rNO/advanced_restart_strings.xml b/res/values-nn-rNO/advanced_restart_strings.xml
+new file mode 100644
+index 0000000..64d380e
+--- /dev/null
++++ b/res/values-nn-rNO/advanced_restart_strings.xml
+@@ -0,0 +1,5 @@
++<?xml version="1.0" encoding="utf-8"?>
++<resources>
++    <string name="power_menu_advanced_restart_title">Avansert omstart</string>
++    <string name="power_menu_advanced_restart_summary">Vis val i av/på-menyen for å starta på nytt i gjenoppretting eller oppstartslastar når eininga er låst opp</string>
++</resources>
+diff --git a/res/values-pl/advanced_restart_strings.xml b/res/values-pl/advanced_restart_strings.xml
+new file mode 100644
+index 0000000..05b6833
+--- /dev/null
++++ b/res/values-pl/advanced_restart_strings.xml
+@@ -0,0 +1,5 @@
++<?xml version="1.0" encoding="utf-8"?>
++<resources>
++    <string name="power_menu_advanced_restart_title">Opcje ponownego uruchamiania</string>
++    <string name="power_menu_advanced_restart_summary">Gdy odblokowany dodaj w menu zasilania opcje ponownego uruchomienia w trybie recovery lub bootloadera</string>
++</resources>
+diff --git a/res/values-pt-rBR/advanced_restart_strings.xml b/res/values-pt-rBR/advanced_restart_strings.xml
+new file mode 100644
+index 0000000..1ee385a
+--- /dev/null
++++ b/res/values-pt-rBR/advanced_restart_strings.xml
+@@ -0,0 +1,5 @@
++<?xml version="1.0" encoding="utf-8"?>
++<resources>
++    <string name="power_menu_advanced_restart_title">Reinicialização avançada</string>
++    <string name="power_menu_advanced_restart_summary">Quando desbloqueado, incluir opções de reinicialização avançada no menu de energia</string>
++</resources>
+diff --git a/res/values-pt-rPT/advanced_restart_strings.xml b/res/values-pt-rPT/advanced_restart_strings.xml
+new file mode 100644
+index 0000000..8d2f21f
+--- /dev/null
++++ b/res/values-pt-rPT/advanced_restart_strings.xml
+@@ -0,0 +1,5 @@
++<?xml version="1.0" encoding="utf-8"?>
++<resources>
++    <string name="power_menu_advanced_restart_title">Reinício avançado</string>
++    <string name="power_menu_advanced_restart_summary">Quando desbloqueado, incluir opções no menu ligar/desligar para reiniciar em modo de recuperação ou bootloader</string>
++</resources>
+diff --git a/res/values-ro/advanced_restart_strings.xml b/res/values-ro/advanced_restart_strings.xml
+new file mode 100644
+index 0000000..cd3f467
+--- /dev/null
++++ b/res/values-ro/advanced_restart_strings.xml
+@@ -0,0 +1,5 @@
++<?xml version="1.0" encoding="utf-8"?>
++<resources>
++    <string name="power_menu_advanced_restart_title">Repornire avansată</string>
++    <string name="power_menu_advanced_restart_summary">La deblocare, se includ opțiuni în meniul de pornire pentru repornirea în recuperare sau bootloader</string>
++</resources>
+diff --git a/res/values-ru/advanced_restart_strings.xml b/res/values-ru/advanced_restart_strings.xml
+new file mode 100644
+index 0000000..1b5804e
+--- /dev/null
++++ b/res/values-ru/advanced_restart_strings.xml
+@@ -0,0 +1,5 @@
++<?xml version="1.0" encoding="utf-8"?>
++<resources>
++    <string name="power_menu_advanced_restart_title">Варианты перезапуска</string>
++    <string name="power_menu_advanced_restart_summary">Когда устройство разблокировано, в меню кнопки питания доступны опции перезагрузки в Recovery и загрузчик</string>
++</resources>
+diff --git a/res/values-sc-rIT/advanced_restart_strings.xml b/res/values-sc-rIT/advanced_restart_strings.xml
+new file mode 100644
+index 0000000..8a0e1c3
+--- /dev/null
++++ b/res/values-sc-rIT/advanced_restart_strings.xml
+@@ -0,0 +1,4 @@
++<?xml version="1.0" encoding="utf-8"?>
++<resources>
++    <string name="power_menu_advanced_restart_title">Riaviu avantzadu</string>
++</resources>
+diff --git a/res/values-sl/advanced_restart_strings.xml b/res/values-sl/advanced_restart_strings.xml
+new file mode 100644
+index 0000000..6b171cd
+--- /dev/null
++++ b/res/values-sl/advanced_restart_strings.xml
+@@ -0,0 +1,5 @@
++<?xml version="1.0" encoding="utf-8"?>
++<resources>
++    <string name="power_menu_advanced_restart_title">Napredni vnovičen zagon</string>
++    <string name="power_menu_advanced_restart_summary">Ko je odklenjeno, v meni izklopa vključi možnosti za vnovično zaganjanje v obnovitev ali zagonski nalagalnik</string>
++</resources>
+diff --git a/res/values-sq/advanced_restart_strings.xml b/res/values-sq/advanced_restart_strings.xml
+new file mode 100644
+index 0000000..b7bd9fc
+--- /dev/null
++++ b/res/values-sq/advanced_restart_strings.xml
+@@ -0,0 +1,5 @@
++<?xml version="1.0" encoding="utf-8"?>
++<resources>
++    <string name="power_menu_advanced_restart_title">Rindezje e përparuar</string>
++    <string name="power_menu_advanced_restart_summary">Kur telefoni është i zhbllokuar, përfshi në menunë e energjisë opsione për t\'u rindezur në Recovery ose Bootloader</string>
++</resources>
+diff --git a/res/values-sv/advanced_restart_strings.xml b/res/values-sv/advanced_restart_strings.xml
+new file mode 100644
+index 0000000..d37a03e
+--- /dev/null
++++ b/res/values-sv/advanced_restart_strings.xml
+@@ -0,0 +1,4 @@
++<?xml version="1.0" encoding="utf-8"?>
++<resources>
++    <string name="power_menu_advanced_restart_title">Avancerad omstart</string>
++</resources>
+diff --git a/res/values-ta/advanced_restart_strings.xml b/res/values-ta/advanced_restart_strings.xml
+new file mode 100644
+index 0000000..58917ed
+--- /dev/null
++++ b/res/values-ta/advanced_restart_strings.xml
+@@ -0,0 +1,4 @@
++<?xml version="1.0" encoding="utf-8"?>
++<resources>
++    <string name="power_menu_advanced_restart_title">மேம்பட்ட மறுதொடக்கம்</string>
++</resources>
+diff --git a/res/values-tr/advanced_restart_strings.xml b/res/values-tr/advanced_restart_strings.xml
+new file mode 100644
+index 0000000..dd78355
+--- /dev/null
++++ b/res/values-tr/advanced_restart_strings.xml
+@@ -0,0 +1,5 @@
++<?xml version="1.0" encoding="utf-8"?>
++<resources>
++    <string name="power_menu_advanced_restart_title">Gelişmiş yeniden başlatma</string>
++    <string name="power_menu_advanced_restart_summary">Kilit açıldığında kurtarma veya önyükleme modunda yeniden başlatmak için güç menüsüne seçenekler ekler</string>
++</resources>
+diff --git a/res/values-ug/advanced_restart_strings.xml b/res/values-ug/advanced_restart_strings.xml
+new file mode 100644
+index 0000000..4014153
+--- /dev/null
++++ b/res/values-ug/advanced_restart_strings.xml
+@@ -0,0 +1,5 @@
++<?xml version="1.0" encoding="utf-8"?>
++<resources>
++    <string name="power_menu_advanced_restart_title">ئالىي قايتا قوزغىتىش</string>
++    <string name="power_menu_advanced_restart_summary">قۇلۇپ ئېچىلغاندا، قايتا قوزغالغاندا توك مەنبە تىزىملىكىدە ئەسلىگە قايتۇرۇش ھالىتى ياكى يېتەكلەش يۈكلىگۈچ تاللانمىسى قوشۇلىدۇ</string>
++</resources>
+diff --git a/res/values-uk/advanced_restart_strings.xml b/res/values-uk/advanced_restart_strings.xml
+new file mode 100644
+index 0000000..2bda5c7
+--- /dev/null
++++ b/res/values-uk/advanced_restart_strings.xml
+@@ -0,0 +1,5 @@
++<?xml version="1.0" encoding="utf-8"?>
++<resources>
++    <string name="power_menu_advanced_restart_title">Варіанти перезапуску</string>
++    <string name="power_menu_advanced_restart_summary">Додати в меню перезапуску режим відновлення й завантажувач, коли пристрій розблоковано</string>
++</resources>
+diff --git a/res/values-vi/advanced_restart_strings.xml b/res/values-vi/advanced_restart_strings.xml
+new file mode 100644
+index 0000000..327d491
+--- /dev/null
++++ b/res/values-vi/advanced_restart_strings.xml
+@@ -0,0 +1,5 @@
++<?xml version="1.0" encoding="utf-8"?>
++<resources>
++    <string name="power_menu_advanced_restart_title">Khởi động lại nâng cao</string>
++    <string name="power_menu_advanced_restart_summary">Khi mở khóa, bao gồm các tùy chọn trong trình đơn nguồn để khởi động lại vào chế độ phục hồi hoặc trình nạp khởi động</string>
++</resources>
+diff --git a/res/values-zh-rCN/advanced_restart_strings.xml b/res/values-zh-rCN/advanced_restart_strings.xml
+new file mode 100644
+index 0000000..e4cbfd5
+--- /dev/null
++++ b/res/values-zh-rCN/advanced_restart_strings.xml
+@@ -0,0 +1,5 @@
++<?xml version="1.0" encoding="utf-8"?>
++<resources>
++    <string name="power_menu_advanced_restart_title">高级重启</string>
++    <string name="power_menu_advanced_restart_summary">解锁状态下，在电源菜单中加入重启至恢复模式或引导程序的选项</string>
++</resources>
+diff --git a/res/values-zh-rTW/advanced_restart_strings.xml b/res/values-zh-rTW/advanced_restart_strings.xml
+new file mode 100644
+index 0000000..7f8ca7f
+--- /dev/null
++++ b/res/values-zh-rTW/advanced_restart_strings.xml
+@@ -0,0 +1,5 @@
++<?xml version="1.0" encoding="utf-8"?>
++<resources>
++    <string name="power_menu_advanced_restart_title">進階重新啟動</string>
++    <string name="power_menu_advanced_restart_summary">解鎖後，在電源選單加入重新啟動進入 recovery 或 bootloader 的選項</string>
++</resources>
+diff --git a/res/values/advanced_restart_strings.xml b/res/values/advanced_restart_strings.xml
+new file mode 100644
+index 0000000..c8f8c7f
+--- /dev/null
++++ b/res/values/advanced_restart_strings.xml
+@@ -0,0 +1,5 @@
++<?xml version="1.0" encoding="utf-8"?>
++<resources>
++    <string name="power_menu_advanced_restart_title">Advanced restart</string>
++    <string name="power_menu_advanced_restart_summary">When unlocked, include options in the power menu for restarting into recovery or bootloader</string>
++</resources>
+diff --git a/res/xml/power_menu_settings.xml b/res/xml/power_menu_settings.xml
+index bf26f87..4ceffb0 100644
+--- a/res/xml/power_menu_settings.xml
++++ b/res/xml/power_menu_settings.xml
+@@ -50,6 +50,13 @@
+         settings:controller="com.android.settings.gestures.LongPressPowerSensitivityPreferenceController"
+     />
+ 
++    <SwitchPreferenceCompat
++        android:key="advanced_reboot"
++        android:title="@string/power_menu_advanced_restart_title"
++        android:summary="@string/power_menu_advanced_restart_summary"
++        settings:allowDividerAbove="true"
++        settings:controller="com.android.settings.gestures.AdvancedRestartPreferenceController"/>
++
+     <com.android.settingslib.widget.FooterPreference
+         android:key="power_menu_power_volume_up_hint"
+         android:title="@string/power_menu_power_volume_up_hint"
+diff --git a/src/com/android/settings/gestures/AdvancedRestartPreferenceController.kt b/src/com/android/settings/gestures/AdvancedRestartPreferenceController.kt
+new file mode 100644
+index 0000000..f764412
+--- /dev/null
++++ b/src/com/android/settings/gestures/AdvancedRestartPreferenceController.kt
+@@ -0,0 +1,35 @@
++package com.android.settings.gestures
++
++import android.content.Context
++import android.provider.Settings
++import com.android.settings.R
++import com.android.settings.core.TogglePreferenceController
++
++class AdvancedRestartPreferenceController(context: Context, key: String) :
++    TogglePreferenceController(context, key) {
++
++    override fun getAvailabilityStatus(): Int = AVAILABLE
++
++    override fun isChecked(): Boolean {
++        return Settings.Secure.getInt(
++            mContext.contentResolver,
++            Settings.Secure.ADVANCED_REBOOT,
++            SETTING_VALUE_OFF,
++        ) == SETTING_VALUE_ON
++    }
++
++    override fun setChecked(isChecked: Boolean): Boolean {
++        return Settings.Secure.putInt(
++            mContext.contentResolver,
++            Settings.Secure.ADVANCED_REBOOT,
++            if (isChecked) SETTING_VALUE_ON else SETTING_VALUE_OFF,
++        )
++    }
++
++    override fun getSliceHighlightMenuRes(): Int = R.string.menu_key_system
++
++    companion object {
++        private const val SETTING_VALUE_OFF = 0
++        private const val SETTING_VALUE_ON = 1
++    }
++}
+-- 
+2.56.0
+

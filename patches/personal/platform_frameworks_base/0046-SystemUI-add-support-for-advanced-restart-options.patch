@@ -1,0 +1,2882 @@
+From 7d72f2d1d627cefeb234afb67bbced861acb5628 Mon Sep 17 00:00:00 2001
+From: Langsdorff <131063968+clangsdorff@users.noreply.github.com>
+Date: Fri, 13 Nov 2026 19:49:24 +0300
+Subject: [PATCH 46/46] SystemUI: add support for advanced restart options
+
+port lineageos advanced restart submenu to the power menu, gated by
+Settings.Secure.ADVANCED_REBOOT and hidden while keyguard is locked or
+for secondary users. adds recovery, bootloader, fastboot and download
+reboot targets along with localized strings.
+---
+ core/java/android/os/IPowerManager.aidl       |   2 +
+ core/java/android/os/PowerManager.java        |  39 ++++
+ core/java/android/provider/Settings.java      |   8 +
+ .../internal/statusbar/IStatusBar.aidl        |   2 +-
+ .../internal/statusbar/IStatusBarService.aidl |   2 +-
+ .../settings/backup/SecureSettings.java       |   1 +
+ .../validators/SecureSettingsValidators.java  |   1 +
+ .../globalactions/ShutdownUiTest.java         |  17 +-
+ .../systemui/plugins/GlobalActions.java       |   4 +-
+ .../drawable/ic_lock_restart_bootloader.xml   |  30 +++
+ .../res/drawable/ic_lock_restart_fastboot.xml |  26 +++
+ .../res/drawable/ic_lock_restart_recovery.xml |  27 +++
+ .../global_actions_power_dialog.xml           |  23 ++
+ .../global_actions_power_dialog_flow.xml      |  38 ++++
+ .../res/layout/global_actions_power_item.xml  |   2 +-
+ .../values-af/advanced_restart_strings.xml    |   4 +
+ .../values-ar/advanced_restart_strings.xml    |  14 ++
+ .../advanced_restart_strings.xml              |  14 ++
+ .../values-az/advanced_restart_strings.xml    |  14 ++
+ .../values-be/advanced_restart_strings.xml    |   8 +
+ .../values-bg/advanced_restart_strings.xml    |  14 ++
+ .../values-bn/advanced_restart_strings.xml    |  14 ++
+ .../advanced_restart_strings.xml              |  13 ++
+ .../values-bs/advanced_restart_strings.xml    |   4 +
+ .../values-ca/advanced_restart_strings.xml    |  14 ++
+ .../values-ckb/advanced_restart_strings.xml   |  14 ++
+ .../values-cs/advanced_restart_strings.xml    |  14 ++
+ .../values-cy/advanced_restart_strings.xml    |  14 ++
+ .../values-da/advanced_restart_strings.xml    |  14 ++
+ .../values-de/advanced_restart_strings.xml    |  14 ++
+ .../values-el/advanced_restart_strings.xml    |  14 ++
+ .../advanced_restart_strings.xml              |  14 ++
+ .../advanced_restart_strings.xml              |  14 ++
+ .../advanced_restart_strings.xml              |  14 ++
+ .../advanced_restart_strings.xml              |  14 ++
+ .../advanced_restart_strings.xml              |  13 ++
+ .../values-es/advanced_restart_strings.xml    |  14 ++
+ .../values-eu/advanced_restart_strings.xml    |  11 +
+ .../values-fa/advanced_restart_strings.xml    |  14 ++
+ .../values-fi/advanced_restart_strings.xml    |  14 ++
+ .../advanced_restart_strings.xml              |   4 +
+ .../values-fr/advanced_restart_strings.xml    |  14 ++
+ .../advanced_restart_strings.xml              |  14 ++
+ .../advanced_restart_strings.xml              |  13 ++
+ .../advanced_restart_strings.xml              |  14 ++
+ .../values-gd/advanced_restart_strings.xml    |  14 ++
+ .../values-gl/advanced_restart_strings.xml    |  14 ++
+ .../values-hr/advanced_restart_strings.xml    |  12 ++
+ .../values-hu/advanced_restart_strings.xml    |  14 ++
+ .../values-in/advanced_restart_strings.xml    |  14 ++
+ .../values-is/advanced_restart_strings.xml    |  14 ++
+ .../values-it/advanced_restart_strings.xml    |  14 ++
+ .../values-iw/advanced_restart_strings.xml    |  14 ++
+ .../values-ja/advanced_restart_strings.xml    |  14 ++
+ .../values-ka/advanced_restart_strings.xml    |  14 ++
+ .../advanced_restart_strings.xml              |  10 +
+ .../values-kn/advanced_restart_strings.xml    |  11 +
+ .../values-ko/advanced_restart_strings.xml    |  14 ++
+ packages/SystemUI/res/values-land/dimens.xml  |   3 -
+ .../values-mk/advanced_restart_strings.xml    |   4 +
+ .../values-my/advanced_restart_strings.xml    |  14 ++
+ .../values-nb/advanced_restart_strings.xml    |  11 +
+ .../values-nl/advanced_restart_strings.xml    |  14 ++
+ .../advanced_restart_strings.xml              |  14 ++
+ .../values-pl/advanced_restart_strings.xml    |  14 ++
+ .../advanced_restart_strings.xml              |  14 ++
+ .../advanced_restart_strings.xml              |  14 ++
+ .../values-ro/advanced_restart_strings.xml    |  14 ++
+ .../values-ru/advanced_restart_strings.xml    |  14 ++
+ .../advanced_restart_strings.xml              |  14 ++
+ .../values-sk/advanced_restart_strings.xml    |  14 ++
+ .../values-sl/advanced_restart_strings.xml    |  14 ++
+ .../values-sq/advanced_restart_strings.xml    |  14 ++
+ .../values-sr/advanced_restart_strings.xml    |  13 ++
+ .../values-su/advanced_restart_strings.xml    |   5 +
+ .../values-sv/advanced_restart_strings.xml    |  14 ++
+ .../values-ta/advanced_restart_strings.xml    |  14 ++
+ .../values-th/advanced_restart_strings.xml    |  13 ++
+ .../values-tr/advanced_restart_strings.xml    |  14 ++
+ .../advanced_restart_strings.xml              |   5 +
+ .../values-ug/advanced_restart_strings.xml    |  14 ++
+ .../values-uk/advanced_restart_strings.xml    |  14 ++
+ .../values-vi/advanced_restart_strings.xml    |  14 ++
+ .../advanced_restart_strings.xml              |  14 ++
+ .../advanced_restart_strings.xml              |   5 +
+ .../advanced_restart_strings.xml              |  14 ++
+ .../res/values/advanced_restart_config.xml    |   9 +
+ .../res/values/advanced_restart_strings.xml   |  14 ++
+ packages/SystemUI/res/values/dimens.xml       |   6 +-
+ .../globalactions/GlobalActionsComponent.java |   8 +-
+ .../GlobalActionsDialogLite.java              | 199 ++++++++++++++++--
+ .../globalactions/GlobalActionsImpl.java      |   4 +-
+ .../GlobalActionsPowerDialog.java             |  22 +-
+ .../systemui/globalactions/ShutdownUi.java    |  25 ++-
+ .../interactor/GlobalActionsInteractor.kt     |   2 +-
+ .../systemui/statusbar/CommandQueue.java      |   9 +-
+ .../globalactions/GlobalActionsImplTest.kt    |   4 +-
+ .../statusbar/FakeStatusBarService.kt         |   2 +-
+ .../server/policy/WindowManagerPolicy.java    |   1 +
+ .../server/power/PowerManagerService.java     |  36 +++-
+ .../android/server/power/ShutdownThread.java  |  27 ++-
+ .../statusbar/StatusBarManagerInternal.java   |   2 +-
+ .../statusbar/StatusBarManagerService.java    |  12 +-
+ .../server/wm/WindowManagerService.java       |   8 +
+ 104 files changed, 1429 insertions(+), 73 deletions(-)
+ create mode 100644 packages/SystemUI/res/drawable/ic_lock_restart_bootloader.xml
+ create mode 100644 packages/SystemUI/res/drawable/ic_lock_restart_fastboot.xml
+ create mode 100644 packages/SystemUI/res/drawable/ic_lock_restart_recovery.xml
+ create mode 100644 packages/SystemUI/res/layout-land/global_actions_power_dialog.xml
+ create mode 100644 packages/SystemUI/res/layout/global_actions_power_dialog_flow.xml
+ create mode 100644 packages/SystemUI/res/values-af/advanced_restart_strings.xml
+ create mode 100644 packages/SystemUI/res/values-ar/advanced_restart_strings.xml
+ create mode 100644 packages/SystemUI/res/values-ast-rES/advanced_restart_strings.xml
+ create mode 100644 packages/SystemUI/res/values-az/advanced_restart_strings.xml
+ create mode 100644 packages/SystemUI/res/values-be/advanced_restart_strings.xml
+ create mode 100644 packages/SystemUI/res/values-bg/advanced_restart_strings.xml
+ create mode 100644 packages/SystemUI/res/values-bn/advanced_restart_strings.xml
+ create mode 100644 packages/SystemUI/res/values-br-rFR/advanced_restart_strings.xml
+ create mode 100644 packages/SystemUI/res/values-bs/advanced_restart_strings.xml
+ create mode 100644 packages/SystemUI/res/values-ca/advanced_restart_strings.xml
+ create mode 100644 packages/SystemUI/res/values-ckb/advanced_restart_strings.xml
+ create mode 100644 packages/SystemUI/res/values-cs/advanced_restart_strings.xml
+ create mode 100644 packages/SystemUI/res/values-cy/advanced_restart_strings.xml
+ create mode 100644 packages/SystemUI/res/values-da/advanced_restart_strings.xml
+ create mode 100644 packages/SystemUI/res/values-de/advanced_restart_strings.xml
+ create mode 100644 packages/SystemUI/res/values-el/advanced_restart_strings.xml
+ create mode 100644 packages/SystemUI/res/values-en-rAU/advanced_restart_strings.xml
+ create mode 100644 packages/SystemUI/res/values-en-rCA/advanced_restart_strings.xml
+ create mode 100644 packages/SystemUI/res/values-en-rGB/advanced_restart_strings.xml
+ create mode 100644 packages/SystemUI/res/values-en-rIN/advanced_restart_strings.xml
+ create mode 100644 packages/SystemUI/res/values-es-rUS/advanced_restart_strings.xml
+ create mode 100644 packages/SystemUI/res/values-es/advanced_restart_strings.xml
+ create mode 100644 packages/SystemUI/res/values-eu/advanced_restart_strings.xml
+ create mode 100644 packages/SystemUI/res/values-fa/advanced_restart_strings.xml
+ create mode 100644 packages/SystemUI/res/values-fi/advanced_restart_strings.xml
+ create mode 100644 packages/SystemUI/res/values-fr-rCA/advanced_restart_strings.xml
+ create mode 100644 packages/SystemUI/res/values-fr/advanced_restart_strings.xml
+ create mode 100644 packages/SystemUI/res/values-fur-rIT/advanced_restart_strings.xml
+ create mode 100644 packages/SystemUI/res/values-fy-rNL/advanced_restart_strings.xml
+ create mode 100644 packages/SystemUI/res/values-ga-rIE/advanced_restart_strings.xml
+ create mode 100644 packages/SystemUI/res/values-gd/advanced_restart_strings.xml
+ create mode 100644 packages/SystemUI/res/values-gl/advanced_restart_strings.xml
+ create mode 100644 packages/SystemUI/res/values-hr/advanced_restart_strings.xml
+ create mode 100644 packages/SystemUI/res/values-hu/advanced_restart_strings.xml
+ create mode 100644 packages/SystemUI/res/values-in/advanced_restart_strings.xml
+ create mode 100644 packages/SystemUI/res/values-is/advanced_restart_strings.xml
+ create mode 100644 packages/SystemUI/res/values-it/advanced_restart_strings.xml
+ create mode 100644 packages/SystemUI/res/values-iw/advanced_restart_strings.xml
+ create mode 100644 packages/SystemUI/res/values-ja/advanced_restart_strings.xml
+ create mode 100644 packages/SystemUI/res/values-ka/advanced_restart_strings.xml
+ create mode 100644 packages/SystemUI/res/values-kab-rDZ/advanced_restart_strings.xml
+ create mode 100644 packages/SystemUI/res/values-kn/advanced_restart_strings.xml
+ create mode 100644 packages/SystemUI/res/values-ko/advanced_restart_strings.xml
+ create mode 100644 packages/SystemUI/res/values-mk/advanced_restart_strings.xml
+ create mode 100644 packages/SystemUI/res/values-my/advanced_restart_strings.xml
+ create mode 100644 packages/SystemUI/res/values-nb/advanced_restart_strings.xml
+ create mode 100644 packages/SystemUI/res/values-nl/advanced_restart_strings.xml
+ create mode 100644 packages/SystemUI/res/values-nn-rNO/advanced_restart_strings.xml
+ create mode 100644 packages/SystemUI/res/values-pl/advanced_restart_strings.xml
+ create mode 100644 packages/SystemUI/res/values-pt-rBR/advanced_restart_strings.xml
+ create mode 100644 packages/SystemUI/res/values-pt-rPT/advanced_restart_strings.xml
+ create mode 100644 packages/SystemUI/res/values-ro/advanced_restart_strings.xml
+ create mode 100644 packages/SystemUI/res/values-ru/advanced_restart_strings.xml
+ create mode 100644 packages/SystemUI/res/values-sc-rIT/advanced_restart_strings.xml
+ create mode 100644 packages/SystemUI/res/values-sk/advanced_restart_strings.xml
+ create mode 100644 packages/SystemUI/res/values-sl/advanced_restart_strings.xml
+ create mode 100644 packages/SystemUI/res/values-sq/advanced_restart_strings.xml
+ create mode 100644 packages/SystemUI/res/values-sr/advanced_restart_strings.xml
+ create mode 100644 packages/SystemUI/res/values-su/advanced_restart_strings.xml
+ create mode 100644 packages/SystemUI/res/values-sv/advanced_restart_strings.xml
+ create mode 100644 packages/SystemUI/res/values-ta/advanced_restart_strings.xml
+ create mode 100644 packages/SystemUI/res/values-th/advanced_restart_strings.xml
+ create mode 100644 packages/SystemUI/res/values-tr/advanced_restart_strings.xml
+ create mode 100644 packages/SystemUI/res/values-tt-rRU/advanced_restart_strings.xml
+ create mode 100644 packages/SystemUI/res/values-ug/advanced_restart_strings.xml
+ create mode 100644 packages/SystemUI/res/values-uk/advanced_restart_strings.xml
+ create mode 100644 packages/SystemUI/res/values-vi/advanced_restart_strings.xml
+ create mode 100644 packages/SystemUI/res/values-zh-rCN/advanced_restart_strings.xml
+ create mode 100644 packages/SystemUI/res/values-zh-rHK/advanced_restart_strings.xml
+ create mode 100644 packages/SystemUI/res/values-zh-rTW/advanced_restart_strings.xml
+ create mode 100644 packages/SystemUI/res/values/advanced_restart_config.xml
+ create mode 100644 packages/SystemUI/res/values/advanced_restart_strings.xml
+
+diff --git a/core/java/android/os/IPowerManager.aidl b/core/java/android/os/IPowerManager.aidl
+index 0d89a3472..06014f33e 100644
+--- a/core/java/android/os/IPowerManager.aidl
++++ b/core/java/android/os/IPowerManager.aidl
+@@ -80,6 +80,8 @@ interface IPowerManager
+     boolean isBatteryDischargePredictionPersonalized();
+     boolean isDeviceIdleMode();
+     boolean isLightDeviceIdleMode();
++
++    void rebootCustom(boolean confirm, String reason, boolean wait);
+     @JavaPassthrough(annotation="@android.annotation.RequiresPermission(anyOf = { android.Manifest.permission.MANAGE_LOW_POWER_STANDBY, android.Manifest.permission.DEVICE_POWER })")
+     boolean isLowPowerStandbySupported();
+     boolean isLowPowerStandbyEnabled();
+diff --git a/core/java/android/os/PowerManager.java b/core/java/android/os/PowerManager.java
+index ee3c62eb9..c6d60a2cf 100644
+--- a/core/java/android/os/PowerManager.java
++++ b/core/java/android/os/PowerManager.java
+@@ -965,6 +965,27 @@ public final class PowerManager {
+      */
+     public static final String REBOOT_RECOVERY_UPDATE = "recovery-update";
+ 
++    /**
++     * The value to pass as the 'reason' argument to reboot() to
++     * reboot into bootloader mode
++     * @hide
++     */
++    public static final String REBOOT_BOOTLOADER = "bootloader";
++
++    /**
++     * The value to pass as the 'reason' argument to reboot() to
++     * reboot into download mode
++     * @hide
++     */
++    public static final String REBOOT_DOWNLOAD = "download";
++
++    /**
++     * The value to pass as the 'reason' argument to reboot() to
++     * reboot into fastboot mode
++     * @hide
++     */
++    public static final String REBOOT_FASTBOOT = "fastboot";
++
+     /**
+      * The value to pass as the 'reason' argument to reboot() when device owner requests a reboot on
+      * the device.
+@@ -2095,6 +2116,24 @@ public final class PowerManager {
+         }
+     }
+ 
++    /**
++     * Reboot the device.  Will not return if the reboot is successful.
++     * <p>
++     * Requires the {@link android.Manifest.permission#REBOOT} permission.
++     * </p>
++     *
++     * @param reason code to pass to the kernel (e.g., "recovery", "bootloader", "download") to
++     *               request special boot modes, or null.
++     * @hide
++     */
++    public void rebootCustom(String reason) {
++        try {
++            mService.rebootCustom(false, reason, true);
++        } catch (RemoteException e) {
++            throw e.rethrowFromSystemServer();
++        }
++    }
++
+     /**
+      * Creates a new sleep lock, which is a wake lock that holds a {@link #PARTIAL_SLEEP_WAKE_LOCK}.
+      * <p>
+diff --git a/core/java/android/provider/Settings.java b/core/java/android/provider/Settings.java
+index 99595a9d5..03b7ee59a 100644
+--- a/core/java/android/provider/Settings.java
++++ b/core/java/android/provider/Settings.java
+@@ -12875,6 +12875,14 @@ public final class Settings {
+         public static final String POWER_MENU_LOCKED_SHOW_CONTENT =
+                 "power_menu_locked_show_content";
+ 
++        /**
++         * Whether to show advanced restart options in the power menu.
++         *
++         * @hide
++         */
++        @Readable
++        public static final String ADVANCED_REBOOT = "advanced_reboot";
++
+         /**
+          * Whether home controls should be accessible from the lockscreen
+          *
+diff --git a/core/java/com/android/internal/statusbar/IStatusBar.aidl b/core/java/com/android/internal/statusbar/IStatusBar.aidl
+index 97e75b131..0582b67f8 100644
+--- a/core/java/com/android/internal/statusbar/IStatusBar.aidl
++++ b/core/java/com/android/internal/statusbar/IStatusBar.aidl
+@@ -199,7 +199,7 @@ oneway interface IStatusBar
+     void showPinningEnterExitToast(boolean entering);
+     void showPinningEscapeToast();
+ 
+-    void showShutdownUi(boolean isReboot, String reason);
++    void showShutdownUi(boolean isReboot, String reason, boolean rebootCustom);
+ 
+     /**
+     * Used to show the authentication dialog (Biometrics, Device Credential).
+diff --git a/core/java/com/android/internal/statusbar/IStatusBarService.aidl b/core/java/com/android/internal/statusbar/IStatusBarService.aidl
+index 20d07c5c9..1c9179461 100644
+--- a/core/java/com/android/internal/statusbar/IStatusBarService.aidl
++++ b/core/java/com/android/internal/statusbar/IStatusBarService.aidl
+@@ -126,7 +126,7 @@ interface IStatusBarService
+      * These methods are needed for global actions control which the UI is shown in sysui.
+      */
+     void shutdown();
+-    void reboot(boolean safeMode);
++    void reboot(boolean safeMode, String reason);
+ 
+     /** just restarts android without rebooting device. Used for some feature flags. */
+     void restart();
+diff --git a/packages/SettingsProvider/src/android/provider/settings/backup/SecureSettings.java b/packages/SettingsProvider/src/android/provider/settings/backup/SecureSettings.java
+index ce19d0797..45aba0d16 100644
+--- a/packages/SettingsProvider/src/android/provider/settings/backup/SecureSettings.java
++++ b/packages/SettingsProvider/src/android/provider/settings/backup/SecureSettings.java
+@@ -131,6 +131,7 @@ public class SecureSettings {
+         Settings.Secure.QS_AUTO_ADDED_TILES,
+         Settings.Secure.CONTROLS_ENABLED,
+         Settings.Secure.POWER_MENU_LOCKED_SHOW_CONTENT,
++        Settings.Secure.ADVANCED_REBOOT,
+         Settings.Secure.DOZE_ENABLED,
+         Settings.Secure.DOZE_ALWAYS_ON,
+         Settings.Secure.DOZE_ALWAYS_ON_INACTIVITY_DETECTION,
+diff --git a/packages/SettingsProvider/src/android/provider/settings/validators/SecureSettingsValidators.java b/packages/SettingsProvider/src/android/provider/settings/validators/SecureSettingsValidators.java
+index 73dfc3ea6..eba888a4d 100644
+--- a/packages/SettingsProvider/src/android/provider/settings/validators/SecureSettingsValidators.java
++++ b/packages/SettingsProvider/src/android/provider/settings/validators/SecureSettingsValidators.java
+@@ -193,6 +193,7 @@ public class SecureSettingsValidators {
+         VALIDATORS.put(Secure.QS_TILES, TILE_LIST_VALIDATOR);
+         VALIDATORS.put(Secure.CONTROLS_ENABLED, BOOLEAN_VALIDATOR);
+         VALIDATORS.put(Secure.POWER_MENU_LOCKED_SHOW_CONTENT, BOOLEAN_VALIDATOR);
++        VALIDATORS.put(Secure.ADVANCED_REBOOT, BOOLEAN_VALIDATOR);
+         VALIDATORS.put(Secure.LOCKSCREEN_SHOW_CONTROLS, BOOLEAN_VALIDATOR);
+         VALIDATORS.put(Secure.LOCKSCREEN_ALLOW_TRIVIAL_CONTROLS, BOOLEAN_VALIDATOR);
+         VALIDATORS.put(Secure.LOCKSCREEN_SHOW_WALLET, BOOLEAN_VALIDATOR);
+diff --git a/packages/SystemUI/multivalentTests/src/com/android/systemui/globalactions/ShutdownUiTest.java b/packages/SystemUI/multivalentTests/src/com/android/systemui/globalactions/ShutdownUiTest.java
+index 482084b90..1084c6b20 100644
+--- a/packages/SystemUI/multivalentTests/src/com/android/systemui/globalactions/ShutdownUiTest.java
++++ b/packages/SystemUI/multivalentTests/src/com/android/systemui/globalactions/ShutdownUiTest.java
+@@ -63,37 +63,38 @@ public class ShutdownUiTest extends SysuiTestCase {
+ 
+     @Test
+     public void getRebootMessage_update() {
+-        int messageId = mShutdownUi.getRebootMessage(true, PowerManager.REBOOT_RECOVERY_UPDATE);
++        int messageId = mShutdownUi.getRebootMessage(
++                true, PowerManager.REBOOT_RECOVERY_UPDATE, false);
+         assertEquals(messageId, R.string.reboot_to_update_reboot);
+     }
+ 
+     @Test
+     public void getRebootMessage_rebootDefault() {
+-        int messageId = mShutdownUi.getRebootMessage(true, "anything-else");
+-        assertEquals(messageId, R.string.reboot_to_reset_message);
++        int messageId = mShutdownUi.getRebootMessage(true, "anything-else", false);
++        assertEquals(messageId, com.android.systemui.res.R.string.global_action_restart_progress);
+     }
+ 
+     @Test
+     public void getRebootMessage_shutdown() {
+-        int messageId = mShutdownUi.getRebootMessage(false, "anything-else");
++        int messageId = mShutdownUi.getRebootMessage(false, "anything-else", false);
+         assertEquals(messageId, R.string.shutdown_progress);
+     }
+ 
+     @Test
+     public void getReasonMessage_update() {
+-        String message = mShutdownUi.getReasonMessage(PowerManager.REBOOT_RECOVERY_UPDATE);
++        String message = mShutdownUi.getReasonMessage(PowerManager.REBOOT_RECOVERY_UPDATE, false);
+         assertEquals(message, mContext.getString(R.string.reboot_to_update_title));
+     }
+ 
+     @Test
+     public void getReasonMessage_rebootDefault() {
+-        String message = mShutdownUi.getReasonMessage(PowerManager.REBOOT_RECOVERY);
++        String message = mShutdownUi.getReasonMessage(PowerManager.REBOOT_RECOVERY, false);
+         assertEquals(message, mContext.getString(R.string.reboot_to_reset_title));
+     }
+ 
+     @Test
+     public void getRebootMessage_defaultToNone() {
+-        String message = mShutdownUi.getReasonMessage("anything-else");
++        String message = mShutdownUi.getReasonMessage("anything-else", false);
+         assertNull(message);
+     }
+ 
+@@ -157,7 +158,7 @@ public class ShutdownUiTest extends SysuiTestCase {
+         Resources mockResources = spy(mContext.getResources());
+         when(mContext.getResources()).thenReturn(mockResources);
+ 
+-        Dialog dialog = mShutdownUi.showShutdownUi(false, "test");
++        Dialog dialog = mShutdownUi.showShutdownUi(false, "test", false);
+         try {
+             verify(mockResources).getFloat(
+                     eq(com.android.systemui.res.R.dimen.shutdown_scrim_behind_alpha));
+diff --git a/packages/SystemUI/plugin/src/com/android/systemui/plugins/GlobalActions.java b/packages/SystemUI/plugin/src/com/android/systemui/plugins/GlobalActions.java
+index 96e25d344..0b2a27009 100644
+--- a/packages/SystemUI/plugin/src/com/android/systemui/plugins/GlobalActions.java
++++ b/packages/SystemUI/plugin/src/com/android/systemui/plugins/GlobalActions.java
+@@ -27,7 +27,7 @@ public interface GlobalActions extends Plugin {
+ 
+     void showGlobalActions(GlobalActionsManager manager);
+     void showOrHideGlobalActions(GlobalActionsManager manager);
+-    default void showShutdownUi(boolean isReboot, String reason) {
++    default void showShutdownUi(boolean isReboot, String reason, boolean rebootCustom) {
+     }
+ 
+     default void destroy() {
+@@ -41,6 +41,6 @@ public interface GlobalActions extends Plugin {
+         void onGlobalActionsHidden();
+ 
+         void shutdown();
+-        void reboot(boolean safeMode);
++        void reboot(boolean safeMode, String reason);
+     }
+ }
+diff --git a/packages/SystemUI/res/drawable/ic_lock_restart_bootloader.xml b/packages/SystemUI/res/drawable/ic_lock_restart_bootloader.xml
+new file mode 100644
+index 000000000..ea625b111
+--- /dev/null
++++ b/packages/SystemUI/res/drawable/ic_lock_restart_bootloader.xml
+@@ -0,0 +1,30 @@
++<?xml version="1.0" encoding="utf-8"?>
++<!--
++     Copyright (C) 2018 The LineageOS Project
++
++     Licensed under the Apache License, Version 2.0 (the "License");
++     you may not use this file except in compliance with the License.
++     You may obtain a copy of the License at
++
++          http://www.apache.org/licenses/LICENSE-2.0
++
++     Unless required by applicable law or agreed to in writing, software
++     distributed under the License is distributed on an "AS IS" BASIS,
++     WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
++     See the License for the specific language governing permissions and
++     limitations under the License.
++-->
++<vector xmlns:android="http://schemas.android.com/apk/res/android"
++    android:width="24dp"
++    android:height="24dp"
++    android:viewportWidth="24"
++    android:viewportHeight="24"
++    android:tint="?android:attr/colorControlNormal">
++
++    <path
++        android:fillColor="#FF000000"
++        android:pathData="M21,8 L3,8 C2,8,2,9,2,9 L2,21 C2,22,3,22,3,22 L21,22 C22,22,22,21,22,21 L22,9 C22,8,21,8,21,8 Z M17,9 C17.55,9,18,9.45,18,10 S17.55,11,17,11 S16,10.55,16,10 S16.45,9,17,9 Z M14,9 C14.55,9,15,9.45,15,10 S14.55,11,14,11 S13,10.55,13,10 S13.45,9,14,9 Z M20,20 L4,20 L4,12 L20,12 L20,20 Z M20,11 C19.45,11,19,10.55,19,10 S19.45,9,20,9 S21,9.45,21,10 S20.55,11,20,11 Z M21,2 L3,2 C2,2,2,3,2,3 L2,6 L22,6 L22,3 C22,2,21,2,21,2 Z M14,5 C13.45,5,13,4.55,13,4 S13.45,3,14,3 S15,3.45,15,4 S14.55,5,14,5 Z M17,5 C16.45,5,16,4.55,16,4 S16.45,3,17,3 S18,3.45,18,4 S17.55,5,17,5 Z M20,5 C19.45,5,19,4.55,19,4 S19.45,3,20,3 S21,3.45,21,4 S20.55,5,20,5 Z" />
++    <path
++        android:fillColor="#FF000000"
++        android:pathData="M11,19.414 L8.293,16.707 L9.707,15.293 L11,16.586 L14.293,13.293 L15.707,14.707 Z" />
++</vector>
+diff --git a/packages/SystemUI/res/drawable/ic_lock_restart_fastboot.xml b/packages/SystemUI/res/drawable/ic_lock_restart_fastboot.xml
+new file mode 100644
+index 000000000..560e6254e
+--- /dev/null
++++ b/packages/SystemUI/res/drawable/ic_lock_restart_fastboot.xml
+@@ -0,0 +1,26 @@
++<?xml version="1.0" encoding="utf-8"?>
++<!--
++     Copyright (C) 2019 The LineageOS Project
++
++     Licensed under the Apache License, Version 2.0 (the "License");
++     you may not use this file except in compliance with the License.
++     You may obtain a copy of the License at
++
++          http://www.apache.org/licenses/LICENSE-2.0
++
++     Unless required by applicable law or agreed to in writing, software
++     distributed under the License is distributed on an "AS IS" BASIS,
++     WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
++     See the License for the specific language governing permissions and
++     limitations under the License.
++-->
++<vector
++    xmlns:android="http://schemas.android.com/apk/res/android"
++    android:width="24dp"
++    android:height="24dp"
++    android:viewportWidth="24"
++    android:viewportHeight="24">
++    <path
++        android:pathData="M 22 9 L 22 7 L 20 7 L 20 5 C 20 4.47 19.789 3.961 19.414 3.586 C 19.039 3.211 18.53 3 18 3 L 4 3 C 3.47 3 2.961 3.211 2.586 3.586 C 2.211 3.961 2 4.47 2 5 L 2 19 C 2 19.53 2.211 20.039 2.586 20.414 C 2.961 20.789 3.47 21 4 21 L 18 21 C 18.53 21 19.039 20.789 19.414 20.414 C 19.789 20.039 20 19.53 20 19 L 20 17 L 22 17 L 22 15 L 20 15 L 20 13 L 22 13 L 22 11 L 20 11 L 20 9 L 22 9 M 18 19 L 4 19 L 4 5 L 18 5 L 18 19 M 6 13 L 11 13 L 11 17 L 6 17 L 6 13 M 12 7 L 16 7 L 16 10 L 12 10 L 12 7 M 6 7 L 11 7 L 11 12 L 6 12 L 6 7 M 12 11 L 16 11 L 16 17 L 12 17 L 12 11 Z"
++        android:fillColor="#000000" />
++</vector>
+diff --git a/packages/SystemUI/res/drawable/ic_lock_restart_recovery.xml b/packages/SystemUI/res/drawable/ic_lock_restart_recovery.xml
+new file mode 100644
+index 000000000..632802607
+--- /dev/null
++++ b/packages/SystemUI/res/drawable/ic_lock_restart_recovery.xml
+@@ -0,0 +1,27 @@
++<?xml version="1.0" encoding="utf-8"?>
++<!--
++     Copyright (C) 2018 The LineageOS Project
++
++     Licensed under the Apache License, Version 2.0 (the "License");
++     you may not use this file except in compliance with the License.
++     You may obtain a copy of the License at
++
++          http://www.apache.org/licenses/LICENSE-2.0
++
++     Unless required by applicable law or agreed to in writing, software
++     distributed under the License is distributed on an "AS IS" BASIS,
++     WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
++     See the License for the specific language governing permissions and
++     limitations under the License.
++-->
++<vector xmlns:android="http://schemas.android.com/apk/res/android"
++    android:width="24dp"
++    android:height="24dp"
++    android:viewportWidth="24"
++    android:viewportHeight="24"
++    android:tint="?android:attr/colorControlNormal">
++
++    <path
++        android:fillColor="#FF000000"
++        android:pathData="M19.43,12.98 C19.47,12.66,19.5,12.34,19.5,12 S19.47,11.34,19.43,11.02 L21.54,9.37 C21.73,9.22,21.78,8.95,21.66,8.73 L19.66,5.27 C19.54,5.05,19.269,4.97,19.05,5.05 L16.56,6.05 C16.04,5.65,15.481,5.32,14.871,5.07 L14.491,2.42 C14.46,2.18,14.25,2,14,2 L10,2 C9.75,2,9.54,2.18,9.51,2.42 L9.13,5.07 C8.52,5.32,7.96,5.66,7.44,6.05 L4.95,5.05 C4.72,4.96,4.46,5.05,4.34,5.27 L2.34,8.73 C2.21,8.95,2.27,9.22,2.46,9.37 L4.57,11.02 C4.53,11.34,4.5,11.67,4.5,12 S4.53,12.66,4.57,12.98 L2.46,14.63 C2.27,14.78,2.22,15.05,2.34,15.27 L4.34,18.731 C4.46,18.951,4.73,19.031,4.95,18.951 L7.44,17.951 C7.96,18.35,8.52,18.68,9.13,18.93 L9.51,21.58 C9.54,21.82,9.75,22,10,22 L14,22 C14.25,22,14.46,21.82,14.49,21.58 L14.87,18.93 C15.48,18.68,16.04,18.34,16.559,17.951 L19.049,18.951 C19.279,19.041,19.539,18.951,19.659,18.731 L21.659,15.27 C21.779,15.05,21.729,14.781,21.539,14.63 L19.43,12.98 Z M9.71,15.71 L8.29,14.29 L14.29,8.29 L15.71,9.71 L9.71,15.71 Z" />
++</vector>
+diff --git a/packages/SystemUI/res/layout-land/global_actions_power_dialog.xml b/packages/SystemUI/res/layout-land/global_actions_power_dialog.xml
+new file mode 100644
+index 000000000..66eef169c
+--- /dev/null
++++ b/packages/SystemUI/res/layout-land/global_actions_power_dialog.xml
+@@ -0,0 +1,23 @@
++<!--
++  ~ Copyright (C) 2020 The Android Open Source Project
++  ~
++  ~ Licensed under the Apache License, Version 2.0 (the "License");
++  ~ you may not use this file except in compliance with the License.
++  ~ You may obtain a copy of the License at
++  ~
++  ~      http://www.apache.org/licenses/LICENSE-2.0
++  ~
++  ~ Unless required by applicable law or agreed to in writing, software
++  ~ distributed under the License is distributed on an "AS IS" BASIS,
++  ~ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
++  ~ See the License for the specific language governing permissions and
++  ~ limitations under the License.
++  -->
++<LinearLayout
++    xmlns:android="http://schemas.android.com/apk/res/android"
++    android:layout_width="wrap_content"
++    android:layout_height="wrap_content"
++    android:orientation="horizontal"
++    android:divider="@drawable/controls_list_divider"
++    android:showDividers="middle"
++/>
+diff --git a/packages/SystemUI/res/layout/global_actions_power_dialog_flow.xml b/packages/SystemUI/res/layout/global_actions_power_dialog_flow.xml
+new file mode 100644
+index 000000000..c85f35293
+--- /dev/null
++++ b/packages/SystemUI/res/layout/global_actions_power_dialog_flow.xml
+@@ -0,0 +1,38 @@
++<?xml version="1.0" encoding="utf-8"?>
++<!-- Copyright (C) 2021 The Android Open Source Project
++
++     Licensed under the Apache License, Version 2.0 (the "License");
++     you may not use this file except in compliance with the License.
++     You may obtain a copy of the License at
++
++          http://www.apache.org/licenses/LICENSE-2.0
++
++     Unless required by applicable law or agreed to in writing, software
++     distributed under the License is distributed on an "AS IS" BASIS,
++     WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
++     See the License for the specific language governing permissions and
++     limitations under the License.
++-->
++<androidx.constraintlayout.widget.ConstraintLayout
++    xmlns:android="http://schemas.android.com/apk/res/android"
++    xmlns:app="http://schemas.android.com/apk/res-auto"
++    android:id="@+id/power_actions_container"
++    android:layout_width="match_parent"
++    android:layout_height="match_parent"
++    android:gravity="center"
++    android:background="@drawable/global_actions_lite_background"
++    android:padding="@dimen/global_actions_lite_padding">
++
++    <androidx.constraintlayout.helper.widget.Flow
++        android:id="@+id/power_flow"
++        android:layout_width="match_parent"
++        android:layout_height="wrap_content"
++        app:layout_constraintStart_toStartOf="parent"
++        app:layout_constraintEnd_toEndOf="parent"
++        app:layout_constraintTop_toTopOf="parent"
++        app:flow_wrapMode="chain"
++        app:flow_maxElementsWrap="2"
++        app:flow_horizontalGap="@dimen/global_actions_lite_padding"
++        app:flow_verticalGap="@dimen/global_actions_lite_padding"
++        app:flow_horizontalStyle="packed"/>
++</androidx.constraintlayout.widget.ConstraintLayout>
+diff --git a/packages/SystemUI/res/layout/global_actions_power_item.xml b/packages/SystemUI/res/layout/global_actions_power_item.xml
+index 3bf589444..84153a8d0 100644
+--- a/packages/SystemUI/res/layout/global_actions_power_item.xml
++++ b/packages/SystemUI/res/layout/global_actions_power_item.xml
+@@ -37,7 +37,7 @@
+         android:ellipsize="marquee"
+         android:layout_marginBottom="16dp"
+         android:maxLines="1"
+-        android:textSize="16sp"
++        android:textSize="12sp"
+         android:gravity="center"
+         android:textColor="@color/control_primary_text"
+         android:textAppearance="?android:attr/textAppearanceSmall" />
+diff --git a/packages/SystemUI/res/values-af/advanced_restart_strings.xml b/packages/SystemUI/res/values-af/advanced_restart_strings.xml
+new file mode 100644
+index 000000000..768ea79a3
+--- /dev/null
++++ b/packages/SystemUI/res/values-af/advanced_restart_strings.xml
+@@ -0,0 +1,4 @@
++<?xml version="1.0" encoding="utf-8"?>
++<resources>
++    <string name="global_action_restart_system">Stelsel</string>
++</resources>
+diff --git a/packages/SystemUI/res/values-ar/advanced_restart_strings.xml b/packages/SystemUI/res/values-ar/advanced_restart_strings.xml
+new file mode 100644
+index 000000000..d58b32b3d
+--- /dev/null
++++ b/packages/SystemUI/res/values-ar/advanced_restart_strings.xml
+@@ -0,0 +1,14 @@
++<?xml version="1.0" encoding="utf-8"?>
++<resources>
++    <string name="global_action_restart_more">إعادة تشغيل\u2026</string>
++    <string name="global_action_restart_system">النظام</string>
++    <string name="global_action_restart_recovery">الاسترداد</string>
++    <string name="global_action_restart_bootloader">محمل الاقلاع</string>
++    <string name="global_action_restart_download">التنزيل</string>
++    <string name="global_action_restart_fastboot">إعادة التشغيل إلى وضع الإقلاع السريع</string>
++    <string name="global_action_restart_progress">جارٍ إعادة التشغيل\u2026</string>
++    <string name="global_action_restart_recovery_progress">إعادة التشغيل في وضع الاسترداد\u2026</string>
++    <string name="global_action_restart_bootloader_progress">إعادة التشغيل في وضع مُحمّل الإقلاع\u2026</string>
++    <string name="global_action_restart_download_progress">إعادة التشغيل في وضع التنزيل\u2026</string>
++    <string name="global_action_restart_fastboot_progress">إعادة التشغيل إلى وضع الإقلاع السريع\u2026</string>
++</resources>
+diff --git a/packages/SystemUI/res/values-ast-rES/advanced_restart_strings.xml b/packages/SystemUI/res/values-ast-rES/advanced_restart_strings.xml
+new file mode 100644
+index 000000000..31c465071
+--- /dev/null
++++ b/packages/SystemUI/res/values-ast-rES/advanced_restart_strings.xml
+@@ -0,0 +1,14 @@
++<?xml version="1.0" encoding="utf-8"?>
++<resources>
++    <string name="global_action_restart_more">Reaniciar\u2026</string>
++    <string name="global_action_restart_system">Sistema</string>
++    <string name="global_action_restart_recovery">Recovery</string>
++    <string name="global_action_restart_bootloader">Cargador d\'arrinque</string>
++    <string name="global_action_restart_download">Descarga</string>
++    <string name="global_action_restart_fastboot">Fastbootd</string>
++    <string name="global_action_restart_progress">Tas reaniciando\u2026</string>
++    <string name="global_action_restart_recovery_progress">Tas reaniciando al recovery\u2026</string>
++    <string name="global_action_restart_bootloader_progress">Tas reaniciando al xestor d\'arrinque\u2026</string>
++    <string name="global_action_restart_download_progress">Tas reaniciando al mou de descarga\u2026</string>
++    <string name="global_action_restart_fastboot_progress">Tas reaniciando al mou fastbootd\u2026</string>
++</resources>
+diff --git a/packages/SystemUI/res/values-az/advanced_restart_strings.xml b/packages/SystemUI/res/values-az/advanced_restart_strings.xml
+new file mode 100644
+index 000000000..2300ee18a
+--- /dev/null
++++ b/packages/SystemUI/res/values-az/advanced_restart_strings.xml
+@@ -0,0 +1,14 @@
++<?xml version="1.0" encoding="utf-8"?>
++<resources>
++    <string name="global_action_restart_more">Yenidən başlat\u2026</string>
++    <string name="global_action_restart_system">Sistem</string>
++    <string name="global_action_restart_recovery">Geri qaytarma</string>
++    <string name="global_action_restart_bootloader">Önyükləyici</string>
++    <string name="global_action_restart_download">Endirmə</string>
++    <string name="global_action_restart_fastboot">Fastbootd</string>
++    <string name="global_action_restart_progress">Yenidən başladılır\u2026</string>
++    <string name="global_action_restart_recovery_progress">Geri qaytarma rejimində yenidən başladılır\u2026</string>
++    <string name="global_action_restart_bootloader_progress">Önyükləyici rejimində yenidən başladılır\u2026</string>
++    <string name="global_action_restart_download_progress">Endirmə rejimində yenidən başladılır\u2026</string>
++    <string name="global_action_restart_fastboot_progress">Fastbootd rejimində yenidən başladılır\u2026</string>
++</resources>
+diff --git a/packages/SystemUI/res/values-be/advanced_restart_strings.xml b/packages/SystemUI/res/values-be/advanced_restart_strings.xml
+new file mode 100644
+index 000000000..a7ebf032c
+--- /dev/null
++++ b/packages/SystemUI/res/values-be/advanced_restart_strings.xml
+@@ -0,0 +1,8 @@
++<?xml version="1.0" encoding="utf-8"?>
++<resources>
++    <string name="global_action_restart_system">Сістэма</string>
++    <string name="global_action_restart_recovery">Аднаўленне</string>
++    <string name="global_action_restart_bootloader">Загрузчык</string>
++    <string name="global_action_restart_fastboot">Fastbootd</string>
++    <string name="global_action_restart_progress">Перазапуск\u2026</string>
++</resources>
+diff --git a/packages/SystemUI/res/values-bg/advanced_restart_strings.xml b/packages/SystemUI/res/values-bg/advanced_restart_strings.xml
+new file mode 100644
+index 000000000..8f75828ea
+--- /dev/null
++++ b/packages/SystemUI/res/values-bg/advanced_restart_strings.xml
+@@ -0,0 +1,14 @@
++<?xml version="1.0" encoding="utf-8"?>
++<resources>
++    <string name="global_action_restart_more">Рестартиране\u2026</string>
++    <string name="global_action_restart_system">Система</string>
++    <string name="global_action_restart_recovery">Режим на възстановяване</string>
++    <string name="global_action_restart_bootloader">Буутлоудър</string>
++    <string name="global_action_restart_download">Изтегли</string>
++    <string name="global_action_restart_fastboot">Fastbootd</string>
++    <string name="global_action_restart_progress">Рестартиране\u2026</string>
++    <string name="global_action_restart_recovery_progress">Рестартиране до режим за възстановяване\u2026</string>
++    <string name="global_action_restart_bootloader_progress">Рестартиране за режим буутлоудър\u2026</string>
++    <string name="global_action_restart_download_progress">Рестартиране за режим изтегляне\u2026</string>
++    <string name="global_action_restart_fastboot_progress">Рестартиране в режим fastbootd\u2026</string>
++</resources>
+diff --git a/packages/SystemUI/res/values-bn/advanced_restart_strings.xml b/packages/SystemUI/res/values-bn/advanced_restart_strings.xml
+new file mode 100644
+index 000000000..77752cdf2
+--- /dev/null
++++ b/packages/SystemUI/res/values-bn/advanced_restart_strings.xml
+@@ -0,0 +1,14 @@
++<?xml version="1.0" encoding="utf-8"?>
++<resources>
++    <string name="global_action_restart_more">রিস্টার্ট\u2026</string>
++    <string name="global_action_restart_system">সিস্টেম</string>
++    <string name="global_action_restart_recovery">রিকভারি</string>
++    <string name="global_action_restart_bootloader">বুটলোডার</string>
++    <string name="global_action_restart_download">ডাউনলোড</string>
++    <string name="global_action_restart_fastboot">Fastbootd</string>
++    <string name="global_action_restart_progress">রিস্টার্টিং\u2026</string>
++    <string name="global_action_restart_recovery_progress">রিকভারি মোডে রিস্টার্ট করা হচ্ছে\u2026</string>
++    <string name="global_action_restart_bootloader_progress">বুটলোডার মোডে রিস্টার্ট করা হচ্ছে\u2026</string>
++    <string name="global_action_restart_download_progress">ডাউনলোড মোডে রিস্টার্ট করা হচ্ছে\u2026</string>
++    <string name="global_action_restart_fastboot_progress">Fastbootd মোডে রিস্টার্ট করা হচ্ছে\u2026</string>
++</resources>
+diff --git a/packages/SystemUI/res/values-br-rFR/advanced_restart_strings.xml b/packages/SystemUI/res/values-br-rFR/advanced_restart_strings.xml
+new file mode 100644
+index 000000000..d6b0ced4c
+--- /dev/null
++++ b/packages/SystemUI/res/values-br-rFR/advanced_restart_strings.xml
+@@ -0,0 +1,13 @@
++<?xml version="1.0" encoding="utf-8"?>
++<resources>
++    <string name="global_action_restart_system">Reizhiad</string>
++    <string name="global_action_restart_recovery">Recovery</string>
++    <string name="global_action_restart_bootloader">Bootloader</string>
++    <string name="global_action_restart_download">Pellgargañ</string>
++    <string name="global_action_restart_fastboot">Fastbootd</string>
++    <string name="global_action_restart_progress">Oc\'h Adlañsañ\u2026</string>
++    <string name="global_action_restart_recovery_progress">Oc\'h adlañsañ e mod recovery\u2026</string>
++    <string name="global_action_restart_bootloader_progress">Oc\'h adlañsañ e mod bootloader\u2026</string>
++    <string name="global_action_restart_download_progress">Oc\'h adlañsañ e mod download\u2026</string>
++    <string name="global_action_restart_fastboot_progress">Oc\'h adlañsañ e mod fastbootd\u2026</string>
++</resources>
+diff --git a/packages/SystemUI/res/values-bs/advanced_restart_strings.xml b/packages/SystemUI/res/values-bs/advanced_restart_strings.xml
+new file mode 100644
+index 000000000..10ecfda28
+--- /dev/null
++++ b/packages/SystemUI/res/values-bs/advanced_restart_strings.xml
+@@ -0,0 +1,4 @@
++<?xml version="1.0" encoding="utf-8"?>
++<resources>
++    <string name="global_action_restart_system">Sistem</string>
++</resources>
+diff --git a/packages/SystemUI/res/values-ca/advanced_restart_strings.xml b/packages/SystemUI/res/values-ca/advanced_restart_strings.xml
+new file mode 100644
+index 000000000..0320f5793
+--- /dev/null
++++ b/packages/SystemUI/res/values-ca/advanced_restart_strings.xml
+@@ -0,0 +1,14 @@
++<?xml version="1.0" encoding="utf-8"?>
++<resources>
++    <string name="global_action_restart_more">Reinicia\u2026</string>
++    <string name="global_action_restart_system">Sistema</string>
++    <string name="global_action_restart_recovery">Recuperació</string>
++    <string name="global_action_restart_bootloader">Bootloader</string>
++    <string name="global_action_restart_download">Descàrrega</string>
++    <string name="global_action_restart_fastboot">Fastbootd</string>
++    <string name="global_action_restart_progress">S\'està reiniciant\u2026</string>
++    <string name="global_action_restart_recovery_progress">S\'està reiniciant al mode de recuperació\u2026</string>
++    <string name="global_action_restart_bootloader_progress">S\'està reiniciant al mode bootloader\u2026</string>
++    <string name="global_action_restart_download_progress">S\'està reiniciant al mode de descàrrega\u2026</string>
++    <string name="global_action_restart_fastboot_progress">S\'està reiniciant al mode fastbootd\u2026</string>
++</resources>
+diff --git a/packages/SystemUI/res/values-ckb/advanced_restart_strings.xml b/packages/SystemUI/res/values-ckb/advanced_restart_strings.xml
+new file mode 100644
+index 000000000..48703b7d0
+--- /dev/null
++++ b/packages/SystemUI/res/values-ckb/advanced_restart_strings.xml
+@@ -0,0 +1,14 @@
++<?xml version="1.0" encoding="utf-8"?>
++<resources>
++    <string name="global_action_restart_more">پێکردنەوە \u2026</string>
++    <string name="global_action_restart_system">سیستم</string>
++    <string name="global_action_restart_recovery">Recovery</string>
++    <string name="global_action_restart_bootloader">Bootloader</string>
++    <string name="global_action_restart_download">داگرتن (Download)</string>
++    <string name="global_action_restart_fastboot">Fastbootd</string>
++    <string name="global_action_restart_progress">پێکردنەوە \u2026</string>
++    <string name="global_action_restart_recovery_progress">پێکردنەوە بۆ دۆخی Recovery \u2026</string>
++    <string name="global_action_restart_bootloader_progress">پێکردنەوە بۆ دۆخی Bootloader \u2026</string>
++    <string name="global_action_restart_download_progress">پێکردنەوە بۆ دۆخی داگرتن \u2026</string>
++    <string name="global_action_restart_fastboot_progress">پێکردنەوە بۆ دۆخی Fastbootd \u2026</string>
++</resources>
+diff --git a/packages/SystemUI/res/values-cs/advanced_restart_strings.xml b/packages/SystemUI/res/values-cs/advanced_restart_strings.xml
+new file mode 100644
+index 000000000..a563e109f
+--- /dev/null
++++ b/packages/SystemUI/res/values-cs/advanced_restart_strings.xml
+@@ -0,0 +1,14 @@
++<?xml version="1.0" encoding="utf-8"?>
++<resources>
++    <string name="global_action_restart_more">Restartovat\u2026</string>
++    <string name="global_action_restart_system">Systém</string>
++    <string name="global_action_restart_recovery">Recovery</string>
++    <string name="global_action_restart_bootloader">Bootloader</string>
++    <string name="global_action_restart_download">Stahování</string>
++    <string name="global_action_restart_fastboot">Fastbootd</string>
++    <string name="global_action_restart_progress">Restartování\u2026</string>
++    <string name="global_action_restart_recovery_progress">Restartování do režimu recovery\u2026</string>
++    <string name="global_action_restart_bootloader_progress">Restartování do režimu bootloader\u2026</string>
++    <string name="global_action_restart_download_progress">Restartování do režimu stahování\u2026</string>
++    <string name="global_action_restart_fastboot_progress">Restartování do režimu fastbootd\u2026</string>
++</resources>
+diff --git a/packages/SystemUI/res/values-cy/advanced_restart_strings.xml b/packages/SystemUI/res/values-cy/advanced_restart_strings.xml
+new file mode 100644
+index 000000000..8890a0d73
+--- /dev/null
++++ b/packages/SystemUI/res/values-cy/advanced_restart_strings.xml
+@@ -0,0 +1,14 @@
++<?xml version="1.0" encoding="utf-8"?>
++<resources>
++    <string name="global_action_restart_more">Ailgychwyn\u2026</string>
++    <string name="global_action_restart_system">System</string>
++    <string name="global_action_restart_recovery">Modd adfer</string>
++    <string name="global_action_restart_bootloader">Cychwynnydd</string>
++    <string name="global_action_restart_download">Modd lawrlwytho</string>
++    <string name="global_action_restart_fastboot">Fastbootd</string>
++    <string name="global_action_restart_progress">Yn ailgychwyn\u2026</string>
++    <string name="global_action_restart_recovery_progress">Yn ailgychwyn i\'r modd adfer\u2026</string>
++    <string name="global_action_restart_bootloader_progress">Yn ailgychwyn i\'r modd llwytho\'r system\u2026</string>
++    <string name="global_action_restart_download_progress">Yn ailgychwyn i\'r modd lawrlwytho\u2026</string>
++    <string name="global_action_restart_fastboot_progress">Yn ailgychwyn in fodd fastbootd\u2026</string>
++</resources>
+diff --git a/packages/SystemUI/res/values-da/advanced_restart_strings.xml b/packages/SystemUI/res/values-da/advanced_restart_strings.xml
+new file mode 100644
+index 000000000..10cb092e7
+--- /dev/null
++++ b/packages/SystemUI/res/values-da/advanced_restart_strings.xml
+@@ -0,0 +1,14 @@
++<?xml version="1.0" encoding="utf-8"?>
++<resources>
++    <string name="global_action_restart_more">Genstart\u2026</string>
++    <string name="global_action_restart_system">System</string>
++    <string name="global_action_restart_recovery">Gendannelse</string>
++    <string name="global_action_restart_bootloader">Opstartslæser</string>
++    <string name="global_action_restart_download">Download</string>
++    <string name="global_action_restart_fastboot">Fastbootd</string>
++    <string name="global_action_restart_progress">Genstarter\u2026</string>
++    <string name="global_action_restart_recovery_progress">Genstarter i gendannelses tilstand\u2026</string>
++    <string name="global_action_restart_bootloader_progress">Genstarter i opstartslæser tilstand\u2026</string>
++    <string name="global_action_restart_download_progress">Genstarter i download tilstand\u2026</string>
++    <string name="global_action_restart_fastboot_progress">Genstarter i fastbootd mode\u2026</string>
++</resources>
+diff --git a/packages/SystemUI/res/values-de/advanced_restart_strings.xml b/packages/SystemUI/res/values-de/advanced_restart_strings.xml
+new file mode 100644
+index 000000000..04adc8d7a
+--- /dev/null
++++ b/packages/SystemUI/res/values-de/advanced_restart_strings.xml
+@@ -0,0 +1,14 @@
++<?xml version="1.0" encoding="utf-8"?>
++<resources>
++    <string name="global_action_restart_more">Neustarten\u2026</string>
++    <string name="global_action_restart_system">System</string>
++    <string name="global_action_restart_recovery">Recovery</string>
++    <string name="global_action_restart_bootloader">Bootloader</string>
++    <string name="global_action_restart_download">Download-Modus</string>
++    <string name="global_action_restart_fastboot">Fastbootd</string>
++    <string name="global_action_restart_progress">Neustarten\u2026</string>
++    <string name="global_action_restart_recovery_progress">In Recovery-Modus neustarten\u2026</string>
++    <string name="global_action_restart_bootloader_progress">In Bootloader-Modus neustarten\u2026</string>
++    <string name="global_action_restart_download_progress">In Download-Modus neustarten\u2026</string>
++    <string name="global_action_restart_fastboot_progress">In Fastbootd-Modus neustarten\u2026</string>
++</resources>
+diff --git a/packages/SystemUI/res/values-el/advanced_restart_strings.xml b/packages/SystemUI/res/values-el/advanced_restart_strings.xml
+new file mode 100644
+index 000000000..1d04c82a2
+--- /dev/null
++++ b/packages/SystemUI/res/values-el/advanced_restart_strings.xml
+@@ -0,0 +1,14 @@
++<?xml version="1.0" encoding="utf-8"?>
++<resources>
++    <string name="global_action_restart_more">Επανεκκίνηση\u2026</string>
++    <string name="global_action_restart_system">Σύστημα</string>
++    <string name="global_action_restart_recovery">Recovery</string>
++    <string name="global_action_restart_bootloader">Bootloader</string>
++    <string name="global_action_restart_download">Download</string>
++    <string name="global_action_restart_fastboot">Fastbootd</string>
++    <string name="global_action_restart_progress">Επανεκκίνηση\u2026</string>
++    <string name="global_action_restart_recovery_progress">Επανεκκίνηση σε λειτουργία recovery\u2026</string>
++    <string name="global_action_restart_bootloader_progress">Επανεκκίνηση σε λειτουργία bootloader\u2026</string>
++    <string name="global_action_restart_download_progress">Επανεκκίνηση σε λειτουργία download\u2026</string>
++    <string name="global_action_restart_fastboot_progress">Επανεκκίνηση σε λειτουργία fastbootd\u2026</string>
++</resources>
+diff --git a/packages/SystemUI/res/values-en-rAU/advanced_restart_strings.xml b/packages/SystemUI/res/values-en-rAU/advanced_restart_strings.xml
+new file mode 100644
+index 000000000..f26e61c28
+--- /dev/null
++++ b/packages/SystemUI/res/values-en-rAU/advanced_restart_strings.xml
+@@ -0,0 +1,14 @@
++<?xml version="1.0" encoding="utf-8"?>
++<resources>
++    <string name="global_action_restart_more">Restart\u2026</string>
++    <string name="global_action_restart_system">System</string>
++    <string name="global_action_restart_recovery">Recovery</string>
++    <string name="global_action_restart_bootloader">Bootloader</string>
++    <string name="global_action_restart_download">Download</string>
++    <string name="global_action_restart_fastboot">Fastbootd</string>
++    <string name="global_action_restart_progress">Restarting\u2026</string>
++    <string name="global_action_restart_recovery_progress">Restarting to recovery mode\u2026</string>
++    <string name="global_action_restart_bootloader_progress">Restarting to bootloader mode\u2026</string>
++    <string name="global_action_restart_download_progress">Restarting to download mode\u2026</string>
++    <string name="global_action_restart_fastboot_progress">Restarting to fastbootd mode\u2026</string>
++</resources>
+diff --git a/packages/SystemUI/res/values-en-rCA/advanced_restart_strings.xml b/packages/SystemUI/res/values-en-rCA/advanced_restart_strings.xml
+new file mode 100644
+index 000000000..f26e61c28
+--- /dev/null
++++ b/packages/SystemUI/res/values-en-rCA/advanced_restart_strings.xml
+@@ -0,0 +1,14 @@
++<?xml version="1.0" encoding="utf-8"?>
++<resources>
++    <string name="global_action_restart_more">Restart\u2026</string>
++    <string name="global_action_restart_system">System</string>
++    <string name="global_action_restart_recovery">Recovery</string>
++    <string name="global_action_restart_bootloader">Bootloader</string>
++    <string name="global_action_restart_download">Download</string>
++    <string name="global_action_restart_fastboot">Fastbootd</string>
++    <string name="global_action_restart_progress">Restarting\u2026</string>
++    <string name="global_action_restart_recovery_progress">Restarting to recovery mode\u2026</string>
++    <string name="global_action_restart_bootloader_progress">Restarting to bootloader mode\u2026</string>
++    <string name="global_action_restart_download_progress">Restarting to download mode\u2026</string>
++    <string name="global_action_restart_fastboot_progress">Restarting to fastbootd mode\u2026</string>
++</resources>
+diff --git a/packages/SystemUI/res/values-en-rGB/advanced_restart_strings.xml b/packages/SystemUI/res/values-en-rGB/advanced_restart_strings.xml
+new file mode 100644
+index 000000000..f26e61c28
+--- /dev/null
++++ b/packages/SystemUI/res/values-en-rGB/advanced_restart_strings.xml
+@@ -0,0 +1,14 @@
++<?xml version="1.0" encoding="utf-8"?>
++<resources>
++    <string name="global_action_restart_more">Restart\u2026</string>
++    <string name="global_action_restart_system">System</string>
++    <string name="global_action_restart_recovery">Recovery</string>
++    <string name="global_action_restart_bootloader">Bootloader</string>
++    <string name="global_action_restart_download">Download</string>
++    <string name="global_action_restart_fastboot">Fastbootd</string>
++    <string name="global_action_restart_progress">Restarting\u2026</string>
++    <string name="global_action_restart_recovery_progress">Restarting to recovery mode\u2026</string>
++    <string name="global_action_restart_bootloader_progress">Restarting to bootloader mode\u2026</string>
++    <string name="global_action_restart_download_progress">Restarting to download mode\u2026</string>
++    <string name="global_action_restart_fastboot_progress">Restarting to fastbootd mode\u2026</string>
++</resources>
+diff --git a/packages/SystemUI/res/values-en-rIN/advanced_restart_strings.xml b/packages/SystemUI/res/values-en-rIN/advanced_restart_strings.xml
+new file mode 100644
+index 000000000..f26e61c28
+--- /dev/null
++++ b/packages/SystemUI/res/values-en-rIN/advanced_restart_strings.xml
+@@ -0,0 +1,14 @@
++<?xml version="1.0" encoding="utf-8"?>
++<resources>
++    <string name="global_action_restart_more">Restart\u2026</string>
++    <string name="global_action_restart_system">System</string>
++    <string name="global_action_restart_recovery">Recovery</string>
++    <string name="global_action_restart_bootloader">Bootloader</string>
++    <string name="global_action_restart_download">Download</string>
++    <string name="global_action_restart_fastboot">Fastbootd</string>
++    <string name="global_action_restart_progress">Restarting\u2026</string>
++    <string name="global_action_restart_recovery_progress">Restarting to recovery mode\u2026</string>
++    <string name="global_action_restart_bootloader_progress">Restarting to bootloader mode\u2026</string>
++    <string name="global_action_restart_download_progress">Restarting to download mode\u2026</string>
++    <string name="global_action_restart_fastboot_progress">Restarting to fastbootd mode\u2026</string>
++</resources>
+diff --git a/packages/SystemUI/res/values-es-rUS/advanced_restart_strings.xml b/packages/SystemUI/res/values-es-rUS/advanced_restart_strings.xml
+new file mode 100644
+index 000000000..0a56395bb
+--- /dev/null
++++ b/packages/SystemUI/res/values-es-rUS/advanced_restart_strings.xml
+@@ -0,0 +1,13 @@
++<?xml version="1.0" encoding="utf-8"?>
++<resources>
++    <string name="global_action_restart_system">Sistema</string>
++    <string name="global_action_restart_recovery">Modo de recuperación (Recovery)</string>
++    <string name="global_action_restart_bootloader">Gestor de arranque (Bootloader)</string>
++    <string name="global_action_restart_download">Descarga</string>
++    <string name="global_action_restart_fastboot">Fastbootd</string>
++    <string name="global_action_restart_progress">Reiniciando\u2026</string>
++    <string name="global_action_restart_recovery_progress">Reiniciando en modo de recuperación\u2026</string>
++    <string name="global_action_restart_bootloader_progress">Reiniciando en modo del gestor de arranque\u2026</string>
++    <string name="global_action_restart_download_progress">Reiniciando en modo «descarga»\u2026</string>
++    <string name="global_action_restart_fastboot_progress">Reiniciando en modo fastbootd\u2026</string>
++</resources>
+diff --git a/packages/SystemUI/res/values-es/advanced_restart_strings.xml b/packages/SystemUI/res/values-es/advanced_restart_strings.xml
+new file mode 100644
+index 000000000..e007c03b5
+--- /dev/null
++++ b/packages/SystemUI/res/values-es/advanced_restart_strings.xml
+@@ -0,0 +1,14 @@
++<?xml version="1.0" encoding="utf-8"?>
++<resources>
++    <string name="global_action_restart_more">Reiniciar\u2026</string>
++    <string name="global_action_restart_system">Sistema</string>
++    <string name="global_action_restart_recovery">Recuperación</string>
++    <string name="global_action_restart_bootloader">Gestor de arranque</string>
++    <string name="global_action_restart_download">Descargar</string>
++    <string name="global_action_restart_fastboot">Fastbootd</string>
++    <string name="global_action_restart_progress">Reiniciando\u2026</string>
++    <string name="global_action_restart_recovery_progress">Reiniciando en modo recuperación\u2026</string>
++    <string name="global_action_restart_bootloader_progress">Reiniciando en gestor de arranque\u2026</string>
++    <string name="global_action_restart_download_progress">Reiniciando en modo descarga\u2026</string>
++    <string name="global_action_restart_fastboot_progress">Reiniciando en modo fastbootd\u2026</string>
++</resources>
+diff --git a/packages/SystemUI/res/values-eu/advanced_restart_strings.xml b/packages/SystemUI/res/values-eu/advanced_restart_strings.xml
+new file mode 100644
+index 000000000..aac8b81e5
+--- /dev/null
++++ b/packages/SystemUI/res/values-eu/advanced_restart_strings.xml
+@@ -0,0 +1,11 @@
++<?xml version="1.0" encoding="utf-8"?>
++<resources>
++    <string name="global_action_restart_system">Sistema</string>
++    <string name="global_action_restart_recovery">Berreskuratzea</string>
++    <string name="global_action_restart_bootloader">Abiarazlea</string>
++    <string name="global_action_restart_download">Deskarga</string>
++    <string name="global_action_restart_progress">Berrabiarazten\u2026</string>
++    <string name="global_action_restart_recovery_progress">Berreskuratze modura berrabiarazten\u2026</string>
++    <string name="global_action_restart_bootloader_progress">Abiarazle modura berrabiarazten\u2026</string>
++    <string name="global_action_restart_download_progress">Deskarga modura berrabiarazten\u2026</string>
++</resources>
+diff --git a/packages/SystemUI/res/values-fa/advanced_restart_strings.xml b/packages/SystemUI/res/values-fa/advanced_restart_strings.xml
+new file mode 100644
+index 000000000..47432b9fa
+--- /dev/null
++++ b/packages/SystemUI/res/values-fa/advanced_restart_strings.xml
+@@ -0,0 +1,14 @@
++<?xml version="1.0" encoding="utf-8"?>
++<resources>
++    <string name="global_action_restart_more">راه‌اندازی مجدد\u2026</string>
++    <string name="global_action_restart_system">سامانه</string>
++    <string name="global_action_restart_recovery">بازیابی</string>
++    <string name="global_action_restart_bootloader">بوت لودر</string>
++    <string name="global_action_restart_download">بارگیری</string>
++    <string name="global_action_restart_fastboot">فست‌بوت</string>
++    <string name="global_action_restart_progress">راه‌اندازی مجدد \u2026</string>
++    <string name="global_action_restart_recovery_progress">راه‌اندازی مجدد به حالت بازیابی\u2026</string>
++    <string name="global_action_restart_bootloader_progress">راه‌اندازی مجدد به حالت بوت لودر\u2026</string>
++    <string name="global_action_restart_download_progress">در حال راه‌اندازی دوباره به حالت بارگیری\u2026</string>
++    <string name="global_action_restart_fastboot_progress">درحال راه‌اندازی مجدد به حالت فست‌بوت\u2026</string>
++</resources>
+diff --git a/packages/SystemUI/res/values-fi/advanced_restart_strings.xml b/packages/SystemUI/res/values-fi/advanced_restart_strings.xml
+new file mode 100644
+index 000000000..8c2881ff5
+--- /dev/null
++++ b/packages/SystemUI/res/values-fi/advanced_restart_strings.xml
+@@ -0,0 +1,14 @@
++<?xml version="1.0" encoding="utf-8"?>
++<resources>
++    <string name="global_action_restart_more">Käynnistä uudelleen\u2026</string>
++    <string name="global_action_restart_system">Järjestelmä</string>
++    <string name="global_action_restart_recovery">Palautustila</string>
++    <string name="global_action_restart_bootloader">Bootloader-tila</string>
++    <string name="global_action_restart_download">Lataa</string>
++    <string name="global_action_restart_fastboot">Fastbootd</string>
++    <string name="global_action_restart_progress">Käynnistetään uudelleen\u2026</string>
++    <string name="global_action_restart_recovery_progress">Uudelleenkäynnistetään Recovery-tilaan\u2026</string>
++    <string name="global_action_restart_bootloader_progress">Uudelleenkäynnistetään Bootloader-tilaan\u2026</string>
++    <string name="global_action_restart_download_progress">Uudelleenkäynnistetään Download-tilaan\u2026</string>
++    <string name="global_action_restart_fastboot_progress">Uudelleenkäynnistetään fastbootd-tilaan\u2026</string>
++</resources>
+diff --git a/packages/SystemUI/res/values-fr-rCA/advanced_restart_strings.xml b/packages/SystemUI/res/values-fr-rCA/advanced_restart_strings.xml
+new file mode 100644
+index 000000000..d8667c60a
+--- /dev/null
++++ b/packages/SystemUI/res/values-fr-rCA/advanced_restart_strings.xml
+@@ -0,0 +1,4 @@
++<?xml version="1.0" encoding="utf-8"?>
++<resources>
++    <string name="global_action_restart_fastboot_progress">Redémarrage en mode fastbootd\u2026</string>
++</resources>
+diff --git a/packages/SystemUI/res/values-fr/advanced_restart_strings.xml b/packages/SystemUI/res/values-fr/advanced_restart_strings.xml
+new file mode 100644
+index 000000000..2cee7ca92
+--- /dev/null
++++ b/packages/SystemUI/res/values-fr/advanced_restart_strings.xml
+@@ -0,0 +1,14 @@
++<?xml version="1.0" encoding="utf-8"?>
++<resources>
++    <string name="global_action_restart_more">Redémarrer\u2026 </string>
++    <string name="global_action_restart_system">Système</string>
++    <string name="global_action_restart_recovery">Récupération</string>
++    <string name="global_action_restart_bootloader">Bootloader</string>
++    <string name="global_action_restart_download">Télécharger</string>
++    <string name="global_action_restart_fastboot">Fastbootd</string>
++    <string name="global_action_restart_progress">Redémarrage\u2026</string>
++    <string name="global_action_restart_recovery_progress">Redémarrage en mode recovery\u2026</string>
++    <string name="global_action_restart_bootloader_progress">Redémarrage en mode bootloader\u2026</string>
++    <string name="global_action_restart_download_progress">Redémarrage en mode download\u2026</string>
++    <string name="global_action_restart_fastboot_progress">Redémarrage en mode fastbootd\u2026</string>
++</resources>
+diff --git a/packages/SystemUI/res/values-fur-rIT/advanced_restart_strings.xml b/packages/SystemUI/res/values-fur-rIT/advanced_restart_strings.xml
+new file mode 100644
+index 000000000..7b811adc2
+--- /dev/null
++++ b/packages/SystemUI/res/values-fur-rIT/advanced_restart_strings.xml
+@@ -0,0 +1,14 @@
++<?xml version="1.0" encoding="utf-8"?>
++<resources>
++    <string name="global_action_restart_more">Gnûf inviament\u2026</string>
++    <string name="global_action_restart_system">Sisteme</string>
++    <string name="global_action_restart_recovery">Recovery</string>
++    <string name="global_action_restart_bootloader">Bootloader</string>
++    <string name="global_action_restart_download">Download</string>
++    <string name="global_action_restart_fastboot">Fastbootd</string>
++    <string name="global_action_restart_progress">Gnûf inviament\u2026</string>
++    <string name="global_action_restart_recovery_progress">Gnûf inviament in modalitât recovery\u2026</string>
++    <string name="global_action_restart_bootloader_progress">Gnûf inviament in modalitât bootloader\u2026</string>
++    <string name="global_action_restart_download_progress">Gnûf inviament in modalitât download\u2026</string>
++    <string name="global_action_restart_fastboot_progress">Gnûf inviament in modalitât fastbootd\u2026</string>
++</resources>
+diff --git a/packages/SystemUI/res/values-fy-rNL/advanced_restart_strings.xml b/packages/SystemUI/res/values-fy-rNL/advanced_restart_strings.xml
+new file mode 100644
+index 000000000..76d4160f3
+--- /dev/null
++++ b/packages/SystemUI/res/values-fy-rNL/advanced_restart_strings.xml
+@@ -0,0 +1,13 @@
++<?xml version="1.0" encoding="utf-8"?>
++<resources>
++    <string name="global_action_restart_system">Systeem</string>
++    <string name="global_action_restart_recovery">Werstel</string>
++    <string name="global_action_restart_bootloader">Bootloader</string>
++    <string name="global_action_restart_download">Downloade</string>
++    <string name="global_action_restart_fastboot">Fastbootd</string>
++    <string name="global_action_restart_progress">Opnij opstarte\u2026</string>
++    <string name="global_action_restart_recovery_progress">Opnij opstarte nei werstelmodus\u2026</string>
++    <string name="global_action_restart_bootloader_progress">Opnij opstarte nei bootloadermodus\u2026</string>
++    <string name="global_action_restart_download_progress">Opnij opstarte nei downloadmodus\u2026</string>
++    <string name="global_action_restart_fastboot_progress">Opnij opstarte nei fastbootddmodus\u2026</string>
++</resources>
+diff --git a/packages/SystemUI/res/values-ga-rIE/advanced_restart_strings.xml b/packages/SystemUI/res/values-ga-rIE/advanced_restart_strings.xml
+new file mode 100644
+index 000000000..f7f9114a8
+--- /dev/null
++++ b/packages/SystemUI/res/values-ga-rIE/advanced_restart_strings.xml
+@@ -0,0 +1,14 @@
++<?xml version="1.0" encoding="utf-8"?>
++<resources>
++    <string name="global_action_restart_more">Atosaigh\u2026</string>
++    <string name="global_action_restart_system">Córas</string>
++    <string name="global_action_restart_recovery">Aisghabháil</string>
++    <string name="global_action_restart_bootloader">Luchtálaí tosaithe</string>
++    <string name="global_action_restart_download">Íosluchtaigh</string>
++    <string name="global_action_restart_fastboot">Fastbootd</string>
++    <string name="global_action_restart_progress">Ag atosú\u2026</string>
++    <string name="global_action_restart_recovery_progress">Ag atosú go mód athshlánaithe\u2026</string>
++    <string name="global_action_restart_bootloader_progress">Ag atosú go mód an bootloader\u2026</string>
++    <string name="global_action_restart_download_progress">Ag atosú go mód íoslódála\u2026</string>
++    <string name="global_action_restart_fastboot_progress">Ag atosú go mód fastbootd\u2026</string>
++</resources>
+diff --git a/packages/SystemUI/res/values-gd/advanced_restart_strings.xml b/packages/SystemUI/res/values-gd/advanced_restart_strings.xml
+new file mode 100644
+index 000000000..b127b463b
+--- /dev/null
++++ b/packages/SystemUI/res/values-gd/advanced_restart_strings.xml
+@@ -0,0 +1,14 @@
++<?xml version="1.0" encoding="utf-8"?>
++<resources>
++    <string name="global_action_restart_more">Ath-thòisich\u2026</string>
++    <string name="global_action_restart_system">An siostam</string>
++    <string name="global_action_restart_recovery">Aiseag</string>
++    <string name="global_action_restart_bootloader">Bootloader</string>
++    <string name="global_action_restart_download">Luchdadh a-nuas</string>
++    <string name="global_action_restart_fastboot">Fastbootd</string>
++    <string name="global_action_restart_progress">’Ga ath-thòiseachadh\u2026</string>
++    <string name="global_action_restart_recovery_progress">’Ga ath-thòiseachadh gun mhodh aisig\u2026</string>
++    <string name="global_action_restart_bootloader_progress">’Ga ath-thòiseachadh gun mhodh bootloader\u2026</string>
++    <string name="global_action_restart_download_progress">’Ga ath-thòiseachadh gun mhodh luchdaidh a-nuas\u2026</string>
++    <string name="global_action_restart_fastboot_progress">’Ga ath-thòiseachadh gun mhodh fastbootd\u2026</string>
++</resources>
+diff --git a/packages/SystemUI/res/values-gl/advanced_restart_strings.xml b/packages/SystemUI/res/values-gl/advanced_restart_strings.xml
+new file mode 100644
+index 000000000..11edbdb33
+--- /dev/null
++++ b/packages/SystemUI/res/values-gl/advanced_restart_strings.xml
+@@ -0,0 +1,14 @@
++<?xml version="1.0" encoding="utf-8"?>
++<resources>
++    <string name="global_action_restart_more">Reiniciar\u2026</string>
++    <string name="global_action_restart_system">Sistema</string>
++    <string name="global_action_restart_recovery">Recuperación</string>
++    <string name="global_action_restart_bootloader">Cargador de arranque</string>
++    <string name="global_action_restart_download">Descarga</string>
++    <string name="global_action_restart_fastboot">Fastbootd</string>
++    <string name="global_action_restart_progress">Reiniciando\u2026</string>
++    <string name="global_action_restart_recovery_progress">Reiniciando en modo recuperación\u2026</string>
++    <string name="global_action_restart_bootloader_progress">Reiniciando en modo bootloader\u2026</string>
++    <string name="global_action_restart_download_progress">Reiniciando en modo descarga\u2026</string>
++    <string name="global_action_restart_fastboot_progress">Reiniciando no modo fastbootd\u2026</string>
++</resources>
+diff --git a/packages/SystemUI/res/values-hr/advanced_restart_strings.xml b/packages/SystemUI/res/values-hr/advanced_restart_strings.xml
+new file mode 100644
+index 000000000..0b6ef2301
+--- /dev/null
++++ b/packages/SystemUI/res/values-hr/advanced_restart_strings.xml
+@@ -0,0 +1,12 @@
++<?xml version="1.0" encoding="utf-8"?>
++<resources>
++    <string name="global_action_restart_more">Ponovno pokretanje\u2026</string>
++    <string name="global_action_restart_system">Sustav</string>
++    <string name="global_action_restart_recovery">Recovery</string>
++    <string name="global_action_restart_bootloader">Bootloader</string>
++    <string name="global_action_restart_download">Preuzmi</string>
++    <string name="global_action_restart_progress">Ponovno pokretanje\u2026</string>
++    <string name="global_action_restart_recovery_progress">Ponovno pokretanje u Recovery\u2026</string>
++    <string name="global_action_restart_bootloader_progress">Ponovno pokretanje u bootloader\u2026</string>
++    <string name="global_action_restart_download_progress">Ponovno pokretanje u način preuzimanja\u2026</string>
++</resources>
+diff --git a/packages/SystemUI/res/values-hu/advanced_restart_strings.xml b/packages/SystemUI/res/values-hu/advanced_restart_strings.xml
+new file mode 100644
+index 000000000..2bf42a491
+--- /dev/null
++++ b/packages/SystemUI/res/values-hu/advanced_restart_strings.xml
+@@ -0,0 +1,14 @@
++<?xml version="1.0" encoding="utf-8"?>
++<resources>
++    <string name="global_action_restart_more">Újraindítás\u2026</string>
++    <string name="global_action_restart_system">Rendszer</string>
++    <string name="global_action_restart_recovery">Recovery</string>
++    <string name="global_action_restart_bootloader">Bootloader</string>
++    <string name="global_action_restart_download">Download-mód</string>
++    <string name="global_action_restart_fastboot">Fastbootd-mód</string>
++    <string name="global_action_restart_progress">Újraindítás\u2026</string>
++    <string name="global_action_restart_recovery_progress">Újraindítás recovery-módba\u2026</string>
++    <string name="global_action_restart_bootloader_progress">Újraindítás bootloader-módba\u2026</string>
++    <string name="global_action_restart_download_progress">Újraindítás download-módba\u2026</string>
++    <string name="global_action_restart_fastboot_progress">Újraindítás Fastbootd-módba\u2026</string>
++</resources>
+diff --git a/packages/SystemUI/res/values-in/advanced_restart_strings.xml b/packages/SystemUI/res/values-in/advanced_restart_strings.xml
+new file mode 100644
+index 000000000..785903a96
+--- /dev/null
++++ b/packages/SystemUI/res/values-in/advanced_restart_strings.xml
+@@ -0,0 +1,14 @@
++<?xml version="1.0" encoding="utf-8"?>
++<resources>
++    <string name="global_action_restart_more">Mulai ulang\u2026</string>
++    <string name="global_action_restart_system">Sistem</string>
++    <string name="global_action_restart_recovery">Recovery</string>
++    <string name="global_action_restart_bootloader">Bootloader</string>
++    <string name="global_action_restart_download">Download</string>
++    <string name="global_action_restart_fastboot">Fastbootd</string>
++    <string name="global_action_restart_progress">Memulai ulang\u2026</string>
++    <string name="global_action_restart_recovery_progress">Memulai ulang ke mode recovery</string>
++    <string name="global_action_restart_bootloader_progress">Memulai ulang ke mode bootloader</string>
++    <string name="global_action_restart_download_progress">Memulai ulang ke mode download</string>
++    <string name="global_action_restart_fastboot_progress">Memulai ulang ke mode fastbootd</string>
++</resources>
+diff --git a/packages/SystemUI/res/values-is/advanced_restart_strings.xml b/packages/SystemUI/res/values-is/advanced_restart_strings.xml
+new file mode 100644
+index 000000000..095a4214f
+--- /dev/null
++++ b/packages/SystemUI/res/values-is/advanced_restart_strings.xml
+@@ -0,0 +1,14 @@
++<?xml version="1.0" encoding="utf-8"?>
++<resources>
++    <string name="global_action_restart_more">Endurræsa\u2026</string>
++    <string name="global_action_restart_system">Kerfi</string>
++    <string name="global_action_restart_recovery">Endurheimting</string>
++    <string name="global_action_restart_bootloader">Ræsistjóri</string>
++    <string name="global_action_restart_download">Niðurhal</string>
++    <string name="global_action_restart_fastboot">Fastbootd</string>
++    <string name="global_action_restart_progress">Endurræsi…\u2026</string>
++    <string name="global_action_restart_recovery_progress">Endurræsi í endurheimtuham\u2026</string>
++    <string name="global_action_restart_bootloader_progress">Endurræsi í ræsistjóraham\u2026</string>
++    <string name="global_action_restart_download_progress">Endurræsi í niðurhalsham\u2026</string>
++    <string name="global_action_restart_fastboot_progress">Endurræsi í fastbootd-ham\u2026</string>
++</resources>
+diff --git a/packages/SystemUI/res/values-it/advanced_restart_strings.xml b/packages/SystemUI/res/values-it/advanced_restart_strings.xml
+new file mode 100644
+index 000000000..5acc1e171
+--- /dev/null
++++ b/packages/SystemUI/res/values-it/advanced_restart_strings.xml
+@@ -0,0 +1,14 @@
++<?xml version="1.0" encoding="utf-8"?>
++<resources>
++    <string name="global_action_restart_more">Riavvio\u2026</string>
++    <string name="global_action_restart_system">Sistema</string>
++    <string name="global_action_restart_recovery">Recovery</string>
++    <string name="global_action_restart_bootloader">Bootloader</string>
++    <string name="global_action_restart_download">Download</string>
++    <string name="global_action_restart_fastboot">Fastbootd</string>
++    <string name="global_action_restart_progress">Riavvio\u2026</string>
++    <string name="global_action_restart_recovery_progress">Riavvio in modalità recovery\u2026</string>
++    <string name="global_action_restart_bootloader_progress">Riavvio in modalità bootloader\u2026</string>
++    <string name="global_action_restart_download_progress">Riavvio in modalità download\u2026</string>
++    <string name="global_action_restart_fastboot_progress">Riavvio in modalità fastbootd\u2026</string>
++</resources>
+diff --git a/packages/SystemUI/res/values-iw/advanced_restart_strings.xml b/packages/SystemUI/res/values-iw/advanced_restart_strings.xml
+new file mode 100644
+index 000000000..ba931f6ed
+--- /dev/null
++++ b/packages/SystemUI/res/values-iw/advanced_restart_strings.xml
+@@ -0,0 +1,14 @@
++<?xml version="1.0" encoding="utf-8"?>
++<resources>
++    <string name="global_action_restart_more">אתחול\u2026</string>
++    <string name="global_action_restart_system">מערכת</string>
++    <string name="global_action_restart_recovery">Recovery</string>
++    <string name="global_action_restart_bootloader">מנהל האתחול</string>
++    <string name="global_action_restart_download">הורדה</string>
++    <string name="global_action_restart_fastboot">Fastboot</string>
++    <string name="global_action_restart_progress">מפעיל מחדש\u2026</string>
++    <string name="global_action_restart_recovery_progress">מפעיל מחדש למצב שחזור (Recovery)\u2026</string>
++    <string name="global_action_restart_bootloader_progress">מפעיל מחדש למנהל אתחול (bootloader)\u2026</string>
++    <string name="global_action_restart_download_progress">מפעיל מחדש למצב הורדה\u2026</string>
++    <string name="global_action_restart_fastboot_progress">מפעיל מחדש למצב fastboot\u2026</string>
++</resources>
+diff --git a/packages/SystemUI/res/values-ja/advanced_restart_strings.xml b/packages/SystemUI/res/values-ja/advanced_restart_strings.xml
+new file mode 100644
+index 000000000..ad35665da
+--- /dev/null
++++ b/packages/SystemUI/res/values-ja/advanced_restart_strings.xml
+@@ -0,0 +1,14 @@
++<?xml version="1.0" encoding="utf-8"?>
++<resources>
++    <string name="global_action_restart_more">再起動\u2026</string>
++    <string name="global_action_restart_system">システム</string>
++    <string name="global_action_restart_recovery">リカバリー</string>
++    <string name="global_action_restart_bootloader">ブートローダー</string>
++    <string name="global_action_restart_download">ダウンロード</string>
++    <string name="global_action_restart_fastboot">fastbootd</string>
++    <string name="global_action_restart_progress">再起動中\u2026</string>
++    <string name="global_action_restart_recovery_progress">リカバリーモードで再起動中\u2026</string>
++    <string name="global_action_restart_bootloader_progress">ブートローダーモードで再起動中\u2026</string>
++    <string name="global_action_restart_download_progress">ダウンロードモードで再起動中\u2026</string>
++    <string name="global_action_restart_fastboot_progress">fastbootd モードで再起動中\u2026</string>
++</resources>
+diff --git a/packages/SystemUI/res/values-ka/advanced_restart_strings.xml b/packages/SystemUI/res/values-ka/advanced_restart_strings.xml
+new file mode 100644
+index 000000000..05c91c446
+--- /dev/null
++++ b/packages/SystemUI/res/values-ka/advanced_restart_strings.xml
+@@ -0,0 +1,14 @@
++<?xml version="1.0" encoding="utf-8"?>
++<resources>
++    <string name="global_action_restart_more">გადატვირთვა\u2026</string>
++    <string name="global_action_restart_system">სისტემა</string>
++    <string name="global_action_restart_recovery">აღმდგენი</string>
++    <string name="global_action_restart_bootloader">ჩამტვირთავი</string>
++    <string name="global_action_restart_download">ჩატვირთვა</string>
++    <string name="global_action_restart_fastboot">Fastbootd</string>
++    <string name="global_action_restart_progress">გადაიტვირთება\u2026</string>
++    <string name="global_action_restart_recovery_progress">გადაიტვირთება აღმდგენ რეჟიმში\u2026</string>
++    <string name="global_action_restart_bootloader_progress">გადაიტვირთება ჩამტვირთავში\u2026</string>
++    <string name="global_action_restart_download_progress">გადაიტვირთება ჩატვირთვის რეჟიმში\u2026</string>
++    <string name="global_action_restart_fastboot_progress">გადაიტვირთება Fastbootd-რეჟიმში\u2026</string>
++</resources>
+diff --git a/packages/SystemUI/res/values-kab-rDZ/advanced_restart_strings.xml b/packages/SystemUI/res/values-kab-rDZ/advanced_restart_strings.xml
+new file mode 100644
+index 000000000..5fd5be7a3
+--- /dev/null
++++ b/packages/SystemUI/res/values-kab-rDZ/advanced_restart_strings.xml
+@@ -0,0 +1,10 @@
++<?xml version="1.0" encoding="utf-8"?>
++<resources>
++    <string name="global_action_restart_more">Tulsa tanekra\u2026</string>
++    <string name="global_action_restart_system">Anagraw</string>
++    <string name="global_action_restart_recovery">Tiririt</string>
++    <string name="global_action_restart_bootloader">Bootloader</string>
++    <string name="global_action_restart_download">Sider</string>
++    <string name="global_action_restart_fastboot">Fastbootd</string>
++    <string name="global_action_restart_progress">Tulsa n tnekra\u2026</string>
++</resources>
+diff --git a/packages/SystemUI/res/values-kn/advanced_restart_strings.xml b/packages/SystemUI/res/values-kn/advanced_restart_strings.xml
+new file mode 100644
+index 000000000..a81dd3f76
+--- /dev/null
++++ b/packages/SystemUI/res/values-kn/advanced_restart_strings.xml
+@@ -0,0 +1,11 @@
++<?xml version="1.0" encoding="utf-8"?>
++<resources>
++    <string name="global_action_restart_system">ವ್ಯವಸ್ಥೆ</string>
++    <string name="global_action_restart_recovery">ಮರುಚೇತರಿಕೆ</string>
++    <string name="global_action_restart_bootloader">Bootloader</string>
++    <string name="global_action_restart_download">ಇಳಿಸು</string>
++    <string name="global_action_restart_progress">ಪುನರಾರಂಭವಾಗುತ್ತಿದೆ\u2026</string>
++    <string name="global_action_restart_recovery_progress">Restarting ರೀತಿಗೆ ಪುನರಾರಂಭವಾಗುತ್ತಿದೆ</string>
++    <string name="global_action_restart_bootloader_progress">Bootloader ರೀತಿಗೆ ಪುನರಾರಂಭವಾಗುತ್ತಿದೆ\u2026</string>
++    <string name="global_action_restart_download_progress">Download ರೀತಿಗೆ ಪುನರಾರಂಭವಾಗುತ್ತಿದೆ\u2026</string>
++</resources>
+diff --git a/packages/SystemUI/res/values-ko/advanced_restart_strings.xml b/packages/SystemUI/res/values-ko/advanced_restart_strings.xml
+new file mode 100644
+index 000000000..59493184c
+--- /dev/null
++++ b/packages/SystemUI/res/values-ko/advanced_restart_strings.xml
+@@ -0,0 +1,14 @@
++<?xml version="1.0" encoding="utf-8"?>
++<resources>
++    <string name="global_action_restart_more">다시 시작\u2026</string>
++    <string name="global_action_restart_system">시스템</string>
++    <string name="global_action_restart_recovery">복구 모드</string>
++    <string name="global_action_restart_bootloader">부트로더</string>
++    <string name="global_action_restart_download">다운로드</string>
++    <string name="global_action_restart_fastboot">Fastbootd 모드</string>
++    <string name="global_action_restart_progress">다시 시작하는 중\u2026</string>
++    <string name="global_action_restart_recovery_progress">복구 모드로 다시 시작하는 중\u2026</string>
++    <string name="global_action_restart_bootloader_progress">부트로더 모드로 다시 시작하는 중\u2026</string>
++    <string name="global_action_restart_download_progress">다운로드 모드로 다시 시작하는 중\u2026</string>
++    <string name="global_action_restart_fastboot_progress">Fastbootd 모드로 다시 시작하는 중\u2026</string>
++</resources>
+diff --git a/packages/SystemUI/res/values-land/dimens.xml b/packages/SystemUI/res/values-land/dimens.xml
+index d76cbb4ef..7fedb7b1f 100644
+--- a/packages/SystemUI/res/values-land/dimens.xml
++++ b/packages/SystemUI/res/values-land/dimens.xml
+@@ -41,9 +41,6 @@
+     <dimen name="biometric_auth_pattern_view_size">248dp</dimen>
+     <dimen name="biometric_auth_pattern_view_max_size">348dp</dimen>
+ 
+-    <dimen name="global_actions_power_dialog_item_height">130dp</dimen>
+-    <dimen name="global_actions_power_dialog_item_bottom_margin">35dp</dimen>
+-
+     <dimen name="controls_management_top_padding">12dp</dimen>
+     <dimen name="controls_management_titles_margin">8dp</dimen>
+     <dimen name="controls_management_indicator_top_margin">8dp</dimen>
+diff --git a/packages/SystemUI/res/values-mk/advanced_restart_strings.xml b/packages/SystemUI/res/values-mk/advanced_restart_strings.xml
+new file mode 100644
+index 000000000..e5af87510
+--- /dev/null
++++ b/packages/SystemUI/res/values-mk/advanced_restart_strings.xml
+@@ -0,0 +1,4 @@
++<?xml version="1.0" encoding="utf-8"?>
++<resources>
++    <string name="global_action_restart_system">Систем</string>
++</resources>
+diff --git a/packages/SystemUI/res/values-my/advanced_restart_strings.xml b/packages/SystemUI/res/values-my/advanced_restart_strings.xml
+new file mode 100644
+index 000000000..d99e7029f
+--- /dev/null
++++ b/packages/SystemUI/res/values-my/advanced_restart_strings.xml
+@@ -0,0 +1,14 @@
++<?xml version="1.0" encoding="utf-8"?>
++<resources>
++    <string name="global_action_restart_more">အစမှ ပြန်စတင်မည် \u2026</string>
++    <string name="global_action_restart_system">စနစ်</string>
++    <string name="global_action_restart_recovery">ပြန်လည်ရယူခြင်း</string>
++    <string name="global_action_restart_bootloader">Bootloader</string>
++    <string name="global_action_restart_download">ဒေါင်းလုပ်မုဒ်</string>
++    <string name="global_action_restart_fastboot">Fastbootd</string>
++    <string name="global_action_restart_progress">အစမှ ပြန်စတင်နေသည် \u2026</string>
++    <string name="global_action_restart_recovery_progress">ပြန်လည်ဆယ်ယူခြင်းမုဒ်ကို ပြန်စတင်နေသည် \u2026</string>
++    <string name="global_action_restart_bootloader_progress">Bootloader မုဒ်ကို ပြန်စတင်နေသည် \u2026</string>
++    <string name="global_action_restart_download_progress">ဒေါင်းလုပ်မုဒ်ကို ပြန်စတင်နေသည် \u2026</string>
++    <string name="global_action_restart_fastboot_progress">Fastbootd မုဒ်ကို ပြန်စတင်နေသည် \u2026</string>
++</resources>
+diff --git a/packages/SystemUI/res/values-nb/advanced_restart_strings.xml b/packages/SystemUI/res/values-nb/advanced_restart_strings.xml
+new file mode 100644
+index 000000000..65962610a
+--- /dev/null
++++ b/packages/SystemUI/res/values-nb/advanced_restart_strings.xml
+@@ -0,0 +1,11 @@
++<?xml version="1.0" encoding="utf-8"?>
++<resources>
++    <string name="global_action_restart_system">System</string>
++    <string name="global_action_restart_recovery">Gjenoppretting</string>
++    <string name="global_action_restart_bootloader">Bootloader</string>
++    <string name="global_action_restart_download">Download-modus</string>
++    <string name="global_action_restart_progress">Starter på nytt\u2026</string>
++    <string name="global_action_restart_recovery_progress">Starter på nytt til gjenoppretting-modus\u2026</string>
++    <string name="global_action_restart_bootloader_progress">Starter på nytt til bootloader-modus\u2026</string>
++    <string name="global_action_restart_download_progress">Starter på nytt til download-modus\u2026</string>
++</resources>
+diff --git a/packages/SystemUI/res/values-nl/advanced_restart_strings.xml b/packages/SystemUI/res/values-nl/advanced_restart_strings.xml
+new file mode 100644
+index 000000000..1518fe1a9
+--- /dev/null
++++ b/packages/SystemUI/res/values-nl/advanced_restart_strings.xml
+@@ -0,0 +1,14 @@
++<?xml version="1.0" encoding="utf-8"?>
++<resources>
++    <string name="global_action_restart_more">Herstarten\u2026</string>
++    <string name="global_action_restart_system">Systeem</string>
++    <string name="global_action_restart_recovery">Recovery</string>
++    <string name="global_action_restart_bootloader">Bootloader</string>
++    <string name="global_action_restart_download">Download</string>
++    <string name="global_action_restart_fastboot">Fastbootd</string>
++    <string name="global_action_restart_progress">Opnieuw opstarten\u2026</string>
++    <string name="global_action_restart_recovery_progress">Opnieuw opstarten naar recovery\u2026</string>
++    <string name="global_action_restart_bootloader_progress">Opnieuw opstarten naar bootloader\u2026</string>
++    <string name="global_action_restart_download_progress">Opnieuw opstarten naar download-modus\u2026</string>
++    <string name="global_action_restart_fastboot_progress">Herstarten naar fastbootd modus\u2026</string>
++</resources>
+diff --git a/packages/SystemUI/res/values-nn-rNO/advanced_restart_strings.xml b/packages/SystemUI/res/values-nn-rNO/advanced_restart_strings.xml
+new file mode 100644
+index 000000000..c35e394cf
+--- /dev/null
++++ b/packages/SystemUI/res/values-nn-rNO/advanced_restart_strings.xml
+@@ -0,0 +1,14 @@
++<?xml version="1.0" encoding="utf-8"?>
++<resources>
++    <string name="global_action_restart_more">Starta på nytt …</string>
++    <string name="global_action_restart_system">System</string>
++    <string name="global_action_restart_recovery">Recovery</string>
++    <string name="global_action_restart_bootloader">Oppstartslastar</string>
++    <string name="global_action_restart_download">Last ned</string>
++    <string name="global_action_restart_fastboot">Fastbootd</string>
++    <string name="global_action_restart_progress">Startar på nytt …</string>
++    <string name="global_action_restart_recovery_progress">Startar på nytt i recovery-modus …</string>
++    <string name="global_action_restart_bootloader_progress">Startar på nytt i oppstartslastar-modus …</string>
++    <string name="global_action_restart_download_progress">Startar på nytt i nedlastingsmodus …</string>
++    <string name="global_action_restart_fastboot_progress">Startar på nytt i fastbootd-modus …</string>
++</resources>
+diff --git a/packages/SystemUI/res/values-pl/advanced_restart_strings.xml b/packages/SystemUI/res/values-pl/advanced_restart_strings.xml
+new file mode 100644
+index 000000000..e8b126579
+--- /dev/null
++++ b/packages/SystemUI/res/values-pl/advanced_restart_strings.xml
+@@ -0,0 +1,14 @@
++<?xml version="1.0" encoding="utf-8"?>
++<resources>
++    <string name="global_action_restart_more">Uruchom ponownie\u2026</string>
++    <string name="global_action_restart_system">System</string>
++    <string name="global_action_restart_recovery">Recovery</string>
++    <string name="global_action_restart_bootloader">Bootloader</string>
++    <string name="global_action_restart_download">Download</string>
++    <string name="global_action_restart_fastboot">Fastbootd</string>
++    <string name="global_action_restart_progress">Ponowne uruchamianie\u2026</string>
++    <string name="global_action_restart_recovery_progress">Uruchamianie w trybie Recovery\u2026</string>
++    <string name="global_action_restart_bootloader_progress">Uruchamianie w trybie Bootloader\u2026</string>
++    <string name="global_action_restart_download_progress">Uruchamianie w trybie Download\u2026</string>
++    <string name="global_action_restart_fastboot_progress">Uruchamianie w trybie Fastbootd\u2026</string>
++</resources>
+diff --git a/packages/SystemUI/res/values-pt-rBR/advanced_restart_strings.xml b/packages/SystemUI/res/values-pt-rBR/advanced_restart_strings.xml
+new file mode 100644
+index 000000000..b5d7c2c8e
+--- /dev/null
++++ b/packages/SystemUI/res/values-pt-rBR/advanced_restart_strings.xml
+@@ -0,0 +1,14 @@
++<?xml version="1.0" encoding="utf-8"?>
++<resources>
++    <string name="global_action_restart_more">Reiniciar\u2026</string>
++    <string name="global_action_restart_system">Sistema</string>
++    <string name="global_action_restart_recovery">Recuperação</string>
++    <string name="global_action_restart_bootloader">Bootloader</string>
++    <string name="global_action_restart_download">Download</string>
++    <string name="global_action_restart_fastboot">Fastbootd</string>
++    <string name="global_action_restart_progress">Reiniciando\u2026</string>
++    <string name="global_action_restart_recovery_progress">Reiniciando para o modo de recuperação\u2026</string>
++    <string name="global_action_restart_bootloader_progress">Reiniciando no modo bootloader\u2026</string>
++    <string name="global_action_restart_download_progress">Reiniciando no modo de download\u2026</string>
++    <string name="global_action_restart_fastboot_progress">Reiniciando no modo fastbootd\u2026</string>
++</resources>
+diff --git a/packages/SystemUI/res/values-pt-rPT/advanced_restart_strings.xml b/packages/SystemUI/res/values-pt-rPT/advanced_restart_strings.xml
+new file mode 100644
+index 000000000..d59923c29
+--- /dev/null
++++ b/packages/SystemUI/res/values-pt-rPT/advanced_restart_strings.xml
+@@ -0,0 +1,14 @@
++<?xml version="1.0" encoding="utf-8"?>
++<resources>
++    <string name="global_action_restart_more">Reiniciar\u2026</string>
++    <string name="global_action_restart_system">Sistema</string>
++    <string name="global_action_restart_recovery">Recuperação</string>
++    <string name="global_action_restart_bootloader">Bootloader</string>
++    <string name="global_action_restart_download">Transferência</string>
++    <string name="global_action_restart_fastboot">Fastbootd</string>
++    <string name="global_action_restart_progress">A reiniciar\u2026</string>
++    <string name="global_action_restart_recovery_progress">A reiniciar para o modo de recuperação\u2026</string>
++    <string name="global_action_restart_bootloader_progress">A reiniciar para o modo de bootloader\u2026</string>
++    <string name="global_action_restart_download_progress">A reiniciar para o modo de transferência\u2026</string>
++    <string name="global_action_restart_fastboot_progress">A reiniciar para o modo de fastbootd\u2026</string>
++</resources>
+diff --git a/packages/SystemUI/res/values-ro/advanced_restart_strings.xml b/packages/SystemUI/res/values-ro/advanced_restart_strings.xml
+new file mode 100644
+index 000000000..d2ecf204e
+--- /dev/null
++++ b/packages/SystemUI/res/values-ro/advanced_restart_strings.xml
+@@ -0,0 +1,14 @@
++<?xml version="1.0" encoding="utf-8"?>
++<resources>
++    <string name="global_action_restart_more">Repornire\u2026</string>
++    <string name="global_action_restart_system">Sistem</string>
++    <string name="global_action_restart_recovery">Recovery</string>
++    <string name="global_action_restart_bootloader">Bootloader</string>
++    <string name="global_action_restart_download">Download</string>
++    <string name="global_action_restart_fastboot">Fastbootd</string>
++    <string name="global_action_restart_progress">Se repornește\u2026</string>
++    <string name="global_action_restart_recovery_progress">Repornire în modul recuperare\u2026</string>
++    <string name="global_action_restart_bootloader_progress">Repornire în modul bootloader\u2026</string>
++    <string name="global_action_restart_download_progress">Repornire în modul descărcare\u2026</string>
++    <string name="global_action_restart_fastboot_progress">Repornire în modul fastbootd\u2026</string>
++</resources>
+diff --git a/packages/SystemUI/res/values-ru/advanced_restart_strings.xml b/packages/SystemUI/res/values-ru/advanced_restart_strings.xml
+new file mode 100644
+index 000000000..e7280c106
+--- /dev/null
++++ b/packages/SystemUI/res/values-ru/advanced_restart_strings.xml
+@@ -0,0 +1,14 @@
++<?xml version="1.0" encoding="utf-8"?>
++<resources>
++    <string name="global_action_restart_more">Перезапуск\u2026</string>
++    <string name="global_action_restart_system">Система</string>
++    <string name="global_action_restart_recovery">Recovery</string>
++    <string name="global_action_restart_bootloader">Загрузчик</string>
++    <string name="global_action_restart_download">Загрузка</string>
++    <string name="global_action_restart_fastboot">Fastbootd</string>
++    <string name="global_action_restart_progress">Перезапуск\u2026</string>
++    <string name="global_action_restart_recovery_progress">Перезапуск в Recovery\u2026</string>
++    <string name="global_action_restart_bootloader_progress">Перезапуск в режим загрузчика\u2026</string>
++    <string name="global_action_restart_download_progress">Перезапуск в режим загрузки\u2026</string>
++    <string name="global_action_restart_fastboot_progress">Перезапуск в режим fastbootd\u2026</string>
++</resources>
+diff --git a/packages/SystemUI/res/values-sc-rIT/advanced_restart_strings.xml b/packages/SystemUI/res/values-sc-rIT/advanced_restart_strings.xml
+new file mode 100644
+index 000000000..b700ec5a0
+--- /dev/null
++++ b/packages/SystemUI/res/values-sc-rIT/advanced_restart_strings.xml
+@@ -0,0 +1,14 @@
++<?xml version="1.0" encoding="utf-8"?>
++<resources>
++    <string name="global_action_restart_more">Torra a aviare\u2026</string>
++    <string name="global_action_restart_system">Sistema</string>
++    <string name="global_action_restart_recovery">Recùperu</string>
++    <string name="global_action_restart_bootloader">Bootloader</string>
++    <string name="global_action_restart_download">Iscàrriga</string>
++    <string name="global_action_restart_fastboot">Fastbootd</string>
++    <string name="global_action_restart_progress">Torrende a allùghere\u2026</string>
++    <string name="global_action_restart_recovery_progress">Torrende a aviare in modalidade de recùperu\u2026</string>
++    <string name="global_action_restart_bootloader_progress">Torrende a aviare in modalidade bootloader\u2026</string>
++    <string name="global_action_restart_download_progress">Torrende a aviare in modalidade de iscarrigamentu\u2026</string>
++    <string name="global_action_restart_fastboot_progress">Torrende a aviare in modalidade fastbootd\u2026</string>
++</resources>
+diff --git a/packages/SystemUI/res/values-sk/advanced_restart_strings.xml b/packages/SystemUI/res/values-sk/advanced_restart_strings.xml
+new file mode 100644
+index 000000000..f5de5549e
+--- /dev/null
++++ b/packages/SystemUI/res/values-sk/advanced_restart_strings.xml
+@@ -0,0 +1,14 @@
++<?xml version="1.0" encoding="utf-8"?>
++<resources>
++    <string name="global_action_restart_more">Reštartovať\u2026</string>
++    <string name="global_action_restart_system">Systém</string>
++    <string name="global_action_restart_recovery">Recovery</string>
++    <string name="global_action_restart_bootloader">Bootloader</string>
++    <string name="global_action_restart_download">Sťahovanie</string>
++    <string name="global_action_restart_fastboot">Fastbootd</string>
++    <string name="global_action_restart_progress">Reštartovanie\u2026</string>
++    <string name="global_action_restart_recovery_progress">Reštartovanie do režimu Recovery\u2026</string>
++    <string name="global_action_restart_bootloader_progress">Reštartovanie do režimu Bootloader\u2026</string>
++    <string name="global_action_restart_download_progress">Reštartovanie do režimu sťahovania\u2026</string>
++    <string name="global_action_restart_fastboot_progress">Reštartovanie do režimu fastbootd\u2026</string>
++</resources>
+diff --git a/packages/SystemUI/res/values-sl/advanced_restart_strings.xml b/packages/SystemUI/res/values-sl/advanced_restart_strings.xml
+new file mode 100644
+index 000000000..ff05057f5
+--- /dev/null
++++ b/packages/SystemUI/res/values-sl/advanced_restart_strings.xml
+@@ -0,0 +1,14 @@
++<?xml version="1.0" encoding="utf-8"?>
++<resources>
++    <string name="global_action_restart_more">Vnovičen zagon \u2026</string>
++    <string name="global_action_restart_system">Sistem</string>
++    <string name="global_action_restart_recovery">Obnovitev</string>
++    <string name="global_action_restart_bootloader">Zagonski nalagalnik</string>
++    <string name="global_action_restart_download">Prenos</string>
++    <string name="global_action_restart_fastboot">Namen. zagon. nalagalnik</string>
++    <string name="global_action_restart_progress">Vnovično zaganjanje \u2026</string>
++    <string name="global_action_restart_recovery_progress">Vnovično zaganjanje v obnovitveni način \u2026</string>
++    <string name="global_action_restart_bootloader_progress">Vnovično zaganjanje v način zagonskega nalagalnika \u2026</string>
++    <string name="global_action_restart_download_progress">Vnovično zaganjanje v način prenosa \u2026</string>
++    <string name="global_action_restart_fastboot_progress">Vnovično zaganjanje v način namen. zagon. nalagalnika \u2026</string>
++</resources>
+diff --git a/packages/SystemUI/res/values-sq/advanced_restart_strings.xml b/packages/SystemUI/res/values-sq/advanced_restart_strings.xml
+new file mode 100644
+index 000000000..450bde89a
+--- /dev/null
++++ b/packages/SystemUI/res/values-sq/advanced_restart_strings.xml
+@@ -0,0 +1,14 @@
++<?xml version="1.0" encoding="utf-8"?>
++<resources>
++    <string name="global_action_restart_more">Rinisni\u2026</string>
++    <string name="global_action_restart_system">Sistemi</string>
++    <string name="global_action_restart_recovery">Rikuperimi</string>
++    <string name="global_action_restart_bootloader">Bootloader</string>
++    <string name="global_action_restart_download">Shkarko</string>
++    <string name="global_action_restart_fastboot">Fastboot</string>
++    <string name="global_action_restart_progress">Duke u rindezur\u2026</string>
++    <string name="global_action_restart_recovery_progress">Duke u rindezur në metodën e rikuperimit\u2026</string>
++    <string name="global_action_restart_bootloader_progress">Duke u rindezur në metodën e Bootloader\u2026</string>
++    <string name="global_action_restart_download_progress">Duke u rindezur në metodën e shkarkimit\u2026</string>
++    <string name="global_action_restart_fastboot_progress">Duke u ndezur në modalitetin fastboot\u2026</string>
++</resources>
+diff --git a/packages/SystemUI/res/values-sr/advanced_restart_strings.xml b/packages/SystemUI/res/values-sr/advanced_restart_strings.xml
+new file mode 100644
+index 000000000..6338b57ae
+--- /dev/null
++++ b/packages/SystemUI/res/values-sr/advanced_restart_strings.xml
+@@ -0,0 +1,13 @@
++<?xml version="1.0" encoding="utf-8"?>
++<resources>
++    <string name="global_action_restart_system">Систем</string>
++    <string name="global_action_restart_recovery">Режим опоравка</string>
++    <string name="global_action_restart_bootloader">Покретач система</string>
++    <string name="global_action_restart_download">Преузимање</string>
++    <string name="global_action_restart_fastboot">Fastbootd</string>
++    <string name="global_action_restart_progress">Поново покрећем\u2026</string>
++    <string name="global_action_restart_recovery_progress">Поново покретање у режим за опоравак\u2026</string>
++    <string name="global_action_restart_bootloader_progress">Поновно покретање система\u2026</string>
++    <string name="global_action_restart_download_progress">Поновно покретање у режим преузимања\u2026</string>
++    <string name="global_action_restart_fastboot_progress">Поново покретање у режим fastbootd\u2026</string>
++</resources>
+diff --git a/packages/SystemUI/res/values-su/advanced_restart_strings.xml b/packages/SystemUI/res/values-su/advanced_restart_strings.xml
+new file mode 100644
+index 000000000..18a36beab
+--- /dev/null
++++ b/packages/SystemUI/res/values-su/advanced_restart_strings.xml
+@@ -0,0 +1,5 @@
++<?xml version="1.0" encoding="utf-8"?>
++<resources>
++    <string name="global_action_restart_fastboot">Fastbootd</string>
++    <string name="global_action_restart_fastboot_progress">Ngahurungkeun deui ka mode fastbootd</string>
++</resources>
+diff --git a/packages/SystemUI/res/values-sv/advanced_restart_strings.xml b/packages/SystemUI/res/values-sv/advanced_restart_strings.xml
+new file mode 100644
+index 000000000..ac9d14c4b
+--- /dev/null
++++ b/packages/SystemUI/res/values-sv/advanced_restart_strings.xml
+@@ -0,0 +1,14 @@
++<?xml version="1.0" encoding="utf-8"?>
++<resources>
++    <string name="global_action_restart_more">Starta om\u2026</string>
++    <string name="global_action_restart_system">System</string>
++    <string name="global_action_restart_recovery">Återställning</string>
++    <string name="global_action_restart_bootloader">Bootloader</string>
++    <string name="global_action_restart_download">Nedladdning</string>
++    <string name="global_action_restart_fastboot">Fastbootd</string>
++    <string name="global_action_restart_progress">Startar om\u2026</string>
++    <string name="global_action_restart_recovery_progress">Startar om i återställningsläge\u2026</string>
++    <string name="global_action_restart_bootloader_progress">Startar om i bootloader-läge\u2026</string>
++    <string name="global_action_restart_download_progress">Startar om i nedladdningsläge\u2026</string>
++    <string name="global_action_restart_fastboot_progress">Startar om i fastbootd-läge\u2026</string>
++</resources>
+diff --git a/packages/SystemUI/res/values-ta/advanced_restart_strings.xml b/packages/SystemUI/res/values-ta/advanced_restart_strings.xml
+new file mode 100644
+index 000000000..fa65847aa
+--- /dev/null
++++ b/packages/SystemUI/res/values-ta/advanced_restart_strings.xml
+@@ -0,0 +1,14 @@
++<?xml version="1.0" encoding="utf-8"?>
++<resources>
++    <string name="global_action_restart_more">மறுதொடக்கம்\u2026</string>
++    <string name="global_action_restart_system">முறைமை</string>
++    <string name="global_action_restart_recovery">மீட்டெடுப்பு</string>
++    <string name="global_action_restart_bootloader">தொடக்கவேற்றி</string>
++    <string name="global_action_restart_download">பதிவிறக்கம்</string>
++    <string name="global_action_restart_fastboot">விரைந்தொடக்கம்</string>
++    <string name="global_action_restart_progress">மறுதொடங்குகிறது\u2026</string>
++    <string name="global_action_restart_recovery_progress">மீட்டெடுப்பு முறையில் மறுதொடங்குகிறது\u2026</string>
++    <string name="global_action_restart_bootloader_progress">தொடக்கவேற்றி முறைமைக்கு மறுதொடங்குகிறது\u2026</string>
++    <string name="global_action_restart_download_progress">பதிவிறக்க முறைமைக்கு மறுதொடங்குகிறது\u2026</string>
++    <string name="global_action_restart_fastboot_progress">விரைந்தொடக்க முறைமைக்கு மறுதொடங்குகிறது\u2026</string>
++</resources>
+diff --git a/packages/SystemUI/res/values-th/advanced_restart_strings.xml b/packages/SystemUI/res/values-th/advanced_restart_strings.xml
+new file mode 100644
+index 000000000..9f6223dde
+--- /dev/null
++++ b/packages/SystemUI/res/values-th/advanced_restart_strings.xml
+@@ -0,0 +1,13 @@
++<?xml version="1.0" encoding="utf-8"?>
++<resources>
++    <string name="global_action_restart_more">รีสตาร์ท\u2026</string>
++    <string name="global_action_restart_system">ระบบ</string>
++    <string name="global_action_restart_recovery">กู้คืนระบบ</string>
++    <string name="global_action_restart_bootloader">Bootloader</string>
++    <string name="global_action_restart_download">ดาวน์โหลด</string>
++    <string name="global_action_restart_progress">กำลังเริ่มระบบใหม่\u2026</string>
++    <string name="global_action_restart_recovery_progress">กำลังเริ่มต้นใหม่ในโหมดการกู้คืน\u2026</string>
++    <string name="global_action_restart_bootloader_progress">กำลังเริ่มต้นใหม่ในโหมด bootloader\u2026</string>
++    <string name="global_action_restart_download_progress">กำลังเริ่มต้นใหม่ในโหมด bootloader\u2026</string>
++    <string name="global_action_restart_fastboot_progress">กำลังเริ่มต้นใหม่ในโหมด fastbootd\u2026</string>
++</resources>
+diff --git a/packages/SystemUI/res/values-tr/advanced_restart_strings.xml b/packages/SystemUI/res/values-tr/advanced_restart_strings.xml
+new file mode 100644
+index 000000000..1c1df1e70
+--- /dev/null
++++ b/packages/SystemUI/res/values-tr/advanced_restart_strings.xml
+@@ -0,0 +1,14 @@
++<?xml version="1.0" encoding="utf-8"?>
++<resources>
++    <string name="global_action_restart_more">Yeniden başlat\u2026</string>
++    <string name="global_action_restart_system">Sistem</string>
++    <string name="global_action_restart_recovery">Kurtarma</string>
++    <string name="global_action_restart_bootloader">Ön yükleyici</string>
++    <string name="global_action_restart_download">İndirme</string>
++    <string name="global_action_restart_fastboot">Fastbootd</string>
++    <string name="global_action_restart_progress">Yeniden başlatılıyor\u2026</string>
++    <string name="global_action_restart_recovery_progress">Kurtarma modunda başlatılıyor\u2026</string>
++    <string name="global_action_restart_bootloader_progress">Ön yükleyici modunda başlatılıyor\u2026</string>
++    <string name="global_action_restart_download_progress">İndirme modunda başlatılıyor\u2026</string>
++    <string name="global_action_restart_fastboot_progress">Fastboot moduna yeniden başlatılıyor\u2026</string>
++</resources>
+diff --git a/packages/SystemUI/res/values-tt-rRU/advanced_restart_strings.xml b/packages/SystemUI/res/values-tt-rRU/advanced_restart_strings.xml
+new file mode 100644
+index 000000000..460f8f80d
+--- /dev/null
++++ b/packages/SystemUI/res/values-tt-rRU/advanced_restart_strings.xml
+@@ -0,0 +1,5 @@
++<?xml version="1.0" encoding="utf-8"?>
++<resources>
++    <string name="global_action_restart_system">Система</string>
++    <string name="global_action_restart_fastboot">Fastbootd</string>
++</resources>
+diff --git a/packages/SystemUI/res/values-ug/advanced_restart_strings.xml b/packages/SystemUI/res/values-ug/advanced_restart_strings.xml
+new file mode 100644
+index 000000000..4fc75a920
+--- /dev/null
++++ b/packages/SystemUI/res/values-ug/advanced_restart_strings.xml
+@@ -0,0 +1,14 @@
++<?xml version="1.0" encoding="utf-8"?>
++<resources>
++    <string name="global_action_restart_more">قايتا قوزغات\u2026</string>
++    <string name="global_action_restart_system">سىستېما</string>
++    <string name="global_action_restart_recovery">ئەسلىگە كەلتۈر</string>
++    <string name="global_action_restart_bootloader">قوزغىتىش يۈكلىگۈچ</string>
++    <string name="global_action_restart_download">چۈشۈر</string>
++    <string name="global_action_restart_fastboot">تېز قوزغىتىش</string>
++    <string name="global_action_restart_progress">قايتا قوزغىتىۋاتىدۇ\u2026</string>
++    <string name="global_action_restart_recovery_progress">ئەسلىگە قايتۇرۇش ھالىتىدە قايتا قوزغىتىۋاتىدۇ\u2026</string>
++    <string name="global_action_restart_bootloader_progress">قوزغىتىش يۈكلىگۈچ ھالىتىدە قايتا قوزغىتىۋاتىدۇ\u2026</string>
++    <string name="global_action_restart_download_progress">چۈشۈرۈش ھالىتىدە قايتا قوزغىتىۋاتىدۇ\u2026</string>
++    <string name="global_action_restart_fastboot_progress">تېز قوزغىتىش ھالىتىدە قايتا قوزغىتىۋاتىدۇ\u2026</string>
++</resources>
+diff --git a/packages/SystemUI/res/values-uk/advanced_restart_strings.xml b/packages/SystemUI/res/values-uk/advanced_restart_strings.xml
+new file mode 100644
+index 000000000..ede07ed2a
+--- /dev/null
++++ b/packages/SystemUI/res/values-uk/advanced_restart_strings.xml
+@@ -0,0 +1,14 @@
++<?xml version="1.0" encoding="utf-8"?>
++<resources>
++    <string name="global_action_restart_more">Перезапуск\u2026</string>
++    <string name="global_action_restart_system">Система</string>
++    <string name="global_action_restart_recovery">Відновлення</string>
++    <string name="global_action_restart_bootloader">Завантажувач</string>
++    <string name="global_action_restart_download">Режим оновлення</string>
++    <string name="global_action_restart_fastboot">Fastbootd</string>
++    <string name="global_action_restart_progress">Перезапуск\u2026</string>
++    <string name="global_action_restart_recovery_progress">Перезапуск до режиму відновлення\u2026</string>
++    <string name="global_action_restart_bootloader_progress">Перезапуск до завантажувача\u2026</string>
++    <string name="global_action_restart_download_progress">Перезапуск у режим оновлення\u2026</string>
++    <string name="global_action_restart_fastboot_progress">Перезапуск у режим fastbootd\u2026</string>
++</resources>
+diff --git a/packages/SystemUI/res/values-vi/advanced_restart_strings.xml b/packages/SystemUI/res/values-vi/advanced_restart_strings.xml
+new file mode 100644
+index 000000000..6626137f3
+--- /dev/null
++++ b/packages/SystemUI/res/values-vi/advanced_restart_strings.xml
+@@ -0,0 +1,14 @@
++<?xml version="1.0" encoding="utf-8"?>
++<resources>
++    <string name="global_action_restart_more">Khởi động lại\u2026</string>
++    <string name="global_action_restart_system">Hệ thống</string>
++    <string name="global_action_restart_recovery">Chế độ phục hồi</string>
++    <string name="global_action_restart_bootloader">Trình nạp khởi động</string>
++    <string name="global_action_restart_download">Tải xuống</string>
++    <string name="global_action_restart_fastboot">Fastbootd</string>
++    <string name="global_action_restart_progress">Đang khởi động lại\u2026</string>
++    <string name="global_action_restart_recovery_progress">Đang khởi động lại vào chế độ phục hồi\u2026</string>
++    <string name="global_action_restart_bootloader_progress">Đang khởi động lại vào chế độ trình nạp khởi động\u2026</string>
++    <string name="global_action_restart_download_progress">Đang khởi động lại vào chế độ tải về\u2026</string>
++    <string name="global_action_restart_fastboot_progress">Đang khởi động lại vào chế độ fastboot\u2026</string>
++</resources>
+diff --git a/packages/SystemUI/res/values-zh-rCN/advanced_restart_strings.xml b/packages/SystemUI/res/values-zh-rCN/advanced_restart_strings.xml
+new file mode 100644
+index 000000000..9ca3d9778
+--- /dev/null
++++ b/packages/SystemUI/res/values-zh-rCN/advanced_restart_strings.xml
+@@ -0,0 +1,14 @@
++<?xml version="1.0" encoding="utf-8"?>
++<resources>
++    <string name="global_action_restart_more">重新启动\u2026</string>
++    <string name="global_action_restart_system">系统</string>
++    <string name="global_action_restart_recovery">恢复模式</string>
++    <string name="global_action_restart_bootloader">引导程序</string>
++    <string name="global_action_restart_download">下载</string>
++    <string name="global_action_restart_fastboot">Fastbootd</string>
++    <string name="global_action_restart_progress">正在重启\u2026</string>
++    <string name="global_action_restart_recovery_progress">重新启动到恢复模式\u2026</string>
++    <string name="global_action_restart_bootloader_progress">重新启动到引导模式\u2026</string>
++    <string name="global_action_restart_download_progress">重新启动到下载模式\u2026</string>
++    <string name="global_action_restart_fastboot_progress">正在重启到 fastbootd 模式\u2026</string>
++</resources>
+diff --git a/packages/SystemUI/res/values-zh-rHK/advanced_restart_strings.xml b/packages/SystemUI/res/values-zh-rHK/advanced_restart_strings.xml
+new file mode 100644
+index 000000000..013f999e6
+--- /dev/null
++++ b/packages/SystemUI/res/values-zh-rHK/advanced_restart_strings.xml
+@@ -0,0 +1,5 @@
++<?xml version="1.0" encoding="utf-8"?>
++<resources>
++    <string name="global_action_restart_system">系統</string>
++    <string name="global_action_restart_download">下載</string>
++</resources>
+diff --git a/packages/SystemUI/res/values-zh-rTW/advanced_restart_strings.xml b/packages/SystemUI/res/values-zh-rTW/advanced_restart_strings.xml
+new file mode 100644
+index 000000000..e21a36ead
+--- /dev/null
++++ b/packages/SystemUI/res/values-zh-rTW/advanced_restart_strings.xml
+@@ -0,0 +1,14 @@
++<?xml version="1.0" encoding="utf-8"?>
++<resources>
++    <string name="global_action_restart_more">重新啟動\u2026</string>
++    <string name="global_action_restart_system">系統</string>
++    <string name="global_action_restart_recovery">Recovery</string>
++    <string name="global_action_restart_bootloader">Bootloader</string>
++    <string name="global_action_restart_download">下載</string>
++    <string name="global_action_restart_fastboot">Fastbootd</string>
++    <string name="global_action_restart_progress">重新啟動中\u2026</string>
++    <string name="global_action_restart_recovery_progress">正在重新啟動至 Recovery 模式\u2026</string>
++    <string name="global_action_restart_bootloader_progress">正在重新啟動至 Bootloader 模式\u2026</string>
++    <string name="global_action_restart_download_progress">正在重新啟動至下載模式\u2026</string>
++    <string name="global_action_restart_fastboot_progress">正在重新啟動至 Fastbootd 模式\u2026</string>
++</resources>
+diff --git a/packages/SystemUI/res/values/advanced_restart_config.xml b/packages/SystemUI/res/values/advanced_restart_config.xml
+new file mode 100644
+index 000000000..ae5b4074d
+--- /dev/null
++++ b/packages/SystemUI/res/values/advanced_restart_config.xml
+@@ -0,0 +1,9 @@
++<?xml version="1.0" encoding="utf-8"?>
++<resources>
++    <string-array name="config_restartActionsList">
++        <item>restart</item>
++        <item>restart_recovery</item>
++        <item>restart_bootloader</item>
++        <item>restart_fastboot</item>
++    </string-array>
++</resources>
+diff --git a/packages/SystemUI/res/values/advanced_restart_strings.xml b/packages/SystemUI/res/values/advanced_restart_strings.xml
+new file mode 100644
+index 000000000..f26e61c28
+--- /dev/null
++++ b/packages/SystemUI/res/values/advanced_restart_strings.xml
+@@ -0,0 +1,14 @@
++<?xml version="1.0" encoding="utf-8"?>
++<resources>
++    <string name="global_action_restart_more">Restart\u2026</string>
++    <string name="global_action_restart_system">System</string>
++    <string name="global_action_restart_recovery">Recovery</string>
++    <string name="global_action_restart_bootloader">Bootloader</string>
++    <string name="global_action_restart_download">Download</string>
++    <string name="global_action_restart_fastboot">Fastbootd</string>
++    <string name="global_action_restart_progress">Restarting\u2026</string>
++    <string name="global_action_restart_recovery_progress">Restarting to recovery mode\u2026</string>
++    <string name="global_action_restart_bootloader_progress">Restarting to bootloader mode\u2026</string>
++    <string name="global_action_restart_download_progress">Restarting to download mode\u2026</string>
++    <string name="global_action_restart_fastboot_progress">Restarting to fastbootd mode\u2026</string>
++</resources>
+diff --git a/packages/SystemUI/res/values/dimens.xml b/packages/SystemUI/res/values/dimens.xml
+index 6f388d006..937b1a03c 100644
+--- a/packages/SystemUI/res/values/dimens.xml
++++ b/packages/SystemUI/res/values/dimens.xml
+@@ -1108,9 +1108,9 @@
+     <dimen name="global_actions_controls_y_translation">20dp</dimen>
+ 
+     <!-- Shutdown and restart actions are larger in power options dialog -->
+-    <dimen name="global_actions_power_dialog_item_height">190dp</dimen>
+-    <dimen name="global_actions_power_dialog_item_width">255dp</dimen>
+-    <dimen name="global_actions_power_dialog_item_bottom_margin">45dp</dimen>
++    <dimen name="global_actions_power_dialog_item_height">128dp</dimen>
++    <dimen name="global_actions_power_dialog_item_width">128dp</dimen>
++    <dimen name="global_actions_power_dialog_item_bottom_margin">22dp</dimen>
+ 
+     <!-- Power Menu Lite -->
+     <dimen name="global_actions_button_size">96dp</dimen>
+diff --git a/packages/SystemUI/src/com/android/systemui/globalactions/GlobalActionsComponent.java b/packages/SystemUI/src/com/android/systemui/globalactions/GlobalActionsComponent.java
+index 566e4418e..d8a851523 100644
+--- a/packages/SystemUI/src/com/android/systemui/globalactions/GlobalActionsComponent.java
++++ b/packages/SystemUI/src/com/android/systemui/globalactions/GlobalActionsComponent.java
+@@ -78,8 +78,8 @@ public class GlobalActionsComponent implements CoreStartable, Callbacks, GlobalA
+     }
+ 
+     @Override
+-    public void handleShowShutdownUi(boolean isReboot, String reason) {
+-        mExtension.get().showShutdownUi(isReboot, reason);
++    public void handleShowShutdownUi(boolean isReboot, String reason, boolean rebootCustom) {
++        mExtension.get().showShutdownUi(isReboot, reason, rebootCustom);
+     }
+ 
+     @Override
+@@ -119,9 +119,9 @@ public class GlobalActionsComponent implements CoreStartable, Callbacks, GlobalA
+     }
+ 
+     @Override
+-    public void reboot(boolean safeMode) {
++    public void reboot(boolean safeMode, String reason) {
+         try {
+-            mBarService.reboot(safeMode);
++            mBarService.reboot(safeMode, reason);
+         } catch (RemoteException e) {
+         }
+     }
+diff --git a/packages/SystemUI/src/com/android/systemui/globalactions/GlobalActionsDialogLite.java b/packages/SystemUI/src/com/android/systemui/globalactions/GlobalActionsDialogLite.java
+index dc11e240c..d4d2a458c 100644
+--- a/packages/SystemUI/src/com/android/systemui/globalactions/GlobalActionsDialogLite.java
++++ b/packages/SystemUI/src/com/android/systemui/globalactions/GlobalActionsDialogLite.java
+@@ -36,6 +36,7 @@ import android.animation.ValueAnimator;
+ import android.annotation.Nullable;
+ import android.app.ActivityManager;
+ import android.app.Dialog;
++import android.app.KeyguardManager;
+ import android.app.IActivityManager;
+ import android.app.WallpaperManager;
+ import android.app.trust.TrustManager;
+@@ -73,6 +74,7 @@ import android.telecom.TelecomManager;
+ import android.telephony.ServiceState;
+ import android.telephony.TelephonyCallback;
+ import android.telephony.TelephonyManager;
++import android.util.ArraySet;
+ import android.util.Log;
+ import android.view.ContextThemeWrapper;
+ import android.view.GestureDetector;
+@@ -198,6 +200,12 @@ public class GlobalActionsDialogLite implements DialogInterface.OnDismissListene
+ 
+     private static final boolean SHOW_SILENT_TOGGLE = true;
+ 
++    private static final String RESTART_ACTION_KEY_RESTART = "restart";
++    private static final String RESTART_ACTION_KEY_RESTART_RECOVERY = "restart_recovery";
++    private static final String RESTART_ACTION_KEY_RESTART_BOOTLOADER = "restart_bootloader";
++    private static final String RESTART_ACTION_KEY_RESTART_DOWNLOAD = "restart_download";
++    private static final String RESTART_ACTION_KEY_RESTART_FASTBOOT = "restart_fastboot";
++
+     // See NotificationManagerService#scheduleDurationReachedLocked
+     private static final long TOAST_FADE_TIME = 333;
+     // See NotificationManagerService.LONG_DELAY
+@@ -288,6 +296,8 @@ public class GlobalActionsDialogLite implements DialogInterface.OnDismissListene
+     final ArrayList<Action> mOverflowItems = new ArrayList<>();
+     @VisibleForTesting
+     final ArrayList<Action> mPowerItems = new ArrayList<>();
++    @VisibleForTesting
++    final ArrayList<Action> mRestartItems = new ArrayList<>();
+ 
+     @NonNull
+     private Handler mMainHandler;
+@@ -302,6 +312,7 @@ public class GlobalActionsDialogLite implements DialogInterface.OnDismissListene
+     private MyAdapter mAdapter;
+     private MyOverflowAdapter mOverflowAdapter;
+     private MyPowerOptionsAdapter mPowerAdapter;
++    private MyRestartOptionsAdapter mRestartAdapter;
+ 
+     private boolean mKeyguardShowing = false;
+     private boolean mDeviceProvisioned = false;
+@@ -666,6 +677,25 @@ public class GlobalActionsDialogLite implements DialogInterface.OnDismissListene
+         }
+     }
+ 
++    private static boolean isAdvancedRestartPossible(Context context) {
++        KeyguardManager km = context.getSystemService(KeyguardManager.class);
++        boolean keyguardLocked = km.inKeyguardRestrictedInputMode() && km.isKeyguardSecure();
++        boolean advancedRestartEnabled = Settings.Secure.getInt(context.getContentResolver(),
++                Settings.Secure.ADVANCED_REBOOT, 0) == 1;
++        boolean isPrimaryUser = UserHandle.getCallingUserId() == UserHandle.USER_SYSTEM;
++        return advancedRestartEnabled && !keyguardLocked && isPrimaryUser;
++    }
++
++    private boolean shouldShowRestartSubmenu() {
++        return isAdvancedRestartPossible(mContext);
++    }
++
++    @VisibleForTesting
++    String[] getRestartActions() {
++        return mResources.getStringArray(
++                com.android.systemui.res.R.array.config_restartActionsList);
++    }
++
+     @VisibleForTesting
+     void createActionItems() {
+         // Simple toggle style if there's no vibrator, otherwise use a tri-state
+@@ -681,12 +711,20 @@ public class GlobalActionsDialogLite implements DialogInterface.OnDismissListene
+         mItems.clear();
+         mOverflowItems.clear();
+         mPowerItems.clear();
++        mRestartItems.clear();
+ 
+         List<GlobalActionType> actionTypes = mInteractor.getPossibleGlobalActions();
++        String[] restartActions = getRestartActions();
+ 
+         ShutDownAction shutdownAction = new ShutDownAction();
+         RestartAction restartAction = new RestartAction();
+         var restartSafeModeAction = new RestartSafeModeAction(mContext);
++        RestartSystemAction sysAction = new RestartSystemAction();
++        RestartRecoveryAction recAction = new RestartRecoveryAction();
++        RestartBootloaderAction blAction = new RestartBootloaderAction();
++        RestartDownloadAction dlAction = new RestartDownloadAction();
++        RestartFastbootAction fbAction = new RestartFastbootAction();
++        ArraySet<String> addedRestartKeys = new ArraySet<>();
+         List<Action> tempActions = new ArrayList<>();
+         CurrentUserProvider currentUser = new CurrentUserProvider();
+         final UserInfo currentUserInfo = currentUser.get();
+@@ -698,6 +736,23 @@ public class GlobalActionsDialogLite implements DialogInterface.OnDismissListene
+             handledEmergencyAffordance = true;
+         }
+ 
++        for (String actionKey : restartActions) {
++            if (!addedRestartKeys.add(actionKey)) {
++                continue;
++            }
++            if (RESTART_ACTION_KEY_RESTART.equals(actionKey)) {
++                addIfShouldShowAction(mRestartItems, sysAction);
++            } else if (RESTART_ACTION_KEY_RESTART_RECOVERY.equals(actionKey)) {
++                addIfShouldShowAction(mRestartItems, recAction);
++            } else if (RESTART_ACTION_KEY_RESTART_BOOTLOADER.equals(actionKey)) {
++                addIfShouldShowAction(mRestartItems, blAction);
++            } else if (RESTART_ACTION_KEY_RESTART_DOWNLOAD.equals(actionKey)) {
++                addIfShouldShowAction(mRestartItems, dlAction);
++            } else if (RESTART_ACTION_KEY_RESTART_FASTBOOT.equals(actionKey)) {
++                addIfShouldShowAction(mRestartItems, fbAction);
++            }
++        }
++
+         for (int i = 0; i < actionTypes.size(); i++) {
+             GlobalActionType actionType = actionTypes.get(i);
+             switch (actionType) {
+@@ -809,6 +864,7 @@ public class GlobalActionsDialogLite implements DialogInterface.OnDismissListene
+         mAdapter = new MyAdapter();
+         mOverflowAdapter = new MyOverflowAdapter();
+         mPowerAdapter = new MyPowerOptionsAdapter();
++        mRestartAdapter = new MyRestartOptionsAdapter();
+     }
+ 
+ 
+@@ -849,6 +905,7 @@ public class GlobalActionsDialogLite implements DialogInterface.OnDismissListene
+                 mAdapter,
+                 mOverflowAdapter,
+                 mPowerAdapter,
++                mRestartAdapter,
+                 mStatusBarWindowControllerStore.forDisplay(context.getDisplayId()),
+                 mKeyguardShowing,
+                 this::onRefresh,
+@@ -963,7 +1020,7 @@ public class GlobalActionsDialogLite implements DialogInterface.OnDismissListene
+             mUiEventLogger.log(GlobalActionsEvent.GA_SHUTDOWN_LONG_PRESS);
+             if (!mUserManager.hasUserRestrictionForUser(UserManager.DISALLOW_SAFE_BOOT,
+                     mUserTracker.getUserHandle())) {
+-                mWindowManagerFuncs.reboot(true);
++                mWindowManagerFuncs.reboot(true, null);
+                 return true;
+             }
+             return false;
+@@ -1084,7 +1141,9 @@ public class GlobalActionsDialogLite implements DialogInterface.OnDismissListene
+     final class RestartAction extends SinglePressAction implements LongPressAction {
+         RestartAction() {
+             super(com.android.systemui.res.R.drawable.ic_global_actions_restart,
+-                    R.string.global_action_restart);
++                    shouldShowRestartSubmenu()
++                            ? com.android.systemui.res.R.string.global_action_restart_more
++                            : R.string.global_action_restart);
+         }
+ 
+         @Override
+@@ -1097,7 +1156,7 @@ public class GlobalActionsDialogLite implements DialogInterface.OnDismissListene
+             mUiEventLogger.log(GlobalActionsEvent.GA_REBOOT_LONG_PRESS);
+             if (!mUserManager.hasUserRestrictionForUser(UserManager.DISALLOW_SAFE_BOOT,
+                     mUserTracker.getUserHandle())) {
+-                mWindowManagerFuncs.reboot(true);
++                mWindowManagerFuncs.reboot(true, null);
+                 return true;
+             }
+             return false;
+@@ -1121,10 +1180,67 @@ public class GlobalActionsDialogLite implements DialogInterface.OnDismissListene
+                 return;
+             }
+             mUiEventLogger.log(GlobalActionsEvent.GA_REBOOT_PRESS);
+-            mWindowManagerFuncs.reboot(false);
++            if (mDelegate != null && shouldShowRestartSubmenu()) {
++                mDelegate.showRestartOptionsMenu();
++            } else {
++                mWindowManagerFuncs.reboot(false, null);
++            }
+         }
+     }
+ 
++    private final class RestartSystemAction extends SinglePressAction implements LongPressAction {
++        RestartSystemAction() {
++            super(R.drawable.ic_restart,
++                    com.android.systemui.res.R.string.global_action_restart_system);
++        }
++
++        @Override
++        public boolean onLongPress() {
++            if (!mUserManager.hasUserRestrictionForUser(UserManager.DISALLOW_SAFE_BOOT,
++                    mUserTracker.getUserHandle())) {
++                mWindowManagerFuncs.reboot(true, null);
++                return true;
++            }
++            return false;
++        }
++
++        @Override public boolean showDuringKeyguard() { return true; }
++        @Override public boolean showBeforeProvisioning() { return true; }
++        @Override public void onPress() { mWindowManagerFuncs.reboot(false, null); }
++    }
++
++    private abstract class RestartReasonAction extends SinglePressAction {
++        RestartReasonAction(int icon, int label) { super(icon, label); }
++        @Override public boolean showDuringKeyguard() { return true; }
++        @Override public boolean showBeforeProvisioning() { return true; }
++        abstract String getReason();
++        @Override public void onPress() { mWindowManagerFuncs.reboot(false, getReason()); }
++    }
++
++    private final class RestartRecoveryAction extends RestartReasonAction {
++        RestartRecoveryAction() { super(com.android.systemui.res.R.drawable.ic_lock_restart_recovery,
++                com.android.systemui.res.R.string.global_action_restart_recovery); }
++        @Override String getReason() { return PowerManager.REBOOT_RECOVERY; }
++    }
++
++    private final class RestartBootloaderAction extends RestartReasonAction {
++        RestartBootloaderAction() { super(com.android.systemui.res.R.drawable.ic_lock_restart_bootloader,
++                com.android.systemui.res.R.string.global_action_restart_bootloader); }
++        @Override String getReason() { return PowerManager.REBOOT_BOOTLOADER; }
++    }
++
++    private final class RestartFastbootAction extends RestartReasonAction {
++        RestartFastbootAction() { super(com.android.systemui.res.R.drawable.ic_lock_restart_fastboot,
++                com.android.systemui.res.R.string.global_action_restart_fastboot); }
++        @Override String getReason() { return PowerManager.REBOOT_FASTBOOT; }
++    }
++
++    private final class RestartDownloadAction extends RestartReasonAction {
++        RestartDownloadAction() { super(com.android.systemui.res.R.drawable.ic_lock_restart_bootloader,
++                com.android.systemui.res.R.string.global_action_restart_download); }
++        @Override String getReason() { return PowerManager.REBOOT_DOWNLOAD; }
++    }
++
+     @VisibleForTesting
+     final class RestartSafeModeAction extends SinglePressAction {
+         private final Context mContext;
+@@ -1649,10 +1765,21 @@ public class GlobalActionsDialogLite implements DialogInterface.OnDismissListene
+      * The adapter used for power menu items shown in the global actions dialog.
+      */
+     public class MyAdapter extends MultiListAdapter {
++        private boolean mShowingRestartOptions = false;
++
++        public boolean isShowingRestartOptions() {
++            return mShowingRestartOptions;
++        }
++
++        public void setShowingRestartOptions(boolean show) {
++            mShowingRestartOptions = show;
++        }
++
+         private int countItems(boolean separated) {
+             int count = 0;
+-            for (int i = 0; i < mItems.size(); i++) {
+-                final Action action = mItems.get(i);
++            List<Action> items = mShowingRestartOptions ? mRestartItems : mItems;
++            for (int i = 0; i < items.size(); i++) {
++                final Action action = items.get(i);
+ 
+                 if (action.shouldBeSeparated() == separated) {
+                     count++;
+@@ -1689,8 +1816,9 @@ public class GlobalActionsDialogLite implements DialogInterface.OnDismissListene
+         @Override
+         public Action getItem(int position) {
+             int filteredPos = 0;
+-            for (int i = 0; i < mItems.size(); i++) {
+-                final Action action = mItems.get(i);
++            List<Action> items = mShowingRestartOptions ? mRestartItems : mItems;
++            for (int i = 0; i < items.size(); i++) {
++                final Action action = items.get(i);
+                 if (!shouldShowAction(action)) {
+                     continue;
+                 }
+@@ -1778,7 +1906,8 @@ public class GlobalActionsDialogLite implements DialogInterface.OnDismissListene
+             if (!(item instanceof SilentModeTriStateAction)) {
+                 if (mDelegate != null) {
+                     // don't dismiss the dialog if we're opening the power options menu
+-                    if (!(item instanceof PowerOptionsAction)) {
++                    if (!(item instanceof PowerOptionsAction)
++                            && !(item instanceof RestartAction && shouldShowRestartSubmenu())) {
+                         // Usually clicking an item shuts down the phone, locks, or starts an
+                         // activity. We don't want to animate back into the power button when that
+                         // happens, so we disable the dialog animation before dismissing.
+@@ -1879,6 +2008,18 @@ public class GlobalActionsDialogLite implements DialogInterface.OnDismissListene
+         }
+     }
+ 
++    public class MyRestartOptionsAdapter extends MyPowerOptionsAdapter {
++        @Override
++        public int getCount() {
++            return mRestartItems.size();
++        }
++
++        @Override
++        public Action getItem(int position) {
++            return mRestartItems.get(position);
++        }
++    }
++
+     /**
+      * The adapter used for items in the power options menu, triggered by the PowerOptionsAction.
+      */
+@@ -2112,7 +2253,7 @@ public class GlobalActionsDialogLite implements DialogInterface.OnDismissListene
+                 mIconView.setBackground(mContext.getDrawable(
+                         com.android.systemui.res.R.drawable.global_actions_lite_button_background));
+                 mIconView.setOnClickListener(i -> onClick());
+-                if (mItems.get(0) == this) {
++                if (mAdapter.getItem(0) == this) {
+                     mIconView.requestFocus();
+                 }
+             }
+@@ -2129,7 +2270,8 @@ public class GlobalActionsDialogLite implements DialogInterface.OnDismissListene
+         private void onClick() {
+             if (mDelegate != null) {
+                 // don't dismiss the dialog if we're opening the power options menu
+-                if (!(this instanceof PowerOptionsAction)) {
++                if (!(this instanceof PowerOptionsAction)
++                        && !(this instanceof RestartAction && shouldShowRestartSubmenu())) {
+                     // Usually clicking an item shuts down the phone, locks, or starts an
+                     // activity. We don't want to animate back into the power button when that
+                     // happens, so we disable the dialog animation before dismissing.
+@@ -2582,6 +2724,8 @@ public class GlobalActionsDialogLite implements DialogInterface.OnDismissListene
+         @NonNull
+         private final MyPowerOptionsAdapter mPowerOptionsAdapter;
+         @NonNull
++        private final MyRestartOptionsAdapter mRestartOptionsAdapter;
++        @NonNull
+         private final StatusBarWindowController mStatusBarWindowController;
+         private final boolean mKeyguardShowing;
+         @NonNull
+@@ -2626,13 +2770,12 @@ public class GlobalActionsDialogLite implements DialogInterface.OnDismissListene
+         @Nullable
+         private Dialog mPowerOptionsDialog;
+         @Nullable
++        private Dialog mRestartOptionsDialog;
++        @Nullable
+         private ListPopupWindow mOverflowPopup;
+         private float mInitialWindowDimAmount;
+ 
+-        private final OnBackInvokedCallback mOnBackInvokedCallback = () -> {
+-            logOnBackInvocation();
+-            dismiss();
+-        };
++        private final OnBackInvokedCallback mOnBackInvokedCallback;
+ 
+         @VisibleForTesting
+         final GestureDetector.SimpleOnGestureListener mGestureListener =
+@@ -2688,6 +2831,7 @@ public class GlobalActionsDialogLite implements DialogInterface.OnDismissListene
+                 @Assisted @NonNull MyAdapter adapter,
+                 @Assisted @NonNull MyOverflowAdapter overflowAdapter,
+                 @Assisted @NonNull MyPowerOptionsAdapter powerAdapter,
++                @Assisted @NonNull MyRestartOptionsAdapter restartAdapter,
+                 @Assisted @NonNull StatusBarWindowController statusBarWindowController,
+                 @Assisted boolean keyguardShowing,
+                 @Assisted("onRefreshCallback") @NonNull Runnable onRefreshCallback,
+@@ -2709,6 +2853,7 @@ public class GlobalActionsDialogLite implements DialogInterface.OnDismissListene
+             mAdapter = adapter;
+             mOverflowAdapter = overflowAdapter;
+             mPowerOptionsAdapter = powerAdapter;
++            mRestartOptionsAdapter = restartAdapter;
+             mStatusBarWindowController = statusBarWindowController;
+             mKeyguardShowing = keyguardShowing;
+             mOnRefreshCallback = onRefreshCallback;
+@@ -2727,6 +2872,15 @@ public class GlobalActionsDialogLite implements DialogInterface.OnDismissListene
+             mSystemUIDialogFactory = systemUIDialogFactory;
+             mGestureDetector = new GestureDetector(context, mGestureListener);
+             mDeviceEntryInteractor = deviceEntryInteractor;
++            mOnBackInvokedCallback = () -> {
++                logOnBackInvocation();
++                if (mAdapter.isShowingRestartOptions()) {
++                    mAdapter.setShowingRestartOptions(false);
++                    mGlobalActionsLayout.updateList();
++                } else {
++                    dismiss();
++                }
++            };
+         }
+ 
+         @NonNull
+@@ -2806,6 +2960,11 @@ public class GlobalActionsDialogLite implements DialogInterface.OnDismissListene
+             mPowerOptionsDialog.show();
+         }
+ 
++        public void showRestartOptionsMenu() {
++            mAdapter.setShowingRestartOptions(true);
++            mGlobalActionsLayout.updateList();
++        }
++
+         private void showPowerOverflowMenu(@NonNull SystemUIDialog dialog) {
+             mOverflowPopup = createPowerOverflowPopup(dialog);
+             mOverflowPopup.show();
+@@ -3123,8 +3282,10 @@ public class GlobalActionsDialogLite implements DialogInterface.OnDismissListene
+         }
+ 
+         private void onDismiss() {
++            mAdapter.setShowingRestartOptions(false);
+             dismissOverflow();
+             dismissPowerOptions();
++            dismissRestartOptions();
+             mTopUiController.setRequestTopUi(false, TAG);
+         }
+ 
+@@ -3140,6 +3301,12 @@ public class GlobalActionsDialogLite implements DialogInterface.OnDismissListene
+             }
+         }
+ 
++        private void dismissRestartOptions() {
++            if (mRestartOptionsDialog != null) {
++                mRestartOptionsDialog.dismiss();
++            }
++        }
++
+         @Override
+         public void onColorsChanged(ColorExtractor extractor, int which) {
+             if (mCurrentDialog == null) {
+@@ -3164,6 +3331,7 @@ public class GlobalActionsDialogLite implements DialogInterface.OnDismissListene
+             // Dismiss the dropdown menus.
+             dismissOverflow();
+             dismissPowerOptions();
++            dismissRestartOptions();
+ 
+             // Update the list as the max number of items per row has probably changed.
+             mGlobalActionsLayout.updateList();
+@@ -3182,6 +3350,7 @@ public class GlobalActionsDialogLite implements DialogInterface.OnDismissListene
+                     @NonNull MyAdapter adapter,
+                     @NonNull MyOverflowAdapter overflowAdapter,
+                     @NonNull MyPowerOptionsAdapter powerAdapter,
++                    @NonNull MyRestartOptionsAdapter restartAdapter,
+                     @NonNull StatusBarWindowController statusBarWindowController,
+                     boolean keyguardShowing,
+                     @Assisted("onRefreshCallback") @NonNull Runnable onRefreshCallback,
+diff --git a/packages/SystemUI/src/com/android/systemui/globalactions/GlobalActionsImpl.java b/packages/SystemUI/src/com/android/systemui/globalactions/GlobalActionsImpl.java
+index 1d5cd77e0..3e79acdbd 100644
+--- a/packages/SystemUI/src/com/android/systemui/globalactions/GlobalActionsImpl.java
++++ b/packages/SystemUI/src/com/android/systemui/globalactions/GlobalActionsImpl.java
+@@ -77,8 +77,8 @@ public class GlobalActionsImpl implements GlobalActions, CommandQueue.Callbacks
+     }
+ 
+     @Override
+-    public void showShutdownUi(boolean isReboot, String reason) {
+-        mShutdownUi.showShutdownUi(isReboot, reason);
++    public void showShutdownUi(boolean isReboot, String reason, boolean rebootCustom) {
++        mShutdownUi.showShutdownUi(isReboot, reason, rebootCustom);
+         mShadeController.instantCollapseShade();
+     }
+     @Override
+diff --git a/packages/SystemUI/src/com/android/systemui/globalactions/GlobalActionsPowerDialog.java b/packages/SystemUI/src/com/android/systemui/globalactions/GlobalActionsPowerDialog.java
+index b8bf1428b..6d0b6c68f 100644
+--- a/packages/SystemUI/src/com/android/systemui/globalactions/GlobalActionsPowerDialog.java
++++ b/packages/SystemUI/src/com/android/systemui/globalactions/GlobalActionsPowerDialog.java
+@@ -26,6 +26,8 @@ import android.view.Window;
+ import android.view.WindowManager;
+ import android.widget.ListAdapter;
+ 
++import androidx.constraintlayout.helper.widget.Flow;
++
+ /**
+  * Creates a customized Dialog for displaying the Shut Down and Restart actions.
+  */
+@@ -36,15 +38,30 @@ public class GlobalActionsPowerDialog {
+      */
+     public static Dialog create(@NonNull Context context, ListAdapter adapter) {
+         ViewGroup listView = (ViewGroup) LayoutInflater.from(context).inflate(
+-                com.android.systemui.res.R.layout.global_actions_power_dialog, null);
++                com.android.systemui.res.R.layout.global_actions_power_dialog_flow, null);
++
++        Flow flow = listView.findViewById(com.android.systemui.res.R.id.power_flow);
+ 
+         for (int i = 0; i < adapter.getCount(); i++) {
+             View action = adapter.getView(i, null, listView);
++            action.setId(View.generateViewId());
+             listView.addView(action);
++            flow.addView(action);
+         }
+ 
+         Resources res = context.getResources();
+ 
++        int nElementsWrap = res.getInteger(
++                com.android.systemui.res.R.integer.power_menu_lite_max_columns);
++        int nChildren = listView.getChildCount() - 1; // don't count flow element
++
++        // Avoid having just one action on the last row if there are more than 2 columns because
++        // it looks unbalanced. Instead, bring the column size down to balance better.
++        if (nChildren == nElementsWrap + 1 && nElementsWrap > 2) {
++            nElementsWrap -= 1;
++        }
++        flow.setMaxElementsWrap(nElementsWrap);
++
+         Dialog dialog = new Dialog(context);
+         dialog.requestWindowFeature(Window.FEATURE_NO_TITLE);
+         dialog.setContentView(listView);
+@@ -53,7 +70,8 @@ public class GlobalActionsPowerDialog {
+         window.setType(WindowManager.LayoutParams.TYPE_VOLUME_OVERLAY);
+         window.setTitle(""); // prevent Talkback from speaking first item name twice
+         window.setBackgroundDrawable(res.getDrawable(
+-                com.android.systemui.res.R.drawable.control_background, context.getTheme()));
++                com.android.systemui.res.R.drawable.global_actions_lite_background,
++                context.getTheme()));
+         window.addFlags(WindowManager.LayoutParams.FLAG_ALT_FOCUSABLE_IM);
+ 
+         return dialog;
+diff --git a/packages/SystemUI/src/com/android/systemui/globalactions/ShutdownUi.java b/packages/SystemUI/src/com/android/systemui/globalactions/ShutdownUi.java
+index 49d4d036f..0194c43d0 100644
+--- a/packages/SystemUI/src/com/android/systemui/globalactions/ShutdownUi.java
++++ b/packages/SystemUI/src/com/android/systemui/globalactions/ShutdownUi.java
+@@ -63,7 +63,7 @@ public class ShutdownUi {
+      * @param reason   Cause for the shutdown.
+      * @return Shutdown dialog.
+      */
+-    public Dialog showShutdownUi(boolean isReboot, String reason) {
++    public Dialog showShutdownUi(boolean isReboot, String reason, boolean rebootCustom) {
+         ScrimDrawable background = new ScrimDrawable();
+ 
+         final Dialog d = new Dialog(mContext,
+@@ -118,8 +118,8 @@ public class ShutdownUi {
+         reasonView.setTypeface(typeface);
+         messageView.setTypeface(typeface);
+ 
+-        messageView.setText(getRebootMessage(isReboot, reason));
+-        String rebootReasonMessage = getReasonMessage(reason);
++        messageView.setText(getRebootMessage(isReboot, reason, rebootCustom));
++        String rebootReasonMessage = getReasonMessage(reason, rebootCustom);
+         if (rebootReasonMessage != null) {
+             reasonView.setVisibility(View.VISIBLE);
+             reasonView.setText(rebootReasonMessage);
+@@ -158,13 +158,22 @@ public class ShutdownUi {
+ 
+     @StringRes
+     @VisibleForTesting
+-    int getRebootMessage(boolean isReboot, @Nullable String reason) {
++    int getRebootMessage(boolean isReboot, @Nullable String reason,
++            boolean custom) {
+         if (reason != null && reason.startsWith(PowerManager.REBOOT_RECOVERY_UPDATE)) {
+             return R.string.reboot_to_update_reboot;
++        } else if (reason != null && !custom && reason.equals(PowerManager.REBOOT_RECOVERY)) {
++            return com.android.systemui.res.R.string.global_action_restart_progress;
+         } else if (reason != null && reason.equals(PowerManager.REBOOT_RECOVERY)) {
+-            return R.string.reboot_to_reset_message;
++            return com.android.systemui.res.R.string.global_action_restart_recovery_progress;
++        } else if (reason != null && reason.equals(PowerManager.REBOOT_BOOTLOADER)) {
++            return com.android.systemui.res.R.string.global_action_restart_bootloader_progress;
++        } else if (reason != null && reason.equals(PowerManager.REBOOT_DOWNLOAD)) {
++            return com.android.systemui.res.R.string.global_action_restart_download_progress;
++        } else if (reason != null && reason.equals(PowerManager.REBOOT_FASTBOOT)) {
++            return com.android.systemui.res.R.string.global_action_restart_fastboot_progress;
+         } else if (isReboot) {
+-            return R.string.reboot_to_reset_message;
++            return com.android.systemui.res.R.string.global_action_restart_progress;
+         } else {
+             return R.string.shutdown_progress;
+         }
+@@ -172,10 +181,10 @@ public class ShutdownUi {
+ 
+     @Nullable
+     @VisibleForTesting
+-    String getReasonMessage(@Nullable String reason) {
++    String getReasonMessage(@Nullable String reason, boolean custom) {
+         if (reason != null && reason.startsWith(PowerManager.REBOOT_RECOVERY_UPDATE)) {
+             return mContext.getString(R.string.reboot_to_update_title);
+-        } else if (reason != null && reason.equals(PowerManager.REBOOT_RECOVERY)) {
++        } else if (reason != null && !custom && reason.equals(PowerManager.REBOOT_RECOVERY)) {
+             return mContext.getString(R.string.reboot_to_reset_title);
+         } else {
+             return null;
+diff --git a/packages/SystemUI/src/com/android/systemui/globalactions/domain/interactor/GlobalActionsInteractor.kt b/packages/SystemUI/src/com/android/systemui/globalactions/domain/interactor/GlobalActionsInteractor.kt
+index ec4d9570c..ff9e888f7 100644
+--- a/packages/SystemUI/src/com/android/systemui/globalactions/domain/interactor/GlobalActionsInteractor.kt
++++ b/packages/SystemUI/src/com/android/systemui/globalactions/domain/interactor/GlobalActionsInteractor.kt
+@@ -120,7 +120,7 @@ constructor(
+                 return@withContext false
+             }
+ 
+-            globalActionsManager.reboot(safeMode)
++            globalActionsManager.reboot(safeMode, null)
+             true
+         }
+ 
+diff --git a/packages/SystemUI/src/com/android/systemui/statusbar/CommandQueue.java b/packages/SystemUI/src/com/android/systemui/statusbar/CommandQueue.java
+index ddb3abf43..bc286ef22 100644
+--- a/packages/SystemUI/src/com/android/systemui/statusbar/CommandQueue.java
++++ b/packages/SystemUI/src/com/android/systemui/statusbar/CommandQueue.java
+@@ -386,7 +386,7 @@ public class CommandQueue extends IStatusBar.Stub implements
+         default void showPinningEscapeToast() { }
+         default void handleShowGlobalActionsMenu() { }
+         default void handleShowOrHideGlobalActionsMenu() { }
+-        default void handleShowShutdownUi(boolean isReboot, String reason) { }
++        default void handleShowShutdownUi(boolean isReboot, String reason, boolean rebootCustom) { }
+ 
+         default void showWirelessChargingAnimation(int batteryLevel) {  }
+ 
+@@ -1134,10 +1134,10 @@ public class CommandQueue extends IStatusBar.Stub implements
+     }
+ 
+     @Override
+-    public void showShutdownUi(boolean isReboot, String reason) {
++    public void showShutdownUi(boolean isReboot, String reason, boolean rebootCustom) {
+         synchronized (mLock) {
+             mHandler.removeMessages(MSG_SHOW_SHUTDOWN_UI);
+-            mHandler.obtainMessage(MSG_SHOW_SHUTDOWN_UI, isReboot ? 1 : 0, 0, reason)
++            mHandler.obtainMessage(MSG_SHOW_SHUTDOWN_UI, isReboot ? 1 : 0, rebootCustom ? 1 : 0, reason)
+                     .sendToTarget();
+         }
+     }
+@@ -1840,7 +1840,8 @@ public class CommandQueue extends IStatusBar.Stub implements
+                     break;
+                 case MSG_SHOW_SHUTDOWN_UI:
+                     for (Callbacks callback : mCallbacks) {
+-                        callback.handleShowShutdownUi(msg.arg1 != 0, (String) msg.obj);
++                        callback.handleShowShutdownUi(msg.arg1 != 0, (String) msg.obj,
++                                msg.arg2 != 0);
+                     }
+                     break;
+                 case MSG_SET_TOP_APP_HIDES_STATUS_BAR:
+diff --git a/packages/SystemUI/tests/src/com/android/systemui/globalactions/GlobalActionsImplTest.kt b/packages/SystemUI/tests/src/com/android/systemui/globalactions/GlobalActionsImplTest.kt
+index 071893b55..7177eb4b4 100644
+--- a/packages/SystemUI/tests/src/com/android/systemui/globalactions/GlobalActionsImplTest.kt
++++ b/packages/SystemUI/tests/src/com/android/systemui/globalactions/GlobalActionsImplTest.kt
+@@ -53,14 +53,14 @@ class GlobalActionsImplTest : SysuiTestCase() {
+ 
+     @Test
+     fun testShutdown_collapsesShade() {
+-        underTest.showShutdownUi(false, "test")
++        underTest.showShutdownUi(false, "test", false)
+ 
+         verify(shadeController).instantCollapseShade()
+     }
+ 
+     @Test
+     fun testReboot_collapsesShade() {
+-        underTest.showShutdownUi(true, "test")
++        underTest.showShutdownUi(true, "test", false)
+ 
+         verify(shadeController).instantCollapseShade()
+     }
+diff --git a/packages/SystemUI/tests/utils/src/android/internal/statusbar/FakeStatusBarService.kt b/packages/SystemUI/tests/utils/src/android/internal/statusbar/FakeStatusBarService.kt
+index ed1262482..b09e6dd36 100644
+--- a/packages/SystemUI/tests/utils/src/android/internal/statusbar/FakeStatusBarService.kt
++++ b/packages/SystemUI/tests/utils/src/android/internal/statusbar/FakeStatusBarService.kt
+@@ -338,7 +338,7 @@ class FakeStatusBarService : IStatusBarService.Stub() {
+ 
+     override fun shutdown() {}
+ 
+-    override fun reboot(safeMode: Boolean) {}
++    override fun reboot(safeMode: Boolean, reason: String) {}
+ 
+     override fun restart() {}
+ 
+diff --git a/services/core/java/com/android/server/policy/WindowManagerPolicy.java b/services/core/java/com/android/server/policy/WindowManagerPolicy.java
+index f925ad4a7..a74975109 100644
+--- a/services/core/java/com/android/server/policy/WindowManagerPolicy.java
++++ b/services/core/java/com/android/server/policy/WindowManagerPolicy.java
+@@ -255,6 +255,7 @@ public interface WindowManagerPolicy extends WindowManagerPolicyConstants {
+ 
+         public void shutdown(boolean confirm);
+         public void reboot(boolean confirm);
++        public void reboot(boolean confirm, String reason);
+         public void rebootSafeMode(boolean confirm);
+ 
+         /**
+diff --git a/services/core/java/com/android/server/power/PowerManagerService.java b/services/core/java/com/android/server/power/PowerManagerService.java
+index 505530cc2..af47e412d 100644
+--- a/services/core/java/com/android/server/power/PowerManagerService.java
++++ b/services/core/java/com/android/server/power/PowerManagerService.java
+@@ -4447,7 +4447,7 @@ public final class PowerManagerService extends SystemService
+     }
+ 
+     private void shutdownOrRebootInternal(final @HaltMode int haltMode, final boolean confirm,
+-            @Nullable final String reason, boolean wait) {
++            @Nullable final String reason, boolean wait, boolean custom) {
+         if (PowerManager.REBOOT_USERSPACE.equals(reason)) {
+             if (!PowerManager.isRebootingUserspaceSupportedImpl()) {
+                 throw new UnsupportedOperationException(
+@@ -4473,7 +4473,11 @@ public final class PowerManagerService extends SystemService
+                     if (haltMode == HALT_MODE_REBOOT_SAFE_MODE) {
+                         ShutdownThread.rebootSafeMode(getUiContext(), confirm);
+                     } else if (haltMode == HALT_MODE_REBOOT) {
+-                        ShutdownThread.reboot(getUiContext(), reason, confirm);
++                        if (custom) {
++                            ShutdownThread.rebootCustom(getUiContext(), reason, confirm);
++                        } else {
++                            ShutdownThread.reboot(getUiContext(), reason, confirm);
++                        }
+                     } else {
+                         ShutdownThread.shutdown(getUiContext(), reason, confirm);
+                     }
+@@ -7364,7 +7368,7 @@ public final class PowerManagerService extends SystemService
+             ShutdownCheckPoints.recordCheckPoint(Binder.getCallingPid(), reason);
+             final long ident = Binder.clearCallingIdentity();
+             try {
+-                shutdownOrRebootInternal(HALT_MODE_REBOOT, confirm, reason, wait);
++                shutdownOrRebootInternal(HALT_MODE_REBOOT, confirm, reason, wait, false);
+             } finally {
+                 Binder.restoreCallingIdentity(ident);
+             }
+@@ -7384,7 +7388,29 @@ public final class PowerManagerService extends SystemService
+             ShutdownCheckPoints.recordCheckPoint(Binder.getCallingPid(), reason);
+             final long ident = Binder.clearCallingIdentity();
+             try {
+-                shutdownOrRebootInternal(HALT_MODE_REBOOT_SAFE_MODE, confirm, reason, wait);
++                shutdownOrRebootInternal(HALT_MODE_REBOOT_SAFE_MODE, confirm, reason, wait, false);
++            } finally {
++                Binder.restoreCallingIdentity(ident);
++            }
++        }
++
++        /**
++         * Reboots the device.
++         *
++         * @param confirm If true, shows a reboot confirmation dialog.
++         * @param reason The reason for the reboot, or null if none.
++         * @param wait If true, this call waits for the reboot to complete and does not return.
++         */
++        @Override // Binder call
++        public void rebootCustom(boolean confirm, String reason, boolean wait) {
++            mContext.enforceCallingOrSelfPermission(android.Manifest.permission.REBOOT, null);
++            if (PowerManager.REBOOT_RECOVERY.equals(reason)) {
++                mContext.enforceCallingOrSelfPermission(android.Manifest.permission.RECOVERY, null);
++            }
++
++            final long ident = Binder.clearCallingIdentity();
++            try {
++                shutdownOrRebootInternal(HALT_MODE_REBOOT, confirm, reason, wait, true);
+             } finally {
+                 Binder.restoreCallingIdentity(ident);
+             }
+@@ -7404,7 +7430,7 @@ public final class PowerManagerService extends SystemService
+             ShutdownCheckPoints.recordCheckPoint(Binder.getCallingPid(), reason);
+             final long ident = Binder.clearCallingIdentity();
+             try {
+-                shutdownOrRebootInternal(HALT_MODE_SHUTDOWN, confirm, reason, wait);
++                shutdownOrRebootInternal(HALT_MODE_SHUTDOWN, confirm, reason, wait, false);
+             } finally {
+                 Binder.restoreCallingIdentity(ident);
+             }
+diff --git a/services/core/java/com/android/server/power/ShutdownThread.java b/services/core/java/com/android/server/power/ShutdownThread.java
+index 7e93aa767..b44ae9c1c 100644
+--- a/services/core/java/com/android/server/power/ShutdownThread.java
++++ b/services/core/java/com/android/server/power/ShutdownThread.java
+@@ -97,6 +97,7 @@ public final class ShutdownThread extends Thread {
+     private static boolean sIsStarted = false;
+ 
+     private static boolean mReboot;
++    private static boolean mRebootCustom;
+     private static boolean mRebootSafeMode;
+     private static boolean mRebootHasProgressBar;
+     private static String mReason;
+@@ -163,6 +164,7 @@ public final class ShutdownThread extends Thread {
+      */
+     public static void shutdown(final Context context, String reason, boolean confirm) {
+         mReboot = false;
++        mRebootCustom = false;
+         mRebootSafeMode = false;
+         mReason = reason;
+         shutdownInner(context, confirm);
+@@ -290,6 +292,26 @@ public final class ShutdownThread extends Thread {
+      */
+     public static void reboot(final Context context, String reason, boolean confirm) {
+         mReboot = true;
++        mRebootCustom = false;
++        mRebootSafeMode = false;
++        mRebootHasProgressBar = false;
++        mReason = reason;
++        shutdownInner(context, confirm);
++    }
++
++    /**
++     * Request a clean shutdown, waiting for subsystems to clean up their
++     * state etc.  Must be called from a Looper thread in which its UI
++     * is shown.
++     *
++     * @param context Context used to display the shutdown progress dialog. This must be a context
++     *                suitable for displaying UI (aka Themable).
++     * @param reason code to pass to the kernel (e.g. "recovery", "bootloader"), or null.
++     * @param confirm true if user confirmation is needed before shutting down.
++     */
++    public static void rebootCustom(final Context context, String reason, boolean confirm) {
++        mReboot = true;
++        mRebootCustom = true;
+         mRebootSafeMode = false;
+         mRebootHasProgressBar = false;
+         mReason = reason;
+@@ -311,6 +333,7 @@ public final class ShutdownThread extends Thread {
+         }
+ 
+         mReboot = true;
++        mRebootCustom = false;
+         mRebootSafeMode = true;
+         mRebootHasProgressBar = false;
+         mReason = null;
+@@ -383,7 +406,7 @@ public final class ShutdownThread extends Thread {
+                 pd.setTitle(context.getText(com.android.internal.R.string.power_off));
+                 pd.setMessage(context.getText(com.android.internal.R.string.shutdown_progress));
+                 pd.setIndeterminate(true);
+-            } else if (showSysuiReboot()) {
++            } else if (mRebootCustom && showSysuiReboot()) {
+                 return null;
+             } else {
+                 // Factory reset path. Set the dialog message accordingly.
+@@ -414,7 +437,7 @@ public final class ShutdownThread extends Thread {
+         try {
+             StatusBarManagerInternal service = LocalServices.getService(
+                     StatusBarManagerInternal.class);
+-            if (service.showShutdownUi(mReboot, mReason)) {
++            if (service.showShutdownUi(mReboot, mReason, mRebootCustom)) {
+                 // Sysui will handle shutdown UI.
+                 if (DEBUG) {
+                     Log.d(TAG, "SysUI handling shutdown UI");
+diff --git a/services/core/java/com/android/server/statusbar/StatusBarManagerInternal.java b/services/core/java/com/android/server/statusbar/StatusBarManagerInternal.java
+index a100b2941..55f5f5d01 100644
+--- a/services/core/java/com/android/server/statusbar/StatusBarManagerInternal.java
++++ b/services/core/java/com/android/server/statusbar/StatusBarManagerInternal.java
+@@ -148,7 +148,7 @@ public interface StatusBarManagerInternal {
+      */
+     void setTopAppHidesStatusBar(int displayId, boolean hidesStatusBar);
+ 
+-    boolean showShutdownUi(boolean isReboot, String requestString);
++    boolean showShutdownUi(boolean isReboot, String requestString, boolean rebootCustom);
+ 
+     /**
+      * Notify system UI the immersive prompt should be dismissed as confirmed, and the confirmed
+diff --git a/services/core/java/com/android/server/statusbar/StatusBarManagerService.java b/services/core/java/com/android/server/statusbar/StatusBarManagerService.java
+index 7f4846909..470498910 100644
+--- a/services/core/java/com/android/server/statusbar/StatusBarManagerService.java
++++ b/services/core/java/com/android/server/statusbar/StatusBarManagerService.java
+@@ -630,11 +630,12 @@ public class StatusBarManagerService extends IStatusBarService.Stub implements D
+         }
+ 
+         @Override
+-        public boolean showShutdownUi(boolean isReboot, String reason) {
++        public boolean showShutdownUi(boolean isReboot, String reason, boolean rebootCustom) {
+             if (!mContext.getResources().getBoolean(R.bool.config_showSysuiShutdown)) {
+                 return false;
+             }
+-            return runWithStatusBarIfPresent(bar -> bar.showShutdownUi(isReboot, reason));
++            return runWithStatusBarIfPresent(
++                    bar -> bar.showShutdownUi(isReboot, reason, rebootCustom));
+         }
+ 
+         @Override
+@@ -1671,13 +1672,10 @@ public class StatusBarManagerService extends IStatusBarService.Stub implements D
+      * Allows the status bar to reboot the device.
+      */
+     @Override
+-    public void reboot(boolean safeMode) {
++    public void reboot(boolean safeMode, String reason) {
+         enforceStatusBarService();
+         enforceValidCallingUser();
+ 
+-        String reason = safeMode
+-                ? PowerManager.REBOOT_SAFE_MODE
+-                : PowerManager.SHUTDOWN_USER_REQUESTED;
+         ShutdownCheckPoints.recordCheckPoint(Binder.getCallingPid(), reason);
+         final long identity = Binder.clearCallingIdentity();
+         try {
+@@ -1687,7 +1685,7 @@ public class StatusBarManagerService extends IStatusBarService.Stub implements D
+                 if (safeMode) {
+                     ShutdownThread.rebootSafeMode(getUiContext(), true);
+                 } else {
+-                    ShutdownThread.reboot(getUiContext(), reason, false);
++                    ShutdownThread.rebootCustom(getUiContext(), reason, false);
+                 }
+             });
+         } finally {
+diff --git a/services/core/java/com/android/server/wm/WindowManagerService.java b/services/core/java/com/android/server/wm/WindowManagerService.java
+index ea99d989a..4d121bac4 100644
+--- a/services/core/java/com/android/server/wm/WindowManagerService.java
++++ b/services/core/java/com/android/server/wm/WindowManagerService.java
+@@ -4160,6 +4160,14 @@ public class WindowManagerService extends IWindowManager.Stub
+                 PowerManager.SHUTDOWN_USER_REQUESTED, confirm);
+     }
+ 
++    // Called by window manager policy.  Not exposed externally.
++    @Override
++    public void reboot(boolean confirm, String reason) {
++        // Pass in the UI context, since ShutdownThread requires it (to show UI).
++        ShutdownThread.rebootCustom(ActivityThread.currentActivityThread().getSystemUiContext(),
++                reason, confirm);
++    }
++
+     // Called by window manager policy.  Not exposed externally.
+     @Override
+     public void rebootSafeMode(boolean confirm) {
+-- 
+2.56.0
+
