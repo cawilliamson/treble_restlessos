@@ -1,0 +1,70 @@
+From 0cdcff5f165f4320bf216b4e5343a9bd60c268b9 Mon Sep 17 00:00:00 2001
+From: Langsdorff <131063968+clangsdorff@users.noreply.github.com>
+Date: Wed, 18 Nov 2026 02:18:06 +0300
+Subject: [PATCH 20/20] treble_app: add a mixer audio toggle for imsmedia
+
+add a switch under IMS settings that writes
+persist.sys.phh.ims.aosp_mixer so imsmedia opens its audio player in
+shared mode without low latency on devices whose audio hal breaks mmap
+call streams when switching routes.
+---
+ app/src/main/java/me/phh/treble/app/Ims.kt         | 5 +++++
+ app/src/main/java/me/phh/treble/app/ImsSettings.kt | 1 +
+ app/src/main/res/xml/pref_ims.xml                  | 6 ++++++
+ 3 files changed, 12 insertions(+)
+
+diff --git a/app/src/main/java/me/phh/treble/app/Ims.kt b/app/src/main/java/me/phh/treble/app/Ims.kt
+index 4420c2f..e48c16a 100644
+--- a/app/src/main/java/me/phh/treble/app/Ims.kt
++++ b/app/src/main/java/me/phh/treble/app/Ims.kt
+@@ -60,6 +60,10 @@ object Ims: EntryStartup {
+                 Misc.safeSetprop("persist.dbg.wfc_avail_ovr", value)
+                 Misc.safeSetprop("persist.dbg.allow_ims_off", value)
+             }
++            ImsSettings.imsStackMixer -> {
++                val value = if (sp.getBoolean(key, false)) "true" else "false"
++                Misc.safeSetprop("persist.sys.phh.ims.aosp_mixer", value)
++            }
+         }
+     }
+ 
+@@ -130,6 +134,7 @@ object Ims: EntryStartup {
+ 
+         //Refresh parameters on boot
+         spListener.onSharedPreferenceChanged(sp, ImsSettings.requestNetwork)
++        spListener.onSharedPreferenceChanged(sp, ImsSettings.imsStackMixer)
+     }
+ 
+     // com.android.phone reads config_ims_mmtel_package only at start, so this must run before the next boot
+diff --git a/app/src/main/java/me/phh/treble/app/ImsSettings.kt b/app/src/main/java/me/phh/treble/app/ImsSettings.kt
+index dbb1f21..4b3cc9e 100644
+--- a/app/src/main/java/me/phh/treble/app/ImsSettings.kt
++++ b/app/src/main/java/me/phh/treble/app/ImsSettings.kt
+@@ -34,6 +34,7 @@ object ImsSettings : Settings {
+     val installImsApk = "key_ims_install_apn"
+     val useImsStack = "key_ims_use_imsstack"
+     val imsStackPackage = "com.android.imsstack"
++    val imsStackMixer = "key_ims_use_imsstack_mixer"
+     val flossLangsdorffUrl = "https://github.com/clangsdorff/ims/releases/latest/download/FlossIms.apk"
+ 
+     override fun enabled() = true
+diff --git a/app/src/main/res/xml/pref_ims.xml b/app/src/main/res/xml/pref_ims.xml
+index 8145eb3..b60b53a 100644
+--- a/app/src/main/res/xml/pref_ims.xml
++++ b/app/src/main/res/xml/pref_ims.xml
+@@ -10,6 +10,12 @@
+         android:title="Use the AOSP IMS stack"
+         android:summaryOff="Experimental. Runs VoLTE on the AP like FlossIMS, takes priority over any installed IMS APK"
+         android:summaryOn="Active. If VoLTE stays off after a reboot, set it to Forced available in Settings &gt; Network &amp; internet &gt; SIMs &gt; Carrier settings overrides" />
++    <SwitchPreferenceCompat
++        android:defaultValue="false"
++        android:dependency="key_ims_use_imsstack"
++        android:key="key_ims_use_imsstack_mixer"
++        android:title="Play AOSP IMS call audio through the mixer"
++        android:summary="Fixes silent or broken call audio when switching to speaker on Samsung audio HALs. Takes effect on the next call" />
+     <Preference android:title="Download and install IMS APK"
+         android:key="key_ims_install_apn" />
+     <SwitchPreferenceCompat
+-- 
+2.56.0
+
