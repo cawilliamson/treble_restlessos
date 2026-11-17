@@ -1,7 +1,7 @@
-From 4857e1382f8629d205602504babd93238e5af306 Mon Sep 17 00:00:00 2001
+From 9eced917386353375b1bfdfddb3a81a74d17e051 Mon Sep 17 00:00:00 2001
 From: "Christopher A. Williamson" <contact@chrisaw.io>
 Date: Mon, 1 Jun 2026 23:42:03 +0100
-Subject: [PATCH 1/1] apn: add TRACFONE.VZWENTP for Tracfone Verizon (311480)
+Subject: [PATCH 1/2] apn: add TRACFONE.VZWENTP for Tracfone Verizon (311480)
 
 Some Tracfone Verizon devices require TRACFONE.VZWENTP as the data
 APN instead of VZWINTERNET. This is a well-documented Tracfone
@@ -39,5 +39,5 @@ index b384d0f..7f06186 100644
          mcc="311"
          mnc="680"
 -- 
-2.54.0
+2.56.0
 
