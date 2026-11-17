@@ -1,0 +1,82 @@
+From 7e6d4cf46a1da4511c6708b5a74f0f429e5230bf Mon Sep 17 00:00:00 2001
+From: Langsdorff <131063968+clangsdorff@users.noreply.github.com>
+Date: Sun, 8 Nov 2026 20:56:13 +0300
+Subject: [PATCH 1/1] imsmedia: allow playing call audio through the mixer
+
+the stock samsung audio hal sets up the ap call route on the primary
+output and treats a mmap stream as a media stream, so it unroutes the
+stream when the call switches to the speaker and the earpiece audio
+breaks up.
+
+when persist.sys.phh.ims.aosp_mixer is set, open the player in shared
+mode without low latency so it uses the mixer, and wait up to a second
+for the stream to start.
+---
+ .../audio/android/ImsMediaAudioPlayer.cpp     | 25 ++++++++++++++++---
+ 1 file changed, 21 insertions(+), 4 deletions(-)
+
+diff --git a/service/src/com/android/telephony/imsmedia/lib/libimsmedia/core/audio/android/ImsMediaAudioPlayer.cpp b/service/src/com/android/telephony/imsmedia/lib/libimsmedia/core/audio/android/ImsMediaAudioPlayer.cpp
+index a9539d5..a9b782c 100644
+--- a/service/src/com/android/telephony/imsmedia/lib/libimsmedia/core/audio/android/ImsMediaAudioPlayer.cpp
++++ b/service/src/com/android/telephony/imsmedia/lib/libimsmedia/core/audio/android/ImsMediaAudioPlayer.cpp
+@@ -29,11 +29,23 @@
+ #include <ImsMediaAudioUtil.h>
+ #include <ImsMediaAudioPlayer.h>
+ #include <utils/Errors.h>
++#include <sys/system_properties.h>
+ 
+ #define AAUDIO_STATE_TIMEOUT_NANO (100 * 1000000L)
++#define AAUDIO_START_TIMEOUT_NANO (1000 * 1000000L)
+ #define DEFAULT_SAMPLING_RATE     (8000)
+ #define CODEC_TIMEOUT_NANO        (100000)
+ 
++static bool useMixerAudio()
++{
++    char value[PROP_VALUE_MAX] = "";
++    if (__system_property_get("persist.sys.phh.ims.aosp_mixer", value) > 0)
++    {
++        return strcmp(value, "true") == 0 || strcmp(value, "1") == 0;
++    }
++    return false;
++}
++
+ using namespace android;
+ 
+ ImsMediaAudioPlayer::ImsMediaAudioPlayer()
+@@ -195,7 +207,8 @@ bool ImsMediaAudioPlayer::Start()
+     }
+ 
+     result = AAudioStream_waitForStateChange(
+-            mAudioStream, inputState, &nextState, AAUDIO_STATE_TIMEOUT_NANO);
++            mAudioStream, inputState, &nextState,
++            useMixerAudio() ? AAUDIO_START_TIMEOUT_NANO : AAUDIO_STATE_TIMEOUT_NANO);
+ 
+     if (result != AAUDIO_OK)
+     {
+@@ -434,8 +447,11 @@ void ImsMediaAudioPlayer::openAudioStream()
+     AAudioStreamBuilder_setFormat(builder, AAUDIO_FORMAT_PCM_I16);
+     AAudioStreamBuilder_setChannelCount(builder, 1);
+     AAudioStreamBuilder_setSampleRate(builder, mSamplingRate);
+-    AAudioStreamBuilder_setSharingMode(builder, AAUDIO_SHARING_MODE_EXCLUSIVE);
+-    AAudioStreamBuilder_setPerformanceMode(builder, AAUDIO_PERFORMANCE_MODE_LOW_LATENCY);
++    bool mixer = useMixerAudio();
++    AAudioStreamBuilder_setSharingMode(builder,
++            mixer ? AAUDIO_SHARING_MODE_SHARED : AAUDIO_SHARING_MODE_EXCLUSIVE);
++    AAudioStreamBuilder_setPerformanceMode(builder,
++            mixer ? AAUDIO_PERFORMANCE_MODE_NONE : AAUDIO_PERFORMANCE_MODE_LOW_LATENCY);
+     AAudioStreamBuilder_setUsage(builder, AAUDIO_USAGE_VOICE_COMMUNICATION);
+     AAudioStreamBuilder_setErrorCallback(builder, audioErrorCallback, this);
+ 
+@@ -485,7 +501,8 @@ void ImsMediaAudioPlayer::restartAudioStream()
+     }
+ 
+     result = AAudioStream_waitForStateChange(
+-            mAudioStream, inputState, &nextState, 3 * AAUDIO_STATE_TIMEOUT_NANO);
++            mAudioStream, inputState, &nextState,
++            useMixerAudio() ? AAUDIO_START_TIMEOUT_NANO : (3 * AAUDIO_STATE_TIMEOUT_NANO));
+ 
+     if (result != AAUDIO_OK)
+     {
+-- 
+2.56.0
+
