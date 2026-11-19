@@ -1,0 +1,33 @@
+From 4a76333b368b21c6d2a7bfc6191f0f77352af7b1 Mon Sep 17 00:00:00 2001
+From: Langsdorff <131063968+clangsdorff@users.noreply.github.com>
+Date: Thu, 19 Nov 2026 21:28:22 +0300
+Subject: [PATCH 6/6] sepolicy: restore perf_event in cap2 for huawei 4.14
+ kernels
+
+huawei kirin 4.14 kernels backport CAP_PERF_EVENT (38) and list it as
+perf_event in the selinux capability2 classmap. their 29.0 vendor
+policy grants and neverallows it, but the platform cap2 common only
+knows perfmon, so libsepol drops those rules with "failed to resolve
+permission perf_event" and hwsched loses the capability.
+
+declare perf_event in cap2 so the vendor rules resolve. kernels that
+do not define it ignore the permission.
+---
+ private/access_vectors | 1 +
+ 1 file changed, 1 insertion(+)
+
+diff --git a/private/access_vectors b/private/access_vectors
+index 0ffb7ec..2d14f07 100644
+--- a/private/access_vectors
++++ b/private/access_vectors
+@@ -141,6 +141,7 @@ common cap2
+ 	perfmon
+ 	checkpoint_restore
+ 	bpf
++	perf_event	# CAP_PERF_EVENT (38) on huawei 4.14 kernels
+ }
+ 
+ #
+-- 
+2.56.0
+
