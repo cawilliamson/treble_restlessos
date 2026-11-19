@@ -1,7 +1,7 @@
 From 0825342ae750974ef49068527eaccd56a841ae7f Mon Sep 17 00:00:00 2001
 From: Langsdorff <131063968+clangsdorff@users.noreply.github.com>
 Date: Wed, 21 Oct 2026 18:54:27 +0300
-Subject: [PATCH 4/4] init: keep the first stage in system init for legacy
+Subject: [PATCH 4/5] init: keep the first stage in system init for legacy
  system-as-root devices
 
 ---

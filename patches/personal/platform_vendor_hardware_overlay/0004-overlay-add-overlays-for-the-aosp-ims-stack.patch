@@ -1,7 +1,7 @@
 From d15b39c12900891065c00b22a68f2d74eb64f2ec Mon Sep 17 00:00:00 2001
 From: Langsdorff <131063968+clangsdorff@users.noreply.github.com>
 Date: Thu, 29 Oct 2026 16:41:13 +0300
-Subject: [PATCH 4/4] overlay: add overlays for the aosp ims stack
+Subject: [PATCH 4/5] overlay: add overlays for the aosp ims stack
 
 imsstack needs volte and wfc marked available, the voip audio mode so
 the samsung audio hal does not start a modem voice call over the
