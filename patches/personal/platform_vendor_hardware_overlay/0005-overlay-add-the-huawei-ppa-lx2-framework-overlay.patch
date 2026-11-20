@@ -6,15 +6,23 @@ Subject: [PATCH 5/5] overlay: add the huawei ppa-lx2 framework overlay
 the kirin 710a ppa-lx2 reports ro.hw.oemName as PPAH* and has a
 notch and 35dp status bar that the generic huawei overlays do not
 cover. add a framework overlay with the display cutout, status bar
-height, brightness limits and two physical sim slots.
+height, brightness limits and two physical sim slots, and a
+systemui overlay with the 30dp status bar side padding stock emui
+uses so the clock no longer sits on the screen edge.
 ---
  Huawei/kirin710/PPAH/Android.mk            |  8 ++++++++
  Huawei/kirin710/PPAH/AndroidManifest.xml   | 10 ++++++++++
  Huawei/kirin710/PPAH/res/values/config.xml | 11 +++++++++++
- overlay.mk                                 |  1 +
- 4 files changed, 30 insertions(+)
+ Huawei/kirin710/PPAH-SystemUI/Android.mk          |  8 ++++++++
+ Huawei/kirin710/PPAH-SystemUI/AndroidManifest.xml | 10 ++++++++++
+ Huawei/kirin710/PPAH-SystemUI/res/values/dimens.xml |  5 +++++
+ overlay.mk                                 |  2 ++
+ 7 files changed, 54 insertions(+)
  create mode 100644 Huawei/kirin710/PPAH/Android.mk
  create mode 100644 Huawei/kirin710/PPAH/AndroidManifest.xml
+ create mode 100644 Huawei/kirin710/PPAH-SystemUI/Android.mk
+ create mode 100644 Huawei/kirin710/PPAH-SystemUI/AndroidManifest.xml
+ create mode 100644 Huawei/kirin710/PPAH-SystemUI/res/values/dimens.xml
  create mode 100644 Huawei/kirin710/PPAH/res/values/config.xml
 
 diff --git a/Huawei/kirin710/PPAH/Android.mk b/Huawei/kirin710/PPAH/Android.mk
@@ -65,15 +73,57 @@ index 0000000..8a9a0ac
 +    <integer name="config_screenBrightnessSettingMinimum">4</integer>
 +    <integer name="config_num_physical_slots">2</integer>
 +</resources>
+diff --git a/Huawei/kirin710/PPAH-SystemUI/Android.mk b/Huawei/kirin710/PPAH-SystemUI/Android.mk
+new file mode 100644
+index 0000000..36ee50c
+--- /dev/null
++++ b/Huawei/kirin710/PPAH-SystemUI/Android.mk
+@@ -0,0 +1,8 @@
++LOCAL_PATH := $(call my-dir)
++include $(CLEAR_VARS)
++LOCAL_MODULE_TAGS := optional
++LOCAL_PACKAGE_NAME := treble-overlay-huawei-PPAH-SystemUI
++LOCAL_MODULE_PATH := $(TARGET_OUT_PRODUCT)/overlay
++LOCAL_IS_RUNTIME_RESOURCE_OVERLAY := true
++LOCAL_PRIVATE_PLATFORM_APIS := true
++include $(BUILD_PACKAGE)
+diff --git a/Huawei/kirin710/PPAH-SystemUI/AndroidManifest.xml b/Huawei/kirin710/PPAH-SystemUI/AndroidManifest.xml
+new file mode 100644
+index 0000000..2e25206
+--- /dev/null
++++ b/Huawei/kirin710/PPAH-SystemUI/AndroidManifest.xml
+@@ -0,0 +1,10 @@
++<manifest xmlns:android="http://schemas.android.com/apk/res/android"
++        package="com.langsdorff.overlay.ppah.systemui"
++        android:versionCode="1"
++        android:versionName="1.0">
++        <overlay android:targetPackage="com.android.systemui"
++                android:requiredSystemPropertyName="ro.hw.oemName"
++                android:requiredSystemPropertyValue="+PPAH*"
++                android:priority="33"
++                android:isStatic="true" />
++</manifest>
+diff --git a/Huawei/kirin710/PPAH-SystemUI/res/values/dimens.xml b/Huawei/kirin710/PPAH-SystemUI/res/values/dimens.xml
+new file mode 100644
+index 0000000..236f67d
+--- /dev/null
++++ b/Huawei/kirin710/PPAH-SystemUI/res/values/dimens.xml
+@@ -0,0 +1,5 @@
++<?xml version="1.0" encoding="utf-8"?>
++<resources>
++    <dimen name="status_bar_padding_start">30dp</dimen>
++    <dimen name="status_bar_padding_end">30dp</dimen>
++</resources>
 diff --git a/overlay.mk b/overlay.mk
 index b10ce93..0317163 100644
 --- a/overlay.mk
 +++ b/overlay.mk
-@@ -53,6 +53,7 @@ PRODUCT_PACKAGES += \
+@@ -53,6 +53,8 @@ PRODUCT_PACKAGES += \
  	treble-overlay-huawei-MAR \
  	treble-overlay-huawei-PIC \
  	treble-overlay-huawei-POT \
 +	treble-overlay-huawei-PPAH \
++	treble-overlay-huawei-PPAH-SystemUI \
  	treble-overlay-huawei-PRA \
  	treble-overlay-huawei-RNE \
  	treble-overlay-huawei-SHT \
