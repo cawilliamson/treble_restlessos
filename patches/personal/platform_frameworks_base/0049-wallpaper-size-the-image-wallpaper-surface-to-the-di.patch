@@ -1,0 +1,52 @@
+From ec98fb2dab426776cbf7c2ce9184ed56d51246cc Mon Sep 17 00:00:00 2001
+From: Langsdorff <131063968+clangsdorff@users.noreply.github.com>
+Date: Fri, 20 Nov 2026 03:37:18 +0300
+Subject: [PATCH 49/49] wallpaper: size the image wallpaper surface to the
+ display
+
+the surface was sized to the bitmap, so a wallpaper larger than the
+display reached hwcomposer as a downscaled layer. legacy composers
+that cannot scale such a layer fall back to client composition for
+every frame the wallpaper is visible. scale the surface down to cover
+the display instead, the bitmap is already drawn into the surface
+frame, so it is scaled once in systemui and the layer goes 1:1.
+---
+ .../systemui/wallpapers/ImageWallpaper.java       | 15 +++++++++++++--
+ 1 file changed, 13 insertions(+), 2 deletions(-)
+
+diff --git a/packages/SystemUI/src/com/android/systemui/wallpapers/ImageWallpaper.java b/packages/SystemUI/src/com/android/systemui/wallpapers/ImageWallpaper.java
+index 95f086694..38b838514 100644
+--- a/packages/SystemUI/src/com/android/systemui/wallpapers/ImageWallpaper.java
++++ b/packages/SystemUI/src/com/android/systemui/wallpapers/ImageWallpaper.java
+@@ -38,6 +38,7 @@ import android.service.wallpaper.WallpaperService;
+ import android.util.Log;
+ import android.view.Surface;
+ import android.view.SurfaceHolder;
++import android.view.WindowManager;
+ 
+ import androidx.annotation.NonNull;
+ 
+@@ -192,8 +193,18 @@ public class ImageWallpaper extends WallpaperService {
+             mSurfaceHolder = surfaceHolder;
+             Rect dimensions = mWallpaperManager.peekBitmapDimensionsAsUser(getSourceFlag(), true,
+                     mUserTracker.getUserId());
+-            int width = Math.max(MIN_SURFACE_WIDTH, dimensions.width());
+-            int height = Math.max(MIN_SURFACE_HEIGHT, dimensions.height());
++            int width = dimensions.width();
++            int height = dimensions.height();
++            Rect display = getDisplayContext().getSystemService(WindowManager.class)
++                    .getMaximumWindowMetrics().getBounds();
++            float scale = Math.max((float) display.width() / width,
++                    (float) display.height() / height);
++            if (scale < 1f) {
++                width = Math.round(width * scale);
++                height = Math.round(height * scale);
++            }
++            width = Math.max(MIN_SURFACE_WIDTH, width);
++            height = Math.max(MIN_SURFACE_HEIGHT, height);
+             mSurfaceHolder.setFixedSize(width, height);
+ 
+             getDisplayContext().getSystemService(DisplayManager.class)
+-- 
+2.56.0
+
