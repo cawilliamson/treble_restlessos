@@ -1,7 +1,7 @@
 From 279748afedaae83cd926c39aa46463d5fcc535c9 Mon Sep 17 00:00:00 2001
 From: Langsdorff <131063968+clangsdorff@users.noreply.github.com>
 Date: Fri, 20 Nov 2026 03:29:02 +0300
-Subject: [PATCH 48/48] wallpaper: disable the zoom by default
+Subject: [PATCH 48/49] wallpaper: disable the zoom by default
 
 the launcher and the shade zoom the wallpaper up to 1.10x on app
 transitions and while the shade is open. on legacy hwcomposers that

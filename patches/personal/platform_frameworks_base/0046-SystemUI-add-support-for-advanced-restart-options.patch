@@ -1,7 +1,7 @@
 From 7d72f2d1d627cefeb234afb67bbced861acb5628 Mon Sep 17 00:00:00 2001
 From: Langsdorff <131063968+clangsdorff@users.noreply.github.com>
 Date: Fri, 13 Nov 2026 19:49:24 +0300
-Subject: [PATCH 46/46] SystemUI: add support for advanced restart options
+Subject: [PATCH 46/49] SystemUI: add support for advanced restart options
 
 port lineageos advanced restart submenu to the power menu, gated by
 Settings.Secure.ADVANCED_REBOOT and hidden while keyguard is locked or
