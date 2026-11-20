@@ -112,7 +112,6 @@ index 0000000..236f67d
 +<?xml version="1.0" encoding="utf-8"?>
 +<resources>
 +    <dimen name="status_bar_padding_start">30dp</dimen>
-+    <dimen name="status_bar_padding_end">30dp</dimen>
 +</resources>
 diff --git a/overlay.mk b/overlay.mk
 index b10ce93..0317163 100644
