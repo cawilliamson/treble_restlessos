@@ -1,0 +1,36 @@
+From 737856767b35a3de56bb49a888b3ecf4b55e39f2 Mon Sep 17 00:00:00 2001
+From: Langsdorff <131063968+clangsdorff@users.noreply.github.com>
+Date: Mon, 23 Nov 2026 19:53:39 +0300
+Subject: [PATCH 6/7] init: skip vendor services with unknown seclabel
+
+vendor and odm rc services on gsi (such as xiaomi poweroffm64) can
+specify selinux domains absent from the gsi sepolicy, causing
+setexeccon() to fail with einval and plog(fatal) to abort with a
+tombstone on every boot.
+
+when setexeccon() fails with einval for a service defined under /vendor/
+or /odm/, log an error and exit cleanly instead of aborting.
+---
+ init/service.cpp | 6 ++++++
+ 1 file changed, 6 insertions(+)
+
+diff --git a/init/service.cpp b/init/service.cpp
+index a627e7e..a27a29f 100644
+--- a/init/service.cpp
++++ b/init/service.cpp
+@@ -278,6 +278,12 @@ void Service::SetProcessAttributesAndCaps(InterprocessFifo setsid_finished) {
+ 
+     if (!seclabel_.empty()) {
+         if (setexeccon(seclabel_.c_str()) < 0) {
++            if (errno == EINVAL &&
++                (filename_.starts_with("/vendor/") || filename_.starts_with("/odm/"))) {
++                PLOG(ERROR) << "cannot setexeccon('" << seclabel_ << "') for " << name_
++                            << ", skipping";
++                _exit(127);
++            }
+             PLOG(FATAL) << "cannot setexeccon('" << seclabel_ << "') for " << name_;
+         }
+     }
+-- 
+2.56.0
+
