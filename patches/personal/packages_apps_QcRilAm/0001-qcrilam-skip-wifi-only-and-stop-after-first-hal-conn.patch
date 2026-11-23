@@ -1,0 +1,239 @@
+From afab20855a9e947ee2fab21ce5b3d16826a4ec45 Mon Sep 17 00:00:00 2001
+From: Langsdorff <131063968+clangsdorff@users.noreply.github.com>
+Date: Mon, 23 Nov 2026 19:54:46 +0300
+Subject: [PATCH 1/1] qcrilam: skip wifi-only and stop after first hal connect
+
+bootreceiver started qcrilamservice on non-qualcomm and wi-fi-only
+devices, and addcallbackforsimslot unconditionally probed all three
+audio interfaces (radio.am hidl, qcril.am hidl, and radio.am aidl)
+even after the first succeeded, causing 121 selinux denials on
+qualcomm hidl devices and wasted work on wi-fi-only tablets.
+
+skip starting the service unless telephony is present, ril is not
+disabled, and hardware or egl is qualcomm/adreno. stop immediately
+when simcount <= 0, probe aidl non-blockingly then both hidl
+interfaces without retry, return on first success, and only retry
+radio.am hidl if none of the three is ready yet.
+---
+ src/me/phh/qcrilam/BootReceiver.kt   |  23 ++++-
+ src/me/phh/qcrilam/QcRilAmService.kt | 147 +++++++++++++++------------
+ 2 files changed, 105 insertions(+), 65 deletions(-)
+
+diff --git a/src/me/phh/qcrilam/BootReceiver.kt b/src/me/phh/qcrilam/BootReceiver.kt
+index b91c328..21b1f32 100644
+--- a/src/me/phh/qcrilam/BootReceiver.kt
++++ b/src/me/phh/qcrilam/BootReceiver.kt
+@@ -23,11 +23,32 @@ package me.phh.qcrilam
+ import android.content.BroadcastReceiver
+ import android.content.Context
+ import android.content.Intent
++import android.content.pm.PackageManager
++import android.os.SystemProperties
+ import android.os.UserManager
+ 
+ class BootReceiver : BroadcastReceiver() {
++    private fun shouldStart(context: Context): Boolean {
++        if (!UserManager.get(context).isSystemUser()) return false
++        if (!context.packageManager.hasSystemFeature(PackageManager.FEATURE_TELEPHONY)) return false
++
++        val baseband = SystemProperties.get("ro.boot.baseband", "")
++        if (baseband.equals("apq", ignoreCase = true) || baseband.equals("none", ignoreCase = true)) {
++            return false
++        }
++
++        val noRil = SystemProperties.get("ro.radio.noril", "")
++        if (noRil.equals("yes", ignoreCase = true) || noRil.equals("true", ignoreCase = true) || noRil == "1") {
++            return false
++        }
++
++        val hardware = SystemProperties.get("ro.hardware", "")
++        val egl = SystemProperties.get("ro.hardware.egl", "")
++        return hardware == "qcom" || egl == "adreno"
++    }
++
+     override fun onReceive(context: Context, intent: Intent?) {
+-        if (UserManager.get(context).isSystemUser()){
++        if (shouldStart(context)) {
+             context.startService(Intent(context, QcRilAmService::class.java))
+         }
+     }
+diff --git a/src/me/phh/qcrilam/QcRilAmService.kt b/src/me/phh/qcrilam/QcRilAmService.kt
+index ba9fea4..5e5141b 100644
+--- a/src/me/phh/qcrilam/QcRilAmService.kt
++++ b/src/me/phh/qcrilam/QcRilAmService.kt
+@@ -34,89 +34,108 @@ private const val TAG = "QcRilAm-Service"
+ private var qcRilAudioResponse: vendor.qti.hardware.radio.am.IQcRilAudioResponse? = null
+ 
+ class QcRilAmService : Service() {
+-    private fun addCallbackForSimSlot(simSlotNo: Int, audioManager: AudioManager) {
++    private fun tryRegisterAidl(slotName: String, audioManager: AudioManager): Boolean {
+         try {
+-            val qcRilAudioHidl1 = vendor.qti.hardware.radio.am.V1_0.IQcRilAudio.getService("slot$simSlotNo", true /*retry*/)
+-            if (qcRilAudioHidl1 == null) {
+-                Log.e(TAG, "Could not get HIDL service instance for slot$simSlotNo, failing")
+-            } else {
+-                qcRilAudioHidl1.setCallback(object : vendor.qti.hardware.radio.am.V1_0.IQcRilAudioCallback.Stub() {
+-                    override fun getParameters(keys: String?): String {
+-                        return audioManager.getParameters(keys)
+-                    }
++            val serviceName = "vendor.qti.hardware.radio.am.IQcRilAudio/$slotName"
++            val qcRilAudioAidl = vendor.qti.hardware.radio.am.IQcRilAudio.Stub.asInterface(
++                ServiceManager.checkService(serviceName)
++            ) ?: return false
++            qcRilAudioResponse = qcRilAudioAidl.setRequestInterface(object : vendor.qti.hardware.radio.am.IQcRilAudioRequest.Stub() {
++                override fun getInterfaceVersion() = vendor.qti.hardware.radio.am.IQcRilAudioRequest.VERSION
++
++                override fun getInterfaceHash() = vendor.qti.hardware.radio.am.IQcRilAudioRequest.HASH
+ 
+-                    override fun setParameters(keyValuePairs: String?): Int {
+-                        // AudioManager.setParameters does not check nor return
+-                        // the value coming from AudioSystem.setParameters.
+-                        // Assume there was no error:
+-                        audioManager.setParameters(keyValuePairs)
+-                        return 0
+-                    }
+-                })
+-            }
++                override fun queryParameters(token: Int, params: String) {
++                    qcRilAudioResponse?.queryParametersResponse(token, audioManager.getParameters(params))
++                }
++
++                override fun setParameters(token: Int, params: String) {
++                    // AudioManager.setParameters does not check nor return
++                    // the value coming from AudioSystem.setParameters.
++                    // Assume there was no error:
++                    audioManager.setParameters(params)
++                    qcRilAudioResponse?.setParametersResponse(token, 0)
++                }
++            })
++            return true
+         } catch (e: Exception) {
+-            Log.e(TAG, "RemoteException while trying to add HIDL callback for slot$simSlotNo")
++            Log.e(TAG, "RemoteException while trying to add AIDL callback for $slotName")
++            return false
+         }
++    }
++
++    private fun tryRegisterRadioAmHidl(
++        slotName: String,
++        audioManager: AudioManager,
++        retry: Boolean
++    ): Boolean {
+         try {
+-            val qcRilAudioHidl2 = vendor.qti.qcril.am.V1_0.IQcRilAudio.getService("slot$simSlotNo", true /*retry*/)
+-            if (qcRilAudioHidl2 == null) {
+-                Log.e(TAG, "Could not get HIDL service instance for slot$simSlotNo, failing")
+-            } else {
+-                qcRilAudioHidl2.setCallback(object : vendor.qti.qcril.am.V1_0.IQcRilAudioCallback.Stub() {
+-                    override fun getParameters(keys: String?): String {
+-                        return audioManager.getParameters(keys)
+-                    }
++            val qcRilAudioHidl = vendor.qti.hardware.radio.am.V1_0.IQcRilAudio.getService(slotName, retry)
++                ?: return false
++            qcRilAudioHidl.setCallback(object : vendor.qti.hardware.radio.am.V1_0.IQcRilAudioCallback.Stub() {
++                override fun getParameters(keys: String?): String {
++                    return audioManager.getParameters(keys)
++                }
+ 
+-                    override fun setParameters(keyValuePairs: String?): Int {
+-                        // AudioManager.setParameters does not check nor return
+-                        // the value coming from AudioSystem.setParameters.
+-                        // Assume there was no error:
+-                        audioManager.setParameters(keyValuePairs)
+-                        return 0
+-                    }
+-                })
+-            }
++                override fun setParameters(keyValuePairs: String?): Int {
++                    // AudioManager.setParameters does not check nor return
++                    // the value coming from AudioSystem.setParameters.
++                    // Assume there was no error:
++                    audioManager.setParameters(keyValuePairs)
++                    return 0
++                }
++            })
++            return true
+         } catch (e: Exception) {
+-            Log.e(TAG, "RemoteException while trying to add HIDL callback for slot$simSlotNo")
++            Log.e(TAG, "RemoteException while trying to add HIDL callback for $slotName")
++            return false
+         }
+-        try {
+-            val serviceName = "vendor.qti.hardware.radio.am.IQcRilAudio/slot$simSlotNo"
+-            val qcRilAudioAidl = vendor.qti.hardware.radio.am.IQcRilAudio.Stub.asInterface(ServiceManager.getService(serviceName))
+-            if (qcRilAudioAidl == null) {
+-                Log.e(TAG, "Could not get AIDL service instance for slot$simSlotNo, failing")
+-            } else {
+-                qcRilAudioResponse = qcRilAudioAidl.setRequestInterface(object : vendor.qti.hardware.radio.am.IQcRilAudioRequest.Stub() {
+-                    override fun getInterfaceVersion() = vendor.qti.hardware.radio.am.IQcRilAudioRequest.VERSION
+-
+-                    override fun getInterfaceHash() = vendor.qti.hardware.radio.am.IQcRilAudioRequest.HASH
++    }
+ 
+-                    override fun queryParameters(token: Int, params: String) {
+-                        qcRilAudioResponse?.queryParametersResponse(token, audioManager.getParameters(params))
+-                    }
++    private fun tryRegisterQcrilAmHidl(slotName: String, audioManager: AudioManager): Boolean {
++        try {
++            val qcRilAudioHidl = vendor.qti.qcril.am.V1_0.IQcRilAudio.getService(slotName, false)
++                ?: return false
++            qcRilAudioHidl.setCallback(object : vendor.qti.qcril.am.V1_0.IQcRilAudioCallback.Stub() {
++                override fun getParameters(keys: String?): String {
++                    return audioManager.getParameters(keys)
++                }
+ 
+-                    override fun setParameters(token: Int, params: String) {
+-                        // AudioManager.setParameters does not check nor return
+-                        // the value coming from AudioSystem.setParameters.
+-                        // Assume there was no error:
+-                        audioManager.setParameters(params)
+-                        qcRilAudioResponse?.setParametersResponse(token, 0)
+-                    }
+-                })
+-            }
++                override fun setParameters(keyValuePairs: String?): Int {
++                    // AudioManager.setParameters does not check nor return
++                    // the value coming from AudioSystem.setParameters.
++                    // Assume there was no error:
++                    audioManager.setParameters(keyValuePairs)
++                    return 0
++                }
++            })
++            return true
+         } catch (e: Exception) {
+-            Log.e(TAG, "RemoteException while trying to add AIDL callback for slot$simSlotNo")
++            Log.e(TAG, "RemoteException while trying to add HIDL callback for $slotName")
++            return false
+         }
+     }
+ 
++    private fun addCallbackForSimSlot(simSlotNo: Int, audioManager: AudioManager) {
++        val slotName = "slot$simSlotNo"
++        if (tryRegisterAidl(slotName, audioManager)) return
++        if (tryRegisterRadioAmHidl(slotName, audioManager, false)) return
++        if (tryRegisterQcrilAmHidl(slotName, audioManager)) return
++        if (tryRegisterRadioAmHidl(slotName, audioManager, true)) return
++        Log.e(TAG, "Could not get any IQcRilAudio service instance for $slotName, failing")
++    }
++
+     override fun onBind(intent: Intent?) = null
+ 
+     override fun onCreate() {
+-        val simCount = getSystemService(SubscriptionManager::class.java)?.getActiveSubscriptionInfoCountMax() ?:2
++        val simCount = getSystemService(SubscriptionManager::class.java)?.getActiveSubscriptionInfoCountMax() ?: 0
+         Log.i(TAG, "Device has $simCount sim slots")
+-        val audioManager = getSystemService(AudioManager::class.java)
+-        if (audioManager == null) {
+-            throw RuntimeException("Can't get audiomanager!")
++        if (simCount <= 0) {
++            stopSelf()
++            return
+         }
++        val audioManager = getSystemService(AudioManager::class.java)
++            ?: throw RuntimeException("Can't get audiomanager!")
+         for (simSlotNo in 1..simCount) {
+             addCallbackForSimSlot(simSlotNo, audioManager)
+         }
+-- 
+2.56.0
+
