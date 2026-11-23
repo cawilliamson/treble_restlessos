@@ -1,4 +1,4 @@
-From 7d72f2d1d627cefeb234afb67bbced861acb5628 Mon Sep 17 00:00:00 2001
+From f8ac4636d008e5e25283b32b7ae440de896513f2 Mon Sep 17 00:00:00 2001
 From: Langsdorff <131063968+clangsdorff@users.noreply.github.com>
 Date: Fri, 13 Nov 2026 19:49:24 +0300
 Subject: [PATCH 10/12] SystemUI: add support for advanced restart options
@@ -98,7 +98,7 @@ reboot targets along with localized strings.
  .../res/values/advanced_restart_strings.xml   |  14 ++
  packages/SystemUI/res/values/dimens.xml       |   6 +-
  .../globalactions/GlobalActionsComponent.java |   8 +-
- .../GlobalActionsDialogLite.java              | 199 ++++++++++++++++--
+ .../GlobalActionsDialogLite.java              | 201 ++++++++++++++++--
  .../globalactions/GlobalActionsImpl.java      |   4 +-
  .../GlobalActionsPowerDialog.java             |  22 +-
  .../systemui/globalactions/ShutdownUi.java    |  25 ++-
@@ -112,7 +112,7 @@ reboot targets along with localized strings.
  .../statusbar/StatusBarManagerInternal.java   |   2 +-
  .../statusbar/StatusBarManagerService.java    |  12 +-
  .../server/wm/WindowManagerService.java       |   8 +
- 104 files changed, 1429 insertions(+), 73 deletions(-)
+ 104 files changed, 1430 insertions(+), 74 deletions(-)
  create mode 100644 packages/SystemUI/res/drawable/ic_lock_restart_bootloader.xml
  create mode 100644 packages/SystemUI/res/drawable/ic_lock_restart_fastboot.xml
  create mode 100644 packages/SystemUI/res/drawable/ic_lock_restart_recovery.xml
@@ -262,10 +262,10 @@ index ee3c62eb9..c6d60a2cf 100644
       * Creates a new sleep lock, which is a wake lock that holds a {@link #PARTIAL_SLEEP_WAKE_LOCK}.
       * <p>
 diff --git a/core/java/android/provider/Settings.java b/core/java/android/provider/Settings.java
-index 99595a9d5..03b7ee59a 100644
+index c18ae72cc..8a0131ebd 100644
 --- a/core/java/android/provider/Settings.java
 +++ b/core/java/android/provider/Settings.java
-@@ -12875,6 +12875,14 @@ public final class Settings {
+@@ -12942,6 +12942,14 @@ public final class Settings {
          public static final String POWER_MENU_LOCKED_SHOW_CONTENT =
                  "power_menu_locked_show_content";
  
@@ -307,7 +307,7 @@ index 20d07c5c9..1c9179461 100644
      /** just restarts android without rebooting device. Used for some feature flags. */
      void restart();
 diff --git a/packages/SettingsProvider/src/android/provider/settings/backup/SecureSettings.java b/packages/SettingsProvider/src/android/provider/settings/backup/SecureSettings.java
-index ce19d0797..45aba0d16 100644
+index 5c6a49d98..90f888dc8 100644
 --- a/packages/SettingsProvider/src/android/provider/settings/backup/SecureSettings.java
 +++ b/packages/SettingsProvider/src/android/provider/settings/backup/SecureSettings.java
 @@ -131,6 +131,7 @@ public class SecureSettings {
@@ -319,7 +319,7 @@ index ce19d0797..45aba0d16 100644
          Settings.Secure.DOZE_ALWAYS_ON,
          Settings.Secure.DOZE_ALWAYS_ON_INACTIVITY_DETECTION,
 diff --git a/packages/SettingsProvider/src/android/provider/settings/validators/SecureSettingsValidators.java b/packages/SettingsProvider/src/android/provider/settings/validators/SecureSettingsValidators.java
-index 73dfc3ea6..eba888a4d 100644
+index 19b5fb47b..426f6d273 100644
 --- a/packages/SettingsProvider/src/android/provider/settings/validators/SecureSettingsValidators.java
 +++ b/packages/SettingsProvider/src/android/provider/settings/validators/SecureSettingsValidators.java
 @@ -193,6 +193,7 @@ public class SecureSettingsValidators {
@@ -1998,7 +1998,7 @@ index 566e4418e..d8a851523 100644
          }
      }
 diff --git a/packages/SystemUI/src/com/android/systemui/globalactions/GlobalActionsDialogLite.java b/packages/SystemUI/src/com/android/systemui/globalactions/GlobalActionsDialogLite.java
-index dc11e240c..d4d2a458c 100644
+index dc11e240c..76c13b6c7 100644
 --- a/packages/SystemUI/src/com/android/systemui/globalactions/GlobalActionsDialogLite.java
 +++ b/packages/SystemUI/src/com/android/systemui/globalactions/GlobalActionsDialogLite.java
 @@ -36,6 +36,7 @@ import android.animation.ValueAnimator;
@@ -2232,6 +2232,15 @@ index dc11e240c..d4d2a458c 100644
      @VisibleForTesting
      final class RestartSafeModeAction extends SinglePressAction {
          private final Context mContext;
+@@ -1155,7 +1271,7 @@ public class GlobalActionsDialogLite implements DialogInterface.OnDismissListene
+             if (ActivityManager.isUserAMonkey()) {
+                 return;
+             }
+-            mWindowManagerFuncs.reboot(true);
++            mWindowManagerFuncs.reboot(true, null);
+         }
+     }
+ 
 @@ -1649,10 +1765,21 @@ public class GlobalActionsDialogLite implements DialogInterface.OnDismissListene
       * The adapter used for power menu items shown in the global actions dialog.
       */
@@ -2655,10 +2664,10 @@ index f925ad4a7..a74975109 100644
  
          /**
 diff --git a/services/core/java/com/android/server/power/PowerManagerService.java b/services/core/java/com/android/server/power/PowerManagerService.java
-index 505530cc2..af47e412d 100644
+index 096ee67d1..7fb551a15 100644
 --- a/services/core/java/com/android/server/power/PowerManagerService.java
 +++ b/services/core/java/com/android/server/power/PowerManagerService.java
-@@ -4447,7 +4447,7 @@ public final class PowerManagerService extends SystemService
+@@ -4449,7 +4449,7 @@ public final class PowerManagerService extends SystemService
      }
  
      private void shutdownOrRebootInternal(final @HaltMode int haltMode, final boolean confirm,
@@ -2667,7 +2676,7 @@ index 505530cc2..af47e412d 100644
          if (PowerManager.REBOOT_USERSPACE.equals(reason)) {
              if (!PowerManager.isRebootingUserspaceSupportedImpl()) {
                  throw new UnsupportedOperationException(
-@@ -4473,7 +4473,11 @@ public final class PowerManagerService extends SystemService
+@@ -4475,7 +4475,11 @@ public final class PowerManagerService extends SystemService
                      if (haltMode == HALT_MODE_REBOOT_SAFE_MODE) {
                          ShutdownThread.rebootSafeMode(getUiContext(), confirm);
                      } else if (haltMode == HALT_MODE_REBOOT) {
@@ -2680,7 +2689,7 @@ index 505530cc2..af47e412d 100644
                      } else {
                          ShutdownThread.shutdown(getUiContext(), reason, confirm);
                      }
-@@ -7364,7 +7368,7 @@ public final class PowerManagerService extends SystemService
+@@ -7366,7 +7370,7 @@ public final class PowerManagerService extends SystemService
              ShutdownCheckPoints.recordCheckPoint(Binder.getCallingPid(), reason);
              final long ident = Binder.clearCallingIdentity();
              try {
@@ -2689,7 +2698,7 @@ index 505530cc2..af47e412d 100644
              } finally {
                  Binder.restoreCallingIdentity(ident);
              }
-@@ -7384,7 +7388,29 @@ public final class PowerManagerService extends SystemService
+@@ -7386,7 +7390,29 @@ public final class PowerManagerService extends SystemService
              ShutdownCheckPoints.recordCheckPoint(Binder.getCallingPid(), reason);
              final long ident = Binder.clearCallingIdentity();
              try {
@@ -2720,7 +2729,7 @@ index 505530cc2..af47e412d 100644
              } finally {
                  Binder.restoreCallingIdentity(ident);
              }
-@@ -7404,7 +7430,7 @@ public final class PowerManagerService extends SystemService
+@@ -7406,7 +7432,7 @@ public final class PowerManagerService extends SystemService
              ShutdownCheckPoints.recordCheckPoint(Binder.getCallingPid(), reason);
              final long ident = Binder.clearCallingIdentity();
              try {
@@ -2878,5 +2887,5 @@ index ea99d989a..4d121bac4 100644
      @Override
      public void rebootSafeMode(boolean confirm) {
 -- 
-2.56.0
+2.43.0
 
