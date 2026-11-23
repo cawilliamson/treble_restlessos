@@ -1,0 +1,85 @@
+From ad9b5c35e81f1fc5851d8f52c987a317a1e9ca6b Mon Sep 17 00:00:00 2001
+From: Langsdorff <131063968+clangsdorff@users.noreply.github.com>
+Date: Mon, 23 Nov 2026 19:52:42 +0300
+Subject: [PATCH 58/58] oplus-fp: exit immediately on non-oplus vendors
+
+both fps_hal.oplus.compat and fps_hal.oppo.compat start via late_start
+on every device. on non-oplus hardware they poll tryGetService() ten
+times with 10s sleeps, staying alive for ~100s and triggering
+hal_fingerprint_oppo_compat selinux denials on every boot.
+
+check ro.product.vendor.manufacturer and ro.product.vendor.brand at the
+start of BiometricsFingerprint() and exit(0) unless either matches oppo,
+oneplus, realme, or oplus.
+---
+ hal/oplus-fp/BiometricsFingerprint.cpp | 14 ++++++++++++++
+ hal/oppo-fp/BiometricsFingerprint.cpp  | 14 ++++++++++++++
+ 2 files changed, 28 insertions(+)
+
+diff --git a/hal/oplus-fp/BiometricsFingerprint.cpp b/hal/oplus-fp/BiometricsFingerprint.cpp
+index 5a8aaef..5ff4f0b 100644
+--- a/hal/oplus-fp/BiometricsFingerprint.cpp
++++ b/hal/oplus-fp/BiometricsFingerprint.cpp
+@@ -28,6 +28,8 @@
+ #include <mutex>
+ #include <hidl/HidlBinderSupport.h>
+ #include <hwbinder/Binder.h>
++#include <android-base/properties.h>
++#include <android-base/strings.h>
+ 
+ namespace android {
+ namespace hardware {
+@@ -37,6 +39,18 @@ namespace V2_1 {
+ namespace implementation {
+ 
+ BiometricsFingerprint::BiometricsFingerprint() {
++    const std::string manufacturer = android::base::GetProperty("ro.product.vendor.manufacturer", "");
++    const std::string brand = android::base::GetProperty("ro.product.vendor.brand", "");
++    auto isOplusFamily = [](const std::string& s) {
++        return android::base::EqualsIgnoreCase(s, "oppo") ||
++               android::base::EqualsIgnoreCase(s, "oneplus") ||
++               android::base::EqualsIgnoreCase(s, "realme") ||
++               android::base::EqualsIgnoreCase(s, "oplus");
++    };
++    if (!isOplusFamily(manufacturer) && !isOplusFamily(brand)) {
++        exit(0);
++    }
++
+     for(int i=0; i<10; i++) {
+         mOplusBiometricsFingerprint = vendor::oplus::hardware::biometrics::fingerprint::V2_1::IBiometricsFingerprint::tryGetService();
+         if(mOplusBiometricsFingerprint != nullptr) break;
+diff --git a/hal/oppo-fp/BiometricsFingerprint.cpp b/hal/oppo-fp/BiometricsFingerprint.cpp
+index ab4a376..60719d8 100644
+--- a/hal/oppo-fp/BiometricsFingerprint.cpp
++++ b/hal/oppo-fp/BiometricsFingerprint.cpp
+@@ -24,6 +24,8 @@
+ #include <unistd.h>
+ #include <utils/Log.h>
+ #include <thread>
++#include <android-base/properties.h>
++#include <android-base/strings.h>
+ 
+ namespace android {
+ namespace hardware {
+@@ -33,6 +35,18 @@ namespace V2_1 {
+ namespace implementation {
+ 
+ BiometricsFingerprint::BiometricsFingerprint() {
++    const std::string manufacturer = android::base::GetProperty("ro.product.vendor.manufacturer", "");
++    const std::string brand = android::base::GetProperty("ro.product.vendor.brand", "");
++    auto isOplusFamily = [](const std::string& s) {
++        return android::base::EqualsIgnoreCase(s, "oppo") ||
++               android::base::EqualsIgnoreCase(s, "oneplus") ||
++               android::base::EqualsIgnoreCase(s, "realme") ||
++               android::base::EqualsIgnoreCase(s, "oplus");
++    };
++    if (!isOplusFamily(manufacturer) && !isOplusFamily(brand)) {
++        exit(0);
++    }
++
+     for(int i=0; i<10; i++) {
+         mOppoBiometricsFingerprint = vendor::oppo::hardware::biometrics::fingerprint::V2_1::IBiometricsFingerprint::tryGetService();
+         if(mOppoBiometricsFingerprint != nullptr) break;
+-- 
+2.56.0
+
