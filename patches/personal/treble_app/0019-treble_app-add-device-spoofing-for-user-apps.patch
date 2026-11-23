@@ -1,7 +1,7 @@
 From 21beae756a8b3aa7fcfad9831cdd971d2f6db6b0 Mon Sep 17 00:00:00 2001
 From: Langsdorff <131063968+clangsdorff@users.noreply.github.com>
 Date: Sun, 8 Nov 2026 13:46:24 +0300
-Subject: [PATCH 19/20] treble_app: add device spoofing for user apps
+Subject: [PATCH 19/21] treble_app: add device spoofing for user apps
 
 add a page with a switch and the device values user apps should see.
 each value goes to persist.sys.spoof.<field>, which the framework

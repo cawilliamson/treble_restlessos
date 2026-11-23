@@ -1,7 +1,7 @@
 From af5a6a4efb8b42ca7f7251734886270c6577a936 Mon Sep 17 00:00:00 2001
 From: "Christopher A. Williamson" <contact@chrisaw.io>
 Date: Fri, 2 Oct 2026 15:16:01 +0100
-Subject: [PATCH 9/9] renderengine: detect vendor EGL driver init failures
+Subject: [PATCH 9/12] renderengine: detect vendor EGL driver init failures
 
 the egl wrapper's egl_display_t::initialize returns EGL_TRUE and
 substitutes its own vendor/version strings even when the vendor driver's

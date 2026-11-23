@@ -1,7 +1,7 @@
 From ad8c4c126d83150c79d415a9e0e862cfae4d87e0 Mon Sep 17 00:00:00 2001
 From: Langsdorff <131063968+clangsdorff@users.noreply.github.com>
 Date: Fri, 20 Nov 2026 01:23:19 +0300
-Subject: [PATCH 5/5] init: allow userless vendor services on legacy vendors
+Subject: [PATCH 5/7] init: allow userless vendor services on legacy vendors
 
 init rejects services without a user line, so wpa_supplicant and
 oeminfo_nvm from pre-S vendors are dropped and the device boots

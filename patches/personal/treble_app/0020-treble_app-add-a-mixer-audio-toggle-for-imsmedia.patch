@@ -1,7 +1,7 @@
 From 0cdcff5f165f4320bf216b4e5343a9bd60c268b9 Mon Sep 17 00:00:00 2001
 From: Langsdorff <131063968+clangsdorff@users.noreply.github.com>
 Date: Wed, 18 Nov 2026 02:18:06 +0300
-Subject: [PATCH 20/20] treble_app: add a mixer audio toggle for imsmedia
+Subject: [PATCH 20/21] treble_app: add a mixer audio toggle for imsmedia
 
 add a switch under IMS settings that writes
 persist.sys.phh.ims.aosp_mixer so imsmedia opens its audio player in

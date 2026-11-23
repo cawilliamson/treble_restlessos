@@ -1,7 +1,7 @@
 From 2018577b47a2ed3d19f76af3d326c3487e062552 Mon Sep 17 00:00:00 2001
 From: "Christopher A. Williamson" <contact@chrisaw.io>
 Date: Fri, 9 Oct 2026 22:24:59 +0100
-Subject: [PATCH 2/5] init, libprocessgroup: tolerate legacy vendor kernels
+Subject: [PATCH 2/7] init, libprocessgroup: tolerate legacy vendor kernels
 
 libprocessgroup and init carry several assumptions that break on
 legacy vendor kernels: cgroup v2-only controllers, memcg layout

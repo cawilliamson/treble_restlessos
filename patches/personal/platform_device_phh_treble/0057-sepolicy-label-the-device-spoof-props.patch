@@ -1,7 +1,7 @@
 From 5be1bf7af342785989a3fd9334e0ce2b990d80ff Mon Sep 17 00:00:00 2001
 From: Langsdorff <131063968+clangsdorff@users.noreply.github.com>
 Date: Sun, 8 Nov 2026 13:45:52 +0300
-Subject: [PATCH 57/57] sepolicy: label the device spoof props
+Subject: [PATCH 57/58] sepolicy: label the device spoof props
 
 label persist.sys.spoof. so the treble app can set the spoofed device
 values and user apps can read them when they start.

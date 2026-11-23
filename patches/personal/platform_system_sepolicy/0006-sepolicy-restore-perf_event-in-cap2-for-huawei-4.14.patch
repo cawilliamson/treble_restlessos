@@ -1,7 +1,7 @@
 From 4a76333b368b21c6d2a7bfc6191f0f77352af7b1 Mon Sep 17 00:00:00 2001
 From: Langsdorff <131063968+clangsdorff@users.noreply.github.com>
 Date: Thu, 19 Nov 2026 21:28:22 +0300
-Subject: [PATCH 6/6] sepolicy: restore perf_event in cap2 for huawei 4.14
+Subject: [PATCH 6/7] sepolicy: restore perf_event in cap2 for huawei 4.14
  kernels
 
 huawei kirin 4.14 kernels backport CAP_PERF_EVENT (38) and list it as

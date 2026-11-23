@@ -1,7 +1,7 @@
 From 2ea8be10ba05260e4f86f9d3ad8dc822d501fca5 Mon Sep 17 00:00:00 2001
 From: "Christopher A. Williamson" <contact@chrisaw.io>
 Date: Tue, 29 Sep 2026 14:05:29 +0100
-Subject: [PATCH 7/9] grant rpc servicemanager aidl visibility to the gsi stubs
+Subject: [PATCH 7/12] grant rpc servicemanager aidl visibility to the gsi stubs
 
 the vendored virtualmachineservice aidl interface under the phh treble
 gsi stubs imports the rpc servicemanager aidl interface, which is

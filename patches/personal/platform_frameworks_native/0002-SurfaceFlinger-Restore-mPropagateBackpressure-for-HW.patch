@@ -1,7 +1,7 @@
 From 6e937de5048c10527aed78f1e035ed4d9276fdae Mon Sep 17 00:00:00 2001
 From: "Christopher A. Williamson" <contact@chrisaw.io>
 Date: Thu, 19 Mar 2026 16:56:39 +0000
-Subject: [PATCH 2/9] SurfaceFlinger: Restore mPropagateBackpressure for HWC backpressure control
+Subject: [PATCH 2/12] SurfaceFlinger: Restore mPropagateBackpressure for HWC backpressure control
 
 Restore the mPropagateBackpressure member variable that existed in
 AOSP until Android 11, adapted for the modern FrameTargeter-based

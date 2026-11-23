@@ -1,7 +1,7 @@
 From 068d1dff625e8cbeac38817a983b7029ef7b9f5c Mon Sep 17 00:00:00 2001
 From: "Christopher A. Williamson" <contact@chrisaw.io>
 Date: Fri, 2 Oct 2026 09:44:29 +0100
-Subject: [PATCH 8/9] renderengine: don't abort on buffers without gpu usage flags
+Subject: [PATCH 8/12] renderengine: don't abort on buffers without gpu usage flags
 
 on gsi builds the vendor gralloc can hand back buffers lacking
 GPU_FRAMEBUFFER usage -- e.g. mtk devices where the /dev/ion open is

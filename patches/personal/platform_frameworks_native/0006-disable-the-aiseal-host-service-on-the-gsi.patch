@@ -1,7 +1,7 @@
 From 24be342a6d06baa8660ef0f531a28d6997f5e6e2 Mon Sep 17 00:00:00 2001
 From: "Christopher A. Williamson" <contact@chrisaw.io>
 Date: Tue, 29 Sep 2026 12:44:19 +0100
-Subject: [PATCH 6/9] disable the aiseal host service on the gsi
+Subject: [PATCH 6/12] disable the aiseal host service on the gsi
 
 the aiseal host service is a virtualization-backed isolated storage
 client: it links against the virtualization aidl interfaces and client
