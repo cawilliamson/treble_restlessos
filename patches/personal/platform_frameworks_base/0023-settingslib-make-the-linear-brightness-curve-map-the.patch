@@ -1,0 +1,38 @@
+From 3ab477eda7f1a93e9cb223fc962ad3e1f65178d1 Mon Sep 17 00:00:00 2001
+From: Langsdorff <131063968+clangsdorff@users.noreply.github.com>
+Date: Fri, 2 Oct 2026 21:17:01 +0300
+Subject: [PATCH 23/38] settingslib: make the linear brightness curve map the
+ slider position both ways
+
+---
+ .../com/android/settingslib/display/BrightnessUtils.java   | 7 +++++--
+ 1 file changed, 5 insertions(+), 2 deletions(-)
+
+diff --git a/packages/SettingsLib/DisplayUtils/src/com/android/settingslib/display/BrightnessUtils.java b/packages/SettingsLib/DisplayUtils/src/com/android/settingslib/display/BrightnessUtils.java
+index 3b098218e..fb78bf6e6 100644
+--- a/packages/SettingsLib/DisplayUtils/src/com/android/settingslib/display/BrightnessUtils.java
++++ b/packages/SettingsLib/DisplayUtils/src/com/android/settingslib/display/BrightnessUtils.java
+@@ -82,8 +82,7 @@ public class BrightnessUtils {
+      */
+     public static final float convertGammaToLinearFloat(int val, float min, float max) {
+         if (SystemProperties.getBoolean("persist.sys.phh.linear_brightness", false)) {
+-            android.util.Log.e("PHH", "Linear brightness val " + val + " from " + min + " to " + max + " makes " + (val / 65536.0f));
+-            return val / 65536.0f;
++            return MathUtils.lerp(min, max, MathUtils.norm(GAMMA_SPACE_MIN, GAMMA_SPACE_MAX, val));
+         }
+         final float normalizedVal = MathUtils.norm(GAMMA_SPACE_MIN, GAMMA_SPACE_MAX, val);
+         final float ret;
+@@ -136,6 +135,10 @@ public class BrightnessUtils {
+      * @return The corresponding slider value
+      */
+     public static final int convertLinearToGammaFloat(float val, float min, float max) {
++        if (SystemProperties.getBoolean("persist.sys.phh.linear_brightness", false)) {
++            return Math.round(MathUtils.lerp(GAMMA_SPACE_MIN, GAMMA_SPACE_MAX,
++                    MathUtils.constrain(MathUtils.norm(min, max, val), 0f, 1f)));
++        }
+         // For some reason, HLG normalizes to the range [0, 12] rather than [0, 1]
+         final float normalizedVal = MathUtils.norm(min, max, val) * 12;
+         final float ret;
+-- 
+2.56.0
+

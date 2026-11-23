@@ -1,0 +1,25 @@
+From 23a8790e803f614e38185c850f54c64e2b4ce1ce Mon Sep 17 00:00:00 2001
+From: Langsdorff <131063968+clangsdorff@users.noreply.github.com>
+Date: Tue, 27 Oct 2026 19:22:20 +0300
+Subject: [PATCH 3/6] overlay: enable the camera and microphone privacy
+ toggles
+
+---
+ overlay/frameworks/base/core/res/res/values/config.xml | 3 +++
+ 1 file changed, 3 insertions(+)
+
+diff --git a/overlay/frameworks/base/core/res/res/values/config.xml b/overlay/frameworks/base/core/res/res/values/config.xml
+index 2a1cd61..d314db3 100644
+--- a/overlay/frameworks/base/core/res/res/values/config.xml
++++ b/overlay/frameworks/base/core/res/res/values/config.xml
+@@ -62,4 +62,7 @@
+   <string name="config_defaultAttentionService" translatable="false">com.restlessos.attention/.FaceAttentionService</string>
+   <!-- role holders are exempt from the camera privacy indicator -->
+   <string name="config_systemVisualIntelligence" translatable="false">com.restlessos.attention</string>
++
++  <bool name="config_supportsMicToggle">true</bool>
++  <bool name="config_supportsCamToggle">true</bool>
+ </resources>
+-- 
+2.56.0
+

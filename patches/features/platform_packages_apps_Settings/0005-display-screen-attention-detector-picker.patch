@@ -1,0 +1,1392 @@
+From fff473b7f77d377f170d6e2639f7e601af936fec Mon Sep 17 00:00:00 2001
+From: Langsdorff <131063968+clangsdorff@users.noreply.github.com>
+Date: Fri, 23 Oct 2026 17:42:56 +0300
+Subject: [PATCH 5/9] display: let the user pick the screen attention face
+ detector
+
+---
+ .../adaptive_sleep_detector_strings.xml       |  7 +++
+ .../adaptive_sleep_detector_strings.xml       |  7 +++
+ .../adaptive_sleep_detector_strings.xml       |  7 +++
+ .../adaptive_sleep_detector_strings.xml       |  7 +++
+ .../adaptive_sleep_detector_strings.xml       |  7 +++
+ .../adaptive_sleep_detector_strings.xml       |  7 +++
+ .../adaptive_sleep_detector_strings.xml       |  7 +++
+ .../adaptive_sleep_detector_strings.xml       |  7 +++
+ .../adaptive_sleep_detector_strings.xml       |  7 +++
+ .../adaptive_sleep_detector_strings.xml       |  7 +++
+ .../adaptive_sleep_detector_strings.xml       |  7 +++
+ .../adaptive_sleep_detector_strings.xml       |  7 +++
+ .../adaptive_sleep_detector_strings.xml       |  7 +++
+ .../adaptive_sleep_detector_strings.xml       |  7 +++
+ .../adaptive_sleep_detector_strings.xml       |  7 +++
+ .../adaptive_sleep_detector_strings.xml       |  7 +++
+ .../adaptive_sleep_detector_strings.xml       |  7 +++
+ .../adaptive_sleep_detector_strings.xml       |  7 +++
+ .../adaptive_sleep_detector_strings.xml       |  7 +++
+ .../adaptive_sleep_detector_strings.xml       |  7 +++
+ .../adaptive_sleep_detector_strings.xml       |  7 +++
+ .../adaptive_sleep_detector_strings.xml       |  7 +++
+ .../adaptive_sleep_detector_strings.xml       |  7 +++
+ .../adaptive_sleep_detector_strings.xml       |  7 +++
+ .../adaptive_sleep_detector_strings.xml       |  7 +++
+ .../adaptive_sleep_detector_strings.xml       |  7 +++
+ .../adaptive_sleep_detector_strings.xml       |  7 +++
+ .../adaptive_sleep_detector_strings.xml       |  7 +++
+ .../adaptive_sleep_detector_strings.xml       |  7 +++
+ .../adaptive_sleep_detector_strings.xml       |  7 +++
+ .../adaptive_sleep_detector_strings.xml       |  7 +++
+ .../adaptive_sleep_detector_strings.xml       |  7 +++
+ .../adaptive_sleep_detector_strings.xml       |  7 +++
+ .../adaptive_sleep_detector_strings.xml       |  7 +++
+ .../adaptive_sleep_detector_strings.xml       |  7 +++
+ .../adaptive_sleep_detector_strings.xml       |  7 +++
+ .../adaptive_sleep_detector_strings.xml       |  7 +++
+ .../adaptive_sleep_detector_strings.xml       |  7 +++
+ .../adaptive_sleep_detector_strings.xml       |  7 +++
+ .../adaptive_sleep_detector_strings.xml       |  7 +++
+ .../adaptive_sleep_detector_strings.xml       |  7 +++
+ .../adaptive_sleep_detector_strings.xml       |  7 +++
+ .../adaptive_sleep_detector_strings.xml       |  7 +++
+ .../adaptive_sleep_detector_strings.xml       |  7 +++
+ .../adaptive_sleep_detector_strings.xml       |  7 +++
+ .../adaptive_sleep_detector_strings.xml       |  7 +++
+ .../adaptive_sleep_detector_strings.xml       |  7 +++
+ .../adaptive_sleep_detector_strings.xml       |  7 +++
+ .../adaptive_sleep_detector_strings.xml       |  7 +++
+ .../adaptive_sleep_detector_strings.xml       |  7 +++
+ .../adaptive_sleep_detector_strings.xml       |  7 +++
+ .../adaptive_sleep_detector_strings.xml       |  7 +++
+ .../adaptive_sleep_detector_strings.xml       |  7 +++
+ .../adaptive_sleep_detector_strings.xml       |  7 +++
+ .../adaptive_sleep_detector_strings.xml       |  7 +++
+ .../adaptive_sleep_detector_strings.xml       |  7 +++
+ .../adaptive_sleep_detector_strings.xml       |  7 +++
+ .../adaptive_sleep_detector_strings.xml       |  7 +++
+ .../adaptive_sleep_detector_strings.xml       |  7 +++
+ .../adaptive_sleep_detector_strings.xml       |  7 +++
+ .../adaptive_sleep_detector_strings.xml       |  7 +++
+ .../adaptive_sleep_detector_strings.xml       |  7 +++
+ .../adaptive_sleep_detector_strings.xml       |  7 +++
+ .../adaptive_sleep_detector_strings.xml       |  7 +++
+ .../adaptive_sleep_detector_strings.xml       |  7 +++
+ .../adaptive_sleep_detector_strings.xml       |  7 +++
+ .../adaptive_sleep_detector_strings.xml       |  7 +++
+ .../adaptive_sleep_detector_strings.xml       |  7 +++
+ .../adaptive_sleep_detector_strings.xml       |  7 +++
+ .../adaptive_sleep_detector_strings.xml       |  7 +++
+ .../adaptive_sleep_detector_strings.xml       |  7 +++
+ .../adaptive_sleep_detector_strings.xml       |  7 +++
+ .../adaptive_sleep_detector_strings.xml       |  7 +++
+ .../adaptive_sleep_detector_strings.xml       |  7 +++
+ .../adaptive_sleep_detector_strings.xml       |  7 +++
+ .../adaptive_sleep_detector_strings.xml       |  7 +++
+ .../adaptive_sleep_detector_strings.xml       |  7 +++
+ .../adaptive_sleep_detector_strings.xml       |  7 +++
+ .../adaptive_sleep_detector_strings.xml       |  7 +++
+ .../adaptive_sleep_detector_strings.xml       |  7 +++
+ .../adaptive_sleep_detector_strings.xml       |  7 +++
+ .../adaptive_sleep_detector_strings.xml       |  7 +++
+ .../adaptive_sleep_detector_strings.xml       |  7 +++
+ .../adaptive_sleep_detector_strings.xml       |  7 +++
+ .../adaptive_sleep_detector_strings.xml       |  7 +++
+ ...tiveSleepDetectorPreferenceController.java | 54 +++++++++++++++++++
+ .../display/ScreenTimeoutSettings.java        |  8 ++-
+ 87 files changed, 655 insertions(+), 2 deletions(-)
+ create mode 100644 res/values-af/adaptive_sleep_detector_strings.xml
+ create mode 100644 res/values-am/adaptive_sleep_detector_strings.xml
+ create mode 100644 res/values-ar/adaptive_sleep_detector_strings.xml
+ create mode 100644 res/values-as/adaptive_sleep_detector_strings.xml
+ create mode 100644 res/values-az/adaptive_sleep_detector_strings.xml
+ create mode 100644 res/values-b+sr+Latn/adaptive_sleep_detector_strings.xml
+ create mode 100644 res/values-be/adaptive_sleep_detector_strings.xml
+ create mode 100644 res/values-bg/adaptive_sleep_detector_strings.xml
+ create mode 100644 res/values-bn/adaptive_sleep_detector_strings.xml
+ create mode 100644 res/values-bs/adaptive_sleep_detector_strings.xml
+ create mode 100644 res/values-ca/adaptive_sleep_detector_strings.xml
+ create mode 100644 res/values-cs/adaptive_sleep_detector_strings.xml
+ create mode 100644 res/values-da/adaptive_sleep_detector_strings.xml
+ create mode 100644 res/values-de/adaptive_sleep_detector_strings.xml
+ create mode 100644 res/values-el/adaptive_sleep_detector_strings.xml
+ create mode 100644 res/values-en-rAU/adaptive_sleep_detector_strings.xml
+ create mode 100644 res/values-en-rCA/adaptive_sleep_detector_strings.xml
+ create mode 100644 res/values-en-rGB/adaptive_sleep_detector_strings.xml
+ create mode 100644 res/values-en-rIN/adaptive_sleep_detector_strings.xml
+ create mode 100644 res/values-es-rUS/adaptive_sleep_detector_strings.xml
+ create mode 100644 res/values-es/adaptive_sleep_detector_strings.xml
+ create mode 100644 res/values-et/adaptive_sleep_detector_strings.xml
+ create mode 100644 res/values-eu/adaptive_sleep_detector_strings.xml
+ create mode 100644 res/values-fa/adaptive_sleep_detector_strings.xml
+ create mode 100644 res/values-fi/adaptive_sleep_detector_strings.xml
+ create mode 100644 res/values-fr-rCA/adaptive_sleep_detector_strings.xml
+ create mode 100644 res/values-fr/adaptive_sleep_detector_strings.xml
+ create mode 100644 res/values-gl/adaptive_sleep_detector_strings.xml
+ create mode 100644 res/values-gu/adaptive_sleep_detector_strings.xml
+ create mode 100644 res/values-hi/adaptive_sleep_detector_strings.xml
+ create mode 100644 res/values-hr/adaptive_sleep_detector_strings.xml
+ create mode 100644 res/values-hu/adaptive_sleep_detector_strings.xml
+ create mode 100644 res/values-hy/adaptive_sleep_detector_strings.xml
+ create mode 100644 res/values-in/adaptive_sleep_detector_strings.xml
+ create mode 100644 res/values-is/adaptive_sleep_detector_strings.xml
+ create mode 100644 res/values-it/adaptive_sleep_detector_strings.xml
+ create mode 100644 res/values-iw/adaptive_sleep_detector_strings.xml
+ create mode 100644 res/values-ja/adaptive_sleep_detector_strings.xml
+ create mode 100644 res/values-ka/adaptive_sleep_detector_strings.xml
+ create mode 100644 res/values-kk/adaptive_sleep_detector_strings.xml
+ create mode 100644 res/values-km/adaptive_sleep_detector_strings.xml
+ create mode 100644 res/values-kn/adaptive_sleep_detector_strings.xml
+ create mode 100644 res/values-ko/adaptive_sleep_detector_strings.xml
+ create mode 100644 res/values-ky/adaptive_sleep_detector_strings.xml
+ create mode 100644 res/values-lo/adaptive_sleep_detector_strings.xml
+ create mode 100644 res/values-lt/adaptive_sleep_detector_strings.xml
+ create mode 100644 res/values-lv/adaptive_sleep_detector_strings.xml
+ create mode 100644 res/values-mk/adaptive_sleep_detector_strings.xml
+ create mode 100644 res/values-ml/adaptive_sleep_detector_strings.xml
+ create mode 100644 res/values-mn/adaptive_sleep_detector_strings.xml
+ create mode 100644 res/values-mr/adaptive_sleep_detector_strings.xml
+ create mode 100644 res/values-ms/adaptive_sleep_detector_strings.xml
+ create mode 100644 res/values-my/adaptive_sleep_detector_strings.xml
+ create mode 100644 res/values-nb/adaptive_sleep_detector_strings.xml
+ create mode 100644 res/values-ne/adaptive_sleep_detector_strings.xml
+ create mode 100644 res/values-nl/adaptive_sleep_detector_strings.xml
+ create mode 100644 res/values-or/adaptive_sleep_detector_strings.xml
+ create mode 100644 res/values-pa/adaptive_sleep_detector_strings.xml
+ create mode 100644 res/values-pl/adaptive_sleep_detector_strings.xml
+ create mode 100644 res/values-pt-rBR/adaptive_sleep_detector_strings.xml
+ create mode 100644 res/values-pt-rPT/adaptive_sleep_detector_strings.xml
+ create mode 100644 res/values-pt/adaptive_sleep_detector_strings.xml
+ create mode 100644 res/values-ro/adaptive_sleep_detector_strings.xml
+ create mode 100644 res/values-ru/adaptive_sleep_detector_strings.xml
+ create mode 100644 res/values-si/adaptive_sleep_detector_strings.xml
+ create mode 100644 res/values-sk/adaptive_sleep_detector_strings.xml
+ create mode 100644 res/values-sl/adaptive_sleep_detector_strings.xml
+ create mode 100644 res/values-sq/adaptive_sleep_detector_strings.xml
+ create mode 100644 res/values-sr/adaptive_sleep_detector_strings.xml
+ create mode 100644 res/values-sv/adaptive_sleep_detector_strings.xml
+ create mode 100644 res/values-sw/adaptive_sleep_detector_strings.xml
+ create mode 100644 res/values-ta/adaptive_sleep_detector_strings.xml
+ create mode 100644 res/values-te/adaptive_sleep_detector_strings.xml
+ create mode 100644 res/values-th/adaptive_sleep_detector_strings.xml
+ create mode 100644 res/values-tl/adaptive_sleep_detector_strings.xml
+ create mode 100644 res/values-tr/adaptive_sleep_detector_strings.xml
+ create mode 100644 res/values-uk/adaptive_sleep_detector_strings.xml
+ create mode 100644 res/values-ur/adaptive_sleep_detector_strings.xml
+ create mode 100644 res/values-uz/adaptive_sleep_detector_strings.xml
+ create mode 100644 res/values-vi/adaptive_sleep_detector_strings.xml
+ create mode 100644 res/values-zh-rCN/adaptive_sleep_detector_strings.xml
+ create mode 100644 res/values-zh-rHK/adaptive_sleep_detector_strings.xml
+ create mode 100644 res/values-zh-rTW/adaptive_sleep_detector_strings.xml
+ create mode 100644 res/values-zu/adaptive_sleep_detector_strings.xml
+ create mode 100644 res/values/adaptive_sleep_detector_strings.xml
+ create mode 100644 src/com/android/settings/display/AdaptiveSleepDetectorPreferenceController.java
+
+diff --git a/res/values-af/adaptive_sleep_detector_strings.xml b/res/values-af/adaptive_sleep_detector_strings.xml
+new file mode 100644
+index 0000000..bbcf4d7
+--- /dev/null
++++ b/res/values-af/adaptive_sleep_detector_strings.xml
+@@ -0,0 +1,7 @@
++<?xml version="1.0" encoding="utf-8"?>
++<resources>
++    <string name="adaptive_sleep_detector_title">Gesigbespeuring</string>
++    <string name="adaptive_sleep_detector_hal">Kamerahardeware</string>
++    <string name="adaptive_sleep_detector_system">Stelsel</string>
++    <string name="adaptive_sleep_detector_privacy">Skermaandag gebruik die voorste kamera om te sien of iemand na die skerm kyk. Dit werk op die toestel, en prente word nooit geberg of iewers heen gestuur nie.</string>
++</resources>
+diff --git a/res/values-am/adaptive_sleep_detector_strings.xml b/res/values-am/adaptive_sleep_detector_strings.xml
+new file mode 100644
+index 0000000..62a592c
+--- /dev/null
++++ b/res/values-am/adaptive_sleep_detector_strings.xml
+@@ -0,0 +1,7 @@
++<?xml version="1.0" encoding="utf-8"?>
++<resources>
++    <string name="adaptive_sleep_detector_title">የፊት ማወቂያ</string>
++    <string name="adaptive_sleep_detector_hal">የካሜራ ሃርድዌር</string>
++    <string name="adaptive_sleep_detector_system">ሥርዓት</string>
++    <string name="adaptive_sleep_detector_privacy">የማያ ገጽ ትኩረት አንድ ሰው ማያ ገጹን እየተመለከተ መሆኑን ለማየት የፊት ካሜራን ይጠቀማል። በመሣሪያው ላይ ይሠራል፣ እና ምስሎች በጭራሽ አይቀመጡም ወይም የትም አይላኩም።</string>
++</resources>
+diff --git a/res/values-ar/adaptive_sleep_detector_strings.xml b/res/values-ar/adaptive_sleep_detector_strings.xml
+new file mode 100644
+index 0000000..b75b7c0
+--- /dev/null
++++ b/res/values-ar/adaptive_sleep_detector_strings.xml
+@@ -0,0 +1,7 @@
++<?xml version="1.0" encoding="utf-8"?>
++<resources>
++    <string name="adaptive_sleep_detector_title">رصد الوجه</string>
++    <string name="adaptive_sleep_detector_hal">جهاز الكاميرا</string>
++    <string name="adaptive_sleep_detector_system">النظام</string>
++    <string name="adaptive_sleep_detector_privacy">تستخدم ميزة \"استشعار النظر إلى الشاشة\" الكاميرا الأمامية لمعرفة ما إذا كان هناك شخص ينظر إلى الشاشة. تعمل هذه الميزة على الجهاز، ولا يتم تخزين الصور أو إرسالها إلى أي مكان.</string>
++</resources>
+diff --git a/res/values-as/adaptive_sleep_detector_strings.xml b/res/values-as/adaptive_sleep_detector_strings.xml
+new file mode 100644
+index 0000000..b079b5f
+--- /dev/null
++++ b/res/values-as/adaptive_sleep_detector_strings.xml
+@@ -0,0 +1,7 @@
++<?xml version="1.0" encoding="utf-8"?>
++<resources>
++    <string name="adaptive_sleep_detector_title">মুখাৱয়ব চিনাক্তকৰণ</string>
++    <string name="adaptive_sleep_detector_hal">কেমেৰাৰ হাৰ্ডৱেৰ</string>
++    <string name="adaptive_sleep_detector_system">ছিষ্টেম</string>
++    <string name="adaptive_sleep_detector_privacy">স্ক্ৰীন এটেনশ্বনে কোনোবাই স্ক্ৰীনখনলৈ চাই আছে নেকি সেয়া চাবলৈ সন্মুখৰ কেমেৰা ব্যৱহাৰ কৰে। এইটোৱে ডিভাইচতে কাম কৰে আৰু প্ৰতিচ্ছবিসমূহ কেতিয়াও ষ্ট’ৰ কৰা নহয় বা ক’লৈকো পঠিওৱা নহয়।</string>
++</resources>
+diff --git a/res/values-az/adaptive_sleep_detector_strings.xml b/res/values-az/adaptive_sleep_detector_strings.xml
+new file mode 100644
+index 0000000..5e3dd1f
+--- /dev/null
++++ b/res/values-az/adaptive_sleep_detector_strings.xml
+@@ -0,0 +1,7 @@
++<?xml version="1.0" encoding="utf-8"?>
++<resources>
++    <string name="adaptive_sleep_detector_title">Üz aşkarlanması</string>
++    <string name="adaptive_sleep_detector_hal">Kamera aparatı</string>
++    <string name="adaptive_sleep_detector_system">Sistem</string>
++    <string name="adaptive_sleep_detector_privacy">Ekran diqqəti kiminsə ekrana baxdığını görmək üçün ön kameradan istifadə edir. Cihazda işləyir, şəkillər heç vaxt saxlanmır və heç yerə göndərilmir.</string>
++</resources>
+diff --git a/res/values-b+sr+Latn/adaptive_sleep_detector_strings.xml b/res/values-b+sr+Latn/adaptive_sleep_detector_strings.xml
+new file mode 100644
+index 0000000..93069df
+--- /dev/null
++++ b/res/values-b+sr+Latn/adaptive_sleep_detector_strings.xml
+@@ -0,0 +1,7 @@
++<?xml version="1.0" encoding="utf-8"?>
++<resources>
++    <string name="adaptive_sleep_detector_title">Otkrivanje lica</string>
++    <string name="adaptive_sleep_detector_hal">Hardver kamere</string>
++    <string name="adaptive_sleep_detector_system">Sistem</string>
++    <string name="adaptive_sleep_detector_privacy">Pažnja ekrana koristi prednju kameru da bi utvrdila da li neko gleda ekran. Radi na uređaju, a slike se nikada ne čuvaju niti šalju bilo gde.</string>
++</resources>
+diff --git a/res/values-be/adaptive_sleep_detector_strings.xml b/res/values-be/adaptive_sleep_detector_strings.xml
+new file mode 100644
+index 0000000..ecf7c7b
+--- /dev/null
++++ b/res/values-be/adaptive_sleep_detector_strings.xml
+@@ -0,0 +1,7 @@
++<?xml version="1.0" encoding="utf-8"?>
++<resources>
++    <string name="adaptive_sleep_detector_title">Выяўленне твару</string>
++    <string name="adaptive_sleep_detector_hal">Апаратнае забеспячэнне камеры</string>
++    <string name="adaptive_sleep_detector_system">Сістэма</string>
++    <string name="adaptive_sleep_detector_privacy">Функцыя \"Увага да экрана\" выкарыстоўвае пярэднюю камеру, каб вызначыць, ці глядзіць хтосьці на экран. Яна працуе на прыладзе, і відарысы ніколі не захоўваюцца і нікуды не адпраўляюцца.</string>
++</resources>
+diff --git a/res/values-bg/adaptive_sleep_detector_strings.xml b/res/values-bg/adaptive_sleep_detector_strings.xml
+new file mode 100644
+index 0000000..fa79c6d
+--- /dev/null
++++ b/res/values-bg/adaptive_sleep_detector_strings.xml
+@@ -0,0 +1,7 @@
++<?xml version="1.0" encoding="utf-8"?>
++<resources>
++    <string name="adaptive_sleep_detector_title">Разпознаване на лице</string>
++    <string name="adaptive_sleep_detector_hal">Хардуер на камерата</string>
++    <string name="adaptive_sleep_detector_system">Система</string>
++    <string name="adaptive_sleep_detector_privacy">Функцията „Внимание към екрана“ използва предната камера, за да установи дали някой гледа екрана. Тя работи на устройството и изображенията никога не се съхраняват и не се изпращат никъде.</string>
++</resources>
+diff --git a/res/values-bn/adaptive_sleep_detector_strings.xml b/res/values-bn/adaptive_sleep_detector_strings.xml
+new file mode 100644
+index 0000000..36c1e48
+--- /dev/null
++++ b/res/values-bn/adaptive_sleep_detector_strings.xml
+@@ -0,0 +1,7 @@
++<?xml version="1.0" encoding="utf-8"?>
++<resources>
++    <string name="adaptive_sleep_detector_title">ফেস শনাক্তকরণ</string>
++    <string name="adaptive_sleep_detector_hal">ক্যামেরা হার্ডওয়্যার</string>
++    <string name="adaptive_sleep_detector_system">সিস্টেম</string>
++    <string name="adaptive_sleep_detector_privacy">স্ক্রিন অ্যাটেনশন কেউ স্ক্রিনের দিকে তাকিয়ে আছেন কিনা তা দেখতে সামনের ক্যামেরা ব্যবহার করে। এটি ডিভাইসেই কাজ করে এবং ছবি কখনও স্টোর করা হয় না বা কোথাও পাঠানো হয় না।</string>
++</resources>
+diff --git a/res/values-bs/adaptive_sleep_detector_strings.xml b/res/values-bs/adaptive_sleep_detector_strings.xml
+new file mode 100644
+index 0000000..e9eb023
+--- /dev/null
++++ b/res/values-bs/adaptive_sleep_detector_strings.xml
+@@ -0,0 +1,7 @@
++<?xml version="1.0" encoding="utf-8"?>
++<resources>
++    <string name="adaptive_sleep_detector_title">Otkrivanje lica</string>
++    <string name="adaptive_sleep_detector_hal">Hardver kamere</string>
++    <string name="adaptive_sleep_detector_system">Sistem</string>
++    <string name="adaptive_sleep_detector_privacy">Pažnja ekrana koristi prednju kameru da utvrdi gleda li neko u ekran. Radi na uređaju, a slike se nikada ne pohranjuju niti šalju bilo gdje.</string>
++</resources>
+diff --git a/res/values-ca/adaptive_sleep_detector_strings.xml b/res/values-ca/adaptive_sleep_detector_strings.xml
+new file mode 100644
+index 0000000..6809dee
+--- /dev/null
++++ b/res/values-ca/adaptive_sleep_detector_strings.xml
+@@ -0,0 +1,7 @@
++<?xml version="1.0" encoding="utf-8"?>
++<resources>
++    <string name="adaptive_sleep_detector_title">Detecció de cares</string>
++    <string name="adaptive_sleep_detector_hal">Maquinari de la càmera</string>
++    <string name="adaptive_sleep_detector_system">Sistema</string>
++    <string name="adaptive_sleep_detector_privacy">L\'atenció a la pantalla utilitza la càmera frontal per veure si algú està mirant la pantalla. Funciona al dispositiu i les imatges no s\'emmagatzemen ni s\'envien enlloc.</string>
++</resources>
+diff --git a/res/values-cs/adaptive_sleep_detector_strings.xml b/res/values-cs/adaptive_sleep_detector_strings.xml
+new file mode 100644
+index 0000000..dafeafc
+--- /dev/null
++++ b/res/values-cs/adaptive_sleep_detector_strings.xml
+@@ -0,0 +1,7 @@
++<?xml version="1.0" encoding="utf-8"?>
++<resources>
++    <string name="adaptive_sleep_detector_title">Detekce obličeje</string>
++    <string name="adaptive_sleep_detector_hal">Hardware fotoaparátu</string>
++    <string name="adaptive_sleep_detector_system">Systém</string>
++    <string name="adaptive_sleep_detector_privacy">Vnímání obrazovky pomocí přední kamery zjišťuje, zda se někdo dívá na obrazovku. Funguje v zařízení a snímky se nikdy neukládají ani nikam neodesílají.</string>
++</resources>
+diff --git a/res/values-da/adaptive_sleep_detector_strings.xml b/res/values-da/adaptive_sleep_detector_strings.xml
+new file mode 100644
+index 0000000..a903608
+--- /dev/null
++++ b/res/values-da/adaptive_sleep_detector_strings.xml
+@@ -0,0 +1,7 @@
++<?xml version="1.0" encoding="utf-8"?>
++<resources>
++    <string name="adaptive_sleep_detector_title">Ansigtsregistrering</string>
++    <string name="adaptive_sleep_detector_hal">Kamerahardware</string>
++    <string name="adaptive_sleep_detector_system">System</string>
++    <string name="adaptive_sleep_detector_privacy">Skærmregistrering bruger frontkameraet til at se, om nogen kigger på skærmen. Funktionen fungerer på enheden, og billeder gemmes eller sendes aldrig nogen steder hen.</string>
++</resources>
+diff --git a/res/values-de/adaptive_sleep_detector_strings.xml b/res/values-de/adaptive_sleep_detector_strings.xml
+new file mode 100644
+index 0000000..bbb085d
+--- /dev/null
++++ b/res/values-de/adaptive_sleep_detector_strings.xml
+@@ -0,0 +1,7 @@
++<?xml version="1.0" encoding="utf-8"?>
++<resources>
++    <string name="adaptive_sleep_detector_title">Gesichtserkennung</string>
++    <string name="adaptive_sleep_detector_hal">Kamera-Hardware</string>
++    <string name="adaptive_sleep_detector_system">System</string>
++    <string name="adaptive_sleep_detector_privacy">Die Funktion „Aufmerksamkeitserkennung“ nutzt die Frontkamera, um zu erkennen, ob jemand auf das Display schaut. Sie funktioniert direkt auf dem Gerät und Bilder werden weder gespeichert noch irgendwohin gesendet.</string>
++</resources>
+diff --git a/res/values-el/adaptive_sleep_detector_strings.xml b/res/values-el/adaptive_sleep_detector_strings.xml
+new file mode 100644
+index 0000000..7f9093b
+--- /dev/null
++++ b/res/values-el/adaptive_sleep_detector_strings.xml
+@@ -0,0 +1,7 @@
++<?xml version="1.0" encoding="utf-8"?>
++<resources>
++    <string name="adaptive_sleep_detector_title">Ανίχνευση προσώπου</string>
++    <string name="adaptive_sleep_detector_hal">Υλικό κάμερας</string>
++    <string name="adaptive_sleep_detector_system">Σύστημα</string>
++    <string name="adaptive_sleep_detector_privacy">Η Προσοχή στην οθόνη χρησιμοποιεί την μπροστινή κάμερα για να διαπιστώσει αν κάποιος κοιτάζει την οθόνη. Λειτουργεί στη συσκευή και οι εικόνες δεν αποθηκεύονται ούτε αποστέλλονται πουθενά.</string>
++</resources>
+diff --git a/res/values-en-rAU/adaptive_sleep_detector_strings.xml b/res/values-en-rAU/adaptive_sleep_detector_strings.xml
+new file mode 100644
+index 0000000..393c3a1
+--- /dev/null
++++ b/res/values-en-rAU/adaptive_sleep_detector_strings.xml
+@@ -0,0 +1,7 @@
++<?xml version="1.0" encoding="utf-8"?>
++<resources>
++    <string name="adaptive_sleep_detector_title">Face detection</string>
++    <string name="adaptive_sleep_detector_hal">Camera hardware</string>
++    <string name="adaptive_sleep_detector_system">System</string>
++    <string name="adaptive_sleep_detector_privacy">Screen attention uses the front camera to see if someone is looking at the screen. It works on device, and images are never stored or sent anywhere.</string>
++</resources>
+diff --git a/res/values-en-rCA/adaptive_sleep_detector_strings.xml b/res/values-en-rCA/adaptive_sleep_detector_strings.xml
+new file mode 100644
+index 0000000..393c3a1
+--- /dev/null
++++ b/res/values-en-rCA/adaptive_sleep_detector_strings.xml
+@@ -0,0 +1,7 @@
++<?xml version="1.0" encoding="utf-8"?>
++<resources>
++    <string name="adaptive_sleep_detector_title">Face detection</string>
++    <string name="adaptive_sleep_detector_hal">Camera hardware</string>
++    <string name="adaptive_sleep_detector_system">System</string>
++    <string name="adaptive_sleep_detector_privacy">Screen attention uses the front camera to see if someone is looking at the screen. It works on device, and images are never stored or sent anywhere.</string>
++</resources>
+diff --git a/res/values-en-rGB/adaptive_sleep_detector_strings.xml b/res/values-en-rGB/adaptive_sleep_detector_strings.xml
+new file mode 100644
+index 0000000..393c3a1
+--- /dev/null
++++ b/res/values-en-rGB/adaptive_sleep_detector_strings.xml
+@@ -0,0 +1,7 @@
++<?xml version="1.0" encoding="utf-8"?>
++<resources>
++    <string name="adaptive_sleep_detector_title">Face detection</string>
++    <string name="adaptive_sleep_detector_hal">Camera hardware</string>
++    <string name="adaptive_sleep_detector_system">System</string>
++    <string name="adaptive_sleep_detector_privacy">Screen attention uses the front camera to see if someone is looking at the screen. It works on device, and images are never stored or sent anywhere.</string>
++</resources>
+diff --git a/res/values-en-rIN/adaptive_sleep_detector_strings.xml b/res/values-en-rIN/adaptive_sleep_detector_strings.xml
+new file mode 100644
+index 0000000..393c3a1
+--- /dev/null
++++ b/res/values-en-rIN/adaptive_sleep_detector_strings.xml
+@@ -0,0 +1,7 @@
++<?xml version="1.0" encoding="utf-8"?>
++<resources>
++    <string name="adaptive_sleep_detector_title">Face detection</string>
++    <string name="adaptive_sleep_detector_hal">Camera hardware</string>
++    <string name="adaptive_sleep_detector_system">System</string>
++    <string name="adaptive_sleep_detector_privacy">Screen attention uses the front camera to see if someone is looking at the screen. It works on device, and images are never stored or sent anywhere.</string>
++</resources>
+diff --git a/res/values-es-rUS/adaptive_sleep_detector_strings.xml b/res/values-es-rUS/adaptive_sleep_detector_strings.xml
+new file mode 100644
+index 0000000..c25cff9
+--- /dev/null
++++ b/res/values-es-rUS/adaptive_sleep_detector_strings.xml
+@@ -0,0 +1,7 @@
++<?xml version="1.0" encoding="utf-8"?>
++<resources>
++    <string name="adaptive_sleep_detector_title">Detección de rostro</string>
++    <string name="adaptive_sleep_detector_hal">Hardware de la cámara</string>
++    <string name="adaptive_sleep_detector_system">Sistema</string>
++    <string name="adaptive_sleep_detector_privacy">La atención a la pantalla usa la cámara frontal para detectar si alguien está mirando la pantalla. Funciona en el dispositivo, y las imágenes nunca se almacenan ni se envían a ningún lugar.</string>
++</resources>
+diff --git a/res/values-es/adaptive_sleep_detector_strings.xml b/res/values-es/adaptive_sleep_detector_strings.xml
+new file mode 100644
+index 0000000..5d074f2
+--- /dev/null
++++ b/res/values-es/adaptive_sleep_detector_strings.xml
+@@ -0,0 +1,7 @@
++<?xml version="1.0" encoding="utf-8"?>
++<resources>
++    <string name="adaptive_sleep_detector_title">Detección de caras</string>
++    <string name="adaptive_sleep_detector_hal">Hardware de la cámara</string>
++    <string name="adaptive_sleep_detector_system">Sistema</string>
++    <string name="adaptive_sleep_detector_privacy">La atención a la pantalla usa la cámara frontal para comprobar si alguien está mirando la pantalla. Funciona en el dispositivo y las imágenes nunca se almacenan ni se envían a ningún sitio.</string>
++</resources>
+diff --git a/res/values-et/adaptive_sleep_detector_strings.xml b/res/values-et/adaptive_sleep_detector_strings.xml
+new file mode 100644
+index 0000000..5c3bf3d
+--- /dev/null
++++ b/res/values-et/adaptive_sleep_detector_strings.xml
+@@ -0,0 +1,7 @@
++<?xml version="1.0" encoding="utf-8"?>
++<resources>
++    <string name="adaptive_sleep_detector_title">Näotuvastus</string>
++    <string name="adaptive_sleep_detector_hal">Kaamera riistvara</string>
++    <string name="adaptive_sleep_detector_system">Süsteem</string>
++    <string name="adaptive_sleep_detector_privacy">Ekraanile tähelepanu pööramise funktsioon kasutab esikaamerat, et näha, kas keegi vaatab ekraani. See toimib seadmes ja pilte ei salvestata ega saadeta kunagi kuhugi.</string>
++</resources>
+diff --git a/res/values-eu/adaptive_sleep_detector_strings.xml b/res/values-eu/adaptive_sleep_detector_strings.xml
+new file mode 100644
+index 0000000..44223dc
+--- /dev/null
++++ b/res/values-eu/adaptive_sleep_detector_strings.xml
+@@ -0,0 +1,7 @@
++<?xml version="1.0" encoding="utf-8"?>
++<resources>
++    <string name="adaptive_sleep_detector_title">Aurpegi-hautematea</string>
++    <string name="adaptive_sleep_detector_hal">Kameraren hardwarea</string>
++    <string name="adaptive_sleep_detector_system">Sistema</string>
++    <string name="adaptive_sleep_detector_privacy">Pantailako arretak aurreko kamera erabiltzen du norbait pantailari begira dagoen jakiteko. Gailuan funtzionatzen du, eta irudiak ez dira inoiz gordetzen edo inora bidaltzen.</string>
++</resources>
+diff --git a/res/values-fa/adaptive_sleep_detector_strings.xml b/res/values-fa/adaptive_sleep_detector_strings.xml
+new file mode 100644
+index 0000000..d56d854
+--- /dev/null
++++ b/res/values-fa/adaptive_sleep_detector_strings.xml
+@@ -0,0 +1,7 @@
++<?xml version="1.0" encoding="utf-8"?>
++<resources>
++    <string name="adaptive_sleep_detector_title">تشخیص چهره</string>
++    <string name="adaptive_sleep_detector_hal">سخت‌افزار دوربین</string>
++    <string name="adaptive_sleep_detector_system">سیستم</string>
++    <string name="adaptive_sleep_detector_privacy">«توجه به صفحه» از دوربین جلو استفاده می‌کند تا ببیند آیا کسی به صفحه نگاه می‌کند یا نه. این ویژگی در دستگاه کار می‌کند و تصاویر هرگز ذخیره یا به جایی ارسال نمی‌شوند.</string>
++</resources>
+diff --git a/res/values-fi/adaptive_sleep_detector_strings.xml b/res/values-fi/adaptive_sleep_detector_strings.xml
+new file mode 100644
+index 0000000..1eedeb8
+--- /dev/null
++++ b/res/values-fi/adaptive_sleep_detector_strings.xml
+@@ -0,0 +1,7 @@
++<?xml version="1.0" encoding="utf-8"?>
++<resources>
++    <string name="adaptive_sleep_detector_title">Kasvojentunnistus</string>
++    <string name="adaptive_sleep_detector_hal">Kameran laitteisto</string>
++    <string name="adaptive_sleep_detector_system">Järjestelmä</string>
++    <string name="adaptive_sleep_detector_privacy">Näytön huomiointi tarkistaa etukameralla, katsooko joku näyttöä. Se toimii laitteella, eikä kuvia koskaan tallenneta tai lähetetä minnekään.</string>
++</resources>
+diff --git a/res/values-fr-rCA/adaptive_sleep_detector_strings.xml b/res/values-fr-rCA/adaptive_sleep_detector_strings.xml
+new file mode 100644
+index 0000000..c52bb2d
+--- /dev/null
++++ b/res/values-fr-rCA/adaptive_sleep_detector_strings.xml
+@@ -0,0 +1,7 @@
++<?xml version="1.0" encoding="utf-8"?>
++<resources>
++    <string name="adaptive_sleep_detector_title">Détection du visage</string>
++    <string name="adaptive_sleep_detector_hal">Matériel de l\'appareil photo</string>
++    <string name="adaptive_sleep_detector_system">Système</string>
++    <string name="adaptive_sleep_detector_privacy">La fonctionnalité Attention à l\'écran utilise l\'appareil photo avant pour vérifier si quelqu\'un regarde l\'écran. Elle fonctionne sur l\'appareil, et les images ne sont jamais stockées ni envoyées nulle part.</string>
++</resources>
+diff --git a/res/values-fr/adaptive_sleep_detector_strings.xml b/res/values-fr/adaptive_sleep_detector_strings.xml
+new file mode 100644
+index 0000000..6a929cb
+--- /dev/null
++++ b/res/values-fr/adaptive_sleep_detector_strings.xml
+@@ -0,0 +1,7 @@
++<?xml version="1.0" encoding="utf-8"?>
++<resources>
++    <string name="adaptive_sleep_detector_title">Détection du visage</string>
++    <string name="adaptive_sleep_detector_hal">Matériel de l\'appareil photo</string>
++    <string name="adaptive_sleep_detector_system">Système</string>
++    <string name="adaptive_sleep_detector_privacy">La fonctionnalité Regard sur l\'écran utilise la caméra avant pour détecter si quelqu\'un regarde l\'écran. Elle fonctionne sur l\'appareil, et les images ne sont jamais stockées ni envoyées nulle part.</string>
++</resources>
+diff --git a/res/values-gl/adaptive_sleep_detector_strings.xml b/res/values-gl/adaptive_sleep_detector_strings.xml
+new file mode 100644
+index 0000000..adb330f
+--- /dev/null
++++ b/res/values-gl/adaptive_sleep_detector_strings.xml
+@@ -0,0 +1,7 @@
++<?xml version="1.0" encoding="utf-8"?>
++<resources>
++    <string name="adaptive_sleep_detector_title">Detección facial</string>
++    <string name="adaptive_sleep_detector_hal">Hardware da cámara</string>
++    <string name="adaptive_sleep_detector_system">Sistema</string>
++    <string name="adaptive_sleep_detector_privacy">A atención á pantalla usa a cámara dianteira para ver se alguén está mirando a pantalla. Funciona no dispositivo e as imaxes nunca se almacenan nin se envían a ningún sitio.</string>
++</resources>
+diff --git a/res/values-gu/adaptive_sleep_detector_strings.xml b/res/values-gu/adaptive_sleep_detector_strings.xml
+new file mode 100644
+index 0000000..26eef5f
+--- /dev/null
++++ b/res/values-gu/adaptive_sleep_detector_strings.xml
+@@ -0,0 +1,7 @@
++<?xml version="1.0" encoding="utf-8"?>
++<resources>
++    <string name="adaptive_sleep_detector_title">ચહેરાની ઓળખ</string>
++    <string name="adaptive_sleep_detector_hal">કૅમેરા હાર્ડવેર</string>
++    <string name="adaptive_sleep_detector_system">સિસ્ટમ</string>
++    <string name="adaptive_sleep_detector_privacy">સ્ક્રીન અટેન્શન કોઈ સ્ક્રીન તરફ જોઈ રહ્યું છે કે નહીં તે જોવા માટે આગળના કૅમેરાનો ઉપયોગ કરે છે. તે ડિવાઇસ પર કામ કરે છે અને છબીઓ ક્યારેય સ્ટોર કરવામાં કે ક્યાંય મોકલવામાં આવતી નથી.</string>
++</resources>
+diff --git a/res/values-hi/adaptive_sleep_detector_strings.xml b/res/values-hi/adaptive_sleep_detector_strings.xml
+new file mode 100644
+index 0000000..e0fb567
+--- /dev/null
++++ b/res/values-hi/adaptive_sleep_detector_strings.xml
+@@ -0,0 +1,7 @@
++<?xml version="1.0" encoding="utf-8"?>
++<resources>
++    <string name="adaptive_sleep_detector_title">चेहरे की पहचान</string>
++    <string name="adaptive_sleep_detector_hal">कैमरा हार्डवेयर</string>
++    <string name="adaptive_sleep_detector_system">सिस्टम</string>
++    <string name="adaptive_sleep_detector_privacy">स्क्रीन अटेंशन, सामने वाले कैमरे का इस्तेमाल करके यह पता लगाता है कि कोई स्क्रीन को देख रहा है या नहीं. यह डिवाइस पर ही काम करता है और इमेज कभी भी सेव नहीं की जातीं या कहीं नहीं भेजी जातीं.</string>
++</resources>
+diff --git a/res/values-hr/adaptive_sleep_detector_strings.xml b/res/values-hr/adaptive_sleep_detector_strings.xml
+new file mode 100644
+index 0000000..cf21cfe
+--- /dev/null
++++ b/res/values-hr/adaptive_sleep_detector_strings.xml
+@@ -0,0 +1,7 @@
++<?xml version="1.0" encoding="utf-8"?>
++<resources>
++    <string name="adaptive_sleep_detector_title">Otkrivanje lica</string>
++    <string name="adaptive_sleep_detector_hal">Hardver fotoaparata</string>
++    <string name="adaptive_sleep_detector_system">Sustav</string>
++    <string name="adaptive_sleep_detector_privacy">Pozornost na zaslon koristi prednji fotoaparat kako bi utvrdila gleda li netko zaslon. Radi na uređaju, a slike se nikad ne pohranjuju niti šalju nikamo.</string>
++</resources>
+diff --git a/res/values-hu/adaptive_sleep_detector_strings.xml b/res/values-hu/adaptive_sleep_detector_strings.xml
+new file mode 100644
+index 0000000..5ef00a6
+--- /dev/null
++++ b/res/values-hu/adaptive_sleep_detector_strings.xml
+@@ -0,0 +1,7 @@
++<?xml version="1.0" encoding="utf-8"?>
++<resources>
++    <string name="adaptive_sleep_detector_title">Arcfelismerés</string>
++    <string name="adaptive_sleep_detector_hal">Kamera hardvere</string>
++    <string name="adaptive_sleep_detector_system">Rendszer</string>
++    <string name="adaptive_sleep_detector_privacy">A képernyőfigyelés az előlapi kamerával ellenőrzi, hogy néz-e valaki a képernyőre. Az eszközön működik, a képeket pedig sosem tárolja és sehová sem küldi el.</string>
++</resources>
+diff --git a/res/values-hy/adaptive_sleep_detector_strings.xml b/res/values-hy/adaptive_sleep_detector_strings.xml
+new file mode 100644
+index 0000000..af197e5
+--- /dev/null
++++ b/res/values-hy/adaptive_sleep_detector_strings.xml
+@@ -0,0 +1,7 @@
++<?xml version="1.0" encoding="utf-8"?>
++<resources>
++    <string name="adaptive_sleep_detector_title">Դեմքի հայտնաբերում</string>
++    <string name="adaptive_sleep_detector_hal">Տեսախցիկի սարքակազմ</string>
++    <string name="adaptive_sleep_detector_system">Համակարգ</string>
++    <string name="adaptive_sleep_detector_privacy">Էկրանի ուշադրության գործառույթն օգտագործում է առջևի տեսախցիկը՝ պարզելու, թե արդյոք որևէ մեկը նայում է էկրանին։ Այն աշխատում է սարքում, և պատկերները երբեք չեն պահվում և ոչ մի տեղ չեն ուղարկվում։</string>
++</resources>
+diff --git a/res/values-in/adaptive_sleep_detector_strings.xml b/res/values-in/adaptive_sleep_detector_strings.xml
+new file mode 100644
+index 0000000..573243e
+--- /dev/null
++++ b/res/values-in/adaptive_sleep_detector_strings.xml
+@@ -0,0 +1,7 @@
++<?xml version="1.0" encoding="utf-8"?>
++<resources>
++    <string name="adaptive_sleep_detector_title">Deteksi wajah</string>
++    <string name="adaptive_sleep_detector_hal">Hardware kamera</string>
++    <string name="adaptive_sleep_detector_system">Sistem</string>
++    <string name="adaptive_sleep_detector_privacy">Fokus ke layar menggunakan kamera depan untuk mengetahui apakah seseorang sedang melihat layar. Fitur ini berfungsi di perangkat, dan gambar tidak pernah disimpan atau dikirim ke mana pun.</string>
++</resources>
+diff --git a/res/values-is/adaptive_sleep_detector_strings.xml b/res/values-is/adaptive_sleep_detector_strings.xml
+new file mode 100644
+index 0000000..b5296a4
+--- /dev/null
++++ b/res/values-is/adaptive_sleep_detector_strings.xml
+@@ -0,0 +1,7 @@
++<?xml version="1.0" encoding="utf-8"?>
++<resources>
++    <string name="adaptive_sleep_detector_title">Andlitsgreining</string>
++    <string name="adaptive_sleep_detector_hal">Vélbúnaður myndavélar</string>
++    <string name="adaptive_sleep_detector_system">Kerfi</string>
++    <string name="adaptive_sleep_detector_privacy">Skjáathygli notar myndavélina að framan til að sjá hvort einhver horfir á skjáinn. Þetta virkar í tækinu og myndir eru aldrei vistaðar eða sendar neitt.</string>
++</resources>
+diff --git a/res/values-it/adaptive_sleep_detector_strings.xml b/res/values-it/adaptive_sleep_detector_strings.xml
+new file mode 100644
+index 0000000..88d0a6e
+--- /dev/null
++++ b/res/values-it/adaptive_sleep_detector_strings.xml
+@@ -0,0 +1,7 @@
++<?xml version="1.0" encoding="utf-8"?>
++<resources>
++    <string name="adaptive_sleep_detector_title">Rilevamento del volto</string>
++    <string name="adaptive_sleep_detector_hal">Hardware della fotocamera</string>
++    <string name="adaptive_sleep_detector_system">Sistema</string>
++    <string name="adaptive_sleep_detector_privacy">Schermo vigile usa la fotocamera anteriore per capire se qualcuno sta guardando lo schermo. Funziona sul dispositivo e le immagini non vengono mai memorizzate né inviate altrove.</string>
++</resources>
+diff --git a/res/values-iw/adaptive_sleep_detector_strings.xml b/res/values-iw/adaptive_sleep_detector_strings.xml
+new file mode 100644
+index 0000000..32803f3
+--- /dev/null
++++ b/res/values-iw/adaptive_sleep_detector_strings.xml
+@@ -0,0 +1,7 @@
++<?xml version="1.0" encoding="utf-8"?>
++<resources>
++    <string name="adaptive_sleep_detector_title">זיהוי פנים</string>
++    <string name="adaptive_sleep_detector_hal">חומרת המצלמה</string>
++    <string name="adaptive_sleep_detector_system">מערכת</string>
++    <string name="adaptive_sleep_detector_privacy">התכונה \"מבט על המסך\" משתמשת במצלמה הקדמית כדי לזהות אם מישהו מסתכל על המסך. היא פועלת במכשיר, והתמונות אף פעם לא נשמרות ולא נשלחות לשום מקום.</string>
++</resources>
+diff --git a/res/values-ja/adaptive_sleep_detector_strings.xml b/res/values-ja/adaptive_sleep_detector_strings.xml
+new file mode 100644
+index 0000000..9268359
+--- /dev/null
++++ b/res/values-ja/adaptive_sleep_detector_strings.xml
+@@ -0,0 +1,7 @@
++<?xml version="1.0" encoding="utf-8"?>
++<resources>
++    <string name="adaptive_sleep_detector_title">顔検出</string>
++    <string name="adaptive_sleep_detector_hal">カメラ ハードウェア</string>
++    <string name="adaptive_sleep_detector_system">システム</string>
++    <string name="adaptive_sleep_detector_privacy">スクリーン アテンションは前面カメラを使用して、ユーザーが画面を見ているかどうかを確認します。この機能はデバイス上で動作し、画像が保存されたり、どこかに送信されたりすることはありません。</string>
++</resources>
+diff --git a/res/values-ka/adaptive_sleep_detector_strings.xml b/res/values-ka/adaptive_sleep_detector_strings.xml
+new file mode 100644
+index 0000000..f66db79
+--- /dev/null
++++ b/res/values-ka/adaptive_sleep_detector_strings.xml
+@@ -0,0 +1,7 @@
++<?xml version="1.0" encoding="utf-8"?>
++<resources>
++    <string name="adaptive_sleep_detector_title">სახის ამოცნობა</string>
++    <string name="adaptive_sleep_detector_hal">კამერის აპარატურა</string>
++    <string name="adaptive_sleep_detector_system">სისტემა</string>
++    <string name="adaptive_sleep_detector_privacy">ეკრანის ყურადღება იყენებს წინა კამერას, რათა გაარკვიოს, უყურებს თუ არა ვინმე ეკრანს. ის მუშაობს მოწყობილობაზე და სურათები არასოდეს ინახება და არსად იგზავნება.</string>
++</resources>
+diff --git a/res/values-kk/adaptive_sleep_detector_strings.xml b/res/values-kk/adaptive_sleep_detector_strings.xml
+new file mode 100644
+index 0000000..4acbbfe
+--- /dev/null
++++ b/res/values-kk/adaptive_sleep_detector_strings.xml
+@@ -0,0 +1,7 @@
++<?xml version="1.0" encoding="utf-8"?>
++<resources>
++    <string name="adaptive_sleep_detector_title">Бетті анықтау</string>
++    <string name="adaptive_sleep_detector_hal">Камера жабдығы</string>
++    <string name="adaptive_sleep_detector_system">Жүйе</string>
++    <string name="adaptive_sleep_detector_privacy">Экранға назар аудару функциясы біреудің экранға қарап тұрғанын анықтау үшін алдыңғы камераны пайдаланады. Ол құрылғыда жұмыс істейді, суреттер ешқашан сақталмайды және ешқайда жіберілмейді.</string>
++</resources>
+diff --git a/res/values-km/adaptive_sleep_detector_strings.xml b/res/values-km/adaptive_sleep_detector_strings.xml
+new file mode 100644
+index 0000000..12aebc7
+--- /dev/null
++++ b/res/values-km/adaptive_sleep_detector_strings.xml
+@@ -0,0 +1,7 @@
++<?xml version="1.0" encoding="utf-8"?>
++<resources>
++    <string name="adaptive_sleep_detector_title">ការចាប់ផ្ទៃមុខ</string>
++    <string name="adaptive_sleep_detector_hal">ហាតវែរកាមេរ៉ា</string>
++    <string name="adaptive_sleep_detector_system">ប្រព័ន្ធ</string>
++    <string name="adaptive_sleep_detector_privacy">ការយកចិត្តទុកដាក់លើអេក្រង់ប្រើកាមេរ៉ាខាងមុខ ដើម្បីមើលថាតើមាននរណាម្នាក់កំពុងមើលអេក្រង់ឬអត់។ វាដំណើរការនៅលើឧបករណ៍ ហើយរូបភាពមិនត្រូវបានរក្សាទុក ឬផ្ញើទៅកន្លែងណាឡើយ។</string>
++</resources>
+diff --git a/res/values-kn/adaptive_sleep_detector_strings.xml b/res/values-kn/adaptive_sleep_detector_strings.xml
+new file mode 100644
+index 0000000..206aa44
+--- /dev/null
++++ b/res/values-kn/adaptive_sleep_detector_strings.xml
+@@ -0,0 +1,7 @@
++<?xml version="1.0" encoding="utf-8"?>
++<resources>
++    <string name="adaptive_sleep_detector_title">ಮುಖ ಪತ್ತೆ</string>
++    <string name="adaptive_sleep_detector_hal">ಕ್ಯಾಮರಾ ಹಾರ್ಡ್‌ವೇರ್</string>
++    <string name="adaptive_sleep_detector_system">ಸಿಸ್ಟಂ</string>
++    <string name="adaptive_sleep_detector_privacy">ಯಾರಾದರೂ ಸ್ಕ್ರೀನ್ ಅನ್ನು ನೋಡುತ್ತಿದ್ದಾರೆಯೇ ಎಂದು ತಿಳಿಯಲು ಸ್ಕ್ರೀನ್ ಗಮನವು ಮುಂಭಾಗದ ಕ್ಯಾಮರಾವನ್ನು ಬಳಸುತ್ತದೆ. ಇದು ಸಾಧನದಲ್ಲೇ ಕಾರ್ಯನಿರ್ವಹಿಸುತ್ತದೆ ಮತ್ತು ಚಿತ್ರಗಳನ್ನು ಎಂದಿಗೂ ಸಂಗ್ರಹಿಸಲಾಗುವುದಿಲ್ಲ ಅಥವಾ ಎಲ್ಲಿಗೂ ಕಳುಹಿಸಲಾಗುವುದಿಲ್ಲ.</string>
++</resources>
+diff --git a/res/values-ko/adaptive_sleep_detector_strings.xml b/res/values-ko/adaptive_sleep_detector_strings.xml
+new file mode 100644
+index 0000000..f877b2b
+--- /dev/null
++++ b/res/values-ko/adaptive_sleep_detector_strings.xml
+@@ -0,0 +1,7 @@
++<?xml version="1.0" encoding="utf-8"?>
++<resources>
++    <string name="adaptive_sleep_detector_title">얼굴 감지</string>
++    <string name="adaptive_sleep_detector_hal">카메라 하드웨어</string>
++    <string name="adaptive_sleep_detector_system">시스템</string>
++    <string name="adaptive_sleep_detector_privacy">화면 응시 기능은 전면 카메라를 사용하여 사용자가 화면을 보고 있는지 확인합니다. 이 기능은 기기에서 작동하며 이미지는 저장되거나 어디로도 전송되지 않습니다.</string>
++</resources>
+diff --git a/res/values-ky/adaptive_sleep_detector_strings.xml b/res/values-ky/adaptive_sleep_detector_strings.xml
+new file mode 100644
+index 0000000..5971566
+--- /dev/null
++++ b/res/values-ky/adaptive_sleep_detector_strings.xml
+@@ -0,0 +1,7 @@
++<?xml version="1.0" encoding="utf-8"?>
++<resources>
++    <string name="adaptive_sleep_detector_title">Жүздү аныктоо</string>
++    <string name="adaptive_sleep_detector_hal">Камеранын жабдыгы</string>
++    <string name="adaptive_sleep_detector_system">Тутум</string>
++    <string name="adaptive_sleep_detector_privacy">Экранга көңүл буруу функциясы кимдир бирөө экранды карап жатканын аныктоо үчүн алдыңкы камераны колдонот. Ал түзмөктө иштейт жана сүрөттөр эч качан сакталбайт жана эч жакка жөнөтүлбөйт.</string>
++</resources>
+diff --git a/res/values-lo/adaptive_sleep_detector_strings.xml b/res/values-lo/adaptive_sleep_detector_strings.xml
+new file mode 100644
+index 0000000..85695d3
+--- /dev/null
++++ b/res/values-lo/adaptive_sleep_detector_strings.xml
+@@ -0,0 +1,7 @@
++<?xml version="1.0" encoding="utf-8"?>
++<resources>
++    <string name="adaptive_sleep_detector_title">ການກວດຈັບໃບໜ້າ</string>
++    <string name="adaptive_sleep_detector_hal">ຮາດແວກ້ອງ</string>
++    <string name="adaptive_sleep_detector_system">ລະບົບ</string>
++    <string name="adaptive_sleep_detector_privacy">ການເອົາໃຈໃສ່ໜ້າຈໍໃຊ້ກ້ອງໜ້າເພື່ອເບິ່ງວ່າມີຄົນກຳລັງເບິ່ງໜ້າຈໍຢູ່ບໍ່. ມັນເຮັດວຽກຢູ່ໃນອຸປະກອນ ແລະ ຮູບພາບຈະບໍ່ຖືກບັນທຶກ ຫຼື ສົ່ງໄປບ່ອນໃດເລີຍ.</string>
++</resources>
+diff --git a/res/values-lt/adaptive_sleep_detector_strings.xml b/res/values-lt/adaptive_sleep_detector_strings.xml
+new file mode 100644
+index 0000000..c9b23d0
+--- /dev/null
++++ b/res/values-lt/adaptive_sleep_detector_strings.xml
+@@ -0,0 +1,7 @@
++<?xml version="1.0" encoding="utf-8"?>
++<resources>
++    <string name="adaptive_sleep_detector_title">Veido aptikimas</string>
++    <string name="adaptive_sleep_detector_hal">Fotoaparato aparatinė įranga</string>
++    <string name="adaptive_sleep_detector_system">Sistema</string>
++    <string name="adaptive_sleep_detector_privacy">Dėmesio ekranui funkcija naudoja priekinį fotoaparatą, kad nustatytų, ar kas nors žiūri į ekraną. Ji veikia įrenginyje, o vaizdai niekada nesaugomi ir niekur nesiunčiami.</string>
++</resources>
+diff --git a/res/values-lv/adaptive_sleep_detector_strings.xml b/res/values-lv/adaptive_sleep_detector_strings.xml
+new file mode 100644
+index 0000000..1a640d2
+--- /dev/null
++++ b/res/values-lv/adaptive_sleep_detector_strings.xml
+@@ -0,0 +1,7 @@
++<?xml version="1.0" encoding="utf-8"?>
++<resources>
++    <string name="adaptive_sleep_detector_title">Sejas noteikšana</string>
++    <string name="adaptive_sleep_detector_hal">Kameras aparatūra</string>
++    <string name="adaptive_sleep_detector_system">Sistēma</string>
++    <string name="adaptive_sleep_detector_privacy">Ekrāna uzmanība izmanto priekšējo kameru, lai noteiktu, vai kāds skatās ekrānā. Tā darbojas ierīcē, un attēli nekad netiek saglabāti vai kaut kur nosūtīti.</string>
++</resources>
+diff --git a/res/values-mk/adaptive_sleep_detector_strings.xml b/res/values-mk/adaptive_sleep_detector_strings.xml
+new file mode 100644
+index 0000000..a252871
+--- /dev/null
++++ b/res/values-mk/adaptive_sleep_detector_strings.xml
+@@ -0,0 +1,7 @@
++<?xml version="1.0" encoding="utf-8"?>
++<resources>
++    <string name="adaptive_sleep_detector_title">Откривање лице</string>
++    <string name="adaptive_sleep_detector_hal">Хардвер на камерата</string>
++    <string name="adaptive_sleep_detector_system">Систем</string>
++    <string name="adaptive_sleep_detector_privacy">Вниманието на екранот ја користи предната камера за да види дали некој гледа во екранот. Работи на уредот, а сликите никогаш не се зачувуваат ниту се испраќаат никаде.</string>
++</resources>
+diff --git a/res/values-ml/adaptive_sleep_detector_strings.xml b/res/values-ml/adaptive_sleep_detector_strings.xml
+new file mode 100644
+index 0000000..4acbb9c
+--- /dev/null
++++ b/res/values-ml/adaptive_sleep_detector_strings.xml
+@@ -0,0 +1,7 @@
++<?xml version="1.0" encoding="utf-8"?>
++<resources>
++    <string name="adaptive_sleep_detector_title">മുഖം കണ്ടെത്തൽ</string>
++    <string name="adaptive_sleep_detector_hal">ക്യാമറ ഹാർഡ്‌വെയർ</string>
++    <string name="adaptive_sleep_detector_system">സിസ്റ്റം</string>
++    <string name="adaptive_sleep_detector_privacy">ആരെങ്കിലും സ്ക്രീനിൽ നോക്കുന്നുണ്ടോയെന്ന് അറിയാൻ സ്ക്രീൻ ശ്രദ്ധ മുൻ ക്യാമറ ഉപയോഗിക്കുന്നു. ഇത് ഉപകരണത്തിൽ തന്നെ പ്രവർത്തിക്കുന്നു, ചിത്രങ്ങൾ ഒരിക്കലും സംഭരിക്കുകയോ എവിടേക്കും അയയ്ക്കുകയോ ചെയ്യില്ല.</string>
++</resources>
+diff --git a/res/values-mn/adaptive_sleep_detector_strings.xml b/res/values-mn/adaptive_sleep_detector_strings.xml
+new file mode 100644
+index 0000000..26adcbf
+--- /dev/null
++++ b/res/values-mn/adaptive_sleep_detector_strings.xml
+@@ -0,0 +1,7 @@
++<?xml version="1.0" encoding="utf-8"?>
++<resources>
++    <string name="adaptive_sleep_detector_title">Нүүр илрүүлэх</string>
++    <string name="adaptive_sleep_detector_hal">Камерын техник хангамж</string>
++    <string name="adaptive_sleep_detector_system">Систем</string>
++    <string name="adaptive_sleep_detector_privacy">Дэлгэцийн анхаарал нь хэн нэгэн дэлгэц рүү харж байгаа эсэхийг тодорхойлохын тулд урд талын камерыг ашигладаг. Энэ нь төхөөрөмж дээр ажилладаг бөгөөд зургийг хэзээ ч хадгалдаггүй, хаашаа ч илгээдэггүй.</string>
++</resources>
+diff --git a/res/values-mr/adaptive_sleep_detector_strings.xml b/res/values-mr/adaptive_sleep_detector_strings.xml
+new file mode 100644
+index 0000000..cd68870
+--- /dev/null
++++ b/res/values-mr/adaptive_sleep_detector_strings.xml
+@@ -0,0 +1,7 @@
++<?xml version="1.0" encoding="utf-8"?>
++<resources>
++    <string name="adaptive_sleep_detector_title">चेहरा ओळखणे</string>
++    <string name="adaptive_sleep_detector_hal">कॅमेरा हार्डवेअर</string>
++    <string name="adaptive_sleep_detector_system">सिस्टीम</string>
++    <string name="adaptive_sleep_detector_privacy">कोणी स्क्रीनकडे पाहत आहे का हे पाहण्यासाठी स्क्रीन अटेंशन समोरचा कॅमेरा वापरते. हे डिव्हाइसवरच काम करते आणि इमेज कधीही स्टोअर केल्या जात नाहीत किंवा कुठेही पाठवल्या जात नाहीत.</string>
++</resources>
+diff --git a/res/values-ms/adaptive_sleep_detector_strings.xml b/res/values-ms/adaptive_sleep_detector_strings.xml
+new file mode 100644
+index 0000000..d3a199f
+--- /dev/null
++++ b/res/values-ms/adaptive_sleep_detector_strings.xml
+@@ -0,0 +1,7 @@
++<?xml version="1.0" encoding="utf-8"?>
++<resources>
++    <string name="adaptive_sleep_detector_title">Pengesanan wajah</string>
++    <string name="adaptive_sleep_detector_hal">Perkakasan kamera</string>
++    <string name="adaptive_sleep_detector_system">Sistem</string>
++    <string name="adaptive_sleep_detector_privacy">Perhatian skrin menggunakan kamera depan untuk melihat jika seseorang sedang memandang skrin. Ciri ini berfungsi pada peranti dan imej tidak sekali-kali disimpan atau dihantar ke mana-mana.</string>
++</resources>
+diff --git a/res/values-my/adaptive_sleep_detector_strings.xml b/res/values-my/adaptive_sleep_detector_strings.xml
+new file mode 100644
+index 0000000..09f8cd0
+--- /dev/null
++++ b/res/values-my/adaptive_sleep_detector_strings.xml
+@@ -0,0 +1,7 @@
++<?xml version="1.0" encoding="utf-8"?>
++<resources>
++    <string name="adaptive_sleep_detector_title">မျက်နှာ သိရှိခြင်း</string>
++    <string name="adaptive_sleep_detector_hal">ကင်မရာ စက်ပစ္စည်း</string>
++    <string name="adaptive_sleep_detector_system">စနစ်</string>
++    <string name="adaptive_sleep_detector_privacy">မျက်နှာပြင် အာရုံစိုက်မှုသည် တစ်စုံတစ်ယောက်က မျက်နှာပြင်ကို ကြည့်နေခြင်း ရှိမရှိ သိရန် ရှေ့ကင်မရာကို သုံးသည်။ ၎င်းသည် စက်ပေါ်တွင် အလုပ်လုပ်ပြီး ပုံများကို မည်သည့်အခါမျှ သိမ်းဆည်းခြင်း သို့မဟုတ် မည်သည့်နေရာသို့မျှ ပို့ခြင်း မရှိပါ။</string>
++</resources>
+diff --git a/res/values-nb/adaptive_sleep_detector_strings.xml b/res/values-nb/adaptive_sleep_detector_strings.xml
+new file mode 100644
+index 0000000..4ba0278
+--- /dev/null
++++ b/res/values-nb/adaptive_sleep_detector_strings.xml
+@@ -0,0 +1,7 @@
++<?xml version="1.0" encoding="utf-8"?>
++<resources>
++    <string name="adaptive_sleep_detector_title">Ansiktsgjenkjenning</string>
++    <string name="adaptive_sleep_detector_hal">Kameramaskinvare</string>
++    <string name="adaptive_sleep_detector_system">System</string>
++    <string name="adaptive_sleep_detector_privacy">Skjermoppmerksomhet bruker frontkameraet for å se om noen ser på skjermen. Det fungerer på enheten, og bilder blir aldri lagret eller sendt noe sted.</string>
++</resources>
+diff --git a/res/values-ne/adaptive_sleep_detector_strings.xml b/res/values-ne/adaptive_sleep_detector_strings.xml
+new file mode 100644
+index 0000000..392c4c0
+--- /dev/null
++++ b/res/values-ne/adaptive_sleep_detector_strings.xml
+@@ -0,0 +1,7 @@
++<?xml version="1.0" encoding="utf-8"?>
++<resources>
++    <string name="adaptive_sleep_detector_title">अनुहार पहिचान</string>
++    <string name="adaptive_sleep_detector_hal">क्यामेराको हार्डवेयर</string>
++    <string name="adaptive_sleep_detector_system">प्रणाली</string>
++    <string name="adaptive_sleep_detector_privacy">कसैले स्क्रिन हेरिरहेको छ कि छैन भनी थाहा पाउन स्क्रिन अटेन्सनले अगाडिको क्यामेरा प्रयोग गर्छ। यो डिभाइसमै काम गर्छ र फोटोहरू कहिल्यै भण्डारण गरिँदैनन् वा कतै पठाइँदैनन्।</string>
++</resources>
+diff --git a/res/values-nl/adaptive_sleep_detector_strings.xml b/res/values-nl/adaptive_sleep_detector_strings.xml
+new file mode 100644
+index 0000000..b63d4dc
+--- /dev/null
++++ b/res/values-nl/adaptive_sleep_detector_strings.xml
+@@ -0,0 +1,7 @@
++<?xml version="1.0" encoding="utf-8"?>
++<resources>
++    <string name="adaptive_sleep_detector_title">Gezichtsdetectie</string>
++    <string name="adaptive_sleep_detector_hal">Camerahardware</string>
++    <string name="adaptive_sleep_detector_system">Systeem</string>
++    <string name="adaptive_sleep_detector_privacy">Schermaandacht gebruikt de camera aan de voorkant om te zien of iemand naar het scherm kijkt. Het werkt op het apparaat en afbeeldingen worden nooit opgeslagen of ergens naartoe gestuurd.</string>
++</resources>
+diff --git a/res/values-or/adaptive_sleep_detector_strings.xml b/res/values-or/adaptive_sleep_detector_strings.xml
+new file mode 100644
+index 0000000..39cc307
+--- /dev/null
++++ b/res/values-or/adaptive_sleep_detector_strings.xml
+@@ -0,0 +1,7 @@
++<?xml version="1.0" encoding="utf-8"?>
++<resources>
++    <string name="adaptive_sleep_detector_title">ଫେସ ଚିହ୍ନଟକରଣ</string>
++    <string name="adaptive_sleep_detector_hal">କ୍ୟାମେରା ହାର୍ଡୱେର</string>
++    <string name="adaptive_sleep_detector_system">ସିଷ୍ଟମ</string>
++    <string name="adaptive_sleep_detector_privacy">କେହି ସ୍କ୍ରିନକୁ ଦେଖୁଛନ୍ତି କି ନାହିଁ ତାହା ଜାଣିବା ପାଇଁ ସ୍କ୍ରିନ ଆଟେନସନ ସାମ୍ନା କ୍ୟାମେରା ବ୍ୟବହାର କରେ। ଏହା ଡିଭାଇସରେ କାମ କରେ ଏବଂ ଛବିଗୁଡ଼ିକ କେବେ ବି ଷ୍ଟୋର କରାଯାଏ ନାହିଁ କିମ୍ବା କେଉଁଠିକୁ ପଠାଯାଏ ନାହିଁ।</string>
++</resources>
+diff --git a/res/values-pa/adaptive_sleep_detector_strings.xml b/res/values-pa/adaptive_sleep_detector_strings.xml
+new file mode 100644
+index 0000000..fedf346
+--- /dev/null
++++ b/res/values-pa/adaptive_sleep_detector_strings.xml
+@@ -0,0 +1,7 @@
++<?xml version="1.0" encoding="utf-8"?>
++<resources>
++    <string name="adaptive_sleep_detector_title">ਚਿਹਰੇ ਦੀ ਪਛਾਣ</string>
++    <string name="adaptive_sleep_detector_hal">ਕੈਮਰਾ ਹਾਰਡਵੇਅਰ</string>
++    <string name="adaptive_sleep_detector_system">ਸਿਸਟਮ</string>
++    <string name="adaptive_sleep_detector_privacy">ਸਕ੍ਰੀਨ ਅਟੈਂਸ਼ਨ ਇਹ ਦੇਖਣ ਲਈ ਅਗਲੇ ਕੈਮਰੇ ਦੀ ਵਰਤੋਂ ਕਰਦਾ ਹੈ ਕਿ ਕੀ ਕੋਈ ਸਕ੍ਰੀਨ ਵੱਲ ਦੇਖ ਰਿਹਾ ਹੈ। ਇਹ ਡੀਵਾਈਸ \'ਤੇ ਕੰਮ ਕਰਦਾ ਹੈ ਅਤੇ ਚਿੱਤਰਾਂ ਨੂੰ ਕਦੇ ਵੀ ਸਟੋਰ ਨਹੀਂ ਕੀਤਾ ਜਾਂਦਾ ਜਾਂ ਕਿਤੇ ਨਹੀਂ ਭੇਜਿਆ ਜਾਂਦਾ।</string>
++</resources>
+diff --git a/res/values-pl/adaptive_sleep_detector_strings.xml b/res/values-pl/adaptive_sleep_detector_strings.xml
+new file mode 100644
+index 0000000..723a712
+--- /dev/null
++++ b/res/values-pl/adaptive_sleep_detector_strings.xml
+@@ -0,0 +1,7 @@
++<?xml version="1.0" encoding="utf-8"?>
++<resources>
++    <string name="adaptive_sleep_detector_title">Wykrywanie twarzy</string>
++    <string name="adaptive_sleep_detector_hal">Sprzęt aparatu</string>
++    <string name="adaptive_sleep_detector_system">System</string>
++    <string name="adaptive_sleep_detector_privacy">Aktywny ekran wykorzystuje przedni aparat, aby sprawdzić, czy ktoś patrzy na ekran. Działa na urządzeniu, a obrazy nigdy nie są przechowywane ani nigdzie wysyłane.</string>
++</resources>
+diff --git a/res/values-pt-rBR/adaptive_sleep_detector_strings.xml b/res/values-pt-rBR/adaptive_sleep_detector_strings.xml
+new file mode 100644
+index 0000000..cb44328
+--- /dev/null
++++ b/res/values-pt-rBR/adaptive_sleep_detector_strings.xml
+@@ -0,0 +1,7 @@
++<?xml version="1.0" encoding="utf-8"?>
++<resources>
++    <string name="adaptive_sleep_detector_title">Detecção de rosto</string>
++    <string name="adaptive_sleep_detector_hal">Hardware da câmera</string>
++    <string name="adaptive_sleep_detector_system">Sistema</string>
++    <string name="adaptive_sleep_detector_privacy">O recurso Atenção à tela usa a câmera frontal para saber se alguém está olhando para a tela. Ele funciona no dispositivo, e as imagens nunca são armazenadas nem enviadas para nenhum lugar.</string>
++</resources>
+diff --git a/res/values-pt-rPT/adaptive_sleep_detector_strings.xml b/res/values-pt-rPT/adaptive_sleep_detector_strings.xml
+new file mode 100644
+index 0000000..8afdbec
+--- /dev/null
++++ b/res/values-pt-rPT/adaptive_sleep_detector_strings.xml
+@@ -0,0 +1,7 @@
++<?xml version="1.0" encoding="utf-8"?>
++<resources>
++    <string name="adaptive_sleep_detector_title">Deteção de rosto</string>
++    <string name="adaptive_sleep_detector_hal">Hardware da câmara</string>
++    <string name="adaptive_sleep_detector_system">Sistema</string>
++    <string name="adaptive_sleep_detector_privacy">A funcionalidade Atenção ao ecrã utiliza a câmara frontal para ver se alguém está a olhar para o ecrã. Funciona no dispositivo e as imagens nunca são armazenadas nem enviadas para lado nenhum.</string>
++</resources>
+diff --git a/res/values-pt/adaptive_sleep_detector_strings.xml b/res/values-pt/adaptive_sleep_detector_strings.xml
+new file mode 100644
+index 0000000..cb44328
+--- /dev/null
++++ b/res/values-pt/adaptive_sleep_detector_strings.xml
+@@ -0,0 +1,7 @@
++<?xml version="1.0" encoding="utf-8"?>
++<resources>
++    <string name="adaptive_sleep_detector_title">Detecção de rosto</string>
++    <string name="adaptive_sleep_detector_hal">Hardware da câmera</string>
++    <string name="adaptive_sleep_detector_system">Sistema</string>
++    <string name="adaptive_sleep_detector_privacy">O recurso Atenção à tela usa a câmera frontal para saber se alguém está olhando para a tela. Ele funciona no dispositivo, e as imagens nunca são armazenadas nem enviadas para nenhum lugar.</string>
++</resources>
+diff --git a/res/values-ro/adaptive_sleep_detector_strings.xml b/res/values-ro/adaptive_sleep_detector_strings.xml
+new file mode 100644
+index 0000000..c97e56e
+--- /dev/null
++++ b/res/values-ro/adaptive_sleep_detector_strings.xml
+@@ -0,0 +1,7 @@
++<?xml version="1.0" encoding="utf-8"?>
++<resources>
++    <string name="adaptive_sleep_detector_title">Detectarea feței</string>
++    <string name="adaptive_sleep_detector_hal">Hardware-ul camerei</string>
++    <string name="adaptive_sleep_detector_system">Sistem</string>
++    <string name="adaptive_sleep_detector_privacy">Atenția la ecran folosește camera frontală pentru a vedea dacă cineva se uită la ecran. Funcționează pe dispozitiv, iar imaginile nu sunt niciodată stocate sau trimise nicăieri.</string>
++</resources>
+diff --git a/res/values-ru/adaptive_sleep_detector_strings.xml b/res/values-ru/adaptive_sleep_detector_strings.xml
+new file mode 100644
+index 0000000..c69374e
+--- /dev/null
++++ b/res/values-ru/adaptive_sleep_detector_strings.xml
+@@ -0,0 +1,7 @@
++<?xml version="1.0" encoding="utf-8"?>
++<resources>
++    <string name="adaptive_sleep_detector_title">Распознавание лица</string>
++    <string name="adaptive_sleep_detector_hal">Оборудование камеры</string>
++    <string name="adaptive_sleep_detector_system">Система</string>
++    <string name="adaptive_sleep_detector_privacy">Адаптивный спящий режим использует фронтальную камеру, чтобы определить, смотрит ли кто-нибудь на экран. Функция работает на устройстве, а изображения никогда не сохраняются и никуда не отправляются.</string>
++</resources>
+diff --git a/res/values-si/adaptive_sleep_detector_strings.xml b/res/values-si/adaptive_sleep_detector_strings.xml
+new file mode 100644
+index 0000000..89abe92
+--- /dev/null
++++ b/res/values-si/adaptive_sleep_detector_strings.xml
+@@ -0,0 +1,7 @@
++<?xml version="1.0" encoding="utf-8"?>
++<resources>
++    <string name="adaptive_sleep_detector_title">මුහුණු අනාවරණය</string>
++    <string name="adaptive_sleep_detector_hal">කැමරා දෘඪාංග</string>
++    <string name="adaptive_sleep_detector_system">පද්ධතිය</string>
++    <string name="adaptive_sleep_detector_privacy">කවුරුන් හෝ තිරය දෙස බලන්නේ දැයි බැලීමට තිර අවධානය ඉදිරිපස කැමරාව භාවිත කරයි. එය උපාංගය මත ක්‍රියා කරන අතර, රූප කිසි විටෙක ගබඩා කිරීම හෝ කොතැනකටවත් යැවීම සිදු නොවේ.</string>
++</resources>
+diff --git a/res/values-sk/adaptive_sleep_detector_strings.xml b/res/values-sk/adaptive_sleep_detector_strings.xml
+new file mode 100644
+index 0000000..e308669
+--- /dev/null
++++ b/res/values-sk/adaptive_sleep_detector_strings.xml
+@@ -0,0 +1,7 @@
++<?xml version="1.0" encoding="utf-8"?>
++<resources>
++    <string name="adaptive_sleep_detector_title">Detekcia tváre</string>
++    <string name="adaptive_sleep_detector_hal">Hardvér fotoaparátu</string>
++    <string name="adaptive_sleep_detector_system">Systém</string>
++    <string name="adaptive_sleep_detector_privacy">Vnímanie obrazovky pomocou predného fotoaparátu zisťuje, či sa niekto pozerá na obrazovku. Funguje v zariadení a snímky sa nikdy neukladajú ani nikam neodosielajú.</string>
++</resources>
+diff --git a/res/values-sl/adaptive_sleep_detector_strings.xml b/res/values-sl/adaptive_sleep_detector_strings.xml
+new file mode 100644
+index 0000000..2b3cd17
+--- /dev/null
++++ b/res/values-sl/adaptive_sleep_detector_strings.xml
+@@ -0,0 +1,7 @@
++<?xml version="1.0" encoding="utf-8"?>
++<resources>
++    <string name="adaptive_sleep_detector_title">Zaznavanje obraza</string>
++    <string name="adaptive_sleep_detector_hal">Strojna oprema fotoaparata</string>
++    <string name="adaptive_sleep_detector_system">Sistem</string>
++    <string name="adaptive_sleep_detector_privacy">Zaznavanje pozornosti uporablja sprednji fotoaparat, da ugotovi, ali nekdo gleda zaslon. Deluje v napravi, slike pa se nikoli ne shranijo ali pošljejo nikamor.</string>
++</resources>
+diff --git a/res/values-sq/adaptive_sleep_detector_strings.xml b/res/values-sq/adaptive_sleep_detector_strings.xml
+new file mode 100644
+index 0000000..d4c9dac
+--- /dev/null
++++ b/res/values-sq/adaptive_sleep_detector_strings.xml
+@@ -0,0 +1,7 @@
++<?xml version="1.0" encoding="utf-8"?>
++<resources>
++    <string name="adaptive_sleep_detector_title">Zbulimi i fytyrës</string>
++    <string name="adaptive_sleep_detector_hal">Hardueri i kamerës</string>
++    <string name="adaptive_sleep_detector_system">Sistemi</string>
++    <string name="adaptive_sleep_detector_privacy">Vëmendja ndaj ekranit përdor kamerën e përparme për të parë nëse dikush po shikon ekranin. Ajo funksionon në pajisje dhe imazhet nuk ruhen ose nuk dërgohen kurrë askund.</string>
++</resources>
+diff --git a/res/values-sr/adaptive_sleep_detector_strings.xml b/res/values-sr/adaptive_sleep_detector_strings.xml
+new file mode 100644
+index 0000000..006138b
+--- /dev/null
++++ b/res/values-sr/adaptive_sleep_detector_strings.xml
+@@ -0,0 +1,7 @@
++<?xml version="1.0" encoding="utf-8"?>
++<resources>
++    <string name="adaptive_sleep_detector_title">Откривање лица</string>
++    <string name="adaptive_sleep_detector_hal">Хардвер камере</string>
++    <string name="adaptive_sleep_detector_system">Систем</string>
++    <string name="adaptive_sleep_detector_privacy">Пажња екрана користи предњу камеру да би утврдила да ли неко гледа екран. Ради на уређају, а слике се никада не чувају нити шаљу било где.</string>
++</resources>
+diff --git a/res/values-sv/adaptive_sleep_detector_strings.xml b/res/values-sv/adaptive_sleep_detector_strings.xml
+new file mode 100644
+index 0000000..5a36671
+--- /dev/null
++++ b/res/values-sv/adaptive_sleep_detector_strings.xml
+@@ -0,0 +1,7 @@
++<?xml version="1.0" encoding="utf-8"?>
++<resources>
++    <string name="adaptive_sleep_detector_title">Ansiktsavkänning</string>
++    <string name="adaptive_sleep_detector_hal">Kamerans maskinvara</string>
++    <string name="adaptive_sleep_detector_system">System</string>
++    <string name="adaptive_sleep_detector_privacy">Skärmuppmärksamhet använder kameran på framsidan för att se om någon tittar på skärmen. Funktionen körs på enheten och bilder sparas aldrig eller skickas någonstans.</string>
++</resources>
+diff --git a/res/values-sw/adaptive_sleep_detector_strings.xml b/res/values-sw/adaptive_sleep_detector_strings.xml
+new file mode 100644
+index 0000000..6f4da13
+--- /dev/null
++++ b/res/values-sw/adaptive_sleep_detector_strings.xml
+@@ -0,0 +1,7 @@
++<?xml version="1.0" encoding="utf-8"?>
++<resources>
++    <string name="adaptive_sleep_detector_title">Utambuzi wa uso</string>
++    <string name="adaptive_sleep_detector_hal">Maunzi ya kamera</string>
++    <string name="adaptive_sleep_detector_system">Mfumo</string>
++    <string name="adaptive_sleep_detector_privacy">Kipengele cha kutambua unapoangalia skrini hutumia kamera ya mbele ili kuona iwapo kuna mtu anayeangalia skrini. Kinafanya kazi kwenye kifaa na picha hazihifadhiwi wala kutumwa popote.</string>
++</resources>
+diff --git a/res/values-ta/adaptive_sleep_detector_strings.xml b/res/values-ta/adaptive_sleep_detector_strings.xml
+new file mode 100644
+index 0000000..3d0ac53
+--- /dev/null
++++ b/res/values-ta/adaptive_sleep_detector_strings.xml
+@@ -0,0 +1,7 @@
++<?xml version="1.0" encoding="utf-8"?>
++<resources>
++    <string name="adaptive_sleep_detector_title">முகம் கண்டறிதல்</string>
++    <string name="adaptive_sleep_detector_hal">கேமரா வன்பொருள்</string>
++    <string name="adaptive_sleep_detector_system">சிஸ்டம்</string>
++    <string name="adaptive_sleep_detector_privacy">திரையை யாராவது பார்க்கிறார்களா என்பதைக் கண்டறிய, திரைக் கவனம் முன்பக்கக் கேமராவைப் பயன்படுத்தும். இது சாதனத்திலேயே செயல்படும், படங்கள் ஒருபோதும் சேமிக்கப்படாது, எங்கும் அனுப்பப்படாது.</string>
++</resources>
+diff --git a/res/values-te/adaptive_sleep_detector_strings.xml b/res/values-te/adaptive_sleep_detector_strings.xml
+new file mode 100644
+index 0000000..7177955
+--- /dev/null
++++ b/res/values-te/adaptive_sleep_detector_strings.xml
+@@ -0,0 +1,7 @@
++<?xml version="1.0" encoding="utf-8"?>
++<resources>
++    <string name="adaptive_sleep_detector_title">ముఖ గుర్తింపు</string>
++    <string name="adaptive_sleep_detector_hal">కెమెరా హార్డ్‌వేర్</string>
++    <string name="adaptive_sleep_detector_system">సిస్టమ్</string>
++    <string name="adaptive_sleep_detector_privacy">ఎవరైనా స్క్రీన్‌ను చూస్తున్నారో లేదో తెలుసుకోవడానికి స్క్రీన్ అటెన్షన్ ముందు కెమెరాను ఉపయోగిస్తుంది. ఇది పరికరంలోనే పని చేస్తుంది, ఇమేజ్‌లు ఎప్పటికీ స్టోర్ చేయబడవు లేదా ఎక్కడికీ పంపబడవు.</string>
++</resources>
+diff --git a/res/values-th/adaptive_sleep_detector_strings.xml b/res/values-th/adaptive_sleep_detector_strings.xml
+new file mode 100644
+index 0000000..849131f
+--- /dev/null
++++ b/res/values-th/adaptive_sleep_detector_strings.xml
+@@ -0,0 +1,7 @@
++<?xml version="1.0" encoding="utf-8"?>
++<resources>
++    <string name="adaptive_sleep_detector_title">การตรวจจับใบหน้า</string>
++    <string name="adaptive_sleep_detector_hal">ฮาร์ดแวร์กล้อง</string>
++    <string name="adaptive_sleep_detector_system">ระบบ</string>
++    <string name="adaptive_sleep_detector_privacy">การจดจ่อที่หน้าจอใช้กล้องหน้าเพื่อดูว่ามีคนกำลังมองหน้าจออยู่หรือไม่ ฟีเจอร์นี้ทำงานในอุปกรณ์ และจะไม่มีการจัดเก็บหรือส่งรูปภาพไปที่ใดเลย</string>
++</resources>
+diff --git a/res/values-tl/adaptive_sleep_detector_strings.xml b/res/values-tl/adaptive_sleep_detector_strings.xml
+new file mode 100644
+index 0000000..3c1d818
+--- /dev/null
++++ b/res/values-tl/adaptive_sleep_detector_strings.xml
+@@ -0,0 +1,7 @@
++<?xml version="1.0" encoding="utf-8"?>
++<resources>
++    <string name="adaptive_sleep_detector_title">Pag-detect ng mukha</string>
++    <string name="adaptive_sleep_detector_hal">Hardware ng camera</string>
++    <string name="adaptive_sleep_detector_system">System</string>
++    <string name="adaptive_sleep_detector_privacy">Ginagamit ng atensyon sa screen ang camera sa harap para malaman kung may tumitingin sa screen. Gumagana ito sa device, at hindi kailanman ini-store o ipinapadala kahit saan ang mga larawan.</string>
++</resources>
+diff --git a/res/values-tr/adaptive_sleep_detector_strings.xml b/res/values-tr/adaptive_sleep_detector_strings.xml
+new file mode 100644
+index 0000000..a269dbc
+--- /dev/null
++++ b/res/values-tr/adaptive_sleep_detector_strings.xml
+@@ -0,0 +1,7 @@
++<?xml version="1.0" encoding="utf-8"?>
++<resources>
++    <string name="adaptive_sleep_detector_title">Yüz algılama</string>
++    <string name="adaptive_sleep_detector_hal">Kamera donanımı</string>
++    <string name="adaptive_sleep_detector_system">Sistem</string>
++    <string name="adaptive_sleep_detector_privacy">Ekrana dikkat özelliği, ekrana birinin bakıp bakmadığını anlamak için ön kamerayı kullanır. Cihaz üzerinde çalışır ve görüntüler hiçbir zaman saklanmaz veya hiçbir yere gönderilmez.</string>
++</resources>
+diff --git a/res/values-uk/adaptive_sleep_detector_strings.xml b/res/values-uk/adaptive_sleep_detector_strings.xml
+new file mode 100644
+index 0000000..ddb9d43
+--- /dev/null
++++ b/res/values-uk/adaptive_sleep_detector_strings.xml
+@@ -0,0 +1,7 @@
++<?xml version="1.0" encoding="utf-8"?>
++<resources>
++    <string name="adaptive_sleep_detector_title">Виявлення обличчя</string>
++    <string name="adaptive_sleep_detector_hal">Апаратне забезпечення камери</string>
++    <string name="adaptive_sleep_detector_system">Система</string>
++    <string name="adaptive_sleep_detector_privacy">Функція \"Адаптивний режим сну\" використовує фронтальну камеру, щоб визначити, чи хтось дивиться на екран. Вона працює на пристрої, а зображення ніколи не зберігаються й нікуди не надсилаються.</string>
++</resources>
+diff --git a/res/values-ur/adaptive_sleep_detector_strings.xml b/res/values-ur/adaptive_sleep_detector_strings.xml
+new file mode 100644
+index 0000000..5f4a096
+--- /dev/null
++++ b/res/values-ur/adaptive_sleep_detector_strings.xml
+@@ -0,0 +1,7 @@
++<?xml version="1.0" encoding="utf-8"?>
++<resources>
++    <string name="adaptive_sleep_detector_title">چہرے کی شناخت</string>
++    <string name="adaptive_sleep_detector_hal">کیمرا ہارڈ ویئر</string>
++    <string name="adaptive_sleep_detector_system">سسٹم</string>
++    <string name="adaptive_sleep_detector_privacy">اسکرین اٹینشن یہ دیکھنے کے لیے سامنے والے کیمرے کا استعمال کرتا ہے کہ آیا کوئی اسکرین کو دیکھ رہا ہے۔ یہ آلے پر کام کرتا ہے اور تصاویر کبھی بھی اسٹور نہیں کی جاتیں یا کہیں نہیں بھیجی جاتیں۔</string>
++</resources>
+diff --git a/res/values-uz/adaptive_sleep_detector_strings.xml b/res/values-uz/adaptive_sleep_detector_strings.xml
+new file mode 100644
+index 0000000..49d2eaa
+--- /dev/null
++++ b/res/values-uz/adaptive_sleep_detector_strings.xml
+@@ -0,0 +1,7 @@
++<?xml version="1.0" encoding="utf-8"?>
++<resources>
++    <string name="adaptive_sleep_detector_title">Yuzni aniqlash</string>
++    <string name="adaptive_sleep_detector_hal">Kamera apparati</string>
++    <string name="adaptive_sleep_detector_system">Tizim</string>
++    <string name="adaptive_sleep_detector_privacy">Ekranga eʼtibor funksiyasi kimdir ekranga qarayotganini aniqlash uchun old kameradan foydalanadi. U qurilmada ishlaydi va rasmlar hech qachon saqlanmaydi yoki hech qayerga yuborilmaydi.</string>
++</resources>
+diff --git a/res/values-vi/adaptive_sleep_detector_strings.xml b/res/values-vi/adaptive_sleep_detector_strings.xml
+new file mode 100644
+index 0000000..37f0e11
+--- /dev/null
++++ b/res/values-vi/adaptive_sleep_detector_strings.xml
+@@ -0,0 +1,7 @@
++<?xml version="1.0" encoding="utf-8"?>
++<resources>
++    <string name="adaptive_sleep_detector_title">Phát hiện khuôn mặt</string>
++    <string name="adaptive_sleep_detector_hal">Phần cứng máy ảnh</string>
++    <string name="adaptive_sleep_detector_system">Hệ thống</string>
++    <string name="adaptive_sleep_detector_privacy">Tính năng Chú ý tới màn hình dùng camera trước để xem có ai đang nhìn vào màn hình hay không. Tính năng này hoạt động trên thiết bị và hình ảnh không bao giờ được lưu trữ hoặc gửi đi bất cứ đâu.</string>
++</resources>
+diff --git a/res/values-zh-rCN/adaptive_sleep_detector_strings.xml b/res/values-zh-rCN/adaptive_sleep_detector_strings.xml
+new file mode 100644
+index 0000000..9d37830
+--- /dev/null
++++ b/res/values-zh-rCN/adaptive_sleep_detector_strings.xml
+@@ -0,0 +1,7 @@
++<?xml version="1.0" encoding="utf-8"?>
++<resources>
++    <string name="adaptive_sleep_detector_title">人脸检测</string>
++    <string name="adaptive_sleep_detector_hal">相机硬件</string>
++    <string name="adaptive_sleep_detector_system">系统</string>
++    <string name="adaptive_sleep_detector_privacy">“屏幕感知”功能会使用前置摄像头来确定是否有人正在看屏幕。该功能在设备上运行，图片绝不会被存储或发送到任何地方。</string>
++</resources>
+diff --git a/res/values-zh-rHK/adaptive_sleep_detector_strings.xml b/res/values-zh-rHK/adaptive_sleep_detector_strings.xml
+new file mode 100644
+index 0000000..e9acfc3
+--- /dev/null
++++ b/res/values-zh-rHK/adaptive_sleep_detector_strings.xml
+@@ -0,0 +1,7 @@
++<?xml version="1.0" encoding="utf-8"?>
++<resources>
++    <string name="adaptive_sleep_detector_title">臉孔偵測</string>
++    <string name="adaptive_sleep_detector_hal">相機硬件</string>
++    <string name="adaptive_sleep_detector_system">系統</string>
++    <string name="adaptive_sleep_detector_privacy">「螢幕感知」功能會使用前置鏡頭偵測是否有人正在看螢幕。此功能在裝置上運作，圖片絕不會儲存或傳送至任何地方。</string>
++</resources>
+diff --git a/res/values-zh-rTW/adaptive_sleep_detector_strings.xml b/res/values-zh-rTW/adaptive_sleep_detector_strings.xml
+new file mode 100644
+index 0000000..895cf58
+--- /dev/null
++++ b/res/values-zh-rTW/adaptive_sleep_detector_strings.xml
+@@ -0,0 +1,7 @@
++<?xml version="1.0" encoding="utf-8"?>
++<resources>
++    <string name="adaptive_sleep_detector_title">臉部偵測</string>
++    <string name="adaptive_sleep_detector_hal">相機硬體</string>
++    <string name="adaptive_sleep_detector_system">系統</string>
++    <string name="adaptive_sleep_detector_privacy">「螢幕感知」功能會使用前置鏡頭偵測是否有人正在看螢幕。這項功能在裝置上運作，圖片絕不會儲存或傳送到任何地方。</string>
++</resources>
+diff --git a/res/values-zu/adaptive_sleep_detector_strings.xml b/res/values-zu/adaptive_sleep_detector_strings.xml
+new file mode 100644
+index 0000000..8518afa
+--- /dev/null
++++ b/res/values-zu/adaptive_sleep_detector_strings.xml
+@@ -0,0 +1,7 @@
++<?xml version="1.0" encoding="utf-8"?>
++<resources>
++    <string name="adaptive_sleep_detector_title">Ukutholwa kobuso</string>
++    <string name="adaptive_sleep_detector_hal">Ihadiwe yekhamera</string>
++    <string name="adaptive_sleep_detector_system">Isistimu</string>
++    <string name="adaptive_sleep_detector_privacy">Ukunaka isikrini kusebenzisa ikhamera engaphambili ukubona ukuthi ukhona yini obuka isikrini. Kusebenza kudivayisi, futhi izithombe azilokothi zigcinwe noma zithunyelwe noma kuphi.</string>
++</resources>
+diff --git a/res/values/adaptive_sleep_detector_strings.xml b/res/values/adaptive_sleep_detector_strings.xml
+new file mode 100644
+index 0000000..393c3a1
+--- /dev/null
++++ b/res/values/adaptive_sleep_detector_strings.xml
+@@ -0,0 +1,7 @@
++<?xml version="1.0" encoding="utf-8"?>
++<resources>
++    <string name="adaptive_sleep_detector_title">Face detection</string>
++    <string name="adaptive_sleep_detector_hal">Camera hardware</string>
++    <string name="adaptive_sleep_detector_system">System</string>
++    <string name="adaptive_sleep_detector_privacy">Screen attention uses the front camera to see if someone is looking at the screen. It works on device, and images are never stored or sent anywhere.</string>
++</resources>
+diff --git a/src/com/android/settings/display/AdaptiveSleepDetectorPreferenceController.java b/src/com/android/settings/display/AdaptiveSleepDetectorPreferenceController.java
+new file mode 100644
+index 0000000..17af943
+--- /dev/null
++++ b/src/com/android/settings/display/AdaptiveSleepDetectorPreferenceController.java
+@@ -0,0 +1,54 @@
++package com.android.settings.display;
++
++import android.content.Context;
++import android.provider.Settings;
++
++import androidx.preference.ListPreference;
++import androidx.preference.PreferenceScreen;
++
++import com.android.settings.R;
++
++/**
++ * The controller of Screen attention's face detector preference.
++ * Picks whether the camera HAL or the system face detector decides if a face is present.
++ */
++public class AdaptiveSleepDetectorPreferenceController {
++
++    // read by com.restlessos.attention
++    private static final String SETTING = "restless_attention_detector";
++    private static final String VALUE_HAL = "hal";
++    private static final String VALUE_SYSTEM = "system";
++
++    private final Context mContext;
++    private ListPreference mPreference;
++
++    public AdaptiveSleepDetectorPreferenceController(Context context) {
++        mContext = context;
++    }
++
++    /**
++     * Adds the controlled preference to the provided preference screen.
++     */
++    public void addToScreen(PreferenceScreen screen) {
++        initializePreference();
++        String value = Settings.Secure.getString(mContext.getContentResolver(), SETTING);
++        mPreference.setValue(VALUE_SYSTEM.equals(value) ? VALUE_SYSTEM : VALUE_HAL);
++        screen.addPreference(mPreference);
++    }
++
++    private void initializePreference() {
++        if (mPreference == null) {
++            mPreference = new ListPreference(mContext);
++            mPreference.setKey("adaptive_sleep_detector");
++            mPreference.setTitle(R.string.adaptive_sleep_detector_title);
++            mPreference.setDialogTitle(R.string.adaptive_sleep_detector_title);
++            mPreference.setEntries(new CharSequence[] {
++                    mContext.getString(R.string.adaptive_sleep_detector_hal),
++                    mContext.getString(R.string.adaptive_sleep_detector_system)});
++            mPreference.setEntryValues(new CharSequence[] {VALUE_HAL, VALUE_SYSTEM});
++            mPreference.setSummaryProvider(ListPreference.SimpleSummaryProvider.getInstance());
++            mPreference.setOnPreferenceChangeListener((p, newValue) -> Settings.Secure.putString(
++                    mContext.getContentResolver(), SETTING, (String) newValue));
++        }
++    }
++}
+diff --git a/src/com/android/settings/display/ScreenTimeoutSettings.java b/src/com/android/settings/display/ScreenTimeoutSettings.java
+index e6f3949..fe12585 100644
+--- a/src/com/android/settings/display/ScreenTimeoutSettings.java
++++ b/src/com/android/settings/display/ScreenTimeoutSettings.java
+@@ -125,6 +125,8 @@ public class ScreenTimeoutSettings extends RadioButtonPickerFragment
+     @VisibleForTesting
+     AdaptiveSleepBatterySaverPreferenceController mAdaptiveSleepBatterySaverPreferenceController;
+
++    private AdaptiveSleepDetectorPreferenceController mAdaptiveSleepDetectorController;
++
+     @Nullable TogglePreferenceController mAdditionalTogglePreferenceController;
+
+     public ScreenTimeoutSettings() {
+@@ -143,9 +145,10 @@ public class ScreenTimeoutSettings extends RadioButtonPickerFragment
+                 new AdaptiveSleepCameraStatePreferenceController(context, getLifecycle());
+         mAdaptiveSleepBatterySaverPreferenceController =
+                 new AdaptiveSleepBatterySaverPreferenceController(context);
++        mAdaptiveSleepDetectorController = new AdaptiveSleepDetectorPreferenceController(context);
+         mPrivacyPreference = new FooterPreference(context);
+         mPrivacyPreference.setIcon(R.drawable.ic_privacy_shield_24dp);
+-        mPrivacyPreference.setTitle(R.string.adaptive_sleep_privacy);
++        mPrivacyPreference.setTitle(R.string.adaptive_sleep_detector_privacy);
+         mPrivacyPreference.setSelectable(false);
+         mPrivacyPreference.setLayoutResource(
+                 com.android.settingslib.widget.preference.footer.R.layout.preference_footer);
+@@ -258,7 +261,7 @@ public class ScreenTimeoutSettings extends RadioButtonPickerFragment
+
+         mPrivacyPreference = new FooterPreference(mContext);
+         mPrivacyPreference.setIcon(R.drawable.ic_privacy_shield_24dp);
+-        mPrivacyPreference.setTitle(R.string.adaptive_sleep_privacy);
++        mPrivacyPreference.setTitle(R.string.adaptive_sleep_detector_privacy);
+         mPrivacyPreference.setSelectable(false);
+         mPrivacyPreference.setLayoutResource(
+                 com.android.settingslib.widget.preference.footer.R.layout.preference_footer);
+@@ -282,6 +285,7 @@ public class ScreenTimeoutSettings extends RadioButtonPickerFragment
+             } else {
+                 mAdaptiveSleepController.addToScreen(screen);
+             }
++            mAdaptiveSleepDetectorController.addToScreen(screen);
+             mAdaptiveSleepBatterySaverPreferenceController.addToScreen(screen);
+             screen.addPreference(mPrivacyPreference);
+         }
+-- 
+2.56.0
+

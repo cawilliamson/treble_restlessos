@@ -1,0 +1,31 @@
+From bc383b12658018414910b5de7252eca2463da501 Mon Sep 17 00:00:00 2001
+From: Langsdorff <131063968+clangsdorff@users.noreply.github.com>
+Date: Tue, 27 Oct 2026 19:24:47 +0300
+Subject: [PATCH 31/38] SystemUI: derive the udfps pixel pitch from the display
+ when the overlay leaves it unset
+
+---
+ .../biometrics/domain/interactor/UdfpsOverlayInteractor.kt  | 6 ++++--
+ 1 file changed, 4 insertions(+), 2 deletions(-)
+
+diff --git a/packages/SystemUI/src/com/android/systemui/biometrics/domain/interactor/UdfpsOverlayInteractor.kt b/packages/SystemUI/src/com/android/systemui/biometrics/domain/interactor/UdfpsOverlayInteractor.kt
+index 3d7170daa..6afb35501 100644
+--- a/packages/SystemUI/src/com/android/systemui/biometrics/domain/interactor/UdfpsOverlayInteractor.kt
++++ b/packages/SystemUI/src/com/android/systemui/biometrics/domain/interactor/UdfpsOverlayInteractor.kt
+@@ -56,9 +56,11 @@ constructor(
+     @Application private val scope: CoroutineScope,
+ ) {
+     private fun calculateIconSize(): Int {
+-        val pixelPitch = context.resources.getFloat(R.dimen.pixel_pitch)
++        var pixelPitch = context.resources.getFloat(R.dimen.pixel_pitch)
+         if (pixelPitch <= 0) {
+-            Log.e(TAG, "invalid pixelPitch: $pixelPitch. Pixel pitch must be updated per device.")
++            val dm = context.resources.displayMetrics
++            val dpi = if (dm.xdpi >= 120f && dm.xdpi <= 800f) dm.xdpi else dm.densityDpi.toFloat()
++            pixelPitch = 25400f / dpi
+         }
+         return (context.resources.getFloat(R.dimen.udfps_icon_size) / pixelPitch).toInt()
+     }
+-- 
+2.56.0
+

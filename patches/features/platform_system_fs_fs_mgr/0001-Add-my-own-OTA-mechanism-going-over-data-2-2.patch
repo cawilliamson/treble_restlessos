@@ -1,7 +1,7 @@
 From 243b5ff1913a0c6d9e075fbd502be5c50b068cd6 Mon Sep 17 00:00:00 2001
 From: Pierre-Hugues Husson <phh@phh.me>
 Date: Sat, 22 Jan 2022 14:34:45 -0500
-Subject: [PATCH 1/2] Add my own OTA mechanism going over /data (2/2)
+Subject: [PATCH 1/1] Add my own OTA mechanism going over /data (2/2)
 
 Change-Id: I9cacff2d761affa0376b4bb8ca63353a9d95b5de
 ---

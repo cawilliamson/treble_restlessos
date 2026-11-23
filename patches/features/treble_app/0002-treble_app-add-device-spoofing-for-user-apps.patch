@@ -1,0 +1,192 @@
+From 21beae756a8b3aa7fcfad9831cdd971d2f6db6b0 Mon Sep 17 00:00:00 2001
+From: Langsdorff <131063968+clangsdorff@users.noreply.github.com>
+Date: Sun, 8 Nov 2026 13:46:24 +0300
+Subject: [PATCH 2/2] treble_app: add device spoofing for user apps
+
+add a page with a switch and the device values user apps should see.
+each value goes to persist.sys.spoof.<field>, which the framework
+reads when a non system app starts. presets fill the form with android
+17 values of real pixel, samsung and xiaomi devices.
+---
+ .../me/phh/treble/app/MainSettingsFragment.kt |   1 +
+ .../java/me/phh/treble/app/SpoofSettings.kt   | 120 ++++++++++++++++++
+ app/src/main/res/xml/pref_main.xml            |   4 +
+ app/src/main/res/xml/pref_spoof.xml           |  12 ++
+ 4 files changed, 137 insertions(+)
+ create mode 100644 app/src/main/java/me/phh/treble/app/SpoofSettings.kt
+ create mode 100644 app/src/main/res/xml/pref_spoof.xml
+
+diff --git a/app/src/main/java/me/phh/treble/app/MainSettingsFragment.kt b/app/src/main/java/me/phh/treble/app/MainSettingsFragment.kt
+index f7e8408..27b4ff8 100644
+--- a/app/src/main/java/me/phh/treble/app/MainSettingsFragment.kt
++++ b/app/src/main/java/me/phh/treble/app/MainSettingsFragment.kt
+@@ -27,6 +27,7 @@ class MainSettingsFragment : SettingsFragment() {
+         "doze" to Entry(null, ::DozeSettingsFragment),
+         "hardening" to Entry(HardeningSettings, ::HardeningSettingsFragment),
+         "ims" to Entry(ImsSettings, ::ImsSettingsFragment),
++        "spoof" to Entry(SpoofSettings, ::SpoofSettingsFragment),
+         "misc" to Entry(null, ::MiscSettingsFragment),
+         "custom" to Entry(CustomSettings, ::CustomSettingsFragment),
+         "audio_effects" to Entry(null, ::AudioEffectsFragment),
+diff --git a/app/src/main/java/me/phh/treble/app/SpoofSettings.kt b/app/src/main/java/me/phh/treble/app/SpoofSettings.kt
+new file mode 100644
+index 0000000..4d72e89
+--- /dev/null
++++ b/app/src/main/java/me/phh/treble/app/SpoofSettings.kt
+@@ -0,0 +1,120 @@
++package me.phh.treble.app
++
++import android.app.AlertDialog
++import android.os.Bundle
++import android.os.SystemProperties
++import android.text.InputType
++import android.view.ViewGroup
++import android.widget.Button
++import android.widget.EditText
++import android.widget.LinearLayout
++import android.widget.ScrollView
++import android.widget.Toast
++import androidx.preference.Preference
++import androidx.preference.SwitchPreferenceCompat
++
++object SpoofSettings : Settings {
++    val enabled = "key_spoof_enabled"
++    val values = "key_spoof_values"
++
++    // non ro properties cannot hold more than this
++    val maxValueLength = 91
++
++    val fields = listOf(
++        "manufacturer" to "Manufacturer",
++        "brand" to "Brand",
++        "model" to "Model",
++        "device" to "Device",
++        "product" to "Product",
++        "fingerprint" to "Fingerprint",
++        "release" to "Android version",
++    )
++
++    val presets = listOf(
++        "Pixel 8" to preset("Google", "google", "Pixel 8", "shiba", "shiba", "google/shiba/shiba:17/CP3A.261005.005/16271449:user/release-keys"),
++        "Pixel 9 Pro" to preset("Google", "google", "Pixel 9 Pro", "caiman", "caiman", "google/caiman/caiman:17/CP3A.261005.005/16271449:user/release-keys"),
++        "Pixel 10 Pro XL" to preset("Google", "google", "Pixel 10 Pro XL", "mustang", "mustang", "google/mustang/mustang:17/CP3A.261005.005/16271449:user/release-keys"),
++        "Galaxy A16 5G (SM-A166B)" to preset("samsung", "samsung", "SM-A166B", "a16x", "a16xxx", "samsung/a16xxx/a16x:17/CP2A.260605.016/A166BXXUAEZJ5:user/release-keys"),
++        "Galaxy S24 Ultra (SM-S928B)" to preset("samsung", "samsung", "SM-S928B", "e3q", "e3qxxx", "samsung/e3qxxx/e3q:17/CP2A.260605.016/S928BXXS6EZJ1:user/release-keys"),
++        "Xiaomi 15 Ultra" to preset("Xiaomi", "Xiaomi", "25019PNF3C", "xuanyuan", "xuanyuan", "Xiaomi/xuanyuan/xuanyuan:17/CP2A.260605.016/OS4.0.0.18.XOACNXM:user/release-keys"),
++        "Redmi K80" to preset("Xiaomi", "Redmi", "24117RK2CC", "zorn", "zorn", "Redmi/zorn/zorn:17/CP2A.260605.016/OS4.0.0.13.XOKCNXM:user/release-keys"),
++    )
++
++    private fun preset(manufacturer: String, brand: String, model: String, device: String, product: String, fingerprint: String) = mapOf(
++        "manufacturer" to manufacturer,
++        "brand" to brand,
++        "model" to model,
++        "device" to device,
++        "product" to product,
++        "fingerprint" to fingerprint,
++        "release" to "17",
++    )
++
++    override fun enabled() = true
++
++    fun prop(field: String) = "persist.sys.spoof.$field"
++}
++
++class SpoofSettingsFragment : SettingsFragment() {
++    override val preferencesResId = R.xml.pref_spoof
++
++    override fun onCreatePreferences(savedInstanceState: Bundle?, rootKey: String?) {
++        super.onCreatePreferences(savedInstanceState, rootKey)
++        findPreference<SwitchPreferenceCompat>(SpoofSettings.enabled)!!.setOnPreferenceChangeListener { _, value ->
++            Misc.safeSetprop(SpoofSettings.prop("enabled"), if (value as Boolean) "true" else "false")
++            true
++        }
++        findPreference<Preference>(SpoofSettings.values)!!.setOnPreferenceClickListener {
++            edit()
++            true
++        }
++    }
++
++    private fun edit() {
++        val ctxt = requireContext()
++        val inputs = SpoofSettings.fields.associate { (field, name) ->
++            field to EditText(ctxt).apply {
++                hint = name
++                inputType = InputType.TYPE_CLASS_TEXT
++                setSingleLine()
++                setText(SystemProperties.get(SpoofSettings.prop(field)))
++            }
++        }
++        val form = LinearLayout(ctxt).apply {
++            orientation = LinearLayout.VERTICAL
++            val padding = (20 * resources.displayMetrics.density).toInt()
++            setPadding(padding, padding / 2, padding, 0)
++            addView(Button(ctxt).apply {
++                text = "Use preset"
++                setOnClickListener {
++                    AlertDialog.Builder(ctxt)
++                        .setTitle("Use preset")
++                        .setItems(SpoofSettings.presets.map { it.first }.toTypedArray()) { _, which ->
++                            SpoofSettings.presets[which].second.forEach { (field, value) -> inputs[field]?.setText(value) }
++                        }
++                        .show()
++                }
++            }, LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT))
++            inputs.values.forEach { addView(it) }
++        }
++        val dialog = AlertDialog.Builder(ctxt)
++            .setTitle("Device values")
++            .setView(ScrollView(ctxt).apply { addView(form) })
++            .setPositiveButton("Save", null)
++            .setNegativeButton("Cancel", null)
++            .create()
++        dialog.setOnShowListener {
++            // set here so a value that is too long keeps the dialog open
++            dialog.getButton(AlertDialog.BUTTON_POSITIVE).setOnClickListener {
++                val values = inputs.mapValues { it.value.text.toString().trim() }
++                if (values.values.any { it.length > SpoofSettings.maxValueLength }) {
++                    Toast.makeText(ctxt, "Values are limited to ${SpoofSettings.maxValueLength} characters", Toast.LENGTH_LONG).show()
++                    return@setOnClickListener
++                }
++                values.forEach { (field, value) -> Misc.safeSetprop(SpoofSettings.prop(field), value) }
++                dialog.dismiss()
++            }
++        }
++        dialog.show()
++    }
++}
+diff --git a/app/src/main/res/xml/pref_main.xml b/app/src/main/res/xml/pref_main.xml
+index 5585bc1..8341461 100644
+--- a/app/src/main/res/xml/pref_main.xml
++++ b/app/src/main/res/xml/pref_main.xml
+@@ -65,6 +65,10 @@
+             android:icon="@drawable/ic_sim_card"
+             android:key="ims"
+             android:title="IMS features" />
++        <Preference
++            android:icon="@drawable/ic_tune"
++            android:key="spoof"
++            android:title="Device spoofing" />
+         <Preference
+             android:icon="@drawable/ic_tune"
+             android:key="misc"
+diff --git a/app/src/main/res/xml/pref_spoof.xml b/app/src/main/res/xml/pref_spoof.xml
+new file mode 100644
+index 0000000..c58f526
+--- /dev/null
++++ b/app/src/main/res/xml/pref_spoof.xml
+@@ -0,0 +1,12 @@
++<?xml version="1.0" encoding="utf-8"?>
++<PreferenceScreen
++    xmlns:android="http://schemas.android.com/apk/res/android">
++    <SwitchPreferenceCompat
++        android:defaultValue="false"
++        android:key="key_spoof_enabled"
++        android:title="Spoof device for user apps"
++        android:summary="User installed apps see the values below. System and vendor apps are not affected. Restart apps after changing this" />
++    <Preference
++        android:key="key_spoof_values"
++        android:title="Device values" />
++</PreferenceScreen>
+-- 
+2.56.0
+

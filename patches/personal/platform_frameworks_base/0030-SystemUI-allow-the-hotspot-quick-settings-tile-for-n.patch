@@ -1,0 +1,36 @@
+From b89eb35a218718259d0f3258b1abf7183733353f Mon Sep 17 00:00:00 2001
+From: 0xALUCARD <0xALUCARD@protonmail.com>
+Date: Sun, 13 Sep 2026 16:04:32 +0000
+Subject: [PATCH 30/38] SystemUI: allow the hotspot quick settings tile for
+ non-admin users
+
+---
+ .../systemui/statusbar/policy/HotspotControllerImpl.java     | 5 ++++-
+ 1 file changed, 4 insertions(+), 1 deletion(-)
+
+diff --git a/packages/SystemUI/src/com/android/systemui/statusbar/policy/HotspotControllerImpl.java b/packages/SystemUI/src/com/android/systemui/statusbar/policy/HotspotControllerImpl.java
+index d0cc32bc7..3d959dff3 100644
+--- a/packages/SystemUI/src/com/android/systemui/statusbar/policy/HotspotControllerImpl.java
++++ b/packages/SystemUI/src/com/android/systemui/statusbar/policy/HotspotControllerImpl.java
+@@ -26,6 +26,7 @@ import android.net.wifi.WifiClient;
+ import android.net.wifi.WifiManager;
+ import android.os.Handler;
+ import android.os.HandlerExecutor;
++import android.os.UserHandle;
+ import android.os.UserManager;
+ import android.util.Log;
+
+@@ -128,7 +129,9 @@ public class HotspotControllerImpl implements HotspotController, WifiManager.Sof
+     @Override
+     public boolean isHotspotSupported() {
+         return mIsTetheringSupportedConfig && mIsTetheringSupported && mHasTetherableWifiRegexs
+-                && UserManager.get(mContext).isUserAdmin(mUserTracker.getUserId());
++                && !UserManager.get(mContext).hasUserRestrictionForUser(
++                        UserManager.DISALLOW_CONFIG_TETHERING,
++                        UserHandle.of(mUserTracker.getUserId()));
+     }
+
+     public void dump(PrintWriter pw, String[] args) {
+-- 
+2.56.0
+

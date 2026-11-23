@@ -1,0 +1,162 @@
+From 0ce17de9226cb0849410b7153e866183f6f09305 Mon Sep 17 00:00:00 2001
+From: Langsdorff <131063968+clangsdorff@users.noreply.github.com>
+Date: Fri, 23 Oct 2026 23:06:18 +0300
+Subject: [PATCH 1/4] taskbar: draw back and home buttons in 2-button
+ navigation
+
+---
+ .../taskbar/NavbarButtonsViewController.java        |  6 +++---
+ .../launcher3/taskbar/TaskbarActivityContext.java   | 13 +++++++++----
+ .../launcher3/taskbar/TaskbarInsetsController.kt    |  6 +++---
+ .../launcher3/taskbar/TaskbarStashController.java   |  4 ++--
+ .../com/android/launcher3/taskbar/TaskbarUiState.kt |  2 ++
+ 5 files changed, 19 insertions(+), 12 deletions(-)
+
+diff --git a/quickstep/src/com/android/launcher3/taskbar/NavbarButtonsViewController.java b/quickstep/src/com/android/launcher3/taskbar/NavbarButtonsViewController.java
+index 4bbf194..be93c21 100644
+--- a/quickstep/src/com/android/launcher3/taskbar/NavbarButtonsViewController.java
++++ b/quickstep/src/com/android/launcher3/taskbar/NavbarButtonsViewController.java
+@@ -381,7 +381,7 @@ public class NavbarButtonsViewController implements TaskbarControllers.LoggableT
+         // won't show up if the expressive theme is enabled and simple view is disabled
+         final boolean shouldShowInSetup = !mContext.isUserSetupComplete()
+                 && (!mIsExpressiveThemeEnabled || mContext.isSimpleViewEnabled());
+-        final boolean alwaysShowButtons = isThreeButtonNav || shouldShowInSetup;
++        final boolean alwaysShowButtons = mContext.isButtonNav() || shouldShowInSetup;
+ 
+         // Make sure to remove nav bar buttons translation when any of the following occur:
+         // - Notification shade is expanded
+@@ -541,7 +541,7 @@ public class NavbarButtonsViewController implements TaskbarControllers.LoggableT
+                 });
+         mPropertyHolders.add(new StatePropertyHolder(mRecentsButton,
+                 flags -> (flags & FLAG_KEYGUARD_VISIBLE) == 0 && (flags & FLAG_DISABLE_RECENTS) == 0
+-                        && !mContext.isNavBarKidsModeActive() && !mContext.isGestureNav()
++                        && !mContext.isNavBarKidsModeActive() && mContext.isThreeButtonNav()
+                         && (flags & FLAG_TASKBAR_STASHED_ON_CD) == 0
+                         && (flags & FLAG_CUEBAR_VISIBLE) == 0));
+ 
+@@ -1211,7 +1211,7 @@ public class NavbarButtonsViewController implements TaskbarControllers.LoggableT
+                         mContext.getDeviceProfile(), mNavButtonsView, mImeSwitcherButton,
+                         mA11yButton, mMoreOptionsButton, mSpace, mContext.getResources(),
+                         mContext.isNavBarKidsModeActive(),
+-                        !mContext.isUserSetupComplete(), mContext.isThreeButtonNav(),
++                        !mContext.isUserSetupComplete(), mContext.isButtonNav(),
+                         mContext.isPhoneMode(), mWindowManagerProxy.getRotation(mContext));
+     }
+ 
+diff --git a/quickstep/src/com/android/launcher3/taskbar/TaskbarActivityContext.java b/quickstep/src/com/android/launcher3/taskbar/TaskbarActivityContext.java
+index 1d084be..1928986 100644
+--- a/quickstep/src/com/android/launcher3/taskbar/TaskbarActivityContext.java
++++ b/quickstep/src/com/android/launcher3/taskbar/TaskbarActivityContext.java
+@@ -701,14 +701,14 @@ public class TaskbarActivityContext extends BaseTaskbarContext {
+      * @return {@code true} if {@link #isPhoneMode()} is true and we're using 3 button-nav
+      */
+     public boolean isPhoneButtonNavMode() {
+-        return isPhoneMode() && isThreeButtonNav();
++        return isPhoneMode() && isButtonNav();
+     }
+ 
+     /**
+      * @return {@code true} if {@link #isPhoneMode()} is true and we're using gesture nav
+      */
+     public boolean isPhoneGestureNavMode() {
+-        return isPhoneMode() && !isThreeButtonNav();
++        return isPhoneMode() && isGestureNav();
+     }
+ 
+     /** Returns whether a navigation overlay hid the gesture handle. */
+@@ -852,7 +852,7 @@ public class TaskbarActivityContext extends BaseTaskbarContext {
+             // drag-and-drop gestures on taskbar icons are not interrupted.
+             windowFlags |= WindowManager.LayoutParams.FLAG_SLIPPERY;
+         }
+-        boolean watchOutside = isTransientTaskbar() || isThreeButtonNav();
++        boolean watchOutside = isTransientTaskbar() || isButtonNav();
+         if (watchOutside && !isRunningInTestHarness()) {
+             windowFlags |= WindowManager.LayoutParams.FLAG_NOT_TOUCH_MODAL
+                     | WindowManager.LayoutParams.FLAG_WATCH_OUTSIDE_TOUCH;
+@@ -967,6 +967,11 @@ public class TaskbarActivityContext extends BaseTaskbarContext {
+         return mNavMode == NavigationMode.THREE_BUTTONS;
+     }
+ 
++    /** Returns whether taskbar draws nav buttons, i.e. 3-button or 2-button nav. */
++    public boolean isButtonNav() {
++        return !isGestureNav();
++    }
++
+     /** Returns whether taskbar should start align. */
+     public boolean shouldStartAlignTaskbar() {
+         return isThreeButtonNav() && mDeviceProfile.getTaskbarProfile().isStartAlignTaskbar();
+@@ -1619,7 +1624,7 @@ public class TaskbarActivityContext extends BaseTaskbarContext {
+         }
+ 
+         if (isPhoneMode()) {
+-            return isThreeButtonNav() ?
++            return isButtonNav() ?
+                     resources.getDimensionPixelSize(R.dimen.taskbar_phone_size) :
+                     resources.getDimensionPixelSize(R.dimen.taskbar_stashed_size);
+         }
+diff --git a/quickstep/src/com/android/launcher3/taskbar/TaskbarInsetsController.kt b/quickstep/src/com/android/launcher3/taskbar/TaskbarInsetsController.kt
+index cfec0db..6cfeec4 100644
+--- a/quickstep/src/com/android/launcher3/taskbar/TaskbarInsetsController.kt
++++ b/quickstep/src/com/android/launcher3/taskbar/TaskbarInsetsController.kt
+@@ -253,7 +253,7 @@ class TaskbarInsetsController(val context: TaskbarActivityContext) : LoggableTas
+         if (provider.type == navigationBars()) {
+             provider.insetsSize = getInsetsForGravityWithCutout(contentHeight, gravity, endRotation)
+         } else if (provider.type == mandatorySystemGestures()) {
+-            if (context.isThreeButtonNav) {
++            if (context.isButtonNav) {
+                 provider.insetsSize =
+                     getInsetsForGravityWithCutout(contentHeight, gravity, endRotation)
+             } else {
+@@ -273,12 +273,12 @@ class TaskbarInsetsController(val context: TaskbarActivityContext) : LoggableTas
+             provider.insetsSize = getInsetsForGravity(tappableHeight, gravity)
+         } else if (provider.type == systemGestures() && provider.index == INDEX_LEFT) {
+             val leftIndexInset =
+-                if (context.isThreeButtonNav) 0
++                if (context.isButtonNav) 0
+                 else gestureNavSettingsObserver.getLeftSensitivityForCallingUser(res)
+             provider.insetsSize = Insets.of(leftIndexInset, 0, 0, 0)
+         } else if (provider.type == systemGestures() && provider.index == INDEX_RIGHT) {
+             val rightIndexInset =
+-                if (context.isThreeButtonNav) 0
++                if (context.isButtonNav) 0
+                 else gestureNavSettingsObserver.getRightSensitivityForCallingUser(res)
+             provider.insetsSize = Insets.of(0, 0, rightIndexInset, 0)
+         }
+diff --git a/quickstep/src/com/android/launcher3/taskbar/TaskbarStashController.java b/quickstep/src/com/android/launcher3/taskbar/TaskbarStashController.java
+index 8ea9347..a791c28 100644
+--- a/quickstep/src/com/android/launcher3/taskbar/TaskbarStashController.java
++++ b/quickstep/src/com/android/launcher3/taskbar/TaskbarStashController.java
+@@ -458,7 +458,7 @@ public class TaskbarStashController implements TaskbarControllers.LoggableTaskba
+         if (!mActivity.isPrimaryDisplay()) {
+             return true;
+         }
+-        return !mActivity.isThreeButtonNav();
++        return !mActivity.isButtonNav();
+     }
+ 
+     /**
+@@ -743,7 +743,7 @@ public class TaskbarStashController implements TaskbarControllers.LoggableTaskba
+     @AnyThread
+     public boolean shouldAllowTaskbarToAutoStash() {
+         final boolean isPrimaryDisplay = mTaskbarUiState.isPrimaryDisplay();
+-        if (mTaskbarUiState.isThreeButtonNav() && isPrimaryDisplay) {
++        if (mTaskbarUiState.isButtonNav() && isPrimaryDisplay) {
+             return false;
+         }
+ 
+diff --git a/quickstep/src/com/android/launcher3/taskbar/TaskbarUiState.kt b/quickstep/src/com/android/launcher3/taskbar/TaskbarUiState.kt
+index 653d33e..fcd76f8 100644
+--- a/quickstep/src/com/android/launcher3/taskbar/TaskbarUiState.kt
++++ b/quickstep/src/com/android/launcher3/taskbar/TaskbarUiState.kt
+@@ -80,6 +80,8 @@ class TaskbarUiState {
+ 
+     fun isThreeButtonNav() = _navigationMode == NavigationMode.THREE_BUTTONS
+ 
++    fun isButtonNav() = _navigationMode != NavigationMode.NO_BUTTON
++
+     fun setIsTransient(isTransient: Boolean) {
+         _isTaskbarTransient = isTransient
+     }
+-- 
+2.50.1 (Apple Git-155)
+

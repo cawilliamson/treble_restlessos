@@ -1,0 +1,53 @@
+From a3b479c7b9d50b37834b8da9bf657223f045d421 Mon Sep 17 00:00:00 2001
+From: Langsdorff <131063968+clangsdorff@users.noreply.github.com>
+Date: Tue, 27 Oct 2026 19:55:31 +0300
+Subject: [PATCH 7/8] fingerprint: don't crash when the second factor pin
+ controller was never built
+
+createPreferenceControllers returns null when no fingerprint hardware is
+detected, so the second factor pin controller is never created. restoring
+the saved state or coming back from the credential confirmation then
+crashes settings with a NullPointerException. guard both calls like the
+rest of the file already does.
+---
+ .../fingerprint/FingerprintSettings.java        | 17 +++++++++++------
+ 1 file changed, 11 insertions(+), 6 deletions(-)
+
+diff --git a/src/com/android/settings/biometrics/fingerprint/FingerprintSettings.java b/src/com/android/settings/biometrics/fingerprint/FingerprintSettings.java
+index a242608..20f228c 100644
+--- a/src/com/android/settings/biometrics/fingerprint/FingerprintSettings.java
++++ b/src/com/android/settings/biometrics/fingerprint/FingerprintSettings.java
+@@ -652,10 +652,13 @@ public class FingerprintSettings extends SubSettings {
+                 );
+                 mUserPassword = savedInstanceState.getParcelable(
+                         ChooseLockSettingsHelper.EXTRA_KEY_PASSWORD);
+-                mBiometricSecondFactorPinPreferenceController.setPrimaryCredential(mUserPassword);
+-                // This controller needs userId set in #onActivityResult, but upstream doesn't set
+-                // them until #onResume.
+-                mBiometricSecondFactorPinPreferenceController.setUserId(mUserId);
++                if (mBiometricSecondFactorPinPreferenceController != null) {
++                    mBiometricSecondFactorPinPreferenceController.setPrimaryCredential(
++                            mUserPassword);
++                    // This controller needs userId set in #onActivityResult, but upstream
++                    // doesn't set them until #onResume.
++                    mBiometricSecondFactorPinPreferenceController.setUserId(mUserId);
++                }
+                 mFingerprintsRenaming = (HashMap<Integer, String>)
+                         savedInstanceState.getSerializable("mFingerprintsRenaming");
+                 mToken = savedInstanceState.getByteArray(
+@@ -1443,8 +1446,10 @@ public class FingerprintSettings extends SubSettings {
+                         if (data.hasExtra(ChooseLockSettingsHelper.EXTRA_KEY_PASSWORD)) {
+                             mUserPassword = data.getParcelableExtra(
+                                     ChooseLockSettingsHelper.EXTRA_KEY_PASSWORD);
+-                            mBiometricSecondFactorPinPreferenceController.setPrimaryCredential(
+-                                    mUserPassword);
++                            if (mBiometricSecondFactorPinPreferenceController != null) {
++                                mBiometricSecondFactorPinPreferenceController.setPrimaryCredential(
++                                        mUserPassword);
++                            }
+                         } else {
+                             Log.d(TAG, "Current primary credential missing");
+                             finish();
+-- 
+2.56.0
+

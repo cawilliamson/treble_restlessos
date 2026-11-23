@@ -1,0 +1,26 @@
+From 7c3c84a3465eaa31dee4b86f142001c861cccff9 Mon Sep 17 00:00:00 2001
+From: Langsdorff <131063968+clangsdorff@users.noreply.github.com>
+Date: Sat, 24 Oct 2026 17:20:53 +0300
+Subject: [PATCH 45/52] rw-system: scan the oppo nvdata partition with strings
+
+---
+ rw-system.sh | 3 ++-
+ 1 file changed, 2 insertions(+), 1 deletion(-)
+
+diff --git a/rw-system.sh b/rw-system.sh
+index 4e0d2d3..4a814d6 100644
+--- a/rw-system.sh
++++ b/rw-system.sh
+@@ -345,7 +345,8 @@ fi
+
+ for part in /dev/block/bootdevice/by-name/oppodycnvbk  /dev/block/platform/bootdevice/by-name/nvdata;do
+     if [ -b "$part" ];then
+-        oppoName="$(grep -aohE '(RMX|CPH)[0-9]{4}' "$part" |head -n 1)"
++        # grep -a on the raw partition reads binary data as huge lines, which can stall post-fs for a long time
++        oppoName="$(strings "$part" | grep -m 1 -oE '(RMX|CPH)[0-9]{4}')"
+         if [ -n "$oppoName" ];then
+             setprop ro.build.overlay.deviceid "$oppoName"
+         fi
+-- 
+2.56.0
+
