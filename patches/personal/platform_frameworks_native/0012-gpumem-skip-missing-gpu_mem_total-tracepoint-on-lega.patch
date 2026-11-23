@@ -1,0 +1,45 @@
+From c036cecec63ea3015ac42d512b61754f3f9ae655 Mon Sep 17 00:00:00 2001
+From: Langsdorff <131063968+clangsdorff@users.noreply.github.com>
+Date: Mon, 23 Nov 2026 19:54:43 +0300
+Subject: [PATCH 12/12] gpumem: skip missing gpu_mem_total tracepoint on legacy
+ kernels
+
+kernels with ebpf support that lack the gpu_mem/gpu_mem_total
+tracepoint cause GpuMem::initialize to spin for 30 seconds retrying
+bpf_attach_tracepoint before failing.
+
+check whether /sys/kernel/tracing/events/gpu_mem/gpu_mem_total exists
+first and return early when absent; GpuMemTracer and GpuMem::dump
+already handle an uninitialized GpuMem cleanly.
+---
+ services/gpuservice/gpumem/GpuMem.cpp | 7 +++++++
+ 1 file changed, 7 insertions(+)
+
+diff --git a/services/gpuservice/gpumem/GpuMem.cpp b/services/gpuservice/gpumem/GpuMem.cpp
+index cdc4094..04e34f9 100644
+--- a/services/gpuservice/gpumem/GpuMem.cpp
++++ b/services/gpuservice/gpumem/GpuMem.cpp
+@@ -24,6 +24,7 @@
+ #include <libbpf.h>
+ #include <bpf/WaitForProgsLoaded.h>
+ #include <log/log.h>
++#include <sys/stat.h>
+ #include <unistd.h>
+ #include <utils/Timers.h>
+ #include <utils/Trace.h>
+@@ -40,6 +41,12 @@ GpuMem::~GpuMem() {
+ }
+ 
+ void GpuMem::initialize() {
++    struct stat sb;
++    if (stat("/sys/kernel/tracing/events/gpu_mem/gpu_mem_total", &sb) != 0) {
++        ALOGI("gpu_mem_total tracepoint not found, skipping");
++        return;
++    }
++
+     // Make sure bpf programs are loaded
+     bpf::waitForProgsLoaded();
+ 
+-- 
+2.56.0
+
