@@ -1,0 +1,86 @@
+From ef1f80675216d13428c19b2fe20f9a52f7358886 Mon Sep 17 00:00:00 2001
+From: Langsdorff <131063968+clangsdorff@users.noreply.github.com>
+Date: Mon, 23 Nov 2026 19:54:43 +0300
+Subject: [PATCH 10/12] dumpstate: fall back to waitpid when pidfd_open returns
+ ENOSYS
+
+on kernels older than 5.3 (such as 4.19), pidfd_open fails with ENOSYS,
+causing waitpid_with_timeout to fail on every subprocess, leaving
+unreaped zombies and repeated SIGKILL failure errors.
+
+add a waitpid(WNOHANG) polling fallback when pidfd_open fails with
+ENOSYS so subprocesses are waited on and reaped cleanly on legacy
+kernels.
+---
+ cmds/dumpstate/DumpstateUtil.cpp | 41 ++++++++++++++++++++++++++++++++
+ 1 file changed, 41 insertions(+)
+
+diff --git a/cmds/dumpstate/DumpstateUtil.cpp b/cmds/dumpstate/DumpstateUtil.cpp
+index 9f5a69a..8a8e7f0 100644
+--- a/cmds/dumpstate/DumpstateUtil.cpp
++++ b/cmds/dumpstate/DumpstateUtil.cpp
+@@ -46,6 +46,7 @@ static int pidfd_open(pid_t pid, unsigned int flags) {
+ }
+ #endif
+ 
++#include <algorithm>
+ #include <vector>
+ 
+ #include "DumpstateInternal.h"
+@@ -83,6 +84,43 @@ struct ExitStatus {
+ //   - process was terminated by a signal, `status.exit_code_or_signal` is
+ //     populated.
+ //   - setup has failed, in which case `status.exit_code_or_signal == 0`,
++static bool waitpid_with_timeout_legacy(
++        pid_t pid, int timeout_ms, bool ret_on_signal, ExitStatus* status) {
++    uint64_t deadline_ns =
++            Nanotime() + static_cast<uint64_t>(std::max(timeout_ms, 0)) * 1000000ULL;
++    while (true) {
++        int wstatus = 0;
++        pid_t r = TEMP_FAILURE_RETRY(waitpid(pid, &wstatus, WNOHANG));
++        if (r == pid) {
++            if (WIFEXITED(wstatus)) {
++                status->exited = true;
++                status->exit_code_or_signal = WEXITSTATUS(wstatus);
++                return true;
++            }
++            if (WIFSIGNALED(wstatus)) {
++                status->exited = ret_on_signal;
++                status->exit_code_or_signal = WTERMSIG(wstatus);
++                return true;
++            }
++            return false;
++        }
++        if (r < 0) {
++            if (errno == ECHILD) {
++                status->exited = true;
++                return true;
++            }
++            return false;
++        }
++        uint64_t now_ns = Nanotime();
++        if (now_ns >= deadline_ns) {
++            errno = ETIMEDOUT;
++            return false;
++        }
++        usleep(static_cast<useconds_t>(
++                std::min<uint64_t>((deadline_ns - now_ns) / 1000ULL, 10000ULL)));
++    }
++}
++
+ static bool waitpid_with_timeout(
+         pid_t pid, int timeout_ms, bool ret_on_signal, ExitStatus* status) {
+     // `pidfd_open` should work even if the process that `pid` refers to has
+@@ -100,6 +138,9 @@ static bool waitpid_with_timeout(
+     //   or similar in another thread).
+     int fd = pidfd_open(pid, 0);
+     if (fd < 0) {
++        if (errno == ENOSYS) {
++            return waitpid_with_timeout_legacy(pid, timeout_ms, ret_on_signal, status);
++        }
+         if (errno == ESRCH) {
+             // There is no such PID, presumably this should be OK if the process
+             // is already done. This will not happen when we actually wait
+-- 
+2.56.0
+
