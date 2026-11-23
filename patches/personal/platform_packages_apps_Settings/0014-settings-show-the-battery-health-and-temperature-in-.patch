@@ -1,7 +1,7 @@
 From 0e84400652eb6d2f7b199a4bb6e5878cedeb9b5f Mon Sep 17 00:00:00 2001
 From: Langsdorff <131063968+clangsdorff@users.noreply.github.com>
 Date: Wed, 28 Oct 2026 20:00:58 +0300
-Subject: [PATCH 14/14] settings: show the battery health and temperature in
+Subject: [PATCH 14/17] settings: show the battery health and temperature in
  battery info
 
 add battery health and temperature to battery information. health shows

@@ -1,7 +1,7 @@
 From 5e95e5d3db50963b5f54d3ab073a1db5e6f7b226 Mon Sep 17 00:00:00 2001
 From: Langsdorff <131063968+clangsdorff@users.noreply.github.com>
 Date: Fri, 13 Nov 2026 20:39:58 +0300
-Subject: [PATCH 16/16] settings: protect sensitive identifiers with tap to
+Subject: [PATCH 16/17] settings: protect sensitive identifiers with tap to
  show
 
 hide phone number, imei, sim eid, wifi mac, and bluetooth mac behind device_info_protected_single_press in about phone and sim settings until tapped.

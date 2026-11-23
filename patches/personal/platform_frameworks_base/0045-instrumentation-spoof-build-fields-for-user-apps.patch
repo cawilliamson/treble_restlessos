@@ -1,7 +1,7 @@
 From f95fddb94f4e4e561753eb1d176043667a42304b Mon Sep 17 00:00:00 2001
 From: Langsdorff <131063968+clangsdorff@users.noreply.github.com>
 Date: Sun, 8 Nov 2026 13:45:39 +0300
-Subject: [PATCH 45/49] instrumentation: spoof build fields for user apps
+Subject: [PATCH 45/50] instrumentation: spoof build fields for user apps
 
 google play and some apps gate on the device identity, so they refuse
 gsis on old vendors. when persist.sys.spoof.enabled is set, show every

@@ -1,7 +1,7 @@
 From 583350d2138c44534531f6101ba2b9390f1bfb4e Mon Sep 17 00:00:00 2001
 From: Langsdorff <131063968+clangsdorff@users.noreply.github.com>
 Date: Fri, 13 Nov 2026 19:49:40 +0300
-Subject: [PATCH 15/15] gestures: add a toggle for advanced restart options
+Subject: [PATCH 15/17] gestures: add a toggle for advanced restart options
 
 add a switch in power menu gesture settings backed by
 Settings.Secure.ADVANCED_REBOOT, with translations from lineageos.
