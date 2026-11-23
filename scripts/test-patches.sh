@@ -63,7 +63,7 @@ if [[ "$RESET" -eq 1 ]]; then
   "$SCRIPT_DIR/reset-sources.sh"
 fi
 
-TIERS=(trebledroid rom personal)
+TIERS=(trebledroid rom personal features)
 if [[ "$DEBUG" -eq 1 ]]; then
   TIERS+=(debug-builds)
 else
