@@ -1,0 +1,57 @@
+From 79897a3f408ed18d632d9bf92e5ed01540e034e0 Mon Sep 17 00:00:00 2001
+From: Langsdorff <131063968+clangsdorff@users.noreply.github.com>
+Date: Mon, 23 Nov 2026 19:54:43 +0300
+Subject: [PATCH 11/12] powermanager: gate samsung miscpower probe on samsung
+ devices
+
+trebledroid probes vendor.samsung.hardware.miscpower@2.0::ISehMiscPower
+unconditionally on every boot, adding binder/hwservicemanager lookup
+overhead and missing-hal noise on non-samsung devices.
+
+check ro.product.vendor.manufacturer before probing ISehMiscPower and
+return nullptr immediately when the vendor is not samsung.
+---
+ services/powermanager/Android.bp         | 1 +
+ services/powermanager/PowerHalLoader.cpp | 7 +++++++
+ 2 files changed, 8 insertions(+)
+
+diff --git a/services/powermanager/Android.bp b/services/powermanager/Android.bp
+index ef01e13..32da7c0 100644
+--- a/services/powermanager/Android.bp
++++ b/services/powermanager/Android.bp
+@@ -33,6 +33,7 @@ cc_library_shared {
+     },
+ 
+     shared_libs: [
++        "libbase",
+         "libbinder",
+         "libbinder_ndk",
+         "libhidlbase",
+diff --git a/services/powermanager/PowerHalLoader.cpp b/services/powermanager/PowerHalLoader.cpp
+index 2f5a857..6d1d950 100644
+--- a/services/powermanager/PowerHalLoader.cpp
++++ b/services/powermanager/PowerHalLoader.cpp
+@@ -17,6 +17,8 @@
+ #define LOG_TAG "PowerHalLoader"
+ 
+ #include <aidl/android/hardware/power/IPower.h>
++#include <android-base/properties.h>
++#include <android-base/strings.h>
+ #include <android/binder_manager.h>
+ #include <android/hardware/power/1.1/IPower.h>
+ #include <android/hardware/power/1.2/IPower.h>
+@@ -128,6 +130,11 @@ sp<V1_3::IPower> PowerHalLoader::loadHidlV1_3() {
+ }
+ 
+ sp<vendor::samsung::hardware::miscpower::V2_0::ISehMiscPower> PowerHalLoader::loadHidlSeh() {
++    static const bool kIsSamsung = android::base::EqualsIgnoreCase(
++            android::base::GetProperty("ro.product.vendor.manufacturer", ""), "samsung");
++    if (!kIsSamsung) {
++        return nullptr;
++    }
+     std::lock_guard<std::mutex> lock(gHalMutex);
+     static bool gHalExists = true;
+     static auto loadFn = []() { return vendor::samsung::hardware::miscpower::V2_0::ISehMiscPower::getService(); };
+-- 
+2.56.0
+
