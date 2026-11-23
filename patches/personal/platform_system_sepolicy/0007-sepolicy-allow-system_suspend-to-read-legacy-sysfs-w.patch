@@ -1,0 +1,49 @@
+From 99e52dba31ac8cc6f82020ad2a3d1a93a348f747 Mon Sep 17 00:00:00 2001
+From: Langsdorff <131063968+clangsdorff@users.noreply.github.com>
+Date: Mon, 23 Nov 2026 19:54:40 +0300
+Subject: [PATCH 7/7] sepolicy: allow system_suspend to read legacy sysfs
+ wakeup nodes
+
+on 4.19 kernels without per-device genfscon wakeup labels,
+/sys/class/wakeup/wakeupN symlinks point into /sys/devices/.../wakeup
+directories and attribute files that still carry the default sysfs
+label. system_suspend only has sysfs_type:dir search and lacks read
+access on sysfs files, flooding logs with avc denials.
+
+except system_suspend from the coredomain sysfs:file no_rw_file_perms
+neverallow and grant it r_dir_file access to sysfs. vendor-specific
+battery/wireless sysfs types and sysfs_batteryinfo (neverallowed in
+domain.te) are left untouched.
+---
+ private/coredomain.te     | 1 +
+ private/system_suspend.te | 2 ++
+ 2 files changed, 3 insertions(+)
+
+diff --git a/private/coredomain.te b/private/coredomain.te
+index 7defa00..909614a 100644
+--- a/private/coredomain.te
++++ b/private/coredomain.te
+@@ -155,6 +155,7 @@ full_treble_only(`
+     coredomain
+     -apexd
+     -init
++    -system_suspend
+     -ueventd
+     is_flag_enabled(RELEASE_AVF_ENABLE_DEVICE_ASSIGNMENT, `-vfio_handler')
+     -vold
+diff --git a/private/system_suspend.te b/private/system_suspend.te
+index 2eadc5b..d3836a3 100644
+--- a/private/system_suspend.te
++++ b/private/system_suspend.te
+@@ -20,6 +20,8 @@ r_dir_file(system_suspend, sysfs_wakeup)
+ r_dir_file(system_suspend, sysfs_wakeup_reasons)
+ # To resolve arbitrary sysfs paths from /sys/class/wakeup/* symlinks.
+ allow system_suspend sysfs_type:dir search;
++# Legacy 4.19 kernels lack genfscon labels for /sys/devices wakeup nodes.
++r_dir_file(system_suspend, sysfs)
+ 
+ # Access to suspend_hal system properties
+ get_prop(system_suspend, suspend_prop)
+-- 
+2.56.0
+
