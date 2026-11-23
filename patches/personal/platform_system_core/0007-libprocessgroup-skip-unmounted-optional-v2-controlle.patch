@@ -1,0 +1,91 @@
+From dc7460d14af3911b3e8c958c3d81a31cf24c3e88 Mon Sep 17 00:00:00 2001
+From: Langsdorff <131063968+clangsdorff@users.noreply.github.com>
+Date: Mon, 23 Nov 2026 19:53:39 +0300
+Subject: [PATCH 7/7] libprocessgroup: skip unmounted optional v2 controllers
+
+on legacy vendor kernels where the memory controller is mounted on v1
+(/dev/memcg), it is absent from cgroup v2 cgroup.controllers, so
+ActivateControllers() spams warnings on every cgroup creation when
+trying to write +memory to cgroup.subtree_control, and JoinCgroup
+actions targeting v2 memory warn in logd and artd.
+
+check cgroup.controllers for optional v2 controllers before writing
+cgroup.subtree_control and skip missing ones quietly. downgrade the
+JoinCgroup v2 warning to verbose when the controller is not usable.
+---
+ libprocessgroup/task_profiles.cpp |  6 +++++-
+ libprocessgroup/util/util.cpp     | 31 +++++++++++++++++++++++++++++++
+ 2 files changed, 36 insertions(+), 1 deletion(-)
+
+diff --git a/libprocessgroup/task_profiles.cpp b/libprocessgroup/task_profiles.cpp
+index 34ac0ad..dfa8d17 100644
+--- a/libprocessgroup/task_profiles.cpp
++++ b/libprocessgroup/task_profiles.cpp
+@@ -1015,10 +1015,14 @@ bool TaskProfiles::Load(const CgroupMap& cg_map, const std::string& file_name) {
+                 if (controller.HasValue()) {
+                     if (controller.version() == 1) {
+                         profile->Add(std::make_unique<SetCgroupAction>(controller, path));
+-                    } else {
++                    } else if (controller.IsUsable()) {
+                         LOG(WARNING) << "A JoinCgroup action in the " << profile_name
+                                      << " profile is used for controller " << controller_name
+                                      << " in the cgroup v2 hierarchy and will be ignored";
++                    } else {
++                        LOG(VERBOSE) << "A JoinCgroup action in the " << profile_name
++                                     << " profile is used for controller " << controller_name
++                                     << " in the cgroup v2 hierarchy and will be ignored";
+                     }
+                 } else {
+                     LOG(WARNING) << "JoinCgroup: controller " << controller_name << " is not found";
+diff --git a/libprocessgroup/util/util.cpp b/libprocessgroup/util/util.cpp
+index 3a25c4b..0e093a9 100644
+--- a/libprocessgroup/util/util.cpp
++++ b/libprocessgroup/util/util.cpp
+@@ -231,13 +231,44 @@ bool ReadDescriptors(CgroupDescriptorMap* descriptors) {
+     return true;
+ }
+ 
++static bool HasControllerToken(std::string_view controllers, std::string_view target) {
++    size_t pos = 0;
++    while (pos < controllers.size()) {
++        pos = controllers.find_first_not_of(" \t\r\n", pos);
++        if (pos == std::string_view::npos) break;
++        size_t end = controllers.find_first_of(" \t\r\n", pos);
++        if (controllers.substr(pos, end - pos) == target) {
++            return true;
++        }
++        if (end == std::string_view::npos) break;
++        pos = end;
++    }
++    return false;
++}
++
+ bool ActivateControllers(const std::string& path, const CgroupDescriptorMap& descriptors) {
++    std::optional<std::string> available_controllers;
++    bool controllers_read_attempted = false;
++
+     for (const auto& [name, descriptor] : descriptors) {
+         const uint32_t flags = descriptor.controller()->flags();
+         const uint32_t max_activation_depth = descriptor.controller()->max_activation_depth();
+         const unsigned int depth = GetCgroupDepth(descriptor.controller()->path(), path);
+ 
+         if (flags & CGROUPRC_CONTROLLER_FLAG_NEEDS_ACTIVATION && depth < max_activation_depth) {
++            if (flags & CGROUPRC_CONTROLLER_FLAG_OPTIONAL) {
++                if (!controllers_read_attempted) {
++                    controllers_read_attempted = true;
++                    std::string content;
++                    if (android::base::ReadFileToString(path + "/cgroup.controllers", &content)) {
++                        available_controllers = std::move(content);
++                    }
++                }
++                if (available_controllers &&
++                    !HasControllerToken(*available_controllers, descriptor.controller()->name())) {
++                    continue;
++                }
++            }
+             std::string str("+");
+             str.append(descriptor.controller()->name());
+             if (!android::base::WriteStringToFile(str, path + "/cgroup.subtree_control")) {
+-- 
+2.56.0
+
