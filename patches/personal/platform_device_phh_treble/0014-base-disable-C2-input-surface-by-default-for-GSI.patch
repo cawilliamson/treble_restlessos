@@ -1,7 +1,7 @@
 From ada1c160566f4391d527ab2aa990550c7b30b9f6 Mon Sep 17 00:00:00 2001
 From: "Christopher A. Williamson" <contact@chrisaw.io>
 Date: Fri, 10 Apr 2026 00:38:55 +0100
-Subject: [PATCH 14/52] base: disable C2 input surface by default for GSI
+Subject: [PATCH 14/53] base: disable C2 input surface by default for GSI
 
 set debug.stagefright.c2inputsurface=-1 as a build-time default via
 PRODUCT_SYSTEM_DEFAULT_PROPERTIES in base.mk.

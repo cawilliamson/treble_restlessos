@@ -1,7 +1,7 @@
 From 2fe513be06730ce760ba31f7cb8c0e93527b46e8 Mon Sep 17 00:00:00 2001
 From: "Christopher A. Williamson" <contact@chrisaw.io>
 Date: Sun, 14 Jun 2026 23:41:41 +0100
-Subject: [PATCH 16/52] vndk.rc: force software codecs via doissM CodecFix
+Subject: [PATCH 16/53] vndk.rc: force software codecs via doissM CodecFix
  approach (opt-in toggle)
 
 restore the doissM CodecFix properties as an opt-in toggle so the default
