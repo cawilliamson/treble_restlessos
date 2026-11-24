@@ -1,0 +1,140 @@
+From 24e44e91dd4fd3b34f8ec178cdca00febcb5d41c Mon Sep 17 00:00:00 2001
+From: mkadrlik <mkadrlik@users.noreply.github.com>
+Date: Fri, 20 Nov 2026 12:11:34 -0600
+Subject: [PATCH 53/53] qcom-atel-ready: reach the aidl oemhook on newer qcril
+
+newer qcril (sm8750, android 16 vendors) only registers the oem hook as
+the aidl vendor.qti.hardware.radio.qcrilhook.IQtiOemHook/oemhookN, so
+the hidl lookup never reaches it. the atel ui ready flag stays 0 and
+qcril's power optimisation drops every incoming sms.
+
+send the same raw request through the aidl service first with
+libbinder_ndk, and keep the hidl path as the fallback.
+---
+ cmds/Android.bp          |  1 +
+ cmds/qcom-atel-ready.cpp | 68 +++++++++++++++++++++++++++++++++-------
+ 2 files changed, 58 insertions(+), 11 deletions(-)
+
+diff --git a/cmds/Android.bp b/cmds/Android.bp
+index 0cd78f6..ebfc3f0 100644
+--- a/cmds/Android.bp
++++ b/cmds/Android.bp
+@@ -72,6 +72,7 @@ cc_binary {
+ 	shared_libs: [
+ 		"libutils",
+ 		"libhidlbase",
++		"libbinder_ndk",
+ 		"liblog",
+ 	],
+ 	init_rc: [
+diff --git a/cmds/qcom-atel-ready.cpp b/cmds/qcom-atel-ready.cpp
+index 08a4fe9..6bcd410 100644
+--- a/cmds/qcom-atel-ready.cpp
++++ b/cmds/qcom-atel-ready.cpp
+@@ -1,12 +1,17 @@
+ // Qualcomm counterpart of mtk-sms-fwk-ready: tell qcril that the telephony UI is ready ("ATEL UI ready").
+ // Until qcril hears it, its power optimisation holds incoming SMS while the screen is off and drops them
+ // after ~20 s without acking. Stock firmware sends it from a system_ext app that GSIs don't ship.
+-// The request goes to IQtiOemHook::oemHookRawRequest as a raw HIDL parcel, so no QTI interface is needed.
++// The request goes to IQtiOemHook::oemHookRawRequest as a raw parcel, so no QTI interface is needed.
++// Newer qcril (SM8750 / Android 16 vendors) only registers the AIDL hook, older ones only the HIDL one.
+ 
+ #define LOG_TAG "qcom-atel-ready"
+ 
+ #include <string.h>
+ #include <unistd.h>
++#include <string>
++#include <android/binder_auto_utils.h>
++#include <android/binder_ibinder.h>
++#include <android/binder_manager.h>
+ #include <android/hidl/manager/1.0/IServiceManager.h>
+ #include <hidl/HidlBinderSupport.h>
+ #include <hidl/ServiceManagement.h>
+@@ -22,22 +27,59 @@ using ::android::hardware::writeEmbeddedToParcel;
+ using ::android::hidl::base::V1_0::IBase;
+ 
+ static const char *kOemHook = "vendor.qti.hardware.radio.qcrilhook@1.0::IQtiOemHook";
+-static const uint32_t kOemHookRawRequest = 2; // setCallback is 1
++static const char *kOemHookAidl = "vendor.qti.hardware.radio.qcrilhook.IQtiOemHook";
++static const uint32_t kOemHookRawRequest = 2; // setCallback is 1, in both interfaces
+ static const int32_t kSetAtelUiStatus = 0x8001a;
++static const size_t kRequestSize = 8 + 4 + 4 + 1;
+ 
+-static bool send(const char *instance) {
+-	auto ret = defaultServiceManager()->get(kOemHook, instance);
+-	if (!ret.isOk()) return false;
+-	sp<IBase> hook = ret;
+-	if (hook == nullptr) return false;
+-
+-	// "QOEMHOOK", request id, payload length, payload (1 = ready), in native byte order
+-	hidl_vec<int8_t> req(8 + 4 + 4 + 1);
++// "QOEMHOOK", request id, payload length, payload (1 = ready), in native byte order
++static void buildRequest(int8_t *req) {
+ 	int32_t id = kSetAtelUiStatus, len = 1;
+ 	memcpy(&req[0], "QOEMHOOK", 8);
+ 	memcpy(&req[8], &id, 4);
+ 	memcpy(&req[12], &len, 4);
+ 	req[16] = 1;
++}
++
++static void *onCreate(void *) { return nullptr; }
++static void onDestroy(void *) {}
++static binder_status_t onTransact(AIBinder *, transaction_code_t, const AParcel *, AParcel *) {
++	return STATUS_UNKNOWN_TRANSACTION;
++}
++
++static bool sendAidl(const char *instance) {
++	std::string name = std::string(kOemHookAidl) + "/" + instance;
++	ndk::SpAIBinder hook(AServiceManager_checkService(name.c_str()));
++	if (hook.get() == nullptr) return false;
++
++	// only lets prepareTransaction write the interface token, nothing is ever received
++	static AIBinder_Class *clazz = AIBinder_Class_define(kOemHookAidl, onCreate, onDestroy, onTransact);
++	if (!AIBinder_associateClass(hook.get(), clazz)) {
++		ALOGW("%s: AIDL associateClass failed", instance);
++		return false;
++	}
++
++	int8_t req[kRequestSize];
++	buildRequest(req);
++
++	ndk::ScopedAParcel data, reply;
++	binder_status_t status = AIBinder_prepareTransaction(hook.get(), data.getR());
++	if (status == STATUS_OK) status = AParcel_writeInt32(data.get(), 1); // serial
++	if (status == STATUS_OK) status = AParcel_writeByteArray(data.get(), req, kRequestSize);
++	if (status == STATUS_OK)
++		status = AIBinder_transact(hook.get(), kOemHookRawRequest, data.getR(), reply.getR(), FLAG_ONEWAY);
++	if (status != STATUS_OK) ALOGW("%s: AIDL transact failed: %d", instance, status);
++	return status == STATUS_OK;
++}
++
++static bool sendHidl(const char *instance) {
++	auto ret = defaultServiceManager()->get(kOemHook, instance);
++	if (!ret.isOk()) return false;
++	sp<IBase> hook = ret;
++	if (hook == nullptr) return false;
++
++	hidl_vec<int8_t> req(kRequestSize);
++	buildRequest(req.data());
+ 
+ 	Parcel data, reply;
+ 	size_t parent, child;
+@@ -46,10 +88,14 @@ static bool send(const char *instance) {
+ 	data.writeBuffer(&req, sizeof(req), &parent);
+ 	writeEmbeddedToParcel(req, &data, parent, 0, &child);
+ 	auto status = toBinder<IBase>(hook)->transact(kOemHookRawRequest, data, &reply, IBinder::FLAG_ONEWAY);
+-	if (status != android::OK) ALOGW("%s: transact failed: %d", instance, status);
++	if (status != android::OK) ALOGW("%s: HIDL transact failed: %d", instance, status);
+ 	return status == android::OK;
+ }
+ 
++static bool send(const char *instance) {
++	return sendAidl(instance) || sendHidl(instance);
++}
++
+ int main(int argc, char **argv) {
+ 	const char *instance = argc > 1 ? argv[1] : "oemhook0";
+ 
+-- 
+2.56.0
+
