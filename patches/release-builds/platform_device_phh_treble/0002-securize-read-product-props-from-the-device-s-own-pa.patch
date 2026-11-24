@@ -1,4 +1,4 @@
-From 4ae6ae6e949385b05cc80ab9f6d1259d06a03c73 Mon Sep 17 00:00:00 2001
+From a23983328cdcd96bbc80a4f873cccb0d17e0f465 Mon Sep 17 00:00:00 2001
 From: Langsdorff <131063968+clangsdorff@users.noreply.github.com>
 Date: Sun, 18 Oct 2026 11:27:13 +0300
 Subject: [PATCH 2/2] securize: read product props from the device's own
@@ -10,15 +10,16 @@ ro.product.device is the gsi's. mount the device's product partition
 read-only and take the values from its build.prop, falling back to odm
 and vendor when there is none. xiaomi's shared vendor images carry
 generic product and vendor props, so odm comes first on xiaomi.
-ro.build.product is the device name, not the model. teei_daemon starts
-before this runs and keeps the gsi name, so restart it once the props
-are set.
+ro.build.product is the device name, not the model. teei_daemon is not
+restarted after the props are set: a second teei_daemon cant configure
+the microtrust tee again and hangs in teei_config_ioctl, keystore2 then
+blocks on the keymaster and boot never finishes.
 ---
- rw-system.sh | 126 +++++++++++++++++++++++++++++++++------------------
- 1 file changed, 79 insertions(+), 47 deletions(-)
+ rw-system.sh | 121 +++++++++++++++++++++++++++++++--------------------
+ 1 file changed, 74 insertions(+), 47 deletions(-)
 
 diff --git a/rw-system.sh b/rw-system.sh
-index d67b40c..9c5ad79 100644
+index d67b40c..9bd86d8 100644
 --- a/rw-system.sh
 +++ b/rw-system.sh
 @@ -805,6 +805,45 @@ copyprop() {
@@ -67,7 +68,7 @@ index d67b40c..9c5ad79 100644
  # OPPO/Realme devices with MTK vendor kernels include an oppo_root_check
  # kernel module or init service that detects an unlocked bootloader and forces
  # a reboot to recovery.  set the boot-state properties to "locked" so any
-@@ -887,53 +926,46 @@ if [ ! -f /metadata/securize_disable ]; then
+@@ -887,53 +926,41 @@ if [ ! -f /metadata/securize_disable ]; then
      copyprop ro.build.fingerprint ro.vendor.build.fingerprint
      copyprop ro.system_ext.build.fingerprint ro.vendor.build.fingerprint
      copyprop ro.product.build.fingerprint ro.vendor.build.fingerprint
@@ -153,11 +154,6 @@ index d67b40c..9c5ad79 100644
 +    copy_device_prop manufacturer \
 +        ro.product.manufacturer ro.product.system.manufacturer ro.product.system_ext.manufacturer ro.product.product.manufacturer \
 +        ro.system.product.manufacturer
-+
-+    # teei_daemon reads the device name once at start, before the props above are set
-+    if [ "$(getprop ro.vendor.mtk_microtrust_tee_support)" = 1 ] && [ "$(getprop init.svc.teei_daemon)" = running ]; then
-+        setprop ctl.restart teei_daemon
-+    fi
  
      # Hide system/xbin/su
      mount /mnt/phh/empty_dir /system/xbin
