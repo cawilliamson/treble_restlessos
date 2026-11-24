@@ -1,7 +1,7 @@
 From 55887d8a3f693b093dcd9a63868ecc13b8fae596 Mon Sep 17 00:00:00 2001
 From: Langsdorff <131063968+clangsdorff@users.noreply.github.com>
 Date: Sun, 4 Oct 2026 23:12:38 +0300
-Subject: [PATCH 7/8] camera: record samsung 60fps video modes behind
+Subject: [PATCH 7/9] camera: record samsung 60fps video modes behind
  persist.sys.phh.samsung.video60
 
 the samsung hal keeps its 60fps video modes in its own video

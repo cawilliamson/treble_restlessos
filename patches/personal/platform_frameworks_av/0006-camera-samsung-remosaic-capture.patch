@@ -1,7 +1,7 @@
 From b79f808d375d95ac2541b582a73e0dd7d0eca64b Mon Sep 17 00:00:00 2001
 From: Langsdorff <131063968+clangsdorff@users.noreply.github.com>
 Date: Sat, 3 Oct 2026 01:43:26 +0300
-Subject: [PATCH 6/8] camera: expose samsung remosaic capture behind
+Subject: [PATCH 6/9] camera: expose samsung remosaic capture behind
  persist.sys.phh.samsung.remosaic
 
 samsung tetra sensors only list their full resolution jpeg size in

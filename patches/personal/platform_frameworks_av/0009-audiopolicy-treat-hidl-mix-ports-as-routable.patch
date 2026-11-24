@@ -1,0 +1,31 @@
+From 4e112f41e05ec51e2ca3cbbc5aba22ef2ffc49d4 Mon Sep 17 00:00:00 2001
+From: Langsdorff <131063968+clangsdorff@users.noreply.github.com>
+Date: Tue, 24 Nov 2026 23:21:19 +0300
+Subject: [PATCH 9/9] audiopolicy: treat hidl mix ports as routable
+
+Dynamic profiles only get a device added to their routable list when
+getAudioMixPort() succeeds, but the HIDL implementation returns
+BAD_VALUE without an opened stream. USB headsets on HIDL vendors are
+never routable, so no track can be created on the USB output.
+
+Skip the query when the profile has no HAL port id, as routesToDevice()
+already does for HIDL.
+---
+ services/audiopolicy/managerdefault/AudioPolicyManager.cpp | 1 +
+ 1 file changed, 1 insertion(+)
+
+diff --git a/services/audiopolicy/managerdefault/AudioPolicyManager.cpp b/services/audiopolicy/managerdefault/AudioPolicyManager.cpp
+index 2af1286..eeb006a 100644
+--- a/services/audiopolicy/managerdefault/AudioPolicyManager.cpp
++++ b/services/audiopolicy/managerdefault/AudioPolicyManager.cpp
+@@ -202,6 +202,7 @@ void AudioPolicyManager::addRoutableDeviceToProfiles(const sp<DeviceDescriptor>
+                 !profile->hasDynamicAudioProfile() ||
+                 !com::android::media::audioserver::enable_strict_port_routing_checks() ||
+                 !com::android::media::audio::check_route_in_get_audio_mix_port() ||
++                profile->getHalId() == AUDIO_PORT_HANDLE_NONE ||
+                 mpClientInterface->getAudioMixPort(&devicePort, &mixPort,
+                                                    profile->getHalId()) == OK;
+ 
+-- 
+2.56.0
+

@@ -1,7 +1,7 @@
 From 5aa16b4f5bcd23aa30649769040f55a286e8cdaf Mon Sep 17 00:00:00 2001
 From: Langsdorff <131063968+clangsdorff@users.noreply.github.com>
 Date: Sun, 18 Oct 2026 15:46:15 +0300
-Subject: [PATCH 8/8] audiopolicy: load sysbta and drop the vendor a2dp ports
+Subject: [PATCH 8/9] audiopolicy: load sysbta and drop the vendor a2dp ports
  on aidl audio hals
 
 ---

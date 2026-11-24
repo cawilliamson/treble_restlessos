@@ -1,7 +1,7 @@
 From 5cdf8d2e1e4428a3b224502426a8311c31ebfad3 Mon Sep 17 00:00:00 2001
 From: "Christopher A. Williamson" <contact@chrisaw.io>
 Date: Mon, 16 Feb 2026 09:44:07 +0000
-Subject: [PATCH 1/8] CameraParameters: don't segfault on NULL key or value
+Subject: [PATCH 1/9] CameraParameters: don't segfault on NULL key or value
 
 Some vendor camera HALs pass NULL parameters to CameraParameters::set().
 Without a guard, strchr() dereferences the null pointer and segfaults.
