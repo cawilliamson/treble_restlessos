@@ -1,7 +1,8 @@
-From 0c49ed2a6095559b3ee8e14a2fb54b810bd1b073 Mon Sep 17 00:00:00 2001
+From c51b556ca933ebdadc50091629f731e21f3f65b0 Mon Sep 17 00:00:00 2001
 From: "Christopher A. Williamson" <contact@chrisaw.io>
 Date: Mon, 15 Jun 2026 11:24:02 +0100
-Subject: [PATCH 1/2] securize: rework to property-based toggle with GSI  fingerprint tracking
+Subject: [PATCH 1/3] securize: rework to property-based toggle with GSI
+ fingerprint tracking
 
 release builds: add pstore-visible stage markers around the securize
 path so a boot that never dismisses the bootanimation leaves its last
@@ -19,7 +20,7 @@ devices, and it does not need to sit in the boot-critical path.
  5 files changed, 143 insertions(+), 46 deletions(-)
 
 diff --git a/base.mk b/base.mk
-index a88eade..bdf2fa9 100644
+index 2f25503..ec50758 100644
 --- a/base.mk
 +++ b/base.mk
 @@ -40,7 +40,6 @@ PRODUCT_SYSTEM_DEFAULT_PROPERTIES += \
@@ -30,7 +31,7 @@ index a88eade..bdf2fa9 100644
      ro.cust.cdrom=/dev/null
  
  # VNDK config files
-@@ -175,7 +174,6 @@ PRODUCT_PACKAGES += \
+@@ -179,7 +178,6 @@ PRODUCT_PACKAGES += \
      resetprop_phh
  
  PRODUCT_COPY_FILES += \
@@ -39,7 +40,7 @@ index a88eade..bdf2fa9 100644
  
  PRODUCT_COPY_FILES += \
 diff --git a/phh-on-boot.sh b/phh-on-boot.sh
-index 2f62af2..2195d2c 100644
+index 863261f..4567010 100644
 --- a/phh-on-boot.sh
 +++ b/phh-on-boot.sh
 @@ -24,6 +24,49 @@ if [ ! -f /sys/fs/fuse/features/fuse_bpf ]; then
@@ -93,7 +94,7 @@ index 2f62af2..2195d2c 100644
  vndk="$(getprop persist.sys.vndk)"
  [ -z "$vndk" ] && vndk="$(getprop ro.vndk.version |grep -oE '^[0-9]+')"
 diff --git a/phh-prop-handler.sh b/phh-prop-handler.sh
-index d9e3153..bdf7c24 100644
+index 391de04..97caa9f 100644
 --- a/phh-prop-handler.sh
 +++ b/phh-prop-handler.sh
 @@ -134,6 +134,18 @@ if [ "$1" == "persist.sys.phh.oppo.gaming_mode" ]; then
@@ -116,10 +117,10 @@ index d9e3153..bdf7c24 100644
      if [[ "$prop_value" != "0" && "$prop_value" != "1" ]]; then
          exit 1
 diff --git a/rw-system.sh b/rw-system.sh
-index 8a9ea1f..28b44cd 100644
+index 293379e..d67b40c 100644
 --- a/rw-system.sh
 +++ b/rw-system.sh
-@@ -815,72 +815,117 @@ if [ "$brand" = OPPO ] || [ "$brand" = realme ]; then
+@@ -827,72 +827,117 @@ if [ "$brand" = OPPO ] || [ "$brand" = realme ]; then
      fi
  fi
  
@@ -278,7 +279,7 @@ index 8a9ea1f..28b44cd 100644
  
  for abi in "" 64;do
 diff --git a/vndk.rc b/vndk.rc
-index c61e712..c4c110a 100644
+index fadc9af..21df056 100644
 --- a/vndk.rc
 +++ b/vndk.rc
 @@ -42,9 +42,12 @@ on property:persist.sys.phh.oppo.dt2w=*
@@ -294,7 +295,7 @@ index c61e712..c4c110a 100644
  
  on property:persist.sys.phh.oppo.usbotg=*
      exec u:r:phhsu_daemon:s0 root -- /system/bin/phh-prop-handler.sh "persist.sys.phh.oppo.usbotg"
-@@ -136,10 +139,6 @@ service watchdogd-gsi /system/bin/watchdogd 10 20
+@@ -139,10 +142,6 @@ service watchdogd-gsi /system/bin/watchdogd 10 20
      disabled
      seclabel u:r:watchdogd:s0
  
@@ -306,5 +307,5 @@ index c61e712..c4c110a 100644
  # AOSP software codecs (c2.android.*) the only usable encoders/decoders.
  # this was the default codec landscape before it was accidentally removed
 -- 
-2.55.0
+2.56.0
 

@@ -1,0 +1,236 @@
+From 2c8af4376e3e4430d170692aa881ddbf6093f6b8 Mon Sep 17 00:00:00 2001
+From: Langsdorff <131063968+clangsdorff@users.noreply.github.com>
+Date: Tue, 24 Nov 2026 23:15:58 +0300
+Subject: [PATCH 3/3] securize: set the device props on early-fs
+
+vendor tee daemons read the device name once when they start on fs,
+which is before rw-system.sh runs on post-fs, so teei_daemon keeps the
+gsi name and the microtrust tee rejects tas that check the android
+model (fingerprint ta on the doogee v40). restarting teei_daemon is not
+an option, a second one hangs in teei_config_ioctl. move the device
+prop part of securize into phh-device-props.sh and run it on early-fs.
+---
+ base.mk                |  1 +
+ phh-device-props.sh    | 80 ++++++++++++++++++++++++++++++++++++++++++
+ rw-system.sh           | 74 --------------------------------------
+ sepolicy/file_contexts |  1 +
+ vndk.rc                |  3 ++
+ 5 files changed, 85 insertions(+), 74 deletions(-)
+ create mode 100755 phh-device-props.sh
+
+diff --git a/base.mk b/base.mk
+index ec50758..626d767 100644
+--- a/base.mk
++++ b/base.mk
+@@ -70,6 +70,7 @@ PRODUCT_COPY_FILES += \
+ PRODUCT_COPY_FILES += \
+     device/phh/treble/rw-system.sh:system/bin/rw-system.sh \
+     device/phh/treble/phh-on-boot.sh:system/bin/phh-on-boot.sh \
++    device/phh/treble/phh-device-props.sh:system/bin/phh-device-props.sh \
+     device/phh/treble/power-mode-monitor.sh:system/bin/power-mode-monitor.sh \
+     device/phh/treble/phh-on-data.sh:system/bin/phh-on-data.sh \
+     device/phh/treble/phh-prop-handler.sh:system/bin/phh-prop-handler.sh \
+diff --git a/phh-device-props.sh b/phh-device-props.sh
+new file mode 100755
+index 0000000..e833066
+--- /dev/null
++++ b/phh-device-props.sh
+@@ -0,0 +1,80 @@
++#!/system/bin/sh
++
++# runs on early-fs: vendor tee daemons read the device name once when they
++# start on fs, and microtrust tees reject tas when it is the gsi's
++
++[ -f /metadata/securize_disable ] && exit 0
++
++# the device's own product partition first, then odm and vendor
++device_prop() {
++    # xiaomi's shared vendor/product images keep the real device in odm
++    case "$(getprop ro.product.vendor.manufacturer)" in
++        [Xx]iaomi)
++            value="$(getprop ro.product.odm."$1")"
++            if [ "$value" ]; then
++                echo "$value"
++                return
++            fi
++            ;;
++    esac
++    if [ "$product_build_prop" ]; then
++        for key in ro.product.product."$1" ro.product."$1"; do
++            value="$(grep "^$key=" "$product_build_prop" | head -n 1 | cut -d = -f 2-)"
++            if [ "$value" ]; then
++                echo "$value"
++                return
++            fi
++        done
++    fi
++    for partition in ro.product.odm ro.product.vendor ro.vendor.product; do
++        value="$(getprop "$partition.$1")"
++        if [ "$value" ]; then
++            echo "$value"
++            return
++        fi
++    done
++}
++
++copy_device_prop() {
++    value="$(device_prop "$1")"
++    [ "$value" ] || return
++    shift
++    for target in "$@"; do
++        resetprop_phh "$target" "$value"
++    done
++}
++
++# /product can be the GSI's own, read the device's product partition directly
++product_build_prop=
++slot="$(getprop ro.boot.slot_suffix)"
++for dev in /dev/block/mapper/product"$slot" /dev/block/mapper/product \
++        /dev/block/by-name/product"$slot" /dev/block/by-name/product; do
++    [ -b "$dev" ] || continue
++    mkdir -p /mnt/phh/product_part
++    if mount -o ro "$dev" /mnt/phh/product_part; then
++        for f in /mnt/phh/product_part/etc/build.prop /mnt/phh/product_part/build.prop; do
++            if [ -f "$f" ]; then
++                cp "$f" /mnt/phh/product_build.prop
++                product_build_prop=/mnt/phh/product_build.prop
++                break
++            fi
++        done
++        umount /mnt/phh/product_part
++    fi
++    rmdir /mnt/phh/product_part
++    break
++done
++
++copy_device_prop device \
++    ro.product.device ro.product.system.device ro.product.system_ext.device ro.product.product.device \
++    ro.build.device ro.build.product
++copy_device_prop name \
++    ro.product.name ro.product.system.name ro.product.system_ext.name ro.product.product.name
++copy_device_prop brand \
++    ro.product.brand ro.product.system.brand ro.product.system_ext.brand ro.product.product.brand \
++    ro.system.product.brand
++copy_device_prop model \
++    ro.product.model ro.product.system.model ro.product.system_ext.model ro.product.product.model
++copy_device_prop manufacturer \
++    ro.product.manufacturer ro.product.system.manufacturer ro.product.system_ext.manufacturer ro.product.product.manufacturer \
++    ro.system.product.manufacturer
+diff --git a/rw-system.sh b/rw-system.sh
+index 9bd86d8..54c304a 100644
+--- a/rw-system.sh
++++ b/rw-system.sh
+@@ -805,45 +805,6 @@ copyprop() {
+     fi
+ }
+ 
+-# the device's own product partition first, then odm and vendor
+-device_prop() {
+-    # xiaomi's shared vendor/product images keep the real device in odm
+-    case "$(getprop ro.product.vendor.manufacturer)" in
+-        [Xx]iaomi)
+-            value="$(getprop ro.product.odm."$1")"
+-            if [ "$value" ]; then
+-                echo "$value"
+-                return
+-            fi
+-            ;;
+-    esac
+-    if [ "$product_build_prop" ]; then
+-        for key in ro.product.product."$1" ro.product."$1"; do
+-            value="$(grep "^$key=" "$product_build_prop" | head -n 1 | cut -d = -f 2-)"
+-            if [ "$value" ]; then
+-                echo "$value"
+-                return
+-            fi
+-        done
+-    fi
+-    for partition in ro.product.odm ro.product.vendor ro.vendor.product; do
+-        value="$(getprop "$partition.$1")"
+-        if [ "$value" ]; then
+-            echo "$value"
+-            return
+-        fi
+-    done
+-}
+-
+-copy_device_prop() {
+-    value="$(device_prop "$1")"
+-    [ "$value" ] || return
+-    shift
+-    for target in "$@"; do
+-        resetprop_phh "$target" "$value"
+-    done
+-}
+-
+ # OPPO/Realme devices with MTK vendor kernels include an oppo_root_check
+ # kernel module or init service that detects an unlocked bootloader and forces
+ # a reboot to recovery.  set the boot-state properties to "locked" so any
+@@ -927,41 +888,6 @@ if [ ! -f /metadata/securize_disable ]; then
+     copyprop ro.system_ext.build.fingerprint ro.vendor.build.fingerprint
+     copyprop ro.product.build.fingerprint ro.vendor.build.fingerprint
+ 
+-    # /product can be the GSI's own, read the device's product partition directly
+-    product_build_prop=
+-    slot="$(getprop ro.boot.slot_suffix)"
+-    for dev in /dev/block/mapper/product"$slot" /dev/block/mapper/product \
+-            /dev/block/by-name/product"$slot" /dev/block/by-name/product; do
+-        [ -b "$dev" ] || continue
+-        mkdir -p /mnt/phh/product_part
+-        if mount -o ro "$dev" /mnt/phh/product_part; then
+-            for f in /mnt/phh/product_part/etc/build.prop /mnt/phh/product_part/build.prop; do
+-                if [ -f "$f" ]; then
+-                    cp "$f" /mnt/phh/product_build.prop
+-                    product_build_prop=/mnt/phh/product_build.prop
+-                    break
+-                fi
+-            done
+-            umount /mnt/phh/product_part
+-        fi
+-        rmdir /mnt/phh/product_part
+-        break
+-    done
+-
+-    copy_device_prop device \
+-        ro.product.device ro.product.system.device ro.product.system_ext.device ro.product.product.device \
+-        ro.build.device ro.build.product
+-    copy_device_prop name \
+-        ro.product.name ro.product.system.name ro.product.system_ext.name ro.product.product.name
+-    copy_device_prop brand \
+-        ro.product.brand ro.product.system.brand ro.product.system_ext.brand ro.product.product.brand \
+-        ro.system.product.brand
+-    copy_device_prop model \
+-        ro.product.model ro.product.system.model ro.product.system_ext.model ro.product.product.model
+-    copy_device_prop manufacturer \
+-        ro.product.manufacturer ro.product.system.manufacturer ro.product.system_ext.manufacturer ro.product.product.manufacturer \
+-        ro.system.product.manufacturer
+-
+     # Hide system/xbin/su
+     mount /mnt/phh/empty_dir /system/xbin
+     echo "phhsec: securize flood done fp=$(getprop ro.build.fingerprint)" > /dev/kmsg 2>/dev/null
+diff --git a/sepolicy/file_contexts b/sepolicy/file_contexts
+index bd5b48d..0c37600 100644
+--- a/sepolicy/file_contexts
++++ b/sepolicy/file_contexts
+@@ -3,6 +3,7 @@
+ /system/etc/usb_audio_policy_configuration.xml	u:object_r:vendor_configs_file:s0
+ /system/bin/rw-system.sh u:object_r:phhsu_exec:s0
+ /system/bin/phh-on-boot.sh u:object_r:phhsu_exec:s0
++/system/bin/phh-device-props.sh u:object_r:phhsu_exec:s0
+ /system/bin/phh-on-data.sh u:object_r:phhsu_exec:s0
+ /system/etc/00-fix-metadata.sh u:object_r:phhsu_exec:s0
+ /system/bin/asus-motor u:object_r:phhsu_exec:s0
+diff --git a/vndk.rc b/vndk.rc
+index 21df056..3a50b12 100644
+--- a/vndk.rc
++++ b/vndk.rc
+@@ -1,3 +1,6 @@
++on early-fs
++    exec - root -- /system/bin/phh-device-props.sh
++
+ on post-fs
+     exec - root -- /system/bin/vndk-detect
+     exec - root -- /system/bin/rw-system.sh
+-- 
+2.56.0
+

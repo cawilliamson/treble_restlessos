@@ -1,7 +1,7 @@
 From a23983328cdcd96bbc80a4f873cccb0d17e0f465 Mon Sep 17 00:00:00 2001
 From: Langsdorff <131063968+clangsdorff@users.noreply.github.com>
 Date: Sun, 18 Oct 2026 11:27:13 +0300
-Subject: [PATCH 2/2] securize: read product props from the device's own
+Subject: [PATCH 2/3] securize: read product props from the device's own
  partitions
 
 /product can be the gsi's own product, so its props cant be told apart
